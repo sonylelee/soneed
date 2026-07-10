@@ -405,6 +405,13 @@ async function onChartPhoto(e){
 }
 
 async function saveRecord(){
+  // 저장 직전, 화면에 실제로 적힌 텍스트/드롭다운 값을 전부 다시 읽어 반영 (모바일 한글 조합 입력 누락 방지)
+  FIELDS.forEach(f=>{
+    if(f.type==='text'||f.type==='num'||f.type==='date'||f.type==='select'){
+      const el=document.getElementById('f_'+f.k);
+      if(el) form[f.k]=el.value||null;
+    }
+  });
   form.notes=document.getElementById('f_notes').value||null;
   const hasPhoto=PHOTO_SLOTS.some(([s])=>form['photo_'+s]);
   if(!form.code&&!hasPhoto){toast('고객 성함이나 사진 중 하나는 입력해 주세요');return;}
