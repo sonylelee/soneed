@@ -41,7 +41,9 @@
   .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 22px} @media(max-width:720px){.grid{grid-template-columns:1fr}}
   .field{min-width:0}
   .field>label{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--muted);margin:0 0 6px 2px}
-  .field.auto>label:after{content:'자동';font-size:10px;font-weight:800;color:var(--auto);background:var(--auto-soft);padding:1px 6px;border-radius:5px}
+  .field.auto>label:after{content:'AI 자동 · 검토요망';font-size:10px;font-weight:800;color:var(--auto);background:var(--auto-soft);padding:1px 6px;border-radius:5px}
+  .field.auto{border:1.5px dashed var(--auto);background:var(--auto-soft);border-radius:10px;padding:8px 10px;margin:-2px 0}
+  .field.auto .seg button,.field.auto select,.field.auto input{opacity:.8}
   input[type=text],input[type=number],input[type=date],select,textarea{width:100%;font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line2);border-radius:9px;padding:9px 11px;outline:none}
   input:focus,select:focus,textarea:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
   textarea{resize:vertical;min-height:64px}
@@ -107,7 +109,7 @@
 </style>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v2 (2026-07-11)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v6 (2026-07-11)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">데이터 · 필터</button></div>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
   <span class="count-pill">기록 <b id="totalCount">0</b></span>
@@ -120,9 +122,11 @@
       <div class="grow subtle" id="editState">새 기록을 작성합니다.</div>
       <button class="btn auto" id="autoBtn" onclick="document.getElementById('chartInput').click()">📄 종이차트 사진으로 자동 채우기</button>
       <input type="file" id="chartInput" accept="image/*" style="display:none" onchange="onChartPhoto(event)">
+      <button class="btn auto" id="faceBtn" onclick="onFaceAnalyze()">🙂 얼굴사진으로 분석 (초안)</button>
       <button class="btn ghost" onclick="clearForm()">새로 작성</button>
     </div>
     <div id="autoMsg"></div>
+    <div id="faceResult"></div>
     <div class="card pad">
       <h2 class="section" style="margin-top:0">사진</h2>
       <div class="photos" id="photos"></div>
@@ -216,6 +220,7 @@ const ICON512="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAIAAAB7GkO
 (function(){try{const m={name:"소니드 얼굴윤곽 분석",short_name:"소니드 분석",start_url:".",scope:".",display:"standalone",background_color:"#EEF0F3",theme_color:"#C81D74",icons:[{src:ICON180,sizes:"180x180",type:"image/png",purpose:"any"},{src:ICON512,sizes:"512x512",type:"image/png",purpose:"any maskable"}]};const l=document.createElement("link");l.rel="manifest";l.href=URL.createObjectURL(new Blob([JSON.stringify(m)],{type:"application/manifest+json"}));document.head.appendChild(l);}catch(e){}})();
 const NEUTRAL=['중립','대칭'];
 const PHOTO_SLOTS=[['front','정면'],['up','고개 든'],['down','고개 숙인']];
+const RELAY="https://admirable-salmiakki-a726d6.netlify.app/.netlify/functions/claude";
 const THERAPISTS=['','이소니','신대성','정수영','김현주','신경미','김려은','이수연','게스트1','게스트2'];
 
 /* 차트 항목 = 데이터 컬럼 (인쇄 차트 순서 그대로: 2D 진단 → 좌우 진단 → 회전 진단) */
@@ -416,7 +421,7 @@ async function onChartPhoto(e){
   try{
     const dataURL=await new Promise(res=>resizeToDataURL(file,1600,0.85,res));const b64=dataURL.split(',')[1];
     const prompt=`이 이미지는 얼굴윤곽 관리사가 손으로 작성한 '소니드 얼굴윤곽 3D 분석차트' 작업지를 촬영한 것입니다. 관리사 본인의 필기(파란펜 동그라미·체크·밑줄 등)를 디지털로 옮기는 단순 전사 작업입니다. 각 행이 분석 항목이고, 손으로 표시된 칸이 그 항목에서 선택된 값입니다. 아래 항목별 가능한 값 목록을 참고해, 각 항목에서 표시된 값을 최대한 판독하세요. 필기가 다소 흐릿하거나 애매해도 가장 그럴듯한 값을 적어주세요 — 사람이 나중에 검토합니다. 표시가 전혀 없는 항목만 생략하세요. 여러 곳이 표시된 항목(예: 럭비프레스 위치)은 값들의 배열로 답하세요. 값은 반드시 목록의 문자열과 정확히 일치해야 합니다. 다른 설명 없이 JSON 객체만 출력하세요.\n\n항목: ${JSON.stringify(schemaForPrompt())}\n\n출력 예시: {"타입":"A","워터슬라이드":"R","얼굴부피에서 가장 큰 부분 (럭비프레스 위치)":["좌 광대","우 후두"]}`;
-    const resp=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,messages:[{role:"user",content:[{type:"image",source:{type:"base64",media_type:"image/jpeg",data:b64}},{type:"text",text:prompt}]}]})});
+    const resp=await fetch(RELAY,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,messages:[{role:"user",content:[{type:"image",source:{type:"base64",media_type:"image/jpeg",data:b64}},{type:"text",text:prompt}]}]})});
     const data=await resp.json();
     const text=(data.content||[]).filter(x=>x.type==='text').map(x=>x.text).join('\n');
     const clean=text.replace(/```json|```/g,'').trim();
@@ -426,9 +431,91 @@ async function onChartPhoto(e){
       if(f.type==='multi'){const vals=(Array.isArray(parsed[label])?parsed[label]:[parsed[label]]).filter(x=>f.opt.includes(x));if(vals.length){form[key]=vals;autoFilled[key]=true;n++;}}
       else if(f.opt.includes(parsed[label])){form[key]=parsed[label];autoFilled[key]=true;n++;}}
     renderForm();applyFormToUI();
-    msg.innerHTML=`<div class="banner info">✓ ${n}개 항목을 자동 인식했습니다. 보라색 <b>자동</b> 배지가 붙은 값은 꼭 검토·수정해 주세요.</div>`;toast(n+'개 자동 입력됨');
+    msg.innerHTML=`<div class="banner info">✓ ${n}개 항목을 자동 인식했습니다. 점선·연한 칸(<b>검토요망</b>)의 값은 꼭 확인·수정해 주세요.</div>`;toast(n+'개 자동 입력됨');
   }catch(err){msg.innerHTML=`<div class="banner err">자동 인식에 실패했습니다. 더 밝고 반듯하게 다시 찍거나 수동으로 입력해 주세요.</div>`;}
   btn.disabled=false;btn.innerHTML=orig;
+}
+
+/* ===== 얼굴사진 3장 → 촉진 전 초안 분석 (읽기전용 · 자동입력 아님) ===== */
+const FACE_PROMPT=`당신은 소니드 얼굴윤곽 분석 보조입니다. 위 사진(정면·고개 든·고개 숙인)을 보고 '촉진 전 초안'을 작성합니다. 확정 진단이 아니라, 관리사가 손으로 촉진해 검증하기 전의 참고 초안입니다.
+
+[절대 원칙]
+- 모든 좌우(L/R)는 그 사람 '본인 기준'. 정면 사진에서는 이미지 좌우가 반전됨(본인 오른쪽=사진 왼쪽).
+- 애매하면 억지로 값 매기지 말고 해당 항목을 생략하거나 확신도를 '촉진'으로. 최종 확정은 항상 촉진.
+- 상관은 규칙이 아님. 정면 쏠림 경향은 참고만, 다른 관측을 뒤집지 말 것.
+
+[먼저 회전 판정]
+- 정면에서 어느 귀가 더 많이 보이나로 투구 회전을 먼저 확정. 왼 귀가 많이 보이면 본인 우회전, 오른 귀가 많이 보이면 좌회전.
+- '투구 회전' 항목은 '귀 보이는 쪽'을 표기(왼 귀 보이면 L). 표기와 실제 회전 방향은 반대임.
+- 회전이 뚜렷하면 정면 좌우 겉보기값(측면함유량·눈 크기·입술 두께·눈썹/눈 높이 등)은 회전이 만든 왜곡일 수 있음. 값은 보이는 대로 적되 확신도를 낮추고 x(회전영향)=true로 표시.
+
+[후두골 중심부 시간] 5시/6시(중립)/7시만. 고개 든 사진에서 오른 귀가 더 아래=7시 / 대칭=6시 / 왼 귀가 더 아래=5시. 귀만 보지 말고 유양돌기 교차확인(귀와 유양돌기가 반대로 벌어진 디커플링이면 뒤집힐 수 있음).
+
+[거리 항목] 직선거리가 아니라 '두께'로 읽음. 부피 살아있는 쪽=긴 쪽, 짜부된 쪽=짧은 쪽.
+
+[회전 진단] 고개 숙인 사진의 마루뼈 좌우 레벨을 기준(0점)으로, 고개 든 사진의 안면 레벨을 대비해 상대 판정. 마루가 이미 돌아간 만큼을 감안(절대위치로 판정 금지). 확연할 때만 방향을 적고 애매하면 생략.
+- 턱 회전: 정면에서 턱 좌우 각이 더 보이거나 더 아래로 내려온 쪽 = 그 '반대'로 회전.
+- 광대뼈 대비 상악: 인중이 '/' 모양이면 상악 우회전 가능성(애매하면 생략).
+
+[워터슬라이드] 광대가 같은 사이드의 이마(3층)·턱(1층)보다 더 튀어나온 쪽, 그리고 고개 든 사진에서 베드 면 기준 더 솟는 광대 쪽.
+
+[CA위치] 눈썹-눈-코-인중-입술 정중 라인이 휘는 정점이 어디냐. 코끝이 정점이면 코, 미간이 정점(눈썹↔코 각도차 큼)이면 미간, 인중이 정점(코끝↔인중 각도 큼)이면 인중.
+
+[얼굴 형태] 얼굴 길이가 아니라 '눈 바깥→얼굴 외곽 옆폭'. 좁으면 세로형, 넓으면 가로형, 애매하면 중립.
+
+[출력] 아래 항목별 가능한 값 목록에서만 고르세요. 판단이 서는 항목만 골라 JSON 객체 하나로 간결하게 출력(애매·불명확한 항목은 생략). 키=항목명(목록과 정확히 일치), 값={"v":선택값(또는 배열),"c":확신도("높음"|"중"|"낮음"|"촉진"),"r":근거(10자 이내),"x":회전영향(true/false)}. 다른 말/설명/코드블록 없이 JSON 객체만 출력.`;
+
+function faceSchema(){const o={};FIELDS.filter(f=>['2d','lr','rot'].includes(f.g)&&(f.type==='seg'||f.type==='select'||f.type==='multi')).forEach(f=>{o[f.label]=f.opt.filter(x=>x!=='');});return o;}
+
+async function onFaceAnalyze(){
+  const slots=[['front','정면'],['up','고개 든'],['down','고개 숙인']].filter(([s])=>form['photo_'+s]);
+  if(!slots.length){toast('먼저 위 "사진" 슬롯에 얼굴 사진(정면·고개 든·고개 숙인)을 넣어주세요');return;}
+  const btn=document.getElementById('faceBtn');btn.disabled=true;const orig=btn.innerHTML;btn.innerHTML='<span class="spinner"></span>분석 중…';
+  const box=document.getElementById('faceResult');box.innerHTML='<div class="banner info">얼굴 사진을 분석해 촉진 전 초안을 만드는 중입니다… (정면·고개 든·고개 숙인 3장이 모두 있으면 더 정확합니다)</div>';
+  const content=[];
+  slots.forEach(([s,ko])=>{content.push({type:'text',text:'['+ko+' 사진]'});content.push({type:'image',source:{type:'base64',media_type:'image/jpeg',data:form['photo_'+s].split(',')[1]}});});
+  content.push({type:'text',text:FACE_PROMPT+'\n\n항목 목록: '+JSON.stringify(faceSchema())});
+  try{
+    const resp=await fetch(RELAY,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:4000,messages:[{role:"user",content}]})});
+    let data;try{data=await resp.json();}catch(je){throw new Error('응답을 읽지 못했습니다 (HTTP '+resp.status+')');}
+    if(!resp.ok||(data&&data.error)){throw new Error('API 오류 '+(resp.status||'')+' · '+((data&&data.error&&data.error.message)||JSON.stringify(data).slice(0,300)));}
+    const text=(data.content||[]).filter(x=>x.type==='text').map(x=>x.text).join('\n');
+    if(!text.trim())throw new Error('빈 응답을 받았습니다.');
+    const clean=text.replace(/```json|```/g,'').trim();
+    const j0=clean.indexOf('{'),j1=clean.lastIndexOf('}');
+    if(j0<0||j1<0)throw new Error('JSON 형식이 아닙니다 · 응답 앞부분: '+clean.slice(0,200));
+    let parsed;try{parsed=JSON.parse(clean.slice(j0,j1+1));}catch(pe){throw new Error('응답이 잘렸을 수 있습니다(JSON 파싱 실패) · 앞부분: '+clean.slice(0,180));}
+    let n=0;autoFilled={};
+    for(const label in parsed){const key=LABEL2KEY[label];if(!key)continue;const f=FMAP[key];const o=parsed[label];if(!o)continue;const val=o.v;
+      if(f.type==='multi'){const vals=(Array.isArray(val)?val:[val]).filter(x=>f.opt.includes(x));if(vals.length){form[key]=vals;autoFilled[key]=true;n++;}}
+      else if(f.opt.includes(val)){form[key]=val;autoFilled[key]=true;n++;}}
+    renderForm();applyFormToUI();
+    renderFaceResult(parsed,n);
+  }catch(err){box.innerHTML='<div class="banner err"><b>분석 오류</b><br><span style="font-size:12px;white-space:pre-wrap;word-break:break-all">'+String((err&&err.message)||err).replace(/</g,'&lt;')+'</span><br><span style="font-size:11px;opacity:.8">사진 화질 문제가 아닐 수 있어요. 이 메시지를 캡처해 알려주시면 정확히 잡아드립니다.</span></div>';}
+  btn.disabled=false;btn.innerHTML=orig;
+}
+
+function faceC(c){return c==='높음'?'#1D9E75':c==='중'?'#BA7517':'#A32D2D';}
+function renderFaceResult(parsed,n){
+  const box=document.getElementById('faceResult');const star=['zygoma_incline','mastoid_incline'];
+  const line='1px solid rgba(128,128,128,0.18)';let rows='',cnt=0;
+  FIELDS.filter(f=>['2d','lr','rot'].includes(f.g)).forEach(f=>{
+    const o=parsed[f.label];if(!o)return;cnt++;
+    const v=Array.isArray(o.v)?o.v.join(' + '):(o.v||'—');
+    const c=o.c||'촉진';
+    const rot=o.x?' <span title="투구 회전으로 결과가 실제와 다를 수 있음" style="color:#534AB7;font-weight:700">⟳</span>':'';
+    const st=star.includes(f.k)?' <span title="촉진 필수 항목" style="color:#A32D2D">★</span>':'';
+    rows+='<tr><td style="padding:7px 8px;border-bottom:'+line+';font-size:13px">'+f.label+st+'</td>'
+      +'<td style="padding:7px 8px;border-bottom:'+line+';font-size:13px;font-weight:600">'+v+rot+'</td>'
+      +'<td style="padding:7px 8px;border-bottom:'+line+';font-size:12px;color:'+faceC(c)+';white-space:nowrap">'+c+'</td>'
+      +'<td style="padding:7px 8px;border-bottom:'+line+';font-size:12px;color:var(--text-secondary,#777)">'+(o.r||'')+'</td></tr>';
+  });
+  if(!cnt){box.innerHTML='<div class="banner info">사진에서 확정할 만한 항목을 찾지 못했습니다. 더 밝고 반듯한 정면·고개 든·고개 숙인 사진으로 다시 시도해 주세요.</div>';return;}
+  box.innerHTML='<div class="card pad" style="margin-top:10px">'
+    +'<div class="banner info" style="margin-bottom:8px">✓ '+(n||cnt)+'개 항목을 폼에 <b>자동 채웠습니다</b> (점선·연한 칸). 촉진 전 <b>초안</b>이니 꼭 검토·수정하세요 · 최종은 촉진 · ⟳=회전 영향, ★=촉진 필수</div>'
+    +'<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">'
+    +'<tr><th style="text-align:left;padding:6px 8px;font-size:11px;color:#999">항목</th><th style="text-align:left;padding:6px 8px;font-size:11px;color:#999">초안값</th><th style="text-align:left;padding:6px 8px;font-size:11px;color:#999">확신도</th><th style="text-align:left;padding:6px 8px;font-size:11px;color:#999">근거</th></tr>'
+    +rows+'</table></div></div>';
 }
 
 async function saveRecord(){
