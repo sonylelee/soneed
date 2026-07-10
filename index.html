@@ -108,8 +108,16 @@
   }
 </style>
 
+<div id="lockScreen" style="position:fixed;inset:0;z-index:99999;background:#EEF0F3;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;padding:20px;font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Segoe UI',Roboto,'Malgun Gothic',sans-serif">
+  <div style="font-weight:800;font-size:22px;color:#C81D74;letter-spacing:-.02em">SONEED</div>
+  <div style="color:#6A7280;font-size:14px">비밀번호를 입력하세요</div>
+  <input id="lockPw" type="password" autocomplete="off" style="width:min(320px,80vw);font-size:16px;padding:12px 14px;border:1px solid #D3D7DE;border-radius:10px;outline:none" placeholder="비밀번호" onkeydown="if(event.key==='Enter')tryUnlock()">
+  <button onclick="tryUnlock()" style="background:#C81D74;color:#fff;border:0;font-weight:800;font-size:15px;padding:12px 24px;border-radius:10px;cursor:pointer">들어가기</button>
+  <div id="lockMsg" style="color:#C0392B;font-size:13px;min-height:18px"></div>
+</div>
+
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v7 (2026-07-11)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v9 (2026-07-11)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">데이터 · 필터</button></div>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
   <span class="count-pill">기록 <b id="totalCount">0</b></span>
@@ -444,6 +452,12 @@ const FACE_PROMPT=`당신은 소니드 얼굴윤곽 분석 보조입니다. 위 
 - 애매하면 억지로 값 매기지 말고 그 항목을 생략(또는 확신도 '촉진'). 최종 확정은 항상 촉진.
 - 상관은 규칙이 아님. 정면 쏠림 경향은 참고만, 다른 관측을 뒤집지 말 것.
 
+[정확도 주의 · 자주 틀리는 것 — 값을 적기 전 반드시 자가점검]
+1) 좌우 반전: 정면 사진에서 '이미지 왼쪽'에 보이는 얼굴 부위는 '본인 오른쪽'이다. 각 L/R 항목을 적기 직전에 "이 방향을 본인 기준으로 뒤집었는가?"를 한 번 더 자문하고 반전이 맞는지 확인할 것. 이 단계를 건너뛰면 좌우가 통째로 반대로 나온다.
+2) 투구 기울기: 양 눈동자 중 사진상 더 아래로 내려간 쪽을 먼저 명확히 본 뒤, 본인 기준으로 반전 → 그쪽이 답(왼눈이 낮으면 L, 오른눈이 낮으면 R).
+3) 후두골 중심부 시간: 고개 든 사진도 좌우 반전 대상. 좌우가 헷갈리면 억지로 5/7을 찍지 말고 '촉진'. '7시'를 기본값처럼 찍지 말 것.
+4) 회전 진단: 고개 숙인 사진에서 기준뼈(마루)가 한쪽으로 뚜렷이 돌아가 있으면, 여러 회전 항목이 같은 방향으로 나오는 경우가 흔하다 — 근거 없이 방향을 뒤섞거나 랜덤으로 채우지 말 것. 확연치 않으면 생략.
+
 [먼저 회전 판정] 정면에서 어느 귀가 더 많이 보이나로 투구 회전을 먼저 확정. 왼 귀가 많이 보이면 본인 우회전, 오른 귀가 많이 보이면 좌회전. '투구 회전' 항목엔 '귀 보이는 쪽'을 표기(왼 귀 보이면 L) — 표기와 실제 회전 방향은 반대. 회전이 뚜렷하면 정면 좌우 겉보기값(측면함유량·눈 크기·입술 두께·눈썹/눈 높이 등)은 회전 왜곡일 수 있음: 값은 보이는 대로 적되 확신도를 낮추고 x(회전영향)=true.
 
 [2D 진단 판독법]
@@ -603,4 +617,17 @@ function refreshAll(){document.getElementById('totalCount').textContent=records.
 let toastT;function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),1800);}
 
 renderForm();fillXtSelects();renderConds();updateValidation();setModeBadge();loadAll();
+
+/* ===== 비밀번호 잠금 ===== */
+const APP_PASSWORD="ththslem1"; /* ← 이 값을 원하는 비밀번호로 바꾸세요 (따옴표 안만) */
+function tryUnlock(){
+  const v=(document.getElementById('lockPw')||{}).value||'';
+  if(v===APP_PASSWORD){try{sessionStorage.setItem('soneed_unlocked','1');}catch(e){}document.getElementById('lockScreen').style.display='none';}
+  else{document.getElementById('lockMsg').textContent='비밀번호가 올바르지 않습니다';}
+}
+(function(){let ok=false;try{ok=sessionStorage.getItem('soneed_unlocked')==='1';}catch(e){}
+  const ls=document.getElementById('lockScreen');
+  if(ok){if(ls)ls.style.display='none';}
+  else{setTimeout(()=>{const el=document.getElementById('lockPw');if(el)el.focus();},120);}
+})();
 </script>
