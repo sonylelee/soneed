@@ -117,7 +117,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v17 (2026-07-14)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v18 (2026-07-14)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">데이터 · 필터</button></div>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
   <span class="count-pill">기록 <b id="totalCount">0</b></span>
@@ -685,22 +685,87 @@ async function measureFront(dataUrl){
   }catch(e){return null;}
 }
 
-function measureText(m){
-  if(!m)return '(자동 측정 실패 — 사진을 직접 보고 판단하되, 좌우를 특히 주의할 것)';
-  const tilt = m.eye_low_own==='거의같음' ? '중립'
-    : (m.eye_low_own==='본인오른쪽' ? 'R (본인 오른쪽 눈이 낮음)' : 'L (본인 왼쪽 눈이 낮음)');
-  const tp = m.type_short_own==='거의같음' ? '애매(확신도 낮춤)'
-    : (m.type_short_own==='본인오른쪽' ? 'A (본인 오른쪽이 짧음)' : 'B (본인 왼쪽이 짧음)');
-  const nose = m.nose_own==='거의수직' ? '중립'
-    : (m.nose_own==='본인오른쪽' ? 'R (본인 오른쪽으로 내려감)' : 'L (본인 왼쪽으로 내려감)');
-  const shape = m.wh<78 ? '세로형' : (m.wh>84 ? '가로형' : '중립');
-  return `[★★자동 측정 결과 — 컴퓨터가 좌표로 정확히 계산했고, 이미 '본인 기준'으로 변환되어 결론까지 나와 있다.
-아래 4개 항목은 그대로 기록하라. 사진을 다시 보지 말고, 절대로 좌우를 다시 뒤집지 마라. 다시 뒤집으면 틀린다.]
+/* 정면 사진: 얼굴 중심선 대비 좌우 귀까지의 거리 → 더 먼 쪽이 더 노출된(보이는) 귀 */
+async function measureEarsFront(dataUrl){
+  try{
+    const lm=await getLandmarker();
+    const img=await _img(dataUrl);
+    const cv=document.createElement('canvas');cv.width=img.width;cv.height=img.height;
+    cv.getContext('2d').drawImage(img,0,0);
+    const out=lm.detect(cv);
+    if(!out.faceLandmarks||!out.faceLandmarks.length)return null;
+    const P=out.faceLandmarks[0].map(p=>({x:p.x*img.width,y:p.y*img.height}));
+    const EAR_A=234, EAR_B=454;      /* 좌우 얼굴 외곽(귀 앞) */
+    const NOSE=1, CHIN=152, FH=10;
+    const dist=(p,q)=>Math.hypot(p.x-q.x,p.y-q.y);
+    const faceH=dist(P[FH],P[CHIN])||1;
+    const cx=P[NOSE].x;                /* 얼굴 중심선(코) */
+    const eA=P[EAR_A], eB=P[EAR_B];
+    const scrL = eA.x<eB.x?eA:eB;      /* 화면 왼쪽 귀쪽 */
+    const scrR = eA.x<eB.x?eB:eA;
+    const dScrL=Math.abs(cx-scrL.x), dScrR=Math.abs(scrR.x-cx);
+    const r=v=>Math.round(v/faceH*1000)/10;
+    const diff=Math.abs(dScrL-dScrR);
+    let moreScreen = diff<faceH*0.01 ? '거의같음' : (dScrL>dScrR?'화면왼쪽':'화면오른쪽');
+    const own=s=>s==='화면왼쪽'?'본인오른쪽':(s==='화면오른쪽'?'본인왼쪽':s);
+    return { more_own: own(moreScreen), ownR:r(dScrL), ownL:r(dScrR) };
+  }catch(e){return null;}
+}
 
-· 투구 기울기 = ${tilt}   (눈동자 높이차 ${m.eye_dy_norm}%)
-· 타입 = ${tp}   (눈썹끝↔입꼬리 거리: 본인우 ${m.type_ownR} / 본인좌 ${m.type_ownL})
-· 콧대 사선 = ${nose}
-· 얼굴 형태 = ${shape}   (가로/세로 ${m.wh}%, 옆폭: 본인우 ${m.side_ownR} / 본인좌 ${m.side_ownL})`;
+/* 고개 든 사진: 좌우 귀의 y좌표 → 더 아래(y가 큰) 쪽 */
+async function measureEarsUp(dataUrl){
+  try{
+    const lm=await getLandmarker();
+    const img=await _img(dataUrl);
+    const cv=document.createElement('canvas');cv.width=img.width;cv.height=img.height;
+    cv.getContext('2d').drawImage(img,0,0);
+    const out=lm.detect(cv);
+    if(!out.faceLandmarks||!out.faceLandmarks.length)return null;
+    const P=out.faceLandmarks[0].map(p=>({x:p.x*img.width,y:p.y*img.height}));
+    const EAR_A=234, EAR_B=454, CHIN=152, FH=10;
+    const dist=(p,q)=>Math.hypot(p.x-q.x,p.y-q.y);
+    const faceH=dist(P[FH],P[CHIN])||1;
+    const eA=P[EAR_A], eB=P[EAR_B];
+    const scrL = eA.x<eB.x?eA:eB;
+    const scrR = eA.x<eB.x?eB:eA;
+    const dy=scrR.y-scrL.y;   /* +면 화면오른쪽 귀가 아래 */
+    const lowScreen = Math.abs(dy)<faceH*0.008 ? '거의같음' : (dy>0?'화면오른쪽':'화면왼쪽');
+    const own=s=>s==='화면왼쪽'?'본인오른쪽':(s==='화면오른쪽'?'본인왼쪽':s);
+    return { low_own: own(lowScreen), dy_norm: Math.round(Math.abs(dy)/faceH*1000)/10 };
+  }catch(e){return null;}
+}
+
+function measureText(m,ef,eu){
+  const lines=[];
+  if(m){
+    const tilt = m.eye_low_own==='거의같음' ? '중립'
+      : (m.eye_low_own==='본인오른쪽' ? 'R (본인 오른쪽 눈이 낮음)' : 'L (본인 왼쪽 눈이 낮음)');
+    const tp = m.type_short_own==='거의같음' ? '애매(확신도 낮춤)'
+      : (m.type_short_own==='본인오른쪽' ? 'A (본인 오른쪽이 짧음)' : 'B (본인 왼쪽이 짧음)');
+    const nose = m.nose_own==='거의수직' ? '중립'
+      : (m.nose_own==='본인오른쪽' ? 'R (본인 오른쪽으로 내려감)' : 'L (본인 왼쪽으로 내려감)');
+    const shape = m.wh<78 ? '세로형' : (m.wh>84 ? '가로형' : '중립');
+    lines.push(`· 투구 기울기 = ${tilt}   (눈동자 높이차 ${m.eye_dy_norm}%)`);
+    lines.push(`· 타입 = ${tp}   (눈썹끝↔입꼬리: 본인우 ${m.type_ownR} / 본인좌 ${m.type_ownL})`);
+    lines.push(`· 콧대 사선 = ${nose}`);
+    lines.push(`· 얼굴 형태 = ${shape}   (가로/세로 ${m.wh}%)`);
+  }
+  if(ef){
+    const rot = ef.more_own==='거의같음' ? '중립'
+      : (ef.more_own==='본인오른쪽' ? 'R (본인 오른쪽 귀가 더 보임)' : 'L (본인 왼쪽 귀가 더 보임)');
+    lines.push(`· 투구 회전(귀 보이는 쪽) = ${rot}   (중심선→귀 거리: 본인우 ${ef.ownR} / 본인좌 ${ef.ownL})`);
+    if(ef.more_own!=='거의같음') lines.push(`· 측면함유량 = ${ef.more_own==='본인오른쪽'?'R':'L'} (투구 회전과 동일)`);
+  }
+  if(eu){
+    const clock = eu.low_own==='거의같음' ? '6시 (좌우 대칭)'
+      : (eu.low_own==='본인오른쪽' ? '7시 (본인 오른쪽 귀가 더 아래)' : '5시 (본인 왼쪽 귀가 더 아래)');
+    lines.push(`· 후두골 중심부 시간 = ${clock}   (고개 든 사진 귀 높이차 ${eu.dy_norm}%)`);
+  }
+  if(!lines.length)return '(자동 측정 실패 — 사진을 직접 보고 판단하되, 좌우를 특히 주의할 것)';
+  return `[★★자동 측정 결과 — 컴퓨터가 좌표로 정확히 계산했고, 이미 '본인 기준'으로 변환되어 결론까지 나와 있다.
+아래 항목은 그대로 기록하라. 사진을 다시 보지 말고, 절대로 좌우를 다시 뒤집지 마라.]
+
+${lines.join('\n')}`;
 }
 
 async function onFaceAnalyze(){
@@ -709,13 +774,15 @@ async function onFaceAnalyze(){
   const btn=document.getElementById('faceBtn');btn.disabled=true;const orig=btn.innerHTML;btn.innerHTML='<span class="spinner"></span>분석 중…';
   const box=document.getElementById('faceResult');box.innerHTML='<div class="banner info">얼굴 특징점을 측정하고 분석하는 중입니다… (20~40초 걸릴 수 있습니다)</div>';
   const meas=form['photo_front']?await measureFront(form['photo_front']):null;
+  const earsF=form['photo_front']?await measureEarsFront(form['photo_front']):null;
+  const earsU=form['photo_up']?await measureEarsUp(form['photo_up']):null;
   const content=[];
   for(const [s,ko] of slots){
     const b64=await shrinkForAI(form['photo_'+s],560,0.55);
     content.push({type:'text',text:'['+ko+' 사진]'});
     content.push({type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}});
   }
-  content.push({type:'text',text:FACE_PROMPT+'\n\n'+measureText(meas)+'\n\n항목 목록: '+JSON.stringify(faceSchema())});
+  content.push({type:'text',text:FACE_PROMPT+'\n\n'+measureText(meas,earsF,earsU)+'\n\n항목 목록: '+JSON.stringify(faceSchema())});
 
   async function callOnce(){
     const ctl=new AbortController();const timer=setTimeout(()=>ctl.abort(),120000);
