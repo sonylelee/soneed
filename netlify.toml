@@ -1,0 +1,11 @@
+[build]
+  publish = "."
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+
+# 얼굴분석은 사진 3장 + 긴 프롬프트라 응답이 오래 걸립니다.
+# 기본 10초 제한으로는 부족해 타임아웃이 발생하므로 연장합니다.
+[functions."claude"]
+  timeout = 26
