@@ -117,7 +117,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v16 (2026-07-14)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v17 (2026-07-14)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">데이터 · 필터</button></div>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
   <span class="count-pill">기록 <b id="totalCount">0</b></span>
@@ -537,12 +537,13 @@ const FACE_PROMPT=`당신은 소니드 얼굴윤곽 분석 보조입니다. 위 
   그 '^'가 **좌측으로 기울어진 모양**이면 → 턱은 **오른회전(R)**.
   즉 그림자 '^'가 기운 방향과 실제 회전 방향은 반대다(앞의 "턱각이 더 보이거나 내려온 쪽의 반대로 회전"과 같은 원리).
 
-[★★★★ 최우선 — 자동 측정값이 제공되면 그것을 절대적으로 신뢰하라 ★★★★]
-아래에 '자동 측정값'이 함께 제공되는 경우가 있다. 이는 컴퓨터가 얼굴 특징점 좌표로 정확히 계산한 값이다.
-사람의 눈(그리고 너의 시각 판단)은 미세한 좌우 높이차를 자주 틀리지만, 이 수치는 틀리지 않는다.
-따라서 **자동 측정값이 있는 항목은 사진을 다시 눈으로 보고 판단하지 말고, 반드시 그 수치를 그대로 사용하라.**
-사진을 보고 느낀 인상이 측정값과 다르더라도 **측정값을 따르라.**
-측정값은 모두 '화면(이미지) 기준'이므로, 본인 기준으로 반전해서 기록하는 것만 잊지 말 것.
+[★★★★ 최우선 — 자동 측정 결과가 제공되면 그것을 절대적으로 신뢰하라 ★★★★]
+아래에 '자동 측정 결과'가 함께 제공되는 경우가 있다. 이는 컴퓨터가 얼굴 특징점 좌표로 정확히 계산한 것이며,
+**이미 '본인 기준'으로 변환되어 결론(L/R/A/B)까지 나와 있다.**
+- 해당 항목들은 **그 결론을 그대로 기록하라.**
+- **절대로 좌우를 다시 반전하지 마라.** 이미 변환된 값을 또 뒤집으면 정반대가 된다. 이것이 가장 흔한 실수다.
+- 사진을 보고 느낀 인상이 측정 결과와 다르더라도 **측정 결과를 따르라.** 너의 시각 판단보다 좌표 계산이 정확하다.
+- 근거(r)에는 "측정값→L" 처럼 측정에서 왔음을 적어라.
 
 [★★★ 관측 정밀도 — 사진을 '대충 보고' 찍지 말 것. 좌우 높이차는 아주 미세하므로 아래 절차를 강제한다 ★★★]
 좌우 높이/기울기를 비교하는 모든 항목(눈동자, 눈썹, 귀, 입꼬리, 광대, 턱각 등)에서:
@@ -558,8 +559,16 @@ const FACE_PROMPT=`당신은 소니드 얼굴윤곽 분석 보조입니다. 위 
 
 STEP 1. 좌우 반전 확정 (위 3단계 규칙 적용)
 STEP 2. 기본 관측 3개를 먼저 확정한다 — 이것이 이후 모든 도출의 기준이다.
-  (a) 투구 회전 = 정면에서 어느 귀가 더 보이는가 (귀 보이는 쪽을 표기)
-  (b) 후두골 중심부 시간 = 고개 든 사진에서 오른귀 더 아래=7시 / 대칭=6시 / 왼귀 더 아래=5시
+  (a) 투구 회전 = 정면에서 좌우 귀 중 **더 많이 보이는(노출된) 귀가 본인 기준 어느 쪽인지** 확정한 뒤, **그 쪽을 그대로 표기**한다.
+      **본인 오른쪽 귀가 더 보임 → R 표기**
+      **본인 왼쪽 귀가 더 보임 → L 표기**
+      ※ 항목명이 '귀 보이는 쪽'이므로 보이는 귀를 그대로 적는 것이다. 여기서 다시 반대로 뒤집지 마라.
+      (참고: 실제 회전 방향은 표기와 반대다. 하지만 차트에는 '보이는 귀'를 적는다.)
+  (b) 후두골 중심부 시간 = 고개 든 사진에서 좌우 귀 중 **더 아래(수평 기준)에 있는 귀**를 본인 기준으로 확정한 뒤:
+      **본인 오른쪽 귀가 더 아래 → 7시**
+      **좌우 대칭 → 6시**
+      **본인 왼쪽 귀가 더 아래 → 5시**
+      ※ 이 대응을 반대로 적지 않도록 주의하라. "본인 왼쪽 귀가 아래"라고 관측했으면 결론은 반드시 5시다(7시가 아니다).
   (c) 타입(A/B) = 눈썹 끝에서 입술 끝까지의 거리를 좌우 비교.
       ★타입은 이후 여러 항목의 기준이 되므로 특히 신중히 볼 것.
       좌우 각각 '눈썹 바깥 끝점'과 '입술 끝점'을 정확히 찍고 그 사이 거리를 재듯 비교하라.
@@ -643,47 +652,55 @@ async function measureFront(dataUrl){
 
     const r=v=>Math.round(v*10)/10;
     const dist=(p,q)=>Math.hypot(p.x-q.x,p.y-q.y);
-    const faceH=dist(P[FOREHEAD],P[CHIN])||1;   /* 정규화 기준 */
-    const norm=v=>r(v/faceH*100);               /* 얼굴세로길이 대비 % */
-
-    /* 1) 눈동자 높이차: y가 클수록 화면상 아래 */
-    const eyeDy=iris.R.y-iris.L.y; /* + 면 화면오른쪽 눈이 아래 */
-    /* 2) 타입: 눈썹바깥끝 ↔ 입꼬리 거리 */
-    const dL=dist(brow.L,mouth.L), dR=dist(brow.R,mouth.R);
-    /* 3) 콧대 사선: 미간→코끝의 x 이동 (+ 면 화면오른쪽으로 내려감) */
-    const noseDx=P[NOSE_TIP].x-P[NOSE_TOP].x;
-    /* 4) 얼굴 형태: 눈바깥→얼굴외곽 옆폭 */
-    const sideL=Math.abs(eyeOut.L.x-cheek.L.x), sideR=Math.abs(cheek.R.x-eyeOut.R.x);
-    /* 5) 얼굴 폭/높이 비 */
+    const faceH=dist(P[FOREHEAD],P[CHIN])||1;
+    const norm=v=>r(v/faceH*100);
     const faceW=dist(cheek.L,cheek.R);
 
+    /* ★ 화면 → 본인 기준 변환: 정면사진에서 화면왼쪽 = 본인 오른쪽 */
+    const own=s=>s==='화면왼쪽'?'본인오른쪽':(s==='화면오른쪽'?'본인왼쪽':s);
+
+    /* 1) 눈동자 높이차 (임계 0.15%) */
+    const eyeDy=iris.R.y-iris.L.y;
+    const eyeScreen = Math.abs(eyeDy)<faceH*0.0015 ? '거의같음' : (eyeDy>0?'화면오른쪽':'화면왼쪽');
+    /* 2) 타입: 눈썹바깥끝↔입꼬리 거리 (임계 0.3%) */
+    const dSL=dist(brow.L,mouth.L), dSR=dist(brow.R,mouth.R);
+    const shortScreen = Math.abs(dSL-dSR)<faceH*0.003 ? '거의같음' : (dSL<dSR?'화면왼쪽':'화면오른쪽');
+    /* 3) 콧대: 미간→코끝 x이동 (임계 0.4%) */
+    const noseDx=P[NOSE_TIP].x-P[NOSE_TOP].x;
+    const noseScreen = Math.abs(noseDx)<faceW*0.004 ? '거의수직' : (noseDx>0?'화면오른쪽':'화면왼쪽');
+    /* 4) 옆폭 */
+    const sSL=Math.abs(eyeOut.L.x-cheek.L.x), sSR=Math.abs(cheek.R.x-eyeOut.R.x);
+
     return {
-      eye_dy_px:r(eyeDy), eye_dy_norm:norm(Math.abs(eyeDy)),
-      eye_lower_side_screen: Math.abs(eyeDy)<faceH*0.004 ? '거의같음' : (eyeDy>0?'화면오른쪽':'화면왼쪽'),
-      brow_mouth_screenL:norm(dL), brow_mouth_screenR:norm(dR),
-      brow_mouth_shorter_screen: Math.abs(dL-dR)<faceH*0.01 ? '거의같음' : (dL<dR?'화면왼쪽':'화면오른쪽'),
-      nose_dx_px:r(noseDx),
-      nose_slant_screen: Math.abs(noseDx)<faceW*0.012 ? '거의수직' : (noseDx>0?'화면오른쪽아래로':'화면왼쪽아래로'),
-      side_width_screenL:norm(sideL), side_width_screenR:norm(sideR),
-      face_w_h_ratio:r(faceW/faceH*100)
+      eye_low_own: own(eyeScreen),
+      eye_dy_norm: norm(Math.abs(eyeDy)),
+      type_short_own: own(shortScreen),
+      type_ownR: norm(dSL),   /* 화면왼쪽 = 본인 오른쪽 */
+      type_ownL: norm(dSR),
+      nose_own: noseScreen==='거의수직'?'거의수직':own(noseScreen),
+      side_ownR: norm(sSL),
+      side_ownL: norm(sSR),
+      wh: r(faceW/faceH*100)
     };
   }catch(e){return null;}
 }
 
 function measureText(m){
-  if(!m)return '(자동 측정 실패 — 사진을 직접 보고 판단하되, 좌우를 특히 주의해서 볼 것)';
-  return `[자동 측정값 — 컴퓨터가 좌표로 정확히 잰 값이다. 눈대중보다 이 수치를 우선하라. 모두 '화면(이미지) 기준'이며, 본인 기준으로 반전해서 기록해야 한다]
-· 눈동자 높이: 더 아래인 쪽 = ${m.eye_lower_side_screen} (높이차 ${m.eye_dy_norm}%)
-· 눈썹바깥끝↔입꼬리 거리: 화면왼쪽 ${m.brow_mouth_screenL} / 화면오른쪽 ${m.brow_mouth_screenR} → 더 짧은 쪽 = ${m.brow_mouth_shorter_screen}
-· 콧대(미간→코끝) 기울기: ${m.nose_slant_screen}
-· 눈바깥→얼굴외곽 옆폭: 화면왼쪽 ${m.side_width_screenL} / 화면오른쪽 ${m.side_width_screenR}
-· 얼굴 가로/세로 비율: ${m.face_w_h_ratio}% (낮을수록 세로형, 높을수록 가로형)
+  if(!m)return '(자동 측정 실패 — 사진을 직접 보고 판단하되, 좌우를 특히 주의할 것)';
+  const tilt = m.eye_low_own==='거의같음' ? '중립'
+    : (m.eye_low_own==='본인오른쪽' ? 'R (본인 오른쪽 눈이 낮음)' : 'L (본인 왼쪽 눈이 낮음)');
+  const tp = m.type_short_own==='거의같음' ? '애매(확신도 낮춤)'
+    : (m.type_short_own==='본인오른쪽' ? 'A (본인 오른쪽이 짧음)' : 'B (본인 왼쪽이 짧음)');
+  const nose = m.nose_own==='거의수직' ? '중립'
+    : (m.nose_own==='본인오른쪽' ? 'R (본인 오른쪽으로 내려감)' : 'L (본인 왼쪽으로 내려감)');
+  const shape = m.wh<78 ? '세로형' : (m.wh>84 ? '가로형' : '중립');
+  return `[★★자동 측정 결과 — 컴퓨터가 좌표로 정확히 계산했고, 이미 '본인 기준'으로 변환되어 결론까지 나와 있다.
+아래 4개 항목은 그대로 기록하라. 사진을 다시 보지 말고, 절대로 좌우를 다시 뒤집지 마라. 다시 뒤집으면 틀린다.]
 
-※ 위 수치를 그대로 사용하라:
-  - 투구 기울기 = 눈동자가 더 아래인 쪽(본인 기준으로 반전). '거의같음'이면 중립.
-  - 타입 = 눈썹↔입꼬리가 더 짧은 쪽(본인 기준 반전). 본인 우측이 짧으면 A, 좌측이 짧으면 B.
-  - 콧대 사선 = 코끝이 내려간 방향(본인 기준 반전).
-  - 얼굴 형태 = 옆폭이 좁으면 세로형, 넓으면 가로형.`;
+· 투구 기울기 = ${tilt}   (눈동자 높이차 ${m.eye_dy_norm}%)
+· 타입 = ${tp}   (눈썹끝↔입꼬리 거리: 본인우 ${m.type_ownR} / 본인좌 ${m.type_ownL})
+· 콧대 사선 = ${nose}
+· 얼굴 형태 = ${shape}   (가로/세로 ${m.wh}%, 옆폭: 본인우 ${m.side_ownR} / 본인좌 ${m.side_ownL})`;
 }
 
 async function onFaceAnalyze(){
