@@ -117,7 +117,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v15 (2026-07-14)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v16 (2026-07-14)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">데이터 · 필터</button></div>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
   <span class="count-pill">기록 <b id="totalCount">0</b></span>
@@ -537,6 +537,13 @@ const FACE_PROMPT=`당신은 소니드 얼굴윤곽 분석 보조입니다. 위 
   그 '^'가 **좌측으로 기울어진 모양**이면 → 턱은 **오른회전(R)**.
   즉 그림자 '^'가 기운 방향과 실제 회전 방향은 반대다(앞의 "턱각이 더 보이거나 내려온 쪽의 반대로 회전"과 같은 원리).
 
+[★★★★ 최우선 — 자동 측정값이 제공되면 그것을 절대적으로 신뢰하라 ★★★★]
+아래에 '자동 측정값'이 함께 제공되는 경우가 있다. 이는 컴퓨터가 얼굴 특징점 좌표로 정확히 계산한 값이다.
+사람의 눈(그리고 너의 시각 판단)은 미세한 좌우 높이차를 자주 틀리지만, 이 수치는 틀리지 않는다.
+따라서 **자동 측정값이 있는 항목은 사진을 다시 눈으로 보고 판단하지 말고, 반드시 그 수치를 그대로 사용하라.**
+사진을 보고 느낀 인상이 측정값과 다르더라도 **측정값을 따르라.**
+측정값은 모두 '화면(이미지) 기준'이므로, 본인 기준으로 반전해서 기록하는 것만 잊지 말 것.
+
 [★★★ 관측 정밀도 — 사진을 '대충 보고' 찍지 말 것. 좌우 높이차는 아주 미세하므로 아래 절차를 강제한다 ★★★]
 좌우 높이/기울기를 비교하는 모든 항목(눈동자, 눈썹, 귀, 입꼬리, 광대, 턱각 등)에서:
 1) 먼저 비교 대상 두 지점의 **정확한 위치**를 찾는다. (예: 좌우 눈동자의 '중심점')
@@ -587,18 +594,111 @@ function faceSchema(){const o={};FIELDS.filter(f=>['2d','lr','rot'].includes(f.g
 
 function shrinkForAI(dataUrl,max,q){return new Promise(res=>{try{const img=new Image();img.onload=()=>{const sc=Math.min(1,max/Math.max(img.width,img.height));const cv=document.createElement('canvas');cv.width=Math.round(img.width*sc);cv.height=Math.round(img.height*sc);cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);res(cv.toDataURL('image/jpeg',q).split(',')[1]);};img.onerror=()=>res(dataUrl.split(',')[1]);img.src=dataUrl;}catch(e){res(dataUrl.split(',')[1]);}});}
 
+/* ===== 얼굴 랜드마크 자동 측정 (눈대중 대신 좌표로 정확히 잰다) ===== */
+let _fl=null,_flLoading=null;
+async function getLandmarker(){
+  if(_fl)return _fl;
+  if(_flLoading)return _flLoading;
+  _flLoading=(async()=>{
+    const vision=await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14');
+    const fs=await vision.FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm');
+    _fl=await vision.FaceLandmarker.createFromOptions(fs,{
+      baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task'},
+      runningMode:'IMAGE',numFaces:1
+    });
+    return _fl;
+  })();
+  return _flLoading;
+}
+
+function _img(dataUrl){return new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=dataUrl;});}
+
+/* 정면 사진에서 핵심 수치를 좌표로 계산. 실패하면 null(그러면 AI가 눈으로 판단) */
+async function measureFront(dataUrl){
+  try{
+    const lm=await getLandmarker();
+    const img=await _img(dataUrl);
+    const cv=document.createElement('canvas');cv.width=img.width;cv.height=img.height;
+    cv.getContext('2d').drawImage(img,0,0);
+    const out=lm.detect(cv);
+    if(!out.faceLandmarks||!out.faceLandmarks.length)return null;
+    const P=out.faceLandmarks[0].map(p=>({x:p.x*img.width,y:p.y*img.height}));
+    const W=img.width,H=img.height;
+    /* MediaPipe 468 landmark 표준 인덱스 (화면 기준: 낮은 x = 화면 왼쪽) */
+    const IRIS_R=473, IRIS_L=468;      /* 화면상 위치는 아래에서 x로 재판별 */
+    const BROW_A=46, BROW_B=276;       /* 눈썹 바깥 끝 */
+    const MOUTH_A=61, MOUTH_B=291;     /* 입꼬리 */
+    const EYE_OUT_A=33, EYE_OUT_B=263; /* 눈 바깥 끝 */
+    const CHEEK_A=234, CHEEK_B=454;    /* 얼굴 외곽 (광대/귀 앞) */
+    const NOSE_TOP=168, NOSE_TIP=1;    /* 미간~코끝 */
+    const CHIN=152, FOREHEAD=10;
+
+    /* 두 점 중 화면 왼쪽/오른쪽을 x좌표로 확실히 구분 */
+    const pick=(a,b)=>P[a].x<P[b].x?{L:P[a],R:P[b]}:{L:P[b],R:P[a]};
+    const iris=pick(IRIS_R,IRIS_L);
+    const brow=pick(BROW_A,BROW_B);
+    const mouth=pick(MOUTH_A,MOUTH_B);
+    const eyeOut=pick(EYE_OUT_A,EYE_OUT_B);
+    const cheek=pick(CHEEK_A,CHEEK_B);
+
+    const r=v=>Math.round(v*10)/10;
+    const dist=(p,q)=>Math.hypot(p.x-q.x,p.y-q.y);
+    const faceH=dist(P[FOREHEAD],P[CHIN])||1;   /* 정규화 기준 */
+    const norm=v=>r(v/faceH*100);               /* 얼굴세로길이 대비 % */
+
+    /* 1) 눈동자 높이차: y가 클수록 화면상 아래 */
+    const eyeDy=iris.R.y-iris.L.y; /* + 면 화면오른쪽 눈이 아래 */
+    /* 2) 타입: 눈썹바깥끝 ↔ 입꼬리 거리 */
+    const dL=dist(brow.L,mouth.L), dR=dist(brow.R,mouth.R);
+    /* 3) 콧대 사선: 미간→코끝의 x 이동 (+ 면 화면오른쪽으로 내려감) */
+    const noseDx=P[NOSE_TIP].x-P[NOSE_TOP].x;
+    /* 4) 얼굴 형태: 눈바깥→얼굴외곽 옆폭 */
+    const sideL=Math.abs(eyeOut.L.x-cheek.L.x), sideR=Math.abs(cheek.R.x-eyeOut.R.x);
+    /* 5) 얼굴 폭/높이 비 */
+    const faceW=dist(cheek.L,cheek.R);
+
+    return {
+      eye_dy_px:r(eyeDy), eye_dy_norm:norm(Math.abs(eyeDy)),
+      eye_lower_side_screen: Math.abs(eyeDy)<faceH*0.004 ? '거의같음' : (eyeDy>0?'화면오른쪽':'화면왼쪽'),
+      brow_mouth_screenL:norm(dL), brow_mouth_screenR:norm(dR),
+      brow_mouth_shorter_screen: Math.abs(dL-dR)<faceH*0.01 ? '거의같음' : (dL<dR?'화면왼쪽':'화면오른쪽'),
+      nose_dx_px:r(noseDx),
+      nose_slant_screen: Math.abs(noseDx)<faceW*0.012 ? '거의수직' : (noseDx>0?'화면오른쪽아래로':'화면왼쪽아래로'),
+      side_width_screenL:norm(sideL), side_width_screenR:norm(sideR),
+      face_w_h_ratio:r(faceW/faceH*100)
+    };
+  }catch(e){return null;}
+}
+
+function measureText(m){
+  if(!m)return '(자동 측정 실패 — 사진을 직접 보고 판단하되, 좌우를 특히 주의해서 볼 것)';
+  return `[자동 측정값 — 컴퓨터가 좌표로 정확히 잰 값이다. 눈대중보다 이 수치를 우선하라. 모두 '화면(이미지) 기준'이며, 본인 기준으로 반전해서 기록해야 한다]
+· 눈동자 높이: 더 아래인 쪽 = ${m.eye_lower_side_screen} (높이차 ${m.eye_dy_norm}%)
+· 눈썹바깥끝↔입꼬리 거리: 화면왼쪽 ${m.brow_mouth_screenL} / 화면오른쪽 ${m.brow_mouth_screenR} → 더 짧은 쪽 = ${m.brow_mouth_shorter_screen}
+· 콧대(미간→코끝) 기울기: ${m.nose_slant_screen}
+· 눈바깥→얼굴외곽 옆폭: 화면왼쪽 ${m.side_width_screenL} / 화면오른쪽 ${m.side_width_screenR}
+· 얼굴 가로/세로 비율: ${m.face_w_h_ratio}% (낮을수록 세로형, 높을수록 가로형)
+
+※ 위 수치를 그대로 사용하라:
+  - 투구 기울기 = 눈동자가 더 아래인 쪽(본인 기준으로 반전). '거의같음'이면 중립.
+  - 타입 = 눈썹↔입꼬리가 더 짧은 쪽(본인 기준 반전). 본인 우측이 짧으면 A, 좌측이 짧으면 B.
+  - 콧대 사선 = 코끝이 내려간 방향(본인 기준 반전).
+  - 얼굴 형태 = 옆폭이 좁으면 세로형, 넓으면 가로형.`;
+}
+
 async function onFaceAnalyze(){
   const slots=[['front','정면'],['up','고개 든'],['down','고개 숙인']].filter(([s])=>form['photo_'+s]);
   if(!slots.length){toast('먼저 위 "사진" 슬롯에 얼굴 사진(정면·고개 든·고개 숙인)을 넣어주세요');return;}
   const btn=document.getElementById('faceBtn');btn.disabled=true;const orig=btn.innerHTML;btn.innerHTML='<span class="spinner"></span>분석 중…';
-  const box=document.getElementById('faceResult');box.innerHTML='<div class="banner info">얼굴 사진을 분석해 촉진 전 초안을 만드는 중입니다… (20~40초 걸릴 수 있습니다)</div>';
+  const box=document.getElementById('faceResult');box.innerHTML='<div class="banner info">얼굴 특징점을 측정하고 분석하는 중입니다… (20~40초 걸릴 수 있습니다)</div>';
+  const meas=form['photo_front']?await measureFront(form['photo_front']):null;
   const content=[];
   for(const [s,ko] of slots){
     const b64=await shrinkForAI(form['photo_'+s],560,0.55);
     content.push({type:'text',text:'['+ko+' 사진]'});
     content.push({type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}});
   }
-  content.push({type:'text',text:FACE_PROMPT+'\n\n항목 목록: '+JSON.stringify(faceSchema())});
+  content.push({type:'text',text:FACE_PROMPT+'\n\n'+measureText(meas)+'\n\n항목 목록: '+JSON.stringify(faceSchema())});
 
   async function callOnce(){
     const ctl=new AbortController();const timer=setTimeout(()=>ctl.abort(),120000);
