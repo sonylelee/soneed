@@ -117,7 +117,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v21 (2026-07-14)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v22 (2026-07-14)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">데이터 · 필터</button></div>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
   <span class="count-pill">기록 <b id="totalCount">0</b></span>
@@ -573,11 +573,14 @@ STEP 2. 기본 관측 3개를 먼저 확정한다 — 이것이 이후 모든 �
       **본인 왼쪽 귀가 더 아래 → 5시**
       ※ 이 대응을 반대로 적지 않도록 주의하라. "본인 왼쪽 귀가 아래"라고 관측했으면 결론은 반드시 5시다(7시가 아니다).
   (c) 타입(A/B) = **얼굴 좌우 중 전체적으로 더 작아 보이는(쪼그라든) 쪽**을 찾는다.
-      ★가장 중요한 기준값이므로 신중히 볼 것.
+      ★가장 중요한 기준값이므로 신중히 볼 것. 여기서 틀리면 회전까지 전부 틀린다.
       · 한쪽 얼굴이 전체적으로 작다 = 그쪽의 각 부위 간 거리가 짧다(압축돼 있다).
       · 눈썹끝↔입술끝 거리, 광대~턱 라인 길이, 얼굴 반쪽의 전반적 면적을 함께 보라.
-      · **본인 오른쪽이 더 작아 보이면 A**, **본인 왼쪽이 더 작아 보이면 B**.
-      · 화면 기준으로 먼저 보고 본인 기준으로 반전할 것.
+      · **반드시 2단계로 판단하라:**
+        1단계 — "화면(이미지)에서 어느 쪽 절반이 더 작아 보이는가?" 를 먼저 말한다.
+        2단계 — 그것을 본인 기준으로 반전한다. **화면 왼쪽 = 본인 오른쪽 / 화면 오른쪽 = 본인 왼쪽.**
+      · **본인 오른쪽이 더 작으면 A**, **본인 왼쪽이 더 작으면 B**.
+      · 근거(r)에 "화면좌가작음→본인우가작음→A" 처럼 두 단계를 모두 적어라.
       ※ 원리: 두개골이 스파이럴 형태로 회전하면서 한쪽이 압축되어 타입이 형성된다. 따라서 타입은 회전과 직결된다.
 STEP 3. 아래 항목은 STEP 2에서 '계산'한다. 사진을 다시 짐작하지 말고 규칙대로 도출하라.
   - 측면함유량 = 투구 회전과 같은 값 (그대로 복사)
@@ -728,7 +731,9 @@ async function measureEarsFront(dataUrl){
   }catch(e){return null;}
 }
 
-/* 고개 든 사진: 좌우 귀의 y좌표 → 더 아래(y가 큰) 쪽 */
+/* 고개 든 사진: 좌우 귀의 높이 비교.
+   주의 - 고개를 들면 얼굴 외곽점(234/454)은 턱/볼 쪽으로 내려가 부정확하다.
+   귀에 더 가까운 점(127/356: 관자놀이~귀 앞)을 쓰고, 얼굴 기울기(눈선)를 보정해 비교한다. */
 async function measureEarsUp(dataUrl){
   try{
     const lm=await getLandmarker();
@@ -738,14 +743,23 @@ async function measureEarsUp(dataUrl){
     const out=lm.detect(cv);
     if(!out.faceLandmarks||!out.faceLandmarks.length)return null;
     const P=out.faceLandmarks[0].map(p=>({x:p.x*img.width,y:p.y*img.height}));
-    const EAR_A=234, EAR_B=454, CHIN=152, FH=10;
+    const EAR_A=127, EAR_B=356;   /* 귀 앞(관자놀이 뒤쪽) — 고개 들어도 귀를 따라감 */
+    const EYE_A=33,  EYE_B=263;   /* 좌우 눈 바깥 — 얼굴 기울기 기준 */
+    const CHIN=152, FH=10;
     const dist=(p,q)=>Math.hypot(p.x-q.x,p.y-q.y);
     const faceH=dist(P[FH],P[CHIN])||1;
-    const eA=P[EAR_A], eB=P[EAR_B];
-    const scrL = eA.x<eB.x?eA:eB;
-    const scrR = eA.x<eB.x?eB:eA;
-    const dy=scrR.y-scrL.y;   /* +면 화면오른쪽 귀가 아래 */
-    const lowScreen = Math.abs(dy)<faceH*0.008 ? '거의같음' : (dy>0?'화면오른쪽':'화면왼쪽');
+
+    /* 얼굴 기울기(눈선의 회전각)를 구해 그만큼 되돌린 좌표계에서 귀 높이를 비교 */
+    const eA=P[EYE_A], eB=P[EYE_B];
+    const ang=Math.atan2(eB.y-eA.y, eB.x-eA.x);   /* 눈선의 기울기 */
+    const cos=Math.cos(-ang), sin=Math.sin(-ang);
+    const rot=p=>({x:p.x*cos - p.y*sin, y:p.x*sin + p.y*cos});
+
+    const a=rot(P[EAR_A]), b=rot(P[EAR_B]);
+    const scrL = a.x<b.x?a:b;    /* 화면 왼쪽 귀 */
+    const scrR = a.x<b.x?b:a;
+    const dy=scrR.y-scrL.y;      /* +면 화면오른쪽 귀가 아래 */
+    const lowScreen = Math.abs(dy)<faceH*0.006 ? '거의같음' : (dy>0?'화면오른쪽':'화면왼쪽');
     const own=s=>s==='화면왼쪽'?'본인오른쪽':(s==='화면오른쪽'?'본인왼쪽':s);
     return { low_own: own(lowScreen), dy_norm: Math.round(Math.abs(dy)/faceH*1000)/10 };
   }catch(e){return null;}
@@ -948,7 +962,7 @@ let toastT;function toast(m){const t=document.getElementById('toast');t.textCont
 renderForm();fillXtSelects();renderConds();updateValidation();setModeBadge();loadAll();
 
 /* ===== 비밀번호 잠금 ===== */
-const APP_PASSWORD="ththslem1"; /* ← 이 값을 원하는 비밀번호로 바꾸세요 (따옴표 안만) */
+const APP_PASSWORD="ththsl1"; /* ← 이 값을 원하는 비밀번호로 바꾸세요 (따옴표 안만) */
 function tryUnlock(){
   const v=(document.getElementById('lockPw')||{}).value||'';
   if(v===APP_PASSWORD){try{sessionStorage.setItem('soneed_unlocked','1');}catch(e){}document.getElementById('lockScreen').style.display='none';}
