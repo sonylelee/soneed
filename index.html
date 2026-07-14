@@ -962,7 +962,7 @@ let toastT;function toast(m){const t=document.getElementById('toast');t.textCont
 renderForm();fillXtSelects();renderConds();updateValidation();setModeBadge();loadAll();
 
 /* ===== 비밀번호 잠금 ===== */
-const APP_PASSWORD="ththsl1"; /* ← 이 값을 원하는 비밀번호로 바꾸세요 (따옴표 안만) */
+const APP_PASSWORD="thslthslem1"; /* ← 이 값을 원하는 비밀번호로 바꾸세요 (따옴표 안만) */
 function tryUnlock(){
   const v=(document.getElementById('lockPw')||{}).value||'';
   if(v===APP_PASSWORD){try{sessionStorage.setItem('soneed_unlocked','1');}catch(e){}document.getElementById('lockScreen').style.display='none';}
