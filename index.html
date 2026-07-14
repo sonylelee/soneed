@@ -117,7 +117,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v18 (2026-07-14)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v19 (2026-07-14)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">데이터 · 필터</button></div>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
   <span class="count-pill">기록 <b id="totalCount">0</b></span>
@@ -740,32 +740,37 @@ function measureText(m,ef,eu){
   if(m){
     const tilt = m.eye_low_own==='거의같음' ? '중립'
       : (m.eye_low_own==='본인오른쪽' ? 'R (본인 오른쪽 눈이 낮음)' : 'L (본인 왼쪽 눈이 낮음)');
-    const tp = m.type_short_own==='거의같음' ? '애매(확신도 낮춤)'
-      : (m.type_short_own==='본인오른쪽' ? 'A (본인 오른쪽이 짧음)' : 'B (본인 왼쪽이 짧음)');
     const nose = m.nose_own==='거의수직' ? '중립'
       : (m.nose_own==='본인오른쪽' ? 'R (본인 오른쪽으로 내려감)' : 'L (본인 왼쪽으로 내려감)');
     const shape = m.wh<78 ? '세로형' : (m.wh>84 ? '가로형' : '중립');
     lines.push(`· 투구 기울기 = ${tilt}   (눈동자 높이차 ${m.eye_dy_norm}%)`);
-    lines.push(`· 타입 = ${tp}   (눈썹끝↔입꼬리: 본인우 ${m.type_ownR} / 본인좌 ${m.type_ownL})`);
     lines.push(`· 콧대 사선 = ${nose}`);
     lines.push(`· 얼굴 형태 = ${shape}   (가로/세로 ${m.wh}%)`);
-  }
-  if(ef){
-    const rot = ef.more_own==='거의같음' ? '중립'
-      : (ef.more_own==='본인오른쪽' ? 'R (본인 오른쪽 귀가 더 보임)' : 'L (본인 왼쪽 귀가 더 보임)');
-    lines.push(`· 투구 회전(귀 보이는 쪽) = ${rot}   (중심선→귀 거리: 본인우 ${ef.ownR} / 본인좌 ${ef.ownL})`);
-    if(ef.more_own!=='거의같음') lines.push(`· 측면함유량 = ${ef.more_own==='본인오른쪽'?'R':'L'} (투구 회전과 동일)`);
   }
   if(eu){
     const clock = eu.low_own==='거의같음' ? '6시 (좌우 대칭)'
       : (eu.low_own==='본인오른쪽' ? '7시 (본인 오른쪽 귀가 더 아래)' : '5시 (본인 왼쪽 귀가 더 아래)');
     lines.push(`· 후두골 중심부 시간 = ${clock}   (고개 든 사진 귀 높이차 ${eu.dy_norm}%)`);
   }
-  if(!lines.length)return '(자동 측정 실패 — 사진을 직접 보고 판단하되, 좌우를 특히 주의할 것)';
+  let ref='';
+  if(m){
+    const tp = m.type_short_own==='거의같음' ? '좌우가 거의 같아 측정으로는 판별 불가'
+      : (m.type_short_own==='본인오른쪽' ? '본인 오른쪽이 근소하게 짧음(A 경향)' : '본인 왼쪽이 근소하게 짧음(B 경향)');
+    ref = `\n[참고 수치 — 결론이 아님. 아래는 참고만 하고 사진을 직접 보고 최종 판단하라]
+· 타입(눈썹끝↔입꼬리 거리): 본인우 ${m.type_ownR} / 본인좌 ${m.type_ownL} → ${tp}
+  ※ 이 수치는 얼굴 회전에 영향받으므로 절대적이지 않다. 사진에서 눈썹끝~입술끝 거리를 직접 비교해 확정하라.`;
+  }
+  if(!lines.length && !ref)return '(자동 측정 실패 — 사진을 직접 보고 판단하되, 좌우를 특히 주의할 것)';
   return `[★★자동 측정 결과 — 컴퓨터가 좌표로 정확히 계산했고, 이미 '본인 기준'으로 변환되어 결론까지 나와 있다.
 아래 항목은 그대로 기록하라. 사진을 다시 보지 말고, 절대로 좌우를 다시 뒤집지 마라.]
 
-${lines.join('\n')}`;
+${lines.join('\n')}
+${ref}
+
+[아래 항목은 측정 대상이 아니다 — 사진을 직접 보고 판단하되, 화면→본인 기준 반전을 반드시 거칠 것]
+· 투구 회전(귀 보이는 쪽): 정면에서 좌우 귀 중 더 많이 노출된 귀가 본인 기준 어느 쪽인지 보라. 그 쪽을 그대로 표기(본인 오른쪽 귀가 더 보이면 R).
+· 측면함유량: 투구 회전과 같은 값.
+· 햄버거 시프트, 워터슬라이드, 팔자주름 등 나머지 항목.`;
 }
 
 async function onFaceAnalyze(){
@@ -865,9 +870,9 @@ async function saveRecord(){
   toast(photoFail?'기본정보는 저장됨 · 사진은 용량이 커서 저장 실패':(updateValidation()?'저장되었습니다':'저장됨 · 회전 오류가 남아있어요'));
   document.getElementById('editState').textContent=(form.code||'무제')+' · 저장됨 (편집 중)';document.getElementById('delBtn').style.display='';refreshAll();
 }
-function editRecord(id){const r=records.find(x=>String(x.id)===String(id));if(!r)return;form=Object.assign({},r);currentId=r.id;autoFilled={};renderForm();applyFormToUI();document.getElementById('editState').textContent=(r.code||'무제')+' · 편집 중';document.getElementById('delBtn').style.display='';document.getElementById('autoMsg').innerHTML='';showView('entry');}
+function editRecord(id){const r=records.find(x=>String(x.id)===String(id));if(!r)return;form=Object.assign({},r);currentId=r.id;autoFilled={};renderForm();applyFormToUI();document.getElementById('editState').textContent=(r.code||'무제')+' · 편집 중';document.getElementById('delBtn').style.display='';document.getElementById('autoMsg').innerHTML='';const _fr2=document.getElementById('faceResult');if(_fr2)_fr2.innerHTML='';showView('entry');}
 async function deleteCurrent(){if(!currentId)return;if(!confirm('이 기록을 삭제할까요?'))return;try{await removeRecord(currentId);}catch(e){toast('삭제 실패: '+e.message);return;}records=records.filter(r=>String(r.id)!==String(currentId));clearForm();toast('삭제되었습니다');refreshAll();}
-function clearForm(){form={};currentId=null;autoFilled={};renderForm();document.getElementById('f_notes').value='';document.getElementById('autoMsg').innerHTML='';document.getElementById('editState').textContent='새 기록을 작성합니다.';document.getElementById('delBtn').style.display='none';updateValidation();}
+function clearForm(){form={};currentId=null;autoFilled={};renderForm();document.getElementById('f_notes').value='';document.getElementById('autoMsg').innerHTML='';const _fr=document.getElementById('faceResult');if(_fr)_fr.innerHTML='';document.getElementById('editState').textContent='새 기록을 작성합니다.';document.getElementById('delBtn').style.display='none';updateValidation();}
 function showView(v){document.getElementById('view-entry').style.display=v==='entry'?'':'none';document.getElementById('view-data').style.display=v==='data'?'':'none';document.getElementById('tabEntry').classList.toggle('on',v==='entry');document.getElementById('tabData').classList.toggle('on',v==='data');if(v==='data'){renderRecList();renderCrosstab();}}
 
 const FILTERABLE=FIELDS.filter(f=>f.type==='seg'||f.type==='select'||f.type==='multi').map(f=>({k:f.k,label:f.label,opt:f.opt.filter(o=>o!=='')}));
