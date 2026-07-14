@@ -117,7 +117,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v19 (2026-07-14)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v20 (2026-07-14)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">데이터 · 필터</button></div>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
   <span class="count-pill">기록 <b id="totalCount">0</b></span>
@@ -671,6 +671,14 @@ async function measureFront(dataUrl){
     /* 4) 옆폭 */
     const sSL=Math.abs(eyeOut.L.x-cheek.L.x), sSR=Math.abs(cheek.R.x-eyeOut.R.x);
 
+    /* 5) ★회전: 얼굴 외곽 중점 대비 코의 치우침
+       얼굴이 우회전하면 코가 본인 왼쪽(=화면 오른쪽)으로 치우쳐 보이고, 본인 오른쪽 귀가 더 노출된다.
+       noseOff > 0 : 코가 화면 오른쪽으로 치우침 = 본인 왼쪽으로 치우침 → 우회전 → 본인 오른쪽 귀 더 보임 → 표기 R */
+    const midX=(cheek.L.x+cheek.R.x)/2;
+    const noseOff=P[NOSE_TIP].x-midX;
+    const rotScreen = Math.abs(noseOff)<faceW*0.012 ? '중립'
+      : (noseOff>0 ? '본인오른쪽' : '본인왼쪽');   /* 이미 '보이는 귀' 기준(본인) */
+
     return {
       eye_low_own: own(eyeScreen),
       eye_dy_norm: norm(Math.abs(eyeDy)),
@@ -680,7 +688,9 @@ async function measureFront(dataUrl){
       nose_own: noseScreen==='거의수직'?'거의수직':own(noseScreen),
       side_ownR: norm(sSL),
       side_ownL: norm(sSR),
-      wh: r(faceW/faceH*100)
+      wh: r(faceW/faceH*100),
+      rot_ear_own: rotScreen,
+      nose_off: r(noseOff/faceW*100)
     };
   }catch(e){return null;}
 }
@@ -742,8 +752,12 @@ function measureText(m,ef,eu){
       : (m.eye_low_own==='본인오른쪽' ? 'R (본인 오른쪽 눈이 낮음)' : 'L (본인 왼쪽 눈이 낮음)');
     const nose = m.nose_own==='거의수직' ? '중립'
       : (m.nose_own==='본인오른쪽' ? 'R (본인 오른쪽으로 내려감)' : 'L (본인 왼쪽으로 내려감)');
-    const shape = m.wh<78 ? '세로형' : (m.wh>84 ? '가로형' : '중립');
+    const shape = m.wh<80 ? '세로형' : (m.wh>86 ? '가로형' : '중립');
+    const rot = m.rot_ear_own==='중립' ? '중립'
+      : (m.rot_ear_own==='본인오른쪽' ? 'R (본인 오른쪽 귀가 더 보임)' : 'L (본인 왼쪽 귀가 더 보임)');
     lines.push(`· 투구 기울기 = ${tilt}   (눈동자 높이차 ${m.eye_dy_norm}%)`);
+    lines.push(`· 투구 회전(귀 보이는 쪽) = ${rot}   (코 중심 치우침 ${m.nose_off}% — 얼굴이 회전하면 코가 반대쪽으로 치우치고 그 쪽 귀가 더 노출된다)`);
+    if(m.rot_ear_own!=='중립') lines.push(`· 측면함유량 = ${m.rot_ear_own==='본인오른쪽'?'R':'L'} (투구 회전과 동일)`);
     lines.push(`· 콧대 사선 = ${nose}`);
     lines.push(`· 얼굴 형태 = ${shape}   (가로/세로 ${m.wh}%)`);
   }
@@ -756,9 +770,9 @@ function measureText(m,ef,eu){
   if(m){
     const tp = m.type_short_own==='거의같음' ? '좌우가 거의 같아 측정으로는 판별 불가'
       : (m.type_short_own==='본인오른쪽' ? '본인 오른쪽이 근소하게 짧음(A 경향)' : '본인 왼쪽이 근소하게 짧음(B 경향)');
-    ref = `\n[참고 수치 — 결론이 아님. 아래는 참고만 하고 사진을 직접 보고 최종 판단하라]
+    ref = `\n[참고 수치 — 결론이 아님. 사진을 직접 보고 최종 판단하라]
 · 타입(눈썹끝↔입꼬리 거리): 본인우 ${m.type_ownR} / 본인좌 ${m.type_ownL} → ${tp}
-  ※ 이 수치는 얼굴 회전에 영향받으므로 절대적이지 않다. 사진에서 눈썹끝~입술끝 거리를 직접 비교해 확정하라.`;
+  ※ 이 수치는 얼굴 회전에 영향받으므로 절대적이지 않다. 사진에서 직접 비교해 확정하라.`;
   }
   if(!lines.length && !ref)return '(자동 측정 실패 — 사진을 직접 보고 판단하되, 좌우를 특히 주의할 것)';
   return `[★★자동 측정 결과 — 컴퓨터가 좌표로 정확히 계산했고, 이미 '본인 기준'으로 변환되어 결론까지 나와 있다.
@@ -768,9 +782,7 @@ ${lines.join('\n')}
 ${ref}
 
 [아래 항목은 측정 대상이 아니다 — 사진을 직접 보고 판단하되, 화면→본인 기준 반전을 반드시 거칠 것]
-· 투구 회전(귀 보이는 쪽): 정면에서 좌우 귀 중 더 많이 노출된 귀가 본인 기준 어느 쪽인지 보라. 그 쪽을 그대로 표기(본인 오른쪽 귀가 더 보이면 R).
-· 측면함유량: 투구 회전과 같은 값.
-· 햄버거 시프트, 워터슬라이드, 팔자주름 등 나머지 항목.`;
+· 햄버거 시프트, 워터슬라이드, 팔자주름, CA위치 등 나머지 항목.`;
 }
 
 async function onFaceAnalyze(){
