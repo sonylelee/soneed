@@ -117,7 +117,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v22 (2026-07-14)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v23 (2026-07-14)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">데이터 · 필터</button></div>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
   <span class="count-pill">기록 <b id="totalCount">0</b></span>
@@ -674,8 +674,11 @@ async function measureFront(dataUrl){
     /* 2) 타입: 눈썹바깥끝↔입꼬리 거리 (임계 0.3%) */
     const dSL=dist(brow.L,mouth.L), dSR=dist(brow.R,mouth.R);
     const shortScreen = Math.abs(dSL-dSR)<faceH*0.003 ? '거의같음' : (dSL<dSR?'화면왼쪽':'화면오른쪽');
-    /* 3) 콧대: 미간→코끝 x이동 (임계 0.4%) */
-    const noseDx=P[NOSE_TIP].x-P[NOSE_TOP].x;
+    /* 3) 콧대: 미간(눈썹 사이) → 코끝의 x 이동. 수직 기준 그대로 (기울기 보정 없음)
+       미간은 좌우 눈 안쪽 끝의 중점으로 잡는다(랜드마크 168은 부정확할 수 있음). */
+    const EYE_IN_A=133, EYE_IN_B=362;   /* 좌우 눈 안쪽 끝 */
+    const glabX=(P[EYE_IN_A].x+P[EYE_IN_B].x)/2;   /* 미간 x */
+    const noseDx=P[NOSE_TIP].x-glabX;              /* +면 코끝이 화면 오른쪽으로 내려감 */
     const noseScreen = Math.abs(noseDx)<faceW*0.004 ? '거의수직' : (noseDx>0?'화면오른쪽':'화면왼쪽');
     /* 4) 옆폭 */
     const sSL=Math.abs(eyeOut.L.x-cheek.L.x), sSR=Math.abs(cheek.R.x-eyeOut.R.x);
@@ -685,7 +688,7 @@ async function measureFront(dataUrl){
        noseOff > 0 : 코가 화면 오른쪽으로 치우침 = 본인 왼쪽으로 치우침 → 우회전 → 본인 오른쪽 귀 더 보임 → 표기 R */
     const midX=(cheek.L.x+cheek.R.x)/2;
     const noseOff=P[NOSE_TIP].x-midX;
-    const rotScreen = Math.abs(noseOff)<faceW*0.012 ? '중립'
+    const rotScreen = Math.abs(noseOff)<faceW*0.005 ? '중립'
       : (noseOff>0 ? '본인오른쪽' : '본인왼쪽');   /* 이미 '보이는 귀' 기준(본인) */
 
     return {
@@ -962,7 +965,7 @@ let toastT;function toast(m){const t=document.getElementById('toast');t.textCont
 renderForm();fillXtSelects();renderConds();updateValidation();setModeBadge();loadAll();
 
 /* ===== 비밀번호 잠금 ===== */
-const APP_PASSWORD="thslthslem1"; /* ← 이 값을 원하는 비밀번호로 바꾸세요 (따옴표 안만) */
+const APP_PASSWORD="ththslem1"; /* ← 이 값을 원하는 비밀번호로 바꾸세요 (따옴표 안만) */
 function tryUnlock(){
   const v=(document.getElementById('lockPw')||{}).value||'';
   if(v===APP_PASSWORD){try{sessionStorage.setItem('soneed_unlocked','1');}catch(e){}document.getElementById('lockScreen').style.display='none';}
