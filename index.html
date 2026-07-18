@@ -117,8 +117,9 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v27 (2026-07-18)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v28 (2026-07-18)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">데이터 · 필터</button></div>
+  <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
   <span class="count-pill">기록 <b id="totalCount">0</b></span>
 </div></header>
@@ -220,6 +221,22 @@
 </main>
 <div class="toast" id="toast"></div>
 
+<div class="modal" id="loginModal" style="display:none">
+  <div class="modal-box">
+    <h3>로그인 (보안)</h3>
+    <p class="subtle" style="margin:0">관리사 계정으로 로그인하세요. 계정 발급은 대표에게 문의. (로그인 정보는 이 기기에만 저장됩니다.)</p>
+    <label>이메일</label>
+    <input type="email" id="loginEmail" placeholder="you@example.com" autocomplete="username">
+    <label>비밀번호</label>
+    <input type="password" id="loginPw" placeholder="비밀번호" autocomplete="current-password">
+    <div id="loginStatus" class="subtle" style="font-size:13px;margin:8px 0"></div>
+    <div class="actions" style="margin-top:14px">
+      <button class="btn primary" onclick="doLogin()">로그인</button>
+      <button class="btn ghost" onclick="doLogout()">로그아웃</button>
+      <button class="btn ghost" onclick="closeLogin()">닫기</button>
+    </div>
+  </div>
+</div>
 <div class="modal" id="settings" style="display:none">
   <div class="modal-box">
     <h3>공용 DB 연결 (Supabase)</h3>
@@ -333,8 +350,43 @@ function storageFail(){if(!storageOK)return;storageOK=false;const b=document.get
 
 /* 공용 DB (Supabase REST) */
 function sbBase(){return cfg.url.replace(/\/+$/,'')+'/rest/v1/';}
-function sbHeaders(extra){return Object.assign({apikey:cfg.key,Authorization:'Bearer '+cfg.key,'Content-Type':'application/json'},extra||{});}
-async function cloudLoad(){const r=await fetch(sbBase()+'records?select=id,data&order=updated_at.desc',{headers:sbHeaders()});if(!r.ok)throw new Error('HTTP '+r.status+' '+await r.text());const rows=await r.json();return rows.map(x=>Object.assign({},x.data,{id:x.id}));}
+function sbHeaders(extra){return Object.assign({apikey:cfg.key,Authorization:'Bearer '+(authTok||cfg.key),'Content-Type':'application/json'},extra||{});}
+/* ===== [보안 Phase 1] Supabase 이메일 로그인 — RLS가 아직 public이라 로그인 없이도 작동. Phase 2에서 authenticated로 잠금 ===== */
+let authTok=null,_authTimer=null;
+function authLoad(){try{return JSON.parse(localStorage.getItem('soneed_auth')||'null');}catch(e){return null;}}
+function authSave(o){try{o?localStorage.setItem('soneed_auth',JSON.stringify(o)):localStorage.removeItem('soneed_auth');}catch(e){}}
+function authGw(){return cfg?cfg.url.replace(/\/+$/,'')+'/auth/v1':'';}
+function authEmail(){const a=authLoad();return(a&&a.email)||null;}
+async function authLogin(email,pw){
+  if(!cfg)throw new Error('먼저 공용 DB에 연결하세요(설정)');
+  const r=await fetch(authGw()+'/token?grant_type=password',{method:'POST',headers:{apikey:cfg.key,'Content-Type':'application/json'},body:JSON.stringify({email:email,password:pw})});
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error(j.msg||j.error_description||j.error||('로그인 실패 HTTP '+r.status));
+  authTok=j.access_token;authSave({email:email,refresh_token:j.refresh_token});authSchedule();updateAuthUI();return j;
+}
+async function authRefresh(){
+  const a=authLoad();if(!a||!a.refresh_token||!cfg)return false;
+  try{
+    const r=await fetch(authGw()+'/token?grant_type=refresh_token',{method:'POST',headers:{apikey:cfg.key,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:a.refresh_token})});
+    const j=await r.json();if(!r.ok)throw 0;
+    authTok=j.access_token;authSave({email:a.email,refresh_token:j.refresh_token});authSchedule();return true;
+  }catch(e){authTok=null;return false;}
+}
+function authSchedule(){if(_authTimer)clearTimeout(_authTimer);_authTimer=setTimeout(function(){authRefresh();},45*60*1000);}
+function authLogout(){authTok=null;authSave(null);if(_authTimer)clearTimeout(_authTimer);updateAuthUI();toast('로그아웃되었습니다');}
+function updateAuthUI(){const b=document.getElementById('authBtn');if(!b)return;const em=authEmail();b.textContent=(authTok&&em)?('👤 '+em):'🔒 로그인';b.className='modebtn'+((authTok&&em)?' on':'');}
+async function authBoot(){if(cfg){const a=authLoad();if(a&&a.refresh_token)await authRefresh();}updateAuthUI();loadAll();}
+function openLogin(){const e=document.getElementById('loginModal');if(!e)return;document.getElementById('loginStatus').textContent=(authTok&&authEmail())?('현재 로그인: '+authEmail()):'';document.getElementById('loginEmail').value=authEmail()||'';e.style.display='flex';}
+function closeLogin(){const e=document.getElementById('loginModal');if(e)e.style.display='none';}
+async function doLogin(){
+  const em=document.getElementById('loginEmail').value.trim(),pw=document.getElementById('loginPw').value,st=document.getElementById('loginStatus');
+  if(!em||!pw){st.textContent='이메일과 비밀번호를 입력하세요';return;}
+  st.textContent='로그인 중…';
+  try{await authLogin(em,pw);st.textContent='✓ 로그인되었습니다';document.getElementById('loginPw').value='';toast('로그인되었습니다');closeLogin();loadAll();}
+  catch(e){st.textContent='로그인 실패: '+e.message;}
+}
+function doLogout(){authLogout();closeLogin();}
+async function cloudLoad(){const r=await fetch(sbBase()+'records?select=id,data&order=updated_at.desc',{headers:sbHeaders()});if(!r.ok){if(r.status===401||r.status===403){openLogin();}throw new Error('HTTP '+r.status+' '+await r.text());}const rows=await r.json();return rows.map(x=>Object.assign({},x.data,{id:x.id}));}
 async function cloudPut(id,dataObj){const r=await fetch(sbBase()+'records',{method:'POST',headers:sbHeaders({Prefer:'resolution=merge-duplicates,return=minimal'}),body:JSON.stringify({id:String(id),data:dataObj,updated_at:new Date().toISOString()})});if(!r.ok)throw new Error('HTTP '+r.status+' '+await r.text());}
 async function cloudSaveRecord(rec){
   const core=JSON.parse(JSON.stringify(rec));
@@ -989,7 +1041,7 @@ function exportCSV(){if(!records.length){toast('내보낼 기록이 없습니다
 function refreshAll(){document.getElementById('totalCount').textContent=records.length;renderConds();renderRecList();renderCrosstab();}
 let toastT;function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),1800);}
 
-renderForm();fillXtSelects();renderConds();updateValidation();setModeBadge();loadAll();
+renderForm();fillXtSelects();renderConds();updateValidation();setModeBadge();authBoot();
 
 /* ===== 비밀번호 잠금 ===== */
 const APP_PASSWORD="ththslem1"; /* ← 이 값을 원하는 비밀번호로 바꾸세요 (따옴표 안만) */
