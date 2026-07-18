@@ -43,6 +43,13 @@
   .field>label{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--muted);margin:0 0 6px 2px}
   .field.auto>label:after{content:'AI 자동 · 검토요망';font-size:10px;font-weight:800;color:var(--auto);background:var(--auto-soft);padding:1px 6px;border-radius:5px}
   .field.auto{border:1.5px dashed var(--auto);background:var(--auto-soft);border-radius:10px;padding:8px 10px;margin:-2px 0}
+  /* AI 초안(○, 무채색) vs 확정(색상) — 항목별 출처 표시 */
+  .field.ai>label:after{content:'○ AI초안';font-size:10px;font-weight:800;color:var(--auto);background:var(--auto-soft);padding:1px 6px;border-radius:5px;margin-left:6px}
+  .field.ai{border:1.5px dashed var(--auto);border-radius:10px;padding:8px 10px;margin:-2px 0}
+  .field.ai .seg button.on{background:#fff;color:var(--ink);border:1.5px solid var(--line2)}
+  .field.ok>label:after{content:'● 확정';font-size:10px;font-weight:800;color:#fff;background:var(--brand);padding:1px 6px;border-radius:5px;margin-left:6px}
+  .field.ok{border:1.5px solid var(--brand);background:var(--brand-soft);border-radius:10px;padding:8px 10px;margin:-2px 0}
+  .field.ok .seg button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
   .field.auto .seg button,.field.auto select,.field.auto input{opacity:.8}
   input[type=text],input[type=number],input[type=date],select,textarea{width:100%;font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line2);border-radius:9px;padding:9px 11px;outline:none}
   input:focus,select:focus,textarea:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
@@ -119,7 +126,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v33 (2026-07-18)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v34 (2026-07-18)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">데이터 · 필터</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -450,21 +457,23 @@ function disconnectDB(){localStorage.removeItem('soneed_cfg');cfg=null;mode='loc
 
 function fieldHTML(f){
   const hint=f.hint?`<span class="subtle" style="font-weight:600;margin-left:4px">${f.hint}</span>`:'';
-  const auto=autoFilled[f.k]?' auto':'';let inner='';
+  const _s=(form._src||{})[f.k];const cls=(f.g==='meta')?'':(_s==='ai'?' ai':(_s==='ok'?' ok':''));let inner='';
   if(f.type==='seg'){inner=`<div class="seg" data-k="${f.k}">`+f.opt.map(o=>{const neu=NEUTRAL.includes(o)?' neu':'';return `<button type="button" data-v="${o}" class="${neu.trim()}" onclick="pickSeg('${f.k}','${o}',this)">${o}</button>`;}).join('')+`</div>`;}
   else if(f.type==='multi'){inner=`<div class="seg" data-k="${f.k}" data-multi="1">`+f.opt.map(o=>`<button type="button" data-v="${o}" onclick="pickMulti('${f.k}','${o}',this)">${o}</button>`).join('')+`</div>`;}
-  else if(f.type==='select'){inner=`<select id="f_${f.k}" onchange="form['${f.k}']=this.value||null;updateValidation()">`+f.opt.map(o=>`<option value="${o}">${o||'—'}</option>`).join('')+`</select>`;}
-  else{const t=f.type==='num'?'number':f.type==='date'?'date':'text';inner=`<input type="${t}" id="f_${f.k}" oninput="form['${f.k}']=this.value||null">`;}
-  return `<div class="field${auto}"><label>${f.label}${hint}</label>${inner}</div>`;
+  else if(f.type==='select'){inner=`<select id="f_${f.k}" onchange="form['${f.k}']=this.value||null;markOk('${f.k}',this);updateValidation()">`+f.opt.map(o=>`<option value="${o}">${o||'—'}</option>`).join('')+`</select>`;}
+  else{const t=f.type==='num'?'number':f.type==='date'?'date':'text';inner=`<input type="${t}" id="f_${f.k}" oninput="form['${f.k}']=this.value||null;markOk('${f.k}',this)">`;}
+  return `<div class="field${cls}"><label>${f.label}${hint}</label>${inner}</div>`;
 }
+/* 관리사가 손으로 만진 항목 = 확정 표시(색상), AI 초안(○)에서 넘어감 — form._src에 저장돼 복원됨 */
+function markOk(k,el){if(!form._src)form._src={};form._src[k]='ok';const fd=el&&el.closest?el.closest('.field'):null;if(fd){fd.classList.remove('ai');fd.classList.add('ok');}}
 function renderForm(){
   const groups={meta:'grid-meta','2d':'grid-2d',lr:'grid-lr',rot:'grid-rot'};
   for(const g in groups)document.getElementById(groups[g]).innerHTML=FIELDS.filter(f=>f.g===g).map(fieldHTML).join('');
   document.getElementById('photos').innerHTML=PHOTO_SLOTS.map(([s,ko])=>`<div class="pslot"><div class="photo-drop" id="drop_${s}" onclick="pickPhoto('${s}')"><div class="ph">${ko}<br><small>클릭</small></div></div><input type="file" accept="image/*" id="pin_${s}" style="display:none" onchange="onPhoto('${s}',event)"><label>${ko}</label></div>`).join('');
   renderAfters();
 }
-function pickSeg(k,v,btn){const box=btn.parentElement,already=form[k]===v;box.querySelectorAll('button').forEach(b=>b.classList.remove('on'));if(already)form[k]=null;else{form[k]=v;btn.classList.add('on');}updateValidation();}
-function pickMulti(k,v,btn){let arr=Array.isArray(form[k])?form[k].slice():[];const i=arr.indexOf(v);if(i>=0){arr.splice(i,1);btn.classList.remove('on');}else{arr.push(v);btn.classList.add('on');}form[k]=arr.length?arr:null;}
+function pickSeg(k,v,btn){const box=btn.parentElement,already=form[k]===v;box.querySelectorAll('button').forEach(b=>b.classList.remove('on'));if(already)form[k]=null;else{form[k]=v;btn.classList.add('on');}markOk(k,btn);updateValidation();}
+function pickMulti(k,v,btn){let arr=Array.isArray(form[k])?form[k].slice():[];const i=arr.indexOf(v);if(i>=0){arr.splice(i,1);btn.classList.remove('on');}else{arr.push(v);btn.classList.add('on');}form[k]=arr.length?arr:null;markOk(k,btn);}
 function getVals(r,k){const v=r[k];if(v==null||v==='')return[];return Array.isArray(v)?v:[v];}
 function applyFormToUI(){
   document.querySelectorAll('.seg').forEach(box=>{const k=box.dataset.k,multi=box.dataset.multi;box.querySelectorAll('button').forEach(b=>{const on=multi?(Array.isArray(form[k])&&form[k].includes(b.dataset.v)):(form[k]===b.dataset.v);b.classList.toggle('on',on);});});
@@ -533,10 +542,10 @@ async function onChartPhoto(e){
     const text=(data.content||[]).filter(x=>x.type==='text').map(x=>x.text).join('\n');
     const clean=text.replace(/```json|```/g,'').trim();
     const parsed=JSON.parse(clean.slice(clean.indexOf('{'),clean.lastIndexOf('}')+1));
-    let n=0;autoFilled={};
+    let n=0;if(!form._src)form._src={};
     for(const label in parsed){const key=LABEL2KEY[label];if(!key)continue;const f=FMAP[key];
-      if(f.type==='multi'){const vals=(Array.isArray(parsed[label])?parsed[label]:[parsed[label]]).filter(x=>f.opt.includes(x));if(vals.length){form[key]=vals;autoFilled[key]=true;n++;}}
-      else if(f.opt.includes(parsed[label])){form[key]=parsed[label];autoFilled[key]=true;n++;}}
+      if(f.type==='multi'){const vals=(Array.isArray(parsed[label])?parsed[label]:[parsed[label]]).filter(x=>f.opt.includes(x));if(vals.length){form[key]=vals;form._src[key]="ai";n++;}}
+      else if(f.opt.includes(parsed[label])){form[key]=parsed[label];form._src[key]="ai";n++;}}
     renderForm();applyFormToUI();
     msg.innerHTML=`<div class="banner info">✓ ${n}개 항목을 자동 인식했습니다. 점선·연한 칸(<b>검토요망</b>)의 값은 꼭 확인·수정해 주세요.</div>`;toast(n+'개 자동 입력됨');
   }catch(err){msg.innerHTML=`<div class="banner err">자동 인식에 실패했습니다. 더 밝고 반듯하게 다시 찍거나 수동으로 입력해 주세요.</div>`;}
@@ -948,10 +957,10 @@ async function onFaceAnalyze(){
     const j0=clean.indexOf('{'),j1=clean.lastIndexOf('}');
     if(j0<0||j1<0)throw new Error('JSON 형식이 아닙니다 · 응답 앞부분: '+clean.slice(0,200));
     let parsed;try{parsed=JSON.parse(clean.slice(j0,j1+1));}catch(pe){throw new Error('응답이 잘렸을 수 있습니다(JSON 파싱 실패) · 앞부분: '+clean.slice(0,180));}
-    let n=0;autoFilled={};
+    let n=0;if(!form._src)form._src={};
     for(const label in parsed){const key=LABEL2KEY[label];if(!key)continue;const f=FMAP[key];const o=parsed[label];if(!o)continue;const val=o.v;
-      if(f.type==='multi'){const vals=(Array.isArray(val)?val:[val]).filter(x=>f.opt.includes(x));if(vals.length){form[key]=vals;autoFilled[key]=true;n++;}}
-      else if(f.opt.includes(val)){form[key]=val;autoFilled[key]=true;n++;}}
+      if(f.type==='multi'){const vals=(Array.isArray(val)?val:[val]).filter(x=>f.opt.includes(x));if(vals.length){form[key]=vals;form._src[key]="ai";n++;}}
+      else if(f.opt.includes(val)){form[key]=val;form._src[key]="ai";n++;}}
     renderForm();applyFormToUI();
     renderFaceResult(parsed,n);
   }catch(err){
