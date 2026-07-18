@@ -56,7 +56,7 @@
   .sticky-thumbs{position:sticky;top:56px;z-index:15;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding:6px 8px;margin:10px 0;background:rgba(255,255,255,.96);backdrop-filter:blur(4px);border:1px solid var(--line);border-radius:12px;box-shadow:0 2px 10px rgba(20,25,35,.09)}
   .sticky-thumbs:empty{display:none}
   .sticky-thumbs .st-item{position:relative;cursor:zoom-in}
-  .sticky-thumbs img{height:74px;width:auto;max-width:96px;object-fit:cover;border-radius:8px;display:block}
+  .sticky-thumbs img{height:min(180px,26vh);width:auto;max-width:32vw;object-fit:cover;border-radius:8px;display:block}
   .sticky-thumbs span{position:absolute;left:3px;bottom:3px;font-size:9px;background:rgba(0,0,0,.55);color:#fff;padding:1px 4px;border-radius:4px}
   #photoZoom{position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;padding:16px;cursor:zoom-out}
   #photoZoom img{max-width:100%;max-height:100%;border-radius:8px}
@@ -136,7 +136,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v35 (2026-07-18)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v36 (2026-07-18)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">데이터 · 필터</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -262,6 +262,12 @@
       <button class="btn primary" onclick="doLogin()">로그인</button>
       <button class="btn ghost" onclick="doLogout()">로그아웃</button>
       <button class="btn ghost" onclick="closeLogin()">닫기</button>
+    </div>
+    <div id="pwChangeBox" style="display:none;margin-top:16px;border-top:1px solid var(--line);padding-top:14px">
+      <label>비밀번호 변경 (본인 계정)</label>
+      <input type="password" id="newPw" placeholder="새 비밀번호 (6자 이상)" autocomplete="new-password">
+      <div id="pwChangeStatus" class="subtle" style="font-size:13px;margin:8px 0"></div>
+      <button class="btn primary" onclick="doChangePw()">비밀번호 변경</button>
     </div>
   </div>
 </div>
@@ -414,7 +420,9 @@ function authSchedule(){if(_authTimer)clearTimeout(_authTimer);_authTimer=setTim
 function authLogout(){authTok=null;authSave(null);if(_authTimer)clearTimeout(_authTimer);updateAuthUI();toast('로그아웃되었습니다');}
 function updateAuthUI(){const b=document.getElementById('authBtn');if(!b)return;const em=authEmail();b.textContent=(authTok&&em)?('👤 '+em):'🔒 로그인';b.className='modebtn'+((authTok&&em)?' on':'');}
 async function authBoot(){updateAuthUI();let ok=false;if(cfg){const a=authLoad();if(a&&a.refresh_token)ok=await authRefresh();}updateAuthUI();if(ok){gateHide();loadAll();}else{gateShow();}}
-function openLogin(){const e=document.getElementById('loginModal');if(!e)return;document.getElementById('loginStatus').textContent=(authTok&&authEmail())?('현재 로그인: '+authEmail()):'';document.getElementById('loginEmail').value=authEmail()||'';e.style.display='flex';}
+function openLogin(){const e=document.getElementById('loginModal');if(!e)return;const li=!!(authTok&&authEmail());document.getElementById('loginStatus').textContent=li?('현재 로그인: '+authEmail()):'';document.getElementById('loginEmail').value=authEmail()||'';const pb=document.getElementById('pwChangeBox');if(pb)pb.style.display=li?'':'none';const ns=document.getElementById('pwChangeStatus');if(ns)ns.textContent='';e.style.display='flex';}
+async function authChangePw(newpw){if(!authTok)throw new Error('먼저 로그인하세요');const r=await fetch(authGw()+'/user',{method:'PUT',headers:{apikey:cfg.key,Authorization:'Bearer '+authTok,'Content-Type':'application/json'},body:JSON.stringify({password:newpw})});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.msg||j.error_description||j.error||('변경 실패 HTTP '+r.status));return j;}
+function doChangePw(){const np=(document.getElementById('newPw')||{}).value||'',st=document.getElementById('pwChangeStatus');if(np.length<6){st.textContent='6자 이상 입력하세요';return;}st.textContent='변경 중…';authChangePw(np).then(function(){st.textContent='✓ 변경되었습니다';document.getElementById('newPw').value='';toast('비밀번호가 변경되었습니다');}).catch(function(e){st.textContent='실패: '+(e&&e.message||e);});}
 function closeLogin(){const e=document.getElementById('loginModal');if(e)e.style.display='none';}
 async function doLogin(){
   const em=document.getElementById('loginEmail').value.trim(),pw=document.getElementById('loginPw').value,st=document.getElementById('loginStatus');
@@ -476,7 +484,7 @@ function fieldHTML(f){
   return `<div class="field${cls}"><label>${f.label}${hint}</label>${inner}</div>`;
 }
 /* 관리사가 손으로 만진 항목 = 확정 표시(색상), AI 초안(○)에서 넘어감 — form._src에 저장돼 복원됨 */
-function markOk(k,el){if(!form._src)form._src={};form._src[k]='ok';const fd=el&&el.closest?el.closest('.field'):null;if(fd){fd.classList.remove('ai');fd.classList.add('ok');}}
+function markOk(k,el){if(!form._src)form._src={};if(!form._ai)form._ai={};form._src[k]='ok';const fd=el&&el.closest?el.closest('.field'):null;if(fd){fd.classList.remove('ai');fd.classList.add('ok');}}
 function renderForm(){
   const groups={meta:'grid-meta','2d':'grid-2d',lr:'grid-lr',rot:'grid-rot'};
   for(const g in groups)document.getElementById(groups[g]).innerHTML=FIELDS.filter(f=>f.g===g).map(fieldHTML).join('');
@@ -558,10 +566,10 @@ async function onChartPhoto(e){
     const text=(data.content||[]).filter(x=>x.type==='text').map(x=>x.text).join('\n');
     const clean=text.replace(/```json|```/g,'').trim();
     const parsed=JSON.parse(clean.slice(clean.indexOf('{'),clean.lastIndexOf('}')+1));
-    let n=0;if(!form._src)form._src={};
+    let n=0;if(!form._src)form._src={};if(!form._ai)form._ai={};
     for(const label in parsed){const key=LABEL2KEY[label];if(!key)continue;const f=FMAP[key];
-      if(f.type==='multi'){const vals=(Array.isArray(parsed[label])?parsed[label]:[parsed[label]]).filter(x=>f.opt.includes(x));if(vals.length){form[key]=vals;form._src[key]="ai";n++;}}
-      else if(f.opt.includes(parsed[label])){form[key]=parsed[label];form._src[key]="ai";n++;}}
+      if(f.type==='multi'){const vals=(Array.isArray(parsed[label])?parsed[label]:[parsed[label]]).filter(x=>f.opt.includes(x));if(vals.length){form[key]=vals;form._src[key]="ai";form._ai[key]=vals;n++;}}
+      else if(f.opt.includes(parsed[label])){form[key]=parsed[label];form._src[key]="ai";form._ai[key]=parsed[label];n++;}}
     renderForm();applyFormToUI();
     msg.innerHTML=`<div class="banner info">✓ ${n}개 항목을 자동 인식했습니다. 점선·연한 칸(<b>검토요망</b>)의 값은 꼭 확인·수정해 주세요.</div>`;toast(n+'개 자동 입력됨');
   }catch(err){msg.innerHTML=`<div class="banner err">자동 인식에 실패했습니다. 더 밝고 반듯하게 다시 찍거나 수동으로 입력해 주세요.</div>`;}
@@ -973,10 +981,10 @@ async function onFaceAnalyze(){
     const j0=clean.indexOf('{'),j1=clean.lastIndexOf('}');
     if(j0<0||j1<0)throw new Error('JSON 형식이 아닙니다 · 응답 앞부분: '+clean.slice(0,200));
     let parsed;try{parsed=JSON.parse(clean.slice(j0,j1+1));}catch(pe){throw new Error('응답이 잘렸을 수 있습니다(JSON 파싱 실패) · 앞부분: '+clean.slice(0,180));}
-    let n=0;if(!form._src)form._src={};
+    let n=0;if(!form._src)form._src={};if(!form._ai)form._ai={};
     for(const label in parsed){const key=LABEL2KEY[label];if(!key)continue;const f=FMAP[key];const o=parsed[label];if(!o)continue;const val=o.v;
-      if(f.type==='multi'){const vals=(Array.isArray(val)?val:[val]).filter(x=>f.opt.includes(x));if(vals.length){form[key]=vals;form._src[key]="ai";n++;}}
-      else if(f.opt.includes(val)){form[key]=val;form._src[key]="ai";n++;}}
+      if(f.type==='multi'){const vals=(Array.isArray(val)?val:[val]).filter(x=>f.opt.includes(x));if(vals.length){form[key]=vals;form._src[key]="ai";form._ai[key]=vals;n++;}}
+      else if(f.opt.includes(val)){form[key]=val;form._src[key]="ai";form._ai[key]=val;n++;}}
     renderForm();applyFormToUI();
     renderFaceResult(parsed,n);
   }catch(err){
