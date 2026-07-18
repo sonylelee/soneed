@@ -117,7 +117,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v24 (2026-07-18)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v25 (2026-07-18)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">데이터 · 필터</button></div>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
   <span class="count-pill">기록 <b id="totalCount">0</b></span>
@@ -1189,11 +1189,14 @@ function fpRender(pct){
   cmpBefore=false; var cb=$("fp_cmp"); if(cb)cb.textContent="👁 전/후 비교";
   if(pct===0&&comp===0&&drw===0&&roll===0&&ham===0&&nR===0&&nL===0){ fpDraw($("fp_cvB"),srcC,showDots?P:null); fpLog("원본(모든 슬라이더 0)."); return; }
   var o={ yawRad:(pct/100)*30*Math.PI/180, pitchRad:(tilt/100)*40*Math.PI/180, comp:comp, draw:drw, roll:roll*Math.PI/180, ham:ham, nostrilR:nR, nostrilL:nL };
-  var field=makeField(o); var warped=warp(srcC,field); var sc={dx:0,dy:0};
-  var moved=showDots?P.map(function(p){field(p.x,p.y,sc);return{x:p.x+sc.dx,y:p.y+sc.dy};}):null;
-  var turn=Math.sign(pct);
-  var arrows=pct!==0?[{x0:field.cx,y0:field.yc,x1:field.cx+turn*36,y1:field.yc,color:"#C81D74"}]:null;
-  fpDraw($("fp_cvB"),warped,moved,arrows);
+  var field,warped,turn;
+  try{
+    field=makeField(o); warped=warp(srcC,field); var sc={dx:0,dy:0};
+    var moved=showDots?P.map(function(p){field(p.x,p.y,sc);return{x:p.x+sc.dx,y:p.y+sc.dy};}):null;
+    turn=Math.sign(pct);
+    var arrows=pct!==0?[{x0:field.cx,y0:field.yc,x1:field.cx+turn*36,y1:field.yc,color:"#C81D74"}]:null;
+    fpDraw($("fp_cvB"),warped,moved,arrows);
+  }catch(err){ fpLog("⚠ 렌더 오류: "+(err&&err.message||err)); return; }
   var L=[];
   if(pct!==0)L.push("회전 "+(pct>0?"+":"")+(+pct).toFixed(1)+"% → "+(turn>0?"화면 오른쪽":"화면 왼쪽"));
   if(comp!==0)L.push("① 문어 리프팅: 본인 "+(comp>0?"오른쪽":"왼쪽"));
@@ -1231,7 +1234,9 @@ function fpRestore(){
   Object.keys(map).forEach(function(k){ if(k in s){ var e=$(map[k]); if(e)e.value=s[k]; } });
   fpRender(num("fp_amp")); fpLog("저장된 조정값을 불러왔습니다.");
 }
-["fp_amp","fp_tilt","fp_comp","fp_draw","fp_roll","fp_ham","fp_nostR","fp_nostL"].forEach(function(id){ var e=$(id); if(e)e.addEventListener("input",function(){ fpQ(num("fp_amp")); }); });
+var _fpSl=/^fp_(amp|tilt|comp|draw|roll|ham|nostR|nostL)$/;
+document.addEventListener("input",function(ev){ if(ev.target&&_fpSl.test(ev.target.id)) fpQ(num("fp_amp")); });
+document.addEventListener("change",function(ev){ if(ev.target&&_fpSl.test(ev.target.id)) fpQ(num("fp_amp")); });
 var _load=$("fp_load"); if(_load)_load.onclick=function(){
   var pf=(typeof form!=="undefined"&&form)?form.photo_front:null;
   if(!pf){ fpLog("저장된 정면사진이 없습니다. 위 [사진] 슬롯에 정면사진을 넣고 다시 시도하세요."); return; }
