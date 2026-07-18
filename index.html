@@ -136,7 +136,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v39 (2026-07-18)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v40 (2026-07-18)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">데이터 · 필터</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -563,11 +563,15 @@ async function faceCropThumb(src){
     const dc=document.createElement('canvas');dc.width=Math.max(2,Math.round(img.width*sc));dc.height=Math.max(2,Math.round(img.height*sc));
     dc.getContext('2d').drawImage(img,0,0,dc.width,dc.height);
     const out=lm.detect(dc);
-    if(!out.faceLandmarks||!out.faceLandmarks.length)return src;
-    const P=out.faceLandmarks[0];let minx=1,miny=1,maxx=0,maxy=0;
-    for(const p of P){if(p.x<minx)minx=p.x;if(p.x>maxx)maxx=p.x;if(p.y<miny)miny=p.y;if(p.y>maxy)maxy=p.y;}
-    let ox=minx*img.width,oy=miny*img.height,ow=(maxx-minx)*img.width,oh=(maxy-miny)*img.height;
-    const mx=ow*0.35,mT=oh*0.55,mB=oh*0.30;ox-=mx;oy-=mT;ow+=2*mx;oh+=mT+mB;
+    let ox,oy,ow,oh;
+    if(out.faceLandmarks&&out.faceLandmarks.length){
+      const P=out.faceLandmarks[0];let minx=1,miny=1,maxx=0,maxy=0;
+      for(const p of P){if(p.x<minx)minx=p.x;if(p.x>maxx)maxx=p.x;if(p.y<miny)miny=p.y;if(p.y>maxy)maxy=p.y;}
+      ox=minx*img.width;oy=miny*img.height;ow=(maxx-minx)*img.width;oh=(maxy-miny)*img.height;
+      const mx=ow*0.35,mT=oh*0.55,mB=oh*0.30;ox-=mx;oy-=mT;ow+=2*mx;oh+=mT+mB;
+    }else{ // 얼굴 못 찾음(고개 든 극단자세 등) → 상단 중앙 heuristic 크롭
+      ow=img.width*0.6;oh=img.height*0.5;ox=(img.width-ow)/2;oy=img.height*0.08;
+    }
     if(ox<0){ow+=ox;ox=0;}if(oy<0){oh+=oy;oy=0;}if(ox+ow>img.width)ow=img.width-ox;if(oy+oh>img.height)oh=img.height-oy;
     const th=document.createElement('canvas');const s2=Math.min(1,320/Math.max(ow,oh));
     th.width=Math.max(1,Math.round(ow*s2));th.height=Math.max(1,Math.round(oh*s2));
@@ -783,7 +787,7 @@ async function getLandmarker(){
     const fs=await vision.FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm');
     _fl=await vision.FaceLandmarker.createFromOptions(fs,{
       baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task'},
-      runningMode:'IMAGE',numFaces:1
+      runningMode:'IMAGE',numFaces:1,minFaceDetectionConfidence:0.25,minFacePresenceConfidence:0.25,minTrackingConfidence:0.25
     });
     return _fl;
   })();
@@ -1068,7 +1072,7 @@ async function saveRecord(){
 }
 function editRecord(id){const r=records.find(x=>String(x.id)===String(id));if(!r)return;form=Object.assign({},r);currentId=r.id;autoFilled={};renderForm();applyFormToUI();document.getElementById('editState').textContent=(r.code||'무제')+' · 편집 중';document.getElementById('delBtn').style.display='';document.getElementById('autoMsg').innerHTML='';const _fr2=document.getElementById('faceResult');if(_fr2)_fr2.innerHTML='';showView('entry');}
 async function deleteCurrent(){if(!currentId)return;if(!confirm('이 기록을 삭제할까요?'))return;try{await removeRecord(currentId);}catch(e){toast('삭제 실패: '+e.message);return;}records=records.filter(r=>String(r.id)!==String(currentId));clearForm();toast('삭제되었습니다');refreshAll();}
-function clearForm(){form={};currentId=null;autoFilled={};renderForm();document.getElementById('f_notes').value='';document.getElementById('autoMsg').innerHTML='';const _fr=document.getElementById('faceResult');if(_fr)_fr.innerHTML='';document.getElementById('editState').textContent='새 기록을 작성합니다.';document.getElementById('delBtn').style.display='none';updateValidation();}
+function clearForm(){form={};currentId=null;autoFilled={};renderForm();renderStickyThumbs();document.getElementById('f_notes').value='';document.getElementById('autoMsg').innerHTML='';const _fr=document.getElementById('faceResult');if(_fr)_fr.innerHTML='';document.getElementById('editState').textContent='새 기록을 작성합니다.';document.getElementById('delBtn').style.display='none';updateValidation();}
 function showView(v){document.getElementById('view-entry').style.display=v==='entry'?'':'none';document.getElementById('view-data').style.display=v==='data'?'':'none';document.getElementById('tabEntry').classList.toggle('on',v==='entry');document.getElementById('tabData').classList.toggle('on',v==='data');if(v==='data'){renderRecList();renderCrosstab();}}
 
 const FILTERABLE=FIELDS.filter(f=>f.type==='seg'||f.type==='select'||f.type==='multi').map(f=>({k:f.k,label:f.label,opt:f.opt.filter(o=>o!=='')}));
