@@ -117,7 +117,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v25 (2026-07-18)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v26 (2026-07-18)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">데이터 · 필터</button></div>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
   <span class="count-pill">기록 <b id="totalCount">0</b></span>
@@ -1026,6 +1026,11 @@ var _st=document.createElement("style"); _st.textContent=_css; (document.head||d
 var $=function(id){return document.getElementById(id);};
 var P=null, srcC=null, origImg=null, curRegion=null, isFit=false, showDots=true, cmpBefore=false;
 var IDX_OUT_A=234, IDX_OUT_B=454, IDX_FOREHEAD=10, IDX_CHIN=152;
+const YAWS=-1;
+function faceCentroid(){
+  let sx=0,sy=0,sz=0; for(const p of P){sx+=p.x;sy+=p.y;sz+=p.z;}
+  const n=P.length; return {cx:sx/n, cy:sy/n, cz:sz/n};
+}
 
 /* 변위 그리드 스무딩: [1 2 1]/4 분리형 블러 iter회 (IDW 특유의 울렁임 제거 → 피부 안 움) */
 function smoothGrid(g,w,h,iter){
