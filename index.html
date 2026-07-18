@@ -117,7 +117,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v26 (2026-07-18)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v27 (2026-07-18)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">데이터 · 필터</button></div>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
   <span class="count-pill">기록 <b id="totalCount">0</b></span>
@@ -1289,6 +1289,21 @@ var _save=$("fp_save"); if(_save)_save.onclick=function(){
   if(typeof saveRecord==="function"){ saveRecord(); fpLog("✅ 차트에 조정값 저장됨."); }
   else fpLog("상단 [기록 저장]을 눌러주세요.");
 };
+
+/* 기록 전환 시 패널 초기화 — 이전 사람 시뮬레이션 얼굴이 남지 않도록 (기존 함수는 감싸기만) */
+function fpResetPanel(){
+  P=null; srcC=null; origImg=null; curRegion=null; isFit=false; cmpBefore=false;
+  fpEnable(false);
+  ["fp_amp","fp_comp","fp_draw","fp_roll","fp_ham","fp_nostR","fp_nostL"].forEach(function(id){var e=$(id);if(e)e.value=0;});
+  var t=$("fp_tilt"); if(t)t.value=40;
+  var mo=$("fp_method_out"); if(mo)mo.textContent="";
+  var fb=$("fp_fit"); if(fb)fb.textContent="🔍 얼굴 확대";
+  var cb=$("fp_cmp"); if(cb)cb.textContent="👁 전/후 비교";
+  ["fp_cvA","fp_cvB"].forEach(function(id){var cv=$(id); if(cv){cv.width=1;cv.height=1;}});
+  fpLog("기록이 바뀌었습니다. [정면사진 불러오기]를 눌러 이 기록의 사진으로 시작하세요.");
+}
+if(typeof window.editRecord==="function"){ var _fpEdit=window.editRecord; window.editRecord=function(){ var r=_fpEdit.apply(this,arguments); try{fpResetPanel();}catch(e){} return r; }; }
+if(typeof window.clearForm==="function"){ var _fpClear=window.clearForm; window.clearForm=function(){ var r=_fpClear.apply(this,arguments); try{fpResetPanel();}catch(e){} return r; }; }
 })();
 
 </script>
