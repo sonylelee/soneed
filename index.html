@@ -136,7 +136,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v38 (2026-07-18)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v39 (2026-07-18)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">데이터 · 필터</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -186,7 +186,6 @@
         <div class="fpx-row">
           <button type="button" class="btn ghost" id="fp_load">정면사진 불러오기</button>
           <button type="button" class="btn ghost" id="fp_fit" disabled>🔍 얼굴 확대</button>
-          <button type="button" class="btn ghost" id="fp_method" disabled>🩹 개선법</button>
           <button type="button" class="btn ghost" id="fp_cmp" disabled>👁 전/후 비교</button>
           <button type="button" class="btn ghost" id="fp_reset" disabled>↺ 원위치</button>
           <button type="button" class="btn ghost" id="fp_dots" disabled>랜드마크 켬</button>
@@ -204,6 +203,7 @@
         <div class="fpx-sl"><label>④ 햄버거 시프트</label><input type="range" id="fp_ham" min="-100" max="100" step="5" value="0" disabled><span id="fp_hamV">0%</span></div>
         <div class="fpx-sl"><label>⑤ 콧볼 오른쪽(+위/−아래)</label><input type="range" id="fp_nostR" min="-100" max="100" step="5" value="0" disabled><span id="fp_nostRV">0%</span></div>
         <div class="fpx-sl"><label>⑥ 콧볼 왼쪽(+위/−아래)</label><input type="range" id="fp_nostL" min="-100" max="100" step="5" value="0" disabled><span id="fp_nostLV">0%</span></div>
+        <button type="button" class="btn primary" id="fp_method" disabled style="width:100%;margin-top:10px">🩹 리세팅가이드</button>
         <div id="fp_log">정면사진을 저장(또는 사진 슬롯에 넣은 뒤) [정면사진 불러오기]를 누르세요.</div>
         <div id="fp_method_out"></div>
       </details>
@@ -240,7 +240,7 @@
       <label style="font-size:13px;color:#71717a">정렬</label>
       <select id="sortSel" onchange="setSort(this.value)" style="font-size:13px;padding:5px 9px;border:1px solid #D3D7DE;border-radius:8px;background:#fff">
         <option value="name">이름 가나다순</option>
-        <option value="updated">최근 업데이트순</option>
+        <option value="updated" selected>최근 업데이트순</option>
         <option value="date">날짜(회차)순</option>
       </select>
     </div>
@@ -375,7 +375,7 @@ let mode=(cfg&&cfg.url&&cfg.key)?'cloud':'local';
 function newId(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
 function sortRecs(){records.sort((a,b)=>(b.date||'').localeCompare(a.date||'')||String(b.id).localeCompare(String(a.id)));}
 /* 목록 정렬(드롭다운) — updMap: 로드 시 각 기록의 updated_at 보관(레코드 오염 없이) */
-let sortMode='name',updMap={};
+let sortMode='updated',updMap={};
 function setSort(v){sortMode=v;renderRecList();}
 function sortList(arr){var a=arr.slice();
   if(sortMode==='name')a.sort(function(x,y){return String(x.code||'힣힣힣').localeCompare(String(y.code||'힣힣힣'),'ko');});
@@ -504,9 +504,10 @@ function applyFormToUI(){
 function signOf(v){return v==='R'?1:v==='L'?-1:0;}
 function dirLabel(v){return v==='R'?'오른회전(R)':v==='L'?'왼회전(L)':v==='중립'?'중립':v;}
 const ROT_CHECKS=[
- {key:'fh_zygoma',X:'par_zygoma',Y:'par_forehead',xl:'광대',yl:'이마',name:'이마뼈 대비 광대'},
- {key:'fh_jaw',X:'par_jaw',Y:'par_forehead',xl:'턱',yl:'이마',name:'이마뼈 대비 턱'},
- {key:'zyg_jaw',X:'par_jaw',Y:'par_zygoma',xl:'턱',yl:'광대',name:'광대뼈 대비 턱'},
+ {key:'fh_zygoma',X:'par_zygoma',Y:'par_forehead',xl:'광대',yl:'이마',name:'이마뼈 대비 광대',base:'마루뼈 대비'},
+ {key:'fh_jaw',X:'par_jaw',Y:'par_forehead',xl:'턱',yl:'이마',name:'이마뼈 대비 턱',base:'마루뼈 대비'},
+ {key:'zyg_jaw',X:'par_jaw',Y:'par_zygoma',xl:'턱',yl:'광대',name:'광대뼈 대비 턱',base:'마루뼈 대비'},
+ {key:'zyg_jaw',X:'fh_jaw',Y:'fh_zygoma',xl:'턱',yl:'광대',name:'광대뼈 대비 턱',base:'이마뼈 대비'},
 ];
 function updateValidation(){
   const issues=[];
@@ -515,7 +516,7 @@ function updateValidation(){
     if(bx==null||by==null||got==null)return;
     const sx=signOf(bx),sy=signOf(by);let expected;
     if(sx===0&&sy===0)expected='중립';else if(sx===sy)return;else expected=(sx-sy)>0?'R':'L';
-    if(got!==expected)issues.push(`⚠ 오류 (재촉진 필요) — 마루뼈 대비 ${c.xl}=${dirLabel(bx)}, ${c.yl}=${dirLabel(by)} 라면 <b>${c.name} 회전</b>은 반드시 <b>${dirLabel(expected)}</b>이어야 합니다. 현재 ${dirLabel(got)}.`);
+    if(got!==expected)issues.push(`⚠ 오류 (재촉진 필요) — ${c.base} ${c.xl}=${dirLabel(bx)}, ${c.yl}=${dirLabel(by)} 라면 <b>${c.name} 회전</b>은 반드시 <b>${dirLabel(expected)}</b>이어야 합니다. 현재 ${dirLabel(got)}.`);
   });
   document.getElementById('rotWarn').innerHTML=issues.map(t=>`<div class="banner err">${t}</div>`).join('');
   return issues.length===0;
@@ -1412,7 +1413,7 @@ var _method=$("fp_method"); if(_method)_method.onclick=function(){
   else if(ham<0)out.push("【햄버거】","· 좌측으로 머리 돌린 후 왼광대와 후두면 압박");
   if(nR>0)out.push("【콧볼 오른쪽】","· 오른광대 후방경사화"); else if(nR<0)out.push("【콧볼 오른쪽】","· 오른광대 전방경사화");
   if(nL>0)out.push("【콧볼 왼쪽】","· 왼광대 후방경사화"); else if(nL<0)out.push("【콧볼 왼쪽】","· 왼광대 전방경사화");
-  $("fp_method_out").textContent=out.length?("🩹 개선법 (촉진 전 참고)\n"+out.join("\n")):"조정된 슬라이더가 없습니다.";
+  $("fp_method_out").textContent=out.length?("🩹 리세팅가이드 (촉진 전 참고)\n"+out.join("\n")):"조정된 슬라이더가 없습니다.";
 };
 var _save=$("fp_save"); if(_save)_save.onclick=function(){
   if(typeof form==="undefined"||!form){ fpLog("저장 대상을 찾지 못했습니다."); return; }
