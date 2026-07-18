@@ -110,14 +110,16 @@
 
 <div id="lockScreen" style="position:fixed;inset:0;z-index:99999;background:#EEF0F3;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;padding:20px;font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Segoe UI',Roboto,'Malgun Gothic',sans-serif">
   <div style="font-weight:800;font-size:22px;color:#C81D74;letter-spacing:-.02em">SONEED</div>
-  <div style="color:#6A7280;font-size:14px">비밀번호를 입력하세요</div>
-  <input id="lockPw" type="password" autocomplete="off" style="width:min(320px,80vw);font-size:16px;padding:12px 14px;border:1px solid #D3D7DE;border-radius:10px;outline:none" placeholder="비밀번호" onkeydown="if(event.key==='Enter')tryUnlock()">
-  <button onclick="tryUnlock()" style="background:#C81D74;color:#fff;border:0;font-weight:800;font-size:15px;padding:12px 24px;border-radius:10px;cursor:pointer">들어가기</button>
+  <div style="color:#6A7280;font-size:14px">로그인 (관리사 계정)</div>
+  <input id="lockEmail" type="email" autocomplete="username" style="width:min(320px,80vw);font-size:16px;padding:12px 14px;border:1px solid #D3D7DE;border-radius:10px;outline:none" placeholder="이메일" onkeydown="if(event.key==='Enter')gateLogin()">
+  <input id="lockPw" type="password" autocomplete="current-password" style="width:min(320px,80vw);font-size:16px;padding:12px 14px;border:1px solid #D3D7DE;border-radius:10px;outline:none" placeholder="비밀번호" onkeydown="if(event.key==='Enter')gateLogin()">
+  <button onclick="gateLogin()" style="background:#C81D74;color:#fff;border:0;font-weight:800;font-size:15px;padding:12px 24px;border-radius:10px;cursor:pointer">로그인</button>
   <div id="lockMsg" style="color:#C0392B;font-size:13px;min-height:18px"></div>
+  <div style="color:#9AA1AC;font-size:12px">계정 발급은 대표에게 문의하세요</div>
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v28 (2026-07-18)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v29 (2026-07-18)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">데이터 · 필터</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -334,8 +336,10 @@ const CHIP_KEYS=['type','waterslide','nasolabial','zyg_maxilla'];
 let records=[],form={},currentId=null,storageOK=true,autoFilled={};
 
 /* ===== 저장 계층: 공용 DB(Supabase) 또는 로컬 ===== */
+/* 공용 DB 주소·키 기본 내장 — RLS(로그인 필수)로 잠겨 있어 키가 공개돼도 데이터 접근 불가. 관리사는 로그인만 하면 됨 */
+const DEFAULT_CFG={url:"https://xzclowgorxhcbsfrrbop.supabase.co",key:"sb_publishable_66Ts2AQrKrjfitjTi11uCQ_dGXiY_EZ"};
 function loadCfg(){try{return JSON.parse(localStorage.getItem('soneed_cfg')||'null');}catch(e){return null;}}
-let cfg=loadCfg();
+let cfg=loadCfg()||DEFAULT_CFG;
 let mode=(cfg&&cfg.url&&cfg.key)?'cloud':'local';
 function newId(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
 function sortRecs(){records.sort((a,b)=>(b.date||'').localeCompare(a.date||'')||String(b.id).localeCompare(String(a.id)));}
@@ -375,7 +379,7 @@ async function authRefresh(){
 function authSchedule(){if(_authTimer)clearTimeout(_authTimer);_authTimer=setTimeout(function(){authRefresh();},45*60*1000);}
 function authLogout(){authTok=null;authSave(null);if(_authTimer)clearTimeout(_authTimer);updateAuthUI();toast('로그아웃되었습니다');}
 function updateAuthUI(){const b=document.getElementById('authBtn');if(!b)return;const em=authEmail();b.textContent=(authTok&&em)?('👤 '+em):'🔒 로그인';b.className='modebtn'+((authTok&&em)?' on':'');}
-async function authBoot(){if(cfg){const a=authLoad();if(a&&a.refresh_token)await authRefresh();}updateAuthUI();loadAll();}
+async function authBoot(){updateAuthUI();let ok=false;if(cfg){const a=authLoad();if(a&&a.refresh_token)ok=await authRefresh();}updateAuthUI();if(ok){gateHide();loadAll();}else{gateShow();}}
 function openLogin(){const e=document.getElementById('loginModal');if(!e)return;document.getElementById('loginStatus').textContent=(authTok&&authEmail())?('현재 로그인: '+authEmail()):'';document.getElementById('loginEmail').value=authEmail()||'';e.style.display='flex';}
 function closeLogin(){const e=document.getElementById('loginModal');if(e)e.style.display='none';}
 async function doLogin(){
@@ -387,7 +391,7 @@ async function doLogin(){
 }
 function doLogout(){authLogout();closeLogin();}
 async function cloudLoad(){const r=await fetch(sbBase()+'records?select=id,data&order=updated_at.desc',{headers:sbHeaders()});if(!r.ok){if(r.status===401||r.status===403){openLogin();}throw new Error('HTTP '+r.status+' '+await r.text());}const rows=await r.json();return rows.map(x=>Object.assign({},x.data,{id:x.id}));}
-async function cloudPut(id,dataObj){const r=await fetch(sbBase()+'records',{method:'POST',headers:sbHeaders({Prefer:'resolution=merge-duplicates,return=minimal'}),body:JSON.stringify({id:String(id),data:dataObj,updated_at:new Date().toISOString()})});if(!r.ok)throw new Error('HTTP '+r.status+' '+await r.text());}
+async function cloudPut(id,dataObj){if(authEmail()){try{dataObj.savedBy=authEmail();}catch(e){}}const r=await fetch(sbBase()+'records',{method:'POST',headers:sbHeaders({Prefer:'resolution=merge-duplicates,return=minimal'}),body:JSON.stringify({id:String(id),data:dataObj,updated_at:new Date().toISOString()})});if(!r.ok)throw new Error('HTTP '+r.status+' '+await r.text());}
 async function cloudSaveRecord(rec){
   const core=JSON.parse(JSON.stringify(rec));
   delete core.photo_front;delete core.photo_up;delete core.photo_down;
@@ -1006,7 +1010,7 @@ function chipFor(r,k){let v=r[k];if(v==null||v==='')return'';if(Array.isArray(v)
 function renderRecList(){
   const list=filtered(),box=document.getElementById('recList');
   if(list.length===0){box.innerHTML=`<div class="empty-note" style="grid-column:1/-1"><b>아직 기록이 없습니다.</b><br>‘기록 입력’ 탭에서 첫 데이터를 저장해 보세요.</div>`;return;}
-  box.innerHTML=list.map(r=>{const p=recPhoto(r);const thumb=p?`<img src="${p}">`:`<span>사진 없음</span>`;const sub=[r.date,r.therapist,r.signup].filter(Boolean).join(' · ');const chips=CHIP_KEYS.map(k=>chipFor(r,k)).filter(Boolean).join('');return `<div class="rec" onclick="editRecord('${r.id}')"><div class="thumb ${p?'':'empty'}">${thumb}</div><div class="meta"><div class="code">${r.code||'무제'}</div><div class="sub">${sub||'&nbsp;'}</div><div class="chips">${chips||'<span class="chip k">미입력</span>'}</div></div></div>`;}).join('');
+  box.innerHTML=list.map(r=>{const p=recPhoto(r);const thumb=p?`<img src="${p}">`:`<span>사진 없음</span>`;const sub=[r.date,r.therapist,r.signup].filter(Boolean).join(' · ');const chips=CHIP_KEYS.map(k=>chipFor(r,k)).filter(Boolean).join('');return `<div class="rec" onclick="editRecord('${r.id}')"><div class="thumb ${p?'':'empty'}">${thumb}</div><div class="meta"><div class="code">${r.code||'무제'}</div><div class="sub">${sub||'&nbsp;'}</div>${(r.savedBy&&r.savedBy!==authEmail())?'<div class="sub" style="color:#C81D74">👤 '+r.savedBy+'</div>':''}<div class="chips">${chips||'<span class="chip k">미입력</span>'}</div></div></div>`;}).join('');
 }
 function fillXtSelects(){const opts='<option value="">(선택)</option>'+FILTERABLE.map(f=>`<option value="${f.k}">${f.label}</option>`).join('');const row=document.getElementById('xtRow'),col=document.getElementById('xtCol');row.innerHTML=opts;col.innerHTML=opts;row.value='zyg_maxilla';col.value='nasolabial';}
 function renderCrosstab(){
@@ -1043,18 +1047,16 @@ let toastT;function toast(m){const t=document.getElementById('toast');t.textCont
 
 renderForm();fillXtSelects();renderConds();updateValidation();setModeBadge();authBoot();
 
-/* ===== 비밀번호 잠금 ===== */
-const APP_PASSWORD="ththslem1"; /* ← 이 값을 원하는 비밀번호로 바꾸세요 (따옴표 안만) */
-function tryUnlock(){
-  const v=(document.getElementById('lockPw')||{}).value||'';
-  if(v===APP_PASSWORD){try{sessionStorage.setItem('soneed_unlocked','1');}catch(e){}document.getElementById('lockScreen').style.display='none';}
-  else{document.getElementById('lockMsg').textContent='비밀번호가 올바르지 않습니다';}
+/* ===== 로그인 게이트 (기존 비밀번호 게이트 대체) — 로그인 전엔 앱/차트가 오버레이로 가려짐 ===== */
+function gateShow(){const ls=document.getElementById('lockScreen');if(ls)ls.style.display='flex';setTimeout(function(){const el=document.getElementById('lockEmail');if(el&&!el.value)el.focus();else{const p=document.getElementById('lockPw');if(p)p.focus();}},120);}
+function gateHide(){const ls=document.getElementById('lockScreen');if(ls)ls.style.display='none';}
+async function gateLogin(){
+  const em=((document.getElementById('lockEmail')||{}).value||'').trim(),pw=(document.getElementById('lockPw')||{}).value||'',msg=document.getElementById('lockMsg');
+  if(!em||!pw){if(msg)msg.textContent='이메일과 비밀번호를 입력하세요';return;}
+  if(msg)msg.textContent='로그인 중…';
+  try{await authLogin(em,pw);if(msg)msg.textContent='';const p=document.getElementById('lockPw');if(p)p.value='';gateHide();loadAll();}
+  catch(e){if(msg)msg.textContent='로그인 실패: '+(e&&e.message||e);}
 }
-(function(){let ok=false;try{ok=sessionStorage.getItem('soneed_unlocked')==='1';}catch(e){}
-  const ls=document.getElementById('lockScreen');
-  if(ok){if(ls)ls.style.display='none';}
-  else{setTimeout(()=>{const el=document.getElementById('lockPw');if(el)el.focus();},120);}
-})();
 
 /* ===== [v24 추가] 3D 얼굴 시뮬레이션 (test-preview 이식·IIFE 격리) — CLAUDE.md §14-1 ===== */
 ;(function(){
