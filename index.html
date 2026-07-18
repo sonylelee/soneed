@@ -119,7 +119,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v30 (2026-07-18)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v33 (2026-07-18)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">데이터 · 필터</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -159,7 +159,7 @@
           <div class="fpx-pane"><div class="fpx-h">미리보기</div><canvas id="fp_cvB"></canvas></div>
         </div>
         <div class="fpx-sl"><label>회전 ←화면왼쪽·오른쪽→</label><input type="range" id="fp_amp" min="-30" max="30" step="0.5" value="0" disabled><span id="fp_ampV">0.0%</span></div>
-        <div class="fpx-sl"><label>원근 기울기(카메라 아래)</label><input type="range" id="fp_tilt" min="0" max="100" step="5" value="40" disabled><span id="fp_tiltV">40%</span></div>
+        <div class="fpx-sl"><label>원근 기울기(카메라 아래 °)</label><input type="range" id="fp_tilt" min="0" max="30" step="1" value="10" disabled><span id="fp_tiltV">10°</span></div>
         <div class="fpx-sl"><label>① 문어(본인 ←왼·오른→)</label><input type="range" id="fp_comp" min="-100" max="100" step="5" value="0" disabled><span id="fp_compV">0%</span></div>
         <div class="fpx-sl"><label>② 드로잉(1·2층)</label><input type="range" id="fp_draw" min="-100" max="100" step="5" value="0" disabled><span id="fp_drawV">0%</span></div>
         <div class="fpx-sl"><label>③ 전체 기울이기</label><input type="range" id="fp_roll" min="-12" max="12" step="0.5" value="0" disabled><span id="fp_rollV">0.0°</span></div>
@@ -217,7 +217,15 @@
       </div>
       <div id="xtOut"></div>
     </div>
-    <div style="margin:22px 2px 12px"><h2 class="section" style="margin:0">기록</h2></div>
+    <div style="margin:22px 2px 12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <h2 class="section" style="margin:0">기록</h2>
+      <label style="font-size:13px;color:#71717a">정렬</label>
+      <select id="sortSel" onchange="setSort(this.value)" style="font-size:13px;padding:5px 9px;border:1px solid #D3D7DE;border-radius:8px;background:#fff">
+        <option value="name">이름 가나다순</option>
+        <option value="updated">최근 업데이트순</option>
+        <option value="date">날짜(회차)순</option>
+      </select>
+    </div>
     <div id="recList" class="recgrid"></div>
   </section>
 </main>
@@ -342,6 +350,15 @@ let cfg=loadCfg()||DEFAULT_CFG;
 let mode=(cfg&&cfg.url&&cfg.key)?'cloud':'local';
 function newId(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
 function sortRecs(){records.sort((a,b)=>(b.date||'').localeCompare(a.date||'')||String(b.id).localeCompare(String(a.id)));}
+/* 목록 정렬(드롭다운) — updMap: 로드 시 각 기록의 updated_at 보관(레코드 오염 없이) */
+let sortMode='name',updMap={};
+function setSort(v){sortMode=v;renderRecList();}
+function sortList(arr){var a=arr.slice();
+  if(sortMode==='name')a.sort(function(x,y){return String(x.code||'힣힣힣').localeCompare(String(y.code||'힣힣힣'),'ko');});
+  else if(sortMode==='updated')a.sort(function(x,y){return String(updMap[y.id]||'').localeCompare(String(updMap[x.id]||''));});
+  else a.sort(function(x,y){return String(y.date||'').localeCompare(String(x.date||''))||String(y.id).localeCompare(String(x.id));});
+  return a;
+}
 
 /* 로컬(브라우저) 저장 — Claude 안에선 window.storage, 밖에선 localStorage */
 const useCloudStore=!!(window.storage);
@@ -389,7 +406,7 @@ async function doLogin(){
   catch(e){st.textContent='로그인 실패: '+e.message;}
 }
 function doLogout(){authLogout();closeLogin();}
-async function cloudLoad(){const r=await fetch(sbBase()+'records?select=id,data&order=updated_at.desc',{headers:sbHeaders()});if(!r.ok){if(r.status===401||r.status===403){openLogin();}throw new Error('HTTP '+r.status+' '+await r.text());}const rows=await r.json();return rows.map(x=>Object.assign({},x.data,{id:x.id}));}
+async function cloudLoad(){const r=await fetch(sbBase()+'records?select=id,data,updated_at&order=updated_at.desc',{headers:sbHeaders()});if(!r.ok){if(r.status===401||r.status===403){openLogin();}throw new Error('HTTP '+r.status+' '+await r.text());}const rows=await r.json();updMap={};return rows.map(x=>{updMap[x.id]=x.updated_at;return Object.assign({},x.data,{id:x.id});});}
 async function cloudPut(id,dataObj){if(authEmail()){try{dataObj.savedBy=authEmail();}catch(e){}}const r=await fetch(sbBase()+'records',{method:'POST',headers:sbHeaders({Prefer:'resolution=merge-duplicates,return=minimal'}),body:JSON.stringify({id:String(id),data:dataObj,updated_at:new Date().toISOString()})});if(!r.ok)throw new Error('HTTP '+r.status+' '+await r.text());}
 async function cloudSaveRecord(rec){
   const core=JSON.parse(JSON.stringify(rec));
@@ -1007,7 +1024,7 @@ function applyFilter(){document.getElementById('filterCount').textContent=filter
 function recPhoto(r){for(const [s] of PHOTO_SLOTS){if(r['photo_'+s])return r['photo_'+s];}return null;}
 function chipFor(r,k){let v=r[k];if(v==null||v==='')return'';if(Array.isArray(v))v=v.join(',');const neu=NEUTRAL.includes(v)?' neu':'';return `<span class="chip${neu}">${FMAP[k].label.split(' ')[0].slice(0,4)}:${v}</span>`;}
 function renderRecList(){
-  const list=filtered(),box=document.getElementById('recList');
+  const list=sortList(filtered()),box=document.getElementById('recList');
   if(list.length===0){box.innerHTML=`<div class="empty-note" style="grid-column:1/-1"><b>아직 기록이 없습니다.</b><br>‘기록 입력’ 탭에서 첫 데이터를 저장해 보세요.</div>`;return;}
   box.innerHTML=list.map(r=>{const p=recPhoto(r);const thumb=p?`<img src="${p}">`:`<span>사진 없음</span>`;const sub=[r.date,r.therapist,r.signup].filter(Boolean).join(' · ');const chips=CHIP_KEYS.map(k=>chipFor(r,k)).filter(Boolean).join('');return `<div class="rec" onclick="editRecord('${r.id}')"><div class="thumb ${p?'':'empty'}">${thumb}</div><div class="meta"><div class="code">${r.code||'무제'}</div><div class="sub">${sub||'&nbsp;'}</div>${(r.savedBy&&r.savedBy!==authEmail())?'<div class="sub" style="color:#C81D74">👤 '+r.savedBy+'</div>':''}<div class="chips">${chips||'<span class="chip k">미입력</span>'}</div></div></div>`;}).join('');
 }
@@ -1126,7 +1143,7 @@ function makeField(o){
       }
     }
     if(dN!==0){                                     // (C) 드로잉: 3층(이마) 고정, 1·2층만 당김+한쪽 올림
-      const vw=Math.max(0,Math.min(1,(Yc+0.10*fH)/(0.45*fH)));  // 0 이마 → 1 턱
+      const vw=Math.max(0,Math.min(1,(Yc+0.18*fH)/(0.11*fH)));  // 이마(3층)만 고정, 광대(2층)~턱(1층) 함께
       dX+=-dN*PULL*vw;
       dY+=-dN*LIFT*vw*(Xc/halfW);
     }
@@ -1170,7 +1187,7 @@ function makeField(o){
     let ddy=rx*srr + ry*(crr-1);
     if(hamMag>0){                                     // ④ 햄버거(전체 이미지)
       const ax=(x-caX)/(fW*0.16), ay=(y-caY)/(fH*0.22), wA=Math.exp(-0.5*(ax*ax+ay*ay));
-      ddx+=-hamSA*hamMag*wA;                          // 광대 최외측(측면 최돌출) → 코쪽(중심)으로
+      ddx+=-hamSA*hamMag*wA; {const nbx=(x-cx)/(fW*0.13),nby=(y-(cy-fH*0.04))/(fH*0.20),wN=Math.exp(-0.5*(nbx*nbx+nby*nby)); ddx+=-hamSA*hamMag*0.7*wN;}                          // 광대 최외측(측면 최돌출) → 코쪽(중심)으로
       const sBpos=-hamSA*(x-cx);                      // 반대쪽(side B) 바깥 방향 거리
       let og=(sBpos-fW*0.50)/(fW*0.14); og=og<0?0:(og>1?1:og);  // 얼굴 바깥에서만(볼 안 건드림)
       const vy=(y-(cy-fH*0.05))/(fH*0.42), vmB=Math.exp(-0.5*vy*vy);  // 귀 높이 근처만
@@ -1241,12 +1258,12 @@ function fpRender(pct){
   if(!P||!srcC)return;
   $("fp_amp").value=pct; $("fp_ampV").textContent=(pct>0?"+":"")+(+pct).toFixed(1)+"%";
   var tilt=num("fp_tilt"),comp=num("fp_comp"),drw=num("fp_draw"),roll=num("fp_roll"),ham=num("fp_ham"),nR=num("fp_nostR"),nL=num("fp_nostL");
-  $("fp_tiltV").textContent=tilt+"%"; $("fp_compV").textContent=(comp>0?"+":"")+comp+"%"; $("fp_drawV").textContent=(drw>0?"+":"")+drw+"%";
+  $("fp_tiltV").textContent=tilt+"°"; $("fp_compV").textContent=(comp>0?"+":"")+comp+"%"; $("fp_drawV").textContent=(drw>0?"+":"")+drw+"%";
   $("fp_rollV").textContent=(roll>0?"+":"")+roll.toFixed(1)+"°"; $("fp_hamV").textContent=(ham>0?"+":"")+ham+"%";
   $("fp_nostRV").textContent=(nR>0?"+":"")+nR+"%"; $("fp_nostLV").textContent=(nL>0?"+":"")+nL+"%";
   cmpBefore=false; var cb=$("fp_cmp"); if(cb)cb.textContent="👁 전/후 비교";
   if(pct===0&&comp===0&&drw===0&&roll===0&&ham===0&&nR===0&&nL===0){ fpDraw($("fp_cvB"),srcC,showDots?P:null); fpLog("원본(모든 슬라이더 0)."); return; }
-  var o={ yawRad:(pct/100)*30*Math.PI/180, pitchRad:(tilt/100)*40*Math.PI/180, comp:comp, draw:drw, roll:roll*Math.PI/180, ham:ham, nostrilR:nR, nostrilL:nL };
+  var o={ yawRad:(pct/100)*30*Math.PI/180, pitchRad:tilt*Math.PI/180, comp:comp, draw:drw, roll:roll*Math.PI/180, ham:ham, nostrilR:nR, nostrilL:nL };
   var field,warped,turn;
   try{
     field=makeField(o); warped=warp(srcC,field); var sc={dx:0,dy:0};
@@ -1317,7 +1334,7 @@ var _cmp=$("fp_cmp"); if(_cmp)_cmp.onclick=function(){
   if(!P||!srcC)return; cmpBefore=!cmpBefore; _cmp.textContent=cmpBefore?"👁 후(변형) 보기":"👁 전/후 비교";
   if(cmpBefore){ fpDraw($("fp_cvB"),srcC,showDots?P:null); fpLog("전(원본) 표시 중 — 다시 눌러 후(변형)로"); } else fpRender(num("fp_amp"));
 };
-var _reset=$("fp_reset"); if(_reset)_reset.onclick=function(){ cmpBefore=false; var cb=$("fp_cmp"); if(cb)cb.textContent="👁 전/후 비교"; ["fp_amp","fp_comp","fp_draw","fp_roll","fp_ham","fp_nostR","fp_nostL"].forEach(function(id){$(id).value=0;}); $("fp_tilt").value=40; $("fp_method_out").textContent=""; fpRender(0); };
+var _reset=$("fp_reset"); if(_reset)_reset.onclick=function(){ cmpBefore=false; var cb=$("fp_cmp"); if(cb)cb.textContent="👁 전/후 비교"; ["fp_amp","fp_comp","fp_draw","fp_roll","fp_ham","fp_nostR","fp_nostL"].forEach(function(id){$(id).value=0;}); $("fp_tilt").value=10; $("fp_method_out").textContent=""; fpRender(0); };
 var _dots=$("fp_dots"); if(_dots)_dots.onclick=function(){ showDots=!showDots; _dots.textContent="랜드마크 "+(showDots?"켬":"끕"); if(P)fpDraw($("fp_cvA"),srcC,showDots?P:null); fpRender(num("fp_amp")); };
 var _method=$("fp_method"); if(_method)_method.onclick=function(){
   if(!P)return;
@@ -1348,7 +1365,7 @@ function fpResetPanel(){
   P=null; srcC=null; origImg=null; curRegion=null; isFit=false; cmpBefore=false;
   fpEnable(false);
   ["fp_amp","fp_comp","fp_draw","fp_roll","fp_ham","fp_nostR","fp_nostL"].forEach(function(id){var e=$(id);if(e)e.value=0;});
-  var t=$("fp_tilt"); if(t)t.value=40;
+  var t=$("fp_tilt"); if(t)t.value=10;
   var mo=$("fp_method_out"); if(mo)mo.textContent="";
   var fb=$("fp_fit"); if(fb)fb.textContent="🔍 얼굴 확대";
   var cb=$("fp_cmp"); if(cb)cb.textContent="👁 전/후 비교";
