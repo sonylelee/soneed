@@ -55,8 +55,8 @@
   /* 스티키 사진 썸네일 + 확대 라이트박스 */
   .sticky-thumbs{position:sticky;top:56px;z-index:15;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding:6px 8px;margin:10px 0;background:rgba(255,255,255,.96);backdrop-filter:blur(4px);border:1px solid var(--line);border-radius:12px;box-shadow:0 2px 10px rgba(20,25,35,.09)}
   .sticky-thumbs:empty{display:none}
-  .sticky-thumbs .st-item{position:relative;cursor:zoom-in}
-  .sticky-thumbs img{height:min(180px,26vh);width:auto;max-width:32vw;object-fit:cover;border-radius:8px;display:block}
+  .sticky-thumbs .st-item{position:relative;cursor:zoom-in;overflow:hidden;border-radius:8px}
+  .sticky-thumbs img{height:min(180px,26vh);width:auto;max-width:40vw;object-fit:cover;border-radius:8px;display:block}
   .sticky-thumbs span{position:absolute;left:3px;bottom:3px;font-size:9px;background:rgba(0,0,0,.55);color:#fff;padding:1px 4px;border-radius:4px}
   #photoZoom{position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;padding:16px;cursor:zoom-out}
   #photoZoom img{max-width:100%;max-height:100%;border-radius:8px}
@@ -136,7 +136,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v36 (2026-07-18)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v38 (2026-07-18)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">데이터 · 필터</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -161,6 +161,26 @@
       <button class="btn ghost" style="margin-top:10px;width:100%" onclick="document.getElementById('main3Input').click()">사진 3장 한 번에 넣기 (앨범에서 여러 장 선택)</button>
       <div id="stickyThumbs" class="sticky-thumbs"></div>
       <input type="file" id="main3Input" accept="image/*" multiple style="display:none" onchange="onMulti(event,'main')">
+
+      <h2 class="section">기본 정보</h2>
+      <div class="grid" id="grid-meta"></div>
+      <h2 class="section">2D 진단 <span class="tag all">사진 · 원시 관찰</span></h2>
+      <div class="grid" id="grid-2d"></div>
+      <h2 class="section">좌우 진단 <span class="tag dist">촉진 · 거리/두께 상대</span></h2>
+      <div class="grid" id="grid-lr"></div>
+      <h2 class="section">회전 진단 <span class="tag rot">기준뼈 대비 상대 회전</span></h2>
+      <div class="grid" id="grid-rot"></div>
+      <div id="rotWarn"></div>
+      <h2 class="section">회차별 애프터 사진</h2>
+      <div id="afters"></div>
+      <button class="btn ghost" style="width:100%" onclick="document.getElementById('afterInput').click()">＋ 애프터 추가 (사진 3장 한 번에)</button>
+      <input type="file" id="afterInput" accept="image/*" multiple style="display:none" onchange="onMulti(event,'after')">
+      <h2 class="section">특이사항</h2>
+      <textarea id="f_notes" placeholder="관리 순서, 특이사항, 다음 회차 계획 등"></textarea>
+      <div class="actions">
+        <button class="btn primary" onclick="saveRecord()">기록 저장</button>
+        <button class="btn danger" id="delBtn" style="display:none" onclick="deleteCurrent()">이 기록 삭제</button>
+      </div>
       <details id="fp_panel">
         <summary>🧪 3D 얼굴 시뮬레이션 <span class="tag all">촉진 전 참고 · 실험</span></summary>
         <div class="fpx-row">
@@ -187,26 +207,6 @@
         <div id="fp_log">정면사진을 저장(또는 사진 슬롯에 넣은 뒤) [정면사진 불러오기]를 누르세요.</div>
         <div id="fp_method_out"></div>
       </details>
-
-      <h2 class="section">기본 정보</h2>
-      <div class="grid" id="grid-meta"></div>
-      <h2 class="section">2D 진단 <span class="tag all">사진 · 원시 관찰</span></h2>
-      <div class="grid" id="grid-2d"></div>
-      <h2 class="section">좌우 진단 <span class="tag dist">촉진 · 거리/두께 상대</span></h2>
-      <div class="grid" id="grid-lr"></div>
-      <h2 class="section">회전 진단 <span class="tag rot">기준뼈 대비 상대 회전</span></h2>
-      <div class="grid" id="grid-rot"></div>
-      <div id="rotWarn"></div>
-      <h2 class="section">회차별 애프터 사진</h2>
-      <div id="afters"></div>
-      <button class="btn ghost" style="width:100%" onclick="document.getElementById('afterInput').click()">＋ 애프터 추가 (사진 3장 한 번에)</button>
-      <input type="file" id="afterInput" accept="image/*" multiple style="display:none" onchange="onMulti(event,'after')">
-      <h2 class="section">특이사항</h2>
-      <textarea id="f_notes" placeholder="관리 순서, 특이사항, 다음 회차 계획 등"></textarea>
-      <div class="actions">
-        <button class="btn primary" onclick="saveRecord()">기록 저장</button>
-        <button class="btn danger" id="delBtn" style="display:none" onclick="deleteCurrent()">이 기록 삭제</button>
-      </div>
     </div>
   </section>
   <section id="view-data" style="display:none">
@@ -547,10 +547,38 @@ function renderAfters(){const box=document.getElementById('afters');if(!box)retu
 function onPhoto(s,e){const f=e.target.files[0];if(!f)return;resizeToDataURL(f,640,0.6,d=>{form['photo_'+s]=d;setPhotoPreview(s);});applyExifDate(f);}
 function setPhotoPreview(s){const el=document.getElementById('drop_'+s);const src=form['photo_'+s];const ko=PHOTO_SLOTS.find(x=>x[0]===s)[1];el.innerHTML=src?`<img src="${src}">`:`<div class="ph">${ko}<br><small>클릭</small></div>`;renderStickyThumbs();}
 /* 스티키 사진 썸네일 — 아래 항목 체크할 때도 위 사진이 따라 내려와 보이게 */
-function renderStickyThumbs(){const box=document.getElementById('stickyThumbs');if(!box)return;box.innerHTML=PHOTO_SLOTS.map(([s,ko])=>{const src=form['photo_'+s];return src?`<div class="st-item" onclick="zoomPhoto('${s}')"><img src="${src}"><span>${ko}</span></div>`:'';}).join('');positionStickyThumbs();}
+let _cropCache={};
+function renderStickyThumbs(){const box=document.getElementById('stickyThumbs');if(!box)return;
+  box.innerHTML=PHOTO_SLOTS.map(([s,ko])=>{const src=form['photo_'+s];if(!src)return '';const shown=_cropCache[src]||src;return `<div class="st-item" onclick="zoomPhoto('${s}')"><img src="${shown}"><span>${ko}</span></div>`;}).join('');
+  positionStickyThumbs();
+  PHOTO_SLOTS.forEach(([s])=>{const src=form['photo_'+s];if(src&&!_cropCache[src]){faceCropThumb(src).then(()=>renderStickyThumbs());}});}
+/* 사진마다 얼굴 거리가 달라 실제 얼굴인식으로 크롭 — 결과는 캐시(원본 dataURL 기준) */
+async function faceCropThumb(src){
+  if(_cropCache[src])return _cropCache[src];
+  _cropCache[src]=src; // 진행 중엔 원본으로 (중복 감지 방지)
+  try{
+    const lm=await getLandmarker();const img=await _img(src);
+    const sc=Math.min(1,640/Math.max(img.width,img.height));
+    const dc=document.createElement('canvas');dc.width=Math.max(2,Math.round(img.width*sc));dc.height=Math.max(2,Math.round(img.height*sc));
+    dc.getContext('2d').drawImage(img,0,0,dc.width,dc.height);
+    const out=lm.detect(dc);
+    if(!out.faceLandmarks||!out.faceLandmarks.length)return src;
+    const P=out.faceLandmarks[0];let minx=1,miny=1,maxx=0,maxy=0;
+    for(const p of P){if(p.x<minx)minx=p.x;if(p.x>maxx)maxx=p.x;if(p.y<miny)miny=p.y;if(p.y>maxy)maxy=p.y;}
+    let ox=minx*img.width,oy=miny*img.height,ow=(maxx-minx)*img.width,oh=(maxy-miny)*img.height;
+    const mx=ow*0.35,mT=oh*0.55,mB=oh*0.30;ox-=mx;oy-=mT;ow+=2*mx;oh+=mT+mB;
+    if(ox<0){ow+=ox;ox=0;}if(oy<0){oh+=oy;oy=0;}if(ox+ow>img.width)ow=img.width-ox;if(oy+oh>img.height)oh=img.height-oy;
+    const th=document.createElement('canvas');const s2=Math.min(1,320/Math.max(ow,oh));
+    th.width=Math.max(1,Math.round(ow*s2));th.height=Math.max(1,Math.round(oh*s2));
+    th.getContext('2d').drawImage(img,ox,oy,ow,oh,0,0,th.width,th.height);
+    const url=th.toDataURL('image/jpeg',0.78);_cropCache[src]=url;return url;
+  }catch(e){return src;}
+}
 function positionStickyThumbs(){const h=document.querySelector('header.top'),st=document.getElementById('stickyThumbs');if(h&&st)st.style.top=(h.offsetHeight-1)+'px';}
 function zoomPhoto(s){const src=form['photo_'+s];if(!src)return;let o=document.getElementById('photoZoom');if(!o){o=document.createElement('div');o.id='photoZoom';o.onclick=function(){o.style.display='none';};document.body.appendChild(o);}o.innerHTML='<img src="'+src+'">';o.style.display='flex';}
 window.addEventListener('resize',positionStickyThumbs);
+/* 3D 시뮬레이션(맨 아래) 영역이 화면에 들어오면 따라오는 사진 숨김 — 폰에서 방해 안 되게 */
+(function(){var fp=document.getElementById('fp_panel'),st=document.getElementById('stickyThumbs');if(fp&&st&&window.IntersectionObserver){new IntersectionObserver(function(es){var vis=es[0]&&es[0].isIntersecting;st.style.display=vis?'none':'';}).observe(fp);}})();
 
 /* 종이차트 자동 인식 */
 function schemaForPrompt(){const o={};FIELDS.filter(f=>f.type==='seg'||f.type==='select'||f.type==='multi').forEach(f=>{o[f.label]=f.opt.filter(x=>x!=='');});return o;}
