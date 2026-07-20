@@ -136,7 +136,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v40 (2026-07-18)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v41 (2026-07-20)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">데이터 · 필터</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -203,6 +203,7 @@
         <div class="fpx-sl"><label>④ 햄버거 시프트</label><input type="range" id="fp_ham" min="-100" max="100" step="5" value="0" disabled><span id="fp_hamV">0%</span></div>
         <div class="fpx-sl"><label>⑤ 콧볼 오른쪽(+위/−아래)</label><input type="range" id="fp_nostR" min="-100" max="100" step="5" value="0" disabled><span id="fp_nostRV">0%</span></div>
         <div class="fpx-sl"><label>⑥ 콧볼 왼쪽(+위/−아래)</label><input type="range" id="fp_nostL" min="-100" max="100" step="5" value="0" disabled><span id="fp_nostLV">0%</span></div>
+        <div class="fpx-sl"><label>⑦ 턱·마루 압축</label><input type="range" id="fp_tm" min="-100" max="100" step="5" value="0" disabled><span id="fp_tmV">0%</span></div>
         <button type="button" class="btn primary" id="fp_method" disabled style="width:100%;margin-top:10px">🩹 리세팅가이드</button>
         <div id="fp_log">정면사진을 저장(또는 사진 슬롯에 넣은 뒤) [정면사진 불러오기]를 누르세요.</div>
         <div id="fp_method_out"></div>
@@ -1187,10 +1188,10 @@ function smoothGrid(g,w,h,iter){
    부호는 모두 본인 기준→§2(화면왼쪽=본인오른쪽)로 변환. 수치 테스트로 방향 확정. */
 function makeField(o){
   const {cx,cy,cz}=faceCentroid();
-  const yawRad=o.yawRad||0, pitchRad=o.pitchRad||0, comp=o.comp||0, drawv=o.draw||0, roll=o.roll||0, ham=o.ham||0, nR=o.nostrilR||0, nL=o.nostrilL||0;
+  const yawRad=o.yawRad||0, pitchRad=o.pitchRad||0, comp=o.comp||0, drawv=o.draw||0, roll=o.roll||0, ham=o.ham||0, nR=o.nostrilR||0, nL=o.nostrilL||0, tm=o.tmComp||0;
   const st=Math.sin(YAWS*yawRad), ct=Math.cos(yawRad), sp=Math.sin(pitchRad);
   const fW=Math.hypot(P[IDX_OUT_A].x-P[IDX_OUT_B].x,P[IDX_OUT_A].y-P[IDX_OUT_B].y);
-  const fH=Math.abs(P[IDX_CHIN].y-P[IDX_FOREHEAD].y), halfW=fW/2;
+  const fH=Math.abs(P[IDX_CHIN].y-P[IDX_FOREHEAD].y), halfW=fW/2, chinY=P[IDX_CHIN].y, foreY=P[IDX_FOREHEAD].y;
   const SRISE=2.8, SFAN=4.0;                       // 세로 항 세기(원근 슬라이더 sp로 함께 조절)
   const kc=(Math.abs(comp)/100)*0.45, compSide=comp>0?-1:1;   // ① comp>0=본인오른쪽(화면왼쪽 Xc<0) 압축
   const dN=-drawv/100, PULL=fW*0.14, LIFT=fH*0.13;           // ② 드로잉 세기(슬라이더 방향 반전: 대표 요청)
@@ -1267,6 +1268,11 @@ function makeField(o){
       if(nR!==0){ const gx2=(x-(cx-fW*0.085))/(fW*0.10); ddy+=-(nR/100)*fH*0.06*Math.exp(-0.5*(gx2*gx2+ny*ny)); } // 본인오른쪽=화면왼쪽
       if(nL!==0){ const gx3=(x-(cx+fW*0.085))/(fW*0.10); ddy+=-(nL/100)*fH*0.06*Math.exp(-0.5*(gx3*gx3+ny*ny)); } // 본인왼쪽=화면오른쪽
     }
+    if(tm!==0){                                      // ⑦ 턱·마루 압축: 턱(아래)↑ + 마루/크라운(위)↓ 서로 가까워짐
+      const kk=(tm/100)*fH*0.16;
+      const jd=(y-(chinY+fH*0.02))/(fH*0.20); ddy+=-kk*Math.exp(-0.5*jd*jd);
+      const cd=(y-(foreY-fH*0.30))/(fH*0.22); ddy+= kk*Math.exp(-0.5*cd*cd);
+    }
     const fx=(x-minx)/cell, fy=(y-miny)/cell;         // 얼굴 영역은 IDW 변위 합산
     if(!(fx<0||fy<0||fx>=gW-1||fy>=gH-1)){
       const x0=fx|0, y0=fy|0, tx=fx-x0, ty=fy-y0;
@@ -1323,13 +1329,13 @@ function num(id){ return parseFloat($(id).value)||0; }
 function fpRender(pct){
   if(!P||!srcC)return;
   $("fp_amp").value=pct; $("fp_ampV").textContent=(pct>0?"+":"")+(+pct).toFixed(1)+"%";
-  var tilt=num("fp_tilt"),comp=num("fp_comp"),drw=num("fp_draw"),roll=num("fp_roll"),ham=num("fp_ham"),nR=num("fp_nostR"),nL=num("fp_nostL");
+  var tilt=num("fp_tilt"),comp=num("fp_comp"),drw=num("fp_draw"),roll=num("fp_roll"),ham=num("fp_ham"),nR=num("fp_nostR"),nL=num("fp_nostL"),tm=num("fp_tm");
   $("fp_tiltV").textContent=tilt+"°"; $("fp_compV").textContent=(comp>0?"+":"")+comp+"%"; $("fp_drawV").textContent=(drw>0?"+":"")+drw+"%";
   $("fp_rollV").textContent=(roll>0?"+":"")+roll.toFixed(1)+"°"; $("fp_hamV").textContent=(ham>0?"+":"")+ham+"%";
-  $("fp_nostRV").textContent=(nR>0?"+":"")+nR+"%"; $("fp_nostLV").textContent=(nL>0?"+":"")+nL+"%";
+  $("fp_nostRV").textContent=(nR>0?"+":"")+nR+"%"; $("fp_nostLV").textContent=(nL>0?"+":"")+nL+"%"; $("fp_tmV").textContent=(tm>0?"+":"")+tm+"%";
   cmpBefore=false; var cb=$("fp_cmp"); if(cb)cb.textContent="👁 전/후 비교";
-  if(pct===0&&comp===0&&drw===0&&roll===0&&ham===0&&nR===0&&nL===0){ fpDraw($("fp_cvB"),srcC,showDots?P:null); fpLog("원본(모든 슬라이더 0)."); return; }
-  var o={ yawRad:(pct/100)*30*Math.PI/180, pitchRad:tilt*Math.PI/180, comp:comp, draw:drw, roll:roll*Math.PI/180, ham:ham, nostrilR:nR, nostrilL:nL };
+  if(pct===0&&comp===0&&drw===0&&roll===0&&ham===0&&nR===0&&nL===0&&tm===0){ fpDraw($("fp_cvB"),srcC,showDots?P:null); fpLog("원본(모든 슬라이더 0)."); return; }
+  var o={ yawRad:(pct/100)*30*Math.PI/180, pitchRad:tilt*Math.PI/180, comp:comp, draw:drw, roll:roll*Math.PI/180, ham:ham, nostrilR:nR, nostrilL:nL, tmComp:tm };
   var field,warped,turn;
   try{
     field=makeField(o); warped=warp(srcC,field); var sc={dx:0,dy:0};
@@ -1350,7 +1356,7 @@ function fpRender(pct){
 }
 var _pend=null,_raf=0;
 function fpQ(pct){ _pend=pct; if(!_raf)_raf=requestAnimationFrame(function(){_raf=0; if(_pend!=null){fpRender(_pend);_pend=null;}}); }
-function fpEnable(on){ ["fp_amp","fp_tilt","fp_comp","fp_draw","fp_roll","fp_ham","fp_nostR","fp_nostL","fp_fit","fp_method","fp_cmp","fp_reset","fp_dots","fp_save"].forEach(function(id){var e=$(id); if(e)e.disabled=!on;}); }
+function fpEnable(on){ ["fp_amp","fp_tilt","fp_comp","fp_draw","fp_roll","fp_ham","fp_nostR","fp_nostL","fp_tm","fp_fit","fp_method","fp_cmp","fp_reset","fp_dots","fp_save"].forEach(function(id){var e=$(id); if(e)e.disabled=!on;}); }
 function fpSetSource(rx,ry,rw,rh){
   curRegion={x:rx,y:ry,w:rw,h:rh};
   var scale=680/Math.max(rw,rh); if(scale>3)scale=3;
@@ -1375,7 +1381,7 @@ function fpRestore(){
   Object.keys(map).forEach(function(k){ if(k in s){ var e=$(map[k]); if(e)e.value=s[k]; } });
   fpRender(num("fp_amp")); fpLog("저장된 조정값을 불러왔습니다.");
 }
-var _fpSl=/^fp_(amp|tilt|comp|draw|roll|ham|nostR|nostL)$/;
+var _fpSl=/^fp_(amp|tilt|comp|draw|roll|ham|nostR|nostL|tm)$/;
 document.addEventListener("input",function(ev){ if(ev.target&&_fpSl.test(ev.target.id)) fpQ(num("fp_amp")); });
 document.addEventListener("change",function(ev){ if(ev.target&&_fpSl.test(ev.target.id)) fpQ(num("fp_amp")); });
 var _load=$("fp_load"); if(_load)_load.onclick=function(){
@@ -1400,13 +1406,13 @@ var _cmp=$("fp_cmp"); if(_cmp)_cmp.onclick=function(){
   if(!P||!srcC)return; cmpBefore=!cmpBefore; _cmp.textContent=cmpBefore?"👁 후(변형) 보기":"👁 전/후 비교";
   if(cmpBefore){ fpDraw($("fp_cvB"),srcC,showDots?P:null); fpLog("전(원본) 표시 중 — 다시 눌러 후(변형)로"); } else fpRender(num("fp_amp"));
 };
-var _reset=$("fp_reset"); if(_reset)_reset.onclick=function(){ cmpBefore=false; var cb=$("fp_cmp"); if(cb)cb.textContent="👁 전/후 비교"; ["fp_amp","fp_comp","fp_draw","fp_roll","fp_ham","fp_nostR","fp_nostL"].forEach(function(id){$(id).value=0;}); $("fp_tilt").value=10; $("fp_method_out").textContent=""; fpRender(0); };
-var _dots=$("fp_dots"); if(_dots)_dots.onclick=function(){ showDots=!showDots; _dots.textContent="랜드마크 "+(showDots?"켬":"끕"); if(P)fpDraw($("fp_cvA"),srcC,showDots?P:null); fpRender(num("fp_amp")); };
+var _reset=$("fp_reset"); if(_reset)_reset.onclick=function(){ cmpBefore=false; var cb=$("fp_cmp"); if(cb)cb.textContent="👁 전/후 비교"; ["fp_amp","fp_comp","fp_draw","fp_roll","fp_ham","fp_nostR","fp_nostL","fp_tm"].forEach(function(id){$(id).value=0;}); $("fp_tilt").value=10; $("fp_method_out").textContent=""; fpRender(0); };
+var _dots=$("fp_dots"); if(_dots)_dots.onclick=function(){ showDots=!showDots; _dots.textContent="랜드마크 "+(showDots?"켬":"끔"); if(P)fpDraw($("fp_cvA"),srcC,showDots?P:null); fpRender(num("fp_amp")); };
 var _method=$("fp_method"); if(_method)_method.onclick=function(){
   if(!P)return;
   var amp=num("fp_amp"),comp=num("fp_comp"),drw=num("fp_draw"),roll=num("fp_roll"),ham=num("fp_ham"),nR=num("fp_nostR"),nL=num("fp_nostL"),out=[];
-  if(amp>0)out.push("【회전 우측】","· 우측으로 머리 돌린 후 오른광대와 후두면 압박","· 2층 or 3층 왼쪽 귀 뒤에서 우측으로 필러링","· 오른쪽 귀 풀링","· 이마 짚고 광대 왼쪽으로 평행이동");
-  else if(amp<0)out.push("【회전 좌측】","· 좌측으로 머리 돌린 후 왼광대와 후두면 압박","· 2층 or 3층 오른쪽 귀 뒤에서 좌측으로 필러링","· 왼쪽 귀 풀링","· 이마 짚고 광대 오른쪽으로 평행이동");
+  if(amp>0)out.push("【2층회전 우측】","· 우측으로 머리 돌린 후 오른광대와 후두면 압박","· 2층 or 3층 왼쪽 귀 뒤에서 우측으로 필러링","· 오른쪽 귀 풀링","· 이마 짚고 광대 왼쪽으로 평행이동");
+  else if(amp<0)out.push("【2층회전 좌측】","· 좌측으로 머리 돌린 후 왼광대와 후두면 압박","· 2층 or 3층 오른쪽 귀 뒤에서 좌측으로 필러링","· 왼쪽 귀 풀링","· 이마 짚고 광대 오른쪽으로 평행이동");
   if(comp<0)out.push("【문어 왼쪽】","· 왼쪽얼굴 문어 (턱 왼쪽으로 당기기)","· 오른쪽 얼굴 늘리기 (이마리프팅&사선내리기)");
   else if(comp>0)out.push("【문어 오른쪽】","· 오른쪽얼굴 문어 (턱 오른쪽으로 당기기)","· 왼쪽 얼굴 늘리기 (이마리프팅&사선내리기)");
   if(drw<0)out.push("【드로잉】","· 왼쪽 턱 위로 들어올려 우측으로 드로잉");
@@ -1430,7 +1436,7 @@ var _save=$("fp_save"); if(_save)_save.onclick=function(){
 function fpResetPanel(){
   P=null; srcC=null; origImg=null; curRegion=null; isFit=false; cmpBefore=false;
   fpEnable(false);
-  ["fp_amp","fp_comp","fp_draw","fp_roll","fp_ham","fp_nostR","fp_nostL"].forEach(function(id){var e=$(id);if(e)e.value=0;});
+  ["fp_amp","fp_comp","fp_draw","fp_roll","fp_ham","fp_nostR","fp_nostL","fp_tm"].forEach(function(id){var e=$(id);if(e)e.value=0;});
   var t=$("fp_tilt"); if(t)t.value=10;
   var mo=$("fp_method_out"); if(mo)mo.textContent="";
   var fb=$("fp_fit"); if(fb)fb.textContent="🔍 얼굴 확대";
