@@ -136,7 +136,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v41 (2026-07-20)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v42 (2026-07-20)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">데이터 · 필터</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -174,6 +174,7 @@
       <h2 class="section">회차별 애프터 사진</h2>
       <div id="afters"></div>
       <button class="btn ghost" style="width:100%" onclick="document.getElementById('afterInput').click()">＋ 애프터 추가 (사진 3장 한 번에)</button>
+      <button class="btn primary" style="width:100%;margin-top:8px" onclick="makeAfterImage()">📸 고객에게 보낼 전/후 이미지 만들기</button>
       <input type="file" id="afterInput" accept="image/*" multiple style="display:none" onchange="onMulti(event,'after')">
       <h2 class="section">특이사항</h2>
       <textarea id="f_notes" placeholder="관리 순서, 특이사항, 다음 회차 계획 등"></textarea>
@@ -544,6 +545,38 @@ function afterField(i,a){const opts='<option value="">회차</option>'+Array.fro
     +'<div class="field" style="max-width:190px"><label>날짜</label><input type="date" value="'+(a.date||'')+'" onchange="form.afters['+i+'].date=this.value||null;renderAfters()"></div>'
     +'<div style="margin-left:auto"><button class="btn danger" style="padding:8px 12px;font-size:12px" onclick="form.afters.splice('+i+',1);renderAfters()">삭제</button></div>'
     +'</div><div class="photos">'+thumbs+'</div></div>';}
+/* 고객에게 보낼 전/후 비교 이미지 — BEFORE(첫 정면) | AFTER(최신 애프터). 얼굴크롭으로 프레이밍 일관 */
+function fpDrawCover(c,img,x,y,w,h){var ir=img.width/img.height,rr=w/h,sw,sh,sx,sy;if(ir>rr){sh=img.height;sw=sh*rr;sx=(img.width-sw)/2;sy=0;}else{sw=img.width;sh=sw/rr;sx=0;sy=(img.height-sh)/2;}c.drawImage(img,sx,sy,sw,sh,x,y,w,h);}
+async function makeAfterImage(){
+  var before=form.photo_front;
+  if(!before){toast('BEFORE(정면 사진)가 없습니다');return;}
+  var afters=(form.afters||[]).filter(function(a){return a.photo_front;});
+  if(!afters.length){toast('애프터 사진을 먼저 추가하세요');return;}
+  var after=afters[afters.length-1];
+  toast('전/후 이미지 만드는 중…');
+  try{
+    var bc=await faceCropThumb(before), ac=await faceCropThumb(after.photo_front);
+    var bi=await _img(bc), ai=await _img(ac);
+    var TW=460,TH=613,PAD=30,GAP=20,TOP=96,W=PAD*2+TW*2+GAP,H=TOP+TH+64;
+    var cv=document.createElement('canvas');cv.width=W;cv.height=H;var c=cv.getContext('2d');
+    c.fillStyle='#fff';c.fillRect(0,0,W,H);
+    c.fillStyle='#C81D74';c.font='bold 30px -apple-system,sans-serif';c.textAlign='center';c.fillText('SONEED   '+(form.code||''),W/2,50);
+    c.fillStyle='#999';c.font='15px sans-serif';c.fillText((form.branch||'')+'   얼굴윤곽 3D 분석',W/2,77);
+    function tile(label,img,dt,x){var y=TOP;
+      c.save();c.beginPath();c.rect(x,y,TW,TH);c.clip();fpDrawCover(c,img,x,y,TW,TH);c.restore();
+      c.fillStyle='rgba(200,29,116,.92)';c.fillRect(x,y,TW,42);c.fillStyle='#fff';c.font='bold 21px sans-serif';c.textAlign='center';c.fillText(label,x+TW/2,y+29);
+      c.fillStyle='rgba(0,0,0,.55)';c.fillRect(x,y+TH-36,TW,36);c.fillStyle='#fff';c.font='16px sans-serif';c.fillText(dt,x+TW/2,y+TH-12);
+      c.strokeStyle='#e6e6ea';c.lineWidth=1;c.strokeRect(x+0.5,y+0.5,TW,TH);}
+    tile('BEFORE',bi,form.date||'첫 방문',PAD);
+    tile('AFTER',ai,(after.date||'')+(after.session?(' · '+after.session):''),PAD+TW+GAP);
+    c.fillStyle='#bbb';c.font='13px sans-serif';c.textAlign='center';c.fillText('SONEED 얼굴윤곽 교정',W/2,H-20);
+    var url=cv.toDataURL('image/jpeg',0.9);
+    var o=document.getElementById('photoZoom');if(!o){o=document.createElement('div');o.id='photoZoom';o.onclick=function(){o.style.display='none';};document.body.appendChild(o);}
+    o.innerHTML='<img src="'+url+'"><div style="position:fixed;bottom:14px;left:0;right:0;text-align:center;color:#fff;font-size:13px">사진을 길게 눌러 저장 · 화면 탭하면 닫기</div>';o.style.display='flex';
+    var a=document.createElement('a');a.href=url;a.download='soneed_전후_'+(form.code||'')+'.jpg';document.body.appendChild(a);a.click();a.remove();
+    toast('전/후 이미지 생성 완료');
+  }catch(e){toast('실패: '+(e&&e.message||e));}
+}
 function renderAfters(){const box=document.getElementById('afters');if(!box)return;if(Array.isArray(form.afters))form.afters.sort((a,b)=>(a.date||'9999-99').localeCompare(b.date||'9999-99'));const arr=Array.isArray(form.afters)?form.afters:[];box.innerHTML=arr.map((a,i)=>afterField(i,a)).join('');}
 
 function onPhoto(s,e){const f=e.target.files[0];if(!f)return;resizeToDataURL(f,640,0.6,d=>{form['photo_'+s]=d;setPhotoPreview(s);});applyExifDate(f);}
