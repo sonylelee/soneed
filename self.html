@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>SONEED · 무료 셀프 얼굴 밸런스 체험</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="theme-color" content="#12141a">
+<style>
+  :root{--bg:#0f1115;--panel:#181b22;--panel2:#1f232c;--line:#2a2f3a;--ink:#f2f4f8;--muted:#9aa2b1;--faint:#6b7280;
+        --brand:#ff4f9e;--brand2:#c81d74;--ok:#34c778;--r:16px;}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0}
+  body{background:radial-gradient(1200px 600px at 50% -10%,#1b1f29,#0f1115);color:var(--ink);
+       font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Segoe UI",Roboto,"Malgun Gothic",sans-serif;
+       font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;min-height:100vh;padding:0 0 40px}
+  .wrap{max-width:460px;margin:0 auto;padding:0 18px}
+  header{display:flex;align-items:center;justify-content:center;gap:8px;height:58px;position:sticky;top:0;
+         background:rgba(15,17,21,.72);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);z-index:5}
+  .logo{font-weight:900;letter-spacing:-.02em;font-size:18px}
+  .logo b{background:linear-gradient(90deg,#ff6fb0,#c81d74);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .logo span{color:var(--muted);font-weight:700;font-size:12px;margin-left:4px}
+  .step{display:none;animation:fade .35s ease}
+  .step.on{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  h1{font-size:24px;line-height:1.3;letter-spacing:-.02em;margin:26px 0 8px;font-weight:900}
+  h1 em{font-style:normal;background:linear-gradient(90deg,#ff6fb0,#ff4f9e);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  p.sub{color:var(--muted);margin:0 0 22px}
+  .card{background:linear-gradient(180deg,var(--panel),#15181f);border:1px solid var(--line);border-radius:var(--r);
+        padding:18px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+  .btn{display:block;width:100%;border:0;border-radius:14px;padding:16px;font:inherit;font-size:16px;font-weight:800;
+       cursor:pointer;transition:transform .12s ease,box-shadow .12s ease,filter .12s}
+  .btn:active{transform:scale(.98)}
+  .btn.primary{background:linear-gradient(90deg,#ff4f9e,#c81d74);color:#fff;box-shadow:0 8px 24px rgba(200,29,116,.35)}
+  .btn.primary:hover{filter:brightness(1.05)}
+  .btn.ghost{background:var(--panel2);color:var(--ink);border:1px solid var(--line)}
+  .btn.book{background:#fff;color:#111;display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}
+  .btn.book .loc{font-weight:900} .btn.book .go{color:#03c75a;font-weight:900}
+  .muted{color:var(--muted);font-size:13px}
+  .consent{display:flex;gap:10px;align-items:flex-start;margin:16px 0;cursor:pointer}
+  .consent input{margin-top:3px;width:18px;height:18px;accent-color:var(--brand)}
+  .consent span{font-size:13px;color:var(--muted)}
+  label.file{display:block}
+  input[type=file]{display:none}
+  .drop{border:1.5px dashed var(--line);border-radius:14px;padding:34px 16px;text-align:center;color:var(--muted);
+        background:var(--panel2);cursor:pointer}
+  .drop b{color:var(--ink)}
+  canvas{width:100%;border-radius:14px;display:block;background:#000}
+  .score{display:flex;align-items:center;gap:16px;margin:6px 0 4px}
+  .ring{width:92px;height:92px;flex:0 0 auto}
+  .score .n{font-size:34px;font-weight:900;line-height:1}
+  .score .l{font-size:13px;color:var(--muted)}
+  .finding{display:flex;gap:12px;padding:13px 0;border-top:1px solid var(--line)}
+  .finding:first-child{border-top:0}
+  .finding .ic{font-size:20px;flex:0 0 auto}
+  .finding .t{font-weight:800} .finding .d{font-size:13px;color:var(--muted)}
+  .spinner{width:44px;height:44px;border:4px solid var(--line);border-top-color:var(--brand);border-radius:50%;animation:spin 1s linear infinite;margin:30px auto}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .disc{font-size:11.5px;color:var(--faint);line-height:1.6;margin-top:18px}
+  .badge{display:inline-block;font-size:11px;font-weight:800;color:#ffd0e6;background:rgba(255,79,158,.14);border:1px solid rgba(255,79,158,.3);padding:3px 10px;border-radius:999px;margin-bottom:14px}
+  .hr{height:1px;background:var(--line);margin:18px 0}
+  .foot{text-align:center;color:var(--faint);font-size:12px;margin-top:26px}
+</style>
+</head>
+<body>
+<header><div class="logo"><b>SONEED</b> <span>얼굴 밸런스</span></div></header>
+<div class="wrap">
+
+  <!-- STEP 1: 인트로 + 동의 -->
+  <section class="step on" id="s-intro">
+    <div class="badge">무료 · 30초 셀프 체험</div>
+    <h1>내 얼굴 <em>좌우 밸런스</em>,<br>지금 확인해보세요</h1>
+    <p class="sub">셀카 한 장이면 소니드가 보는 방식으로 얼굴 균형을 살짝 들여다봐요.</p>
+    <div class="card">
+      <div class="finding"><div class="ic">📷</div><div><div class="t">사진은 내 폰에서만 분석</div><div class="d">서버로 전송·저장하지 않아요. 분석이 끝나면 사라집니다.</div></div></div>
+      <div class="finding"><div class="ic">✨</div><div><div class="t">눈높이·콧대·좌우 볼륨</div><div class="d">얼굴 균형을 쉬운 말로 보여드려요.</div></div></div>
+      <div class="finding"><div class="ic">💬</div><div><div class="t">체험용 참고 결과예요</div><div class="d">정확한 분석·교정은 소니드 관리사가 직접 봐드립니다.</div></div></div>
+      <label class="consent"><input type="checkbox" id="agree"><span>사진이 내 기기에서만 처리되는 것에 동의하며, 본 결과는 의료 진단이 아닌 미용 체험 참고용임을 이해했습니다.</span></label>
+      <button class="btn primary" id="startBtn" disabled style="opacity:.5">동의하고 시작하기</button>
+    </div>
+    <div class="disc">※ 본 서비스는 얼굴 이미지를 저장·전송하지 않으며, 모든 분석은 사용자의 브라우저(기기) 내에서 처리됩니다. 결과는 참고용 미용 정보이며 의학적 진단·치료를 대체하지 않습니다.</div>
+  </section>
+
+  <!-- STEP 2: 촬영 -->
+  <section class="step" id="s-capture">
+    <h1>정면 셀카를 올려주세요</h1>
+    <p class="sub">정면을 보고, 앞머리로 이마·눈썹이 가리지 않게 찍어주세요. 밝은 곳일수록 정확해요.</p>
+    <label class="file">
+      <input type="file" id="photo" accept="image/*" capture="user">
+      <div class="drop" id="drop"><b>📸 사진 찍기 / 앨범에서 고르기</b><br><span class="muted">여기를 눌러주세요</span></div>
+    </label>
+    <button class="btn ghost" id="backIntro" style="margin-top:12px">← 뒤로</button>
+  </section>
+
+  <!-- STEP 3: 분석중 -->
+  <section class="step" id="s-loading">
+    <h1>얼굴을 읽는 중…</h1>
+    <p class="sub" id="loadMsg">잠시만요, 얼굴 균형을 계산하고 있어요.</p>
+    <div class="spinner"></div>
+  </section>
+
+  <!-- STEP 4: 결과 -->
+  <section class="step" id="s-result">
+    <h1>내 얼굴 밸런스 <em>결과</em></h1>
+    <div class="card" style="margin-bottom:14px">
+      <div class="score">
+        <svg class="ring" viewBox="0 0 36 36">
+          <path d="M18 2.5a15.5 15.5 0 1 1 0 31 15.5 15.5 0 0 1 0-31" fill="none" stroke="#2a2f3a" stroke-width="3"/>
+          <path id="ringFill" d="M18 2.5a15.5 15.5 0 1 1 0 31 15.5 15.5 0 0 1 0-31" fill="none" stroke="url(#g)" stroke-width="3" stroke-linecap="round" stroke-dasharray="0 100"/>
+          <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff6fb0"/><stop offset="1" stop-color="#c81d74"/></linearGradient></defs>
+        </svg>
+        <div><div class="n" id="scoreN">–</div><div class="l">밸런스 점수 (100점 만점)</div></div>
+      </div>
+      <canvas id="cv" width="10" height="10" style="margin-top:12px"></canvas>
+      <div class="muted" style="text-align:center;margin-top:8px;font-size:12px">— 선: 눈높이 / | 선: 얼굴 중심 —</div>
+    </div>
+    <div class="card" id="findings"></div>
+    <div class="hr"></div>
+    <h1 style="font-size:20px;margin:6px 0 4px">더 정확한 건, <em>소니드에서</em></h1>
+    <p class="sub" style="margin-bottom:14px">이 체험은 참고용이에요. 손으로 직접 만져보는 정밀 분석과 30분 밸런스 관리는 소니드 관리사가 해드립니다. 예약할 지점을 골라주세요.</p>
+    <a class="btn book" id="bookApgujeong" href="#" target="_blank" rel="noopener"><span class="loc">📍 압구정점</span><span class="go">네이버 예약 →</span></a>
+    <a class="btn book" id="bookDongtan" href="#" target="_blank" rel="noopener"><span class="loc">📍 동탄본점</span><span class="go">네이버 예약 →</span></a>
+    <button class="btn ghost" id="again" style="margin-top:16px">↺ 다시 체험하기</button>
+    <div class="disc">본 결과는 사용자의 기기 내에서 계산된 참고용 미용 정보이며, 의료적 진단·치료가 아닙니다. 얼굴 비대칭의 원인·상태는 반드시 전문 관리사의 대면 확인이 필요합니다.</div>
+    <div class="foot">SONEED · 얼굴윤곽 밸런스</div>
+  </section>
+
+</div>
+
+<script type="module">
+/* ===== 지점별 네이버 예약 주소 (대표가 채워주세요) ===== */
+const NAVER = {
+  apgujeong: "https://map.naver.com/p/entry/place/2078742264?placePath=%2Fticket%3Fentry%3Dpll%26from%3Dnx%26fromNxList%3Dtrue%26from%3Dmap%26fromPanelNum%3D1%26additionalHeight%3D76%26timestamp%3D202607212234%26locale%3Dko%26svcName%3Dmap_pcv5&placeSearchOption=entry%3Dpll%26fromNxList%3Dtrue&searchType=place&c=15.00,0,0,0,dh",
+  dongtan:   "https://map.naver.com/p/entry/place/1531652767?placePath=%2Fticket%3Fentry%3Dpll%26from%3Dnx%26fromNxList%3Dtrue%26from%3Dmap%26fromPanelNum%3D1%26additionalHeight%3D76%26timestamp%3D202607212234%26locale%3Dko%26svcName%3Dmap_pcv5&placeSearchOption=entry%3Dpll%26fromNxList%3Dtrue&searchType=place&c=15.00,0,0,0,dh"
+};
+document.getElementById('bookApgujeong').href = NAVER.apgujeong;
+document.getElementById('bookDongtan').href = NAVER.dongtan;
+
+const $ = id => document.getElementById(id);
+function go(id){ document.querySelectorAll('.step').forEach(s=>s.classList.remove('on')); $(id).classList.add('on'); window.scrollTo(0,0); }
+
+/* 동의 → 시작 */
+$('agree').addEventListener('change', e=>{ const b=$('startBtn'); b.disabled=!e.target.checked; b.style.opacity=e.target.checked?1:.5; });
+$('startBtn').onclick = ()=>go('s-capture');
+$('backIntro').onclick = ()=>go('s-intro');
+$('again').onclick = ()=>{ $('photo').value=''; go('s-intro'); $('agree').checked=false; $('startBtn').disabled=true; $('startBtn').style.opacity=.5; };
+
+/* MediaPipe 로더 (앱과 동일 버전) */
+let _fl=null,_load=null;
+async function getLandmarker(){
+  if(_fl)return _fl; if(_load)return _load;
+  _load=(async()=>{
+    const v=await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14');
+    const fs=await v.FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm');
+    _fl=await v.FaceLandmarker.createFromOptions(fs,{
+      baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task'},
+      runningMode:'IMAGE',numFaces:1,minFaceDetectionConfidence:0.3,minFacePresenceConfidence:0.3,minTrackingConfidence:0.3
+    });
+    return _fl;
+  })(); return _load;
+}
+const imgFrom = src => new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=src;});
+const D=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+
+$('photo').onchange = async e=>{
+  const f=e.target.files[0]; if(!f)return;
+  go('s-loading');
+  try{
+    const url=URL.createObjectURL(f);
+    const img=await imgFrom(url);
+    // 리사이즈(가로 최대 720)
+    const sc=Math.min(1,720/Math.max(img.width,img.height));
+    const c=document.createElement('canvas'); c.width=Math.round(img.width*sc); c.height=Math.round(img.height*sc);
+    c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+    const lm=await getLandmarker();
+    const out=lm.detect(c);
+    URL.revokeObjectURL(url);
+    if(!out.faceLandmarks || !out.faceLandmarks.length){
+      $('loadMsg').textContent='얼굴을 못 찾았어요. 정면·밝은 곳에서 다시 찍어주세요.';
+      setTimeout(()=>go('s-capture'),1500); return;
+    }
+    const P=out.faceLandmarks[0].map(p=>({x:p.x*c.width,y:p.y*c.height}));
+    analyze(P,c);
+    go('s-result');
+  }catch(err){ $('loadMsg').textContent='오류가 났어요. 다시 시도해주세요.'; setTimeout(()=>go('s-capture'),1500); }
+};
+
+function analyze(P,srcCanvas){
+  const faceH=D(P[10],P[152]), faceW=D(P[234],P[454]);
+  const irisL=P[468], irisR=P[473];                 // 화면 좌/우 눈동자
+  // 눈높이 기울기(각도)
+  const tiltDeg = Math.atan2(irisR.y-irisL.y, irisR.x-irisL.x)*180/Math.PI;
+  const tiltAbs = Math.abs(tiltDeg);
+  // 콧대: 미간(눈안쪽 중점)→코끝 x이동
+  const glabX=(P[133].x+P[362].x)/2, noseDx=(P[1].x-glabX)/faceW*100;
+  // 좌우 볼륨(중심선 대비 코 치우침)
+  const cxF=(P[234].x+P[454].x)/2, noseOff=(P[1].x-cxF)/faceW*100;
+  // 얼굴형
+  const wh=faceW/faceH*100;
+
+  // 점수(편차가 작을수록 높음)
+  let score=100;
+  score-=Math.min(22, tiltAbs*3.2);
+  score-=Math.min(20, Math.abs(noseDx)*2.6);
+  score-=Math.min(18, Math.abs(noseOff)*2.4);
+  score=Math.max(55,Math.round(score));           // 체험용: 너무 낮게 안 나오게 바닥 55
+  $('scoreN').textContent=score;
+  $('ringFill').setAttribute('stroke-dasharray', (score)+' 100');
+
+  // 결과 카드
+  const F=[];
+  if(tiltAbs<1.3) F.push(['⚖️','눈높이 밸런스 좋아요','양쪽 눈높이가 거의 수평이에요.']);
+  else F.push(['↔️','눈높이가 살짝 기울어요', '얼굴이 약 '+tiltAbs.toFixed(1)+'° 정도 한쪽으로 기울어 보여요. 아래 사진의 가로선으로 확인해보세요.']);
+
+  if(Math.abs(noseDx)<1.2) F.push(['👃','콧대 밸런스 좋아요','콧대가 중심선을 잘 따라와요.']);
+  else F.push(['〰️','콧대가 살짝 흘러요','콧대가 중심에서 조금 벗어나 흐르는 편이에요.']);
+
+  if(Math.abs(noseOff)<1.3) F.push(['🙂','좌우 볼륨 균형형','얼굴 좌우 볼륨이 대체로 균형 잡혀 있어요.']);
+  else F.push(['🔀','한쪽 볼륨이 조금 더','얼굴 좌우 중 한쪽이 살짝 더 도드라져 보여요.']);
+
+  F.push(['📐', wh<80?'갸름한 세로형':(wh>86?'또렷한 가로형':'균형 잡힌 얼굴형'), wh<80?'세로로 갸름한 편이에요.':(wh>86?'가로로 또렷한 편이에요.':'가로세로 비율이 균형적이에요.')]);
+
+  $('findings').innerHTML=F.map(f=>`<div class="finding"><div class="ic">${f[0]}</div><div><div class="t">${f[1]}</div><div class="d">${f[2]}</div></div></div>`).join('');
+
+  // 시각화: 얼굴 크롭 + 눈선 + 중심선
+  drawViz(P,srcCanvas,cxF,irisL,irisR);
+}
+
+function drawViz(P,src,cxF,irisL,irisR){
+  let minx=1e9,miny=1e9,maxx=-1e9,maxy=-1e9;
+  for(const p of P){ if(p.x<minx)minx=p.x;if(p.x>maxx)maxx=p.x;if(p.y<miny)miny=p.y;if(p.y>maxy)maxy=p.y; }
+  const mw=(maxx-minx)*0.28, mh=(maxy-miny)*0.34;
+  let ox=Math.max(0,minx-mw), oy=Math.max(0,miny-mh*1.1);
+  let ow=Math.min(src.width-ox,(maxx-minx)+mw*2), oh=Math.min(src.height-oy,(maxy-miny)+mh*2.1);
+  const cv=$('cv'); const scale=Math.min(2, 460/ow); cv.width=Math.round(ow*scale); cv.height=Math.round(oh*scale);
+  const g=cv.getContext('2d'); g.drawImage(src,ox,oy,ow,oh,0,0,cv.width,cv.height);
+  const tx=x=>(x-ox)*scale, ty=y=>(y-oy)*scale;
+  // 중심선(세로)
+  g.strokeStyle='rgba(255,79,158,.9)'; g.lineWidth=2; g.setLineDash([6,5]);
+  g.beginPath(); g.moveTo(tx(cxF),0); g.lineTo(tx(cxF),cv.height); g.stroke();
+  // 눈선(가로)
+  g.strokeStyle='rgba(90,200,255,.95)'; g.setLineDash([]);
+  g.beginPath(); g.moveTo(tx(irisL.x),ty(irisL.y)); g.lineTo(tx(irisR.x),ty(irisR.y)); g.stroke();
+  // 눈동자 점
+  g.fillStyle='#fff';
+  [irisL,irisR].forEach(p=>{g.beginPath();g.arc(tx(p.x),ty(p.y),3.5,0,7);g.fill();});
+}
+</script>
+</body>
+</html>
