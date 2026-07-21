@@ -136,7 +136,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v45 (2026-07-21)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v46 (2026-07-21)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">데이터 · 필터</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -241,7 +241,8 @@
       <h2 class="section" style="margin-top:0">구독 등급 관리 <span class="subtle" style="text-transform:none;letter-spacing:0;font-weight:600">관리사 계정별 등급 지정(대표 전용)</span></h2>
       <div class="subtle" style="margin-bottom:8px">베이직 15,000 · 스탠다드 30,000 · 프리미엄 50,000 (원/월) · 미지정 계정은 기본 프리미엄</div>
       <div class="rowline" style="align-items:flex-end">
-        <div class="field" style="flex:1;min-width:180px"><label>이메일</label><input id="tierEmail" placeholder="관리사 로그인 이메일"></div>
+        <div class="field" style="flex:1;min-width:160px"><label>이메일</label><input id="tierEmail" placeholder="관리사 로그인 이메일"></div>
+        <div class="field" style="min-width:110px"><label>이름</label><input id="tierName" placeholder="홍길동"></div>
         <div class="field"><label>등급</label><select id="tierSel"><option>베이직</option><option>스탠다드</option><option>프리미엄</option></select></div>
         <button class="btn primary" onclick="saveTierFor()" style="height:38px">지정/변경</button>
       </div>
@@ -263,15 +264,18 @@
 
 <div class="modal" id="loginModal" style="display:none">
   <div class="modal-box">
-    <h3>로그인 (보안)</h3>
+    <h3 id="loginTitle">로그인 (보안)</h3>
+    <div id="myPlanBox" style="display:none"></div>
+    <div id="loginFormBox">
     <p class="subtle" style="margin:0">관리사 계정으로 로그인하세요. 계정 발급은 대표에게 문의. (로그인 정보는 이 기기에만 저장됩니다.)</p>
     <label>이메일</label>
     <input type="email" id="loginEmail" placeholder="you@example.com" autocomplete="username">
     <label>비밀번호</label>
     <input type="password" id="loginPw" placeholder="비밀번호" autocomplete="current-password">
     <div id="loginStatus" class="subtle" style="font-size:13px;margin:8px 0"></div>
+    </div>
     <div class="actions" style="margin-top:14px">
-      <button class="btn primary" onclick="doLogin()">로그인</button>
+      <button class="btn primary" id="loginDoBtn" onclick="doLogin()">로그인</button>
       <button class="btn ghost" onclick="doLogout()">로그아웃</button>
       <button class="btn ghost" onclick="closeLogin()">닫기</button>
     </div>
@@ -423,23 +427,23 @@ const TIER_LV={'베이직':1,'스탠다드':2,'프리미엄':3};
 const TIER_LIST=['베이직','스탠다드','프리미엄'];
 const TIER_PRICE={'베이직':'15,000원/월','스탠다드':'30,000원/월','프리미엄':'50,000원/월'};
 const DEFAULT_TIER='프리미엄';
-let userTier=DEFAULT_TIER;
+let userTier=DEFAULT_TIER, userName='';
 function tierLv(t){return TIER_LV[t]||0;}
 function hasTier(min){return tierLv(userTier)>=tierLv(min);}   // 내 등급이 min 이상인가
 function requireTier(min,featName){ if(hasTier(min))return true; toast('🔒 "'+featName+'"은(는) '+min+' 등급 전용입니다 ('+(TIER_PRICE[min]||'')+')'); return false; }
 async function loadTier(){
   var em=authEmail();
-  if(!em||!authTok||!cfg){ userTier=DEFAULT_TIER; applyTierUI(); return; }
+  if(!em||!authTok||!cfg){ userTier=DEFAULT_TIER; userName=''; applyTierUI(); return; }
   try{
-    var r=await fetch(sbBase()+'accounts?select=tier&email=eq.'+encodeURIComponent(em),{headers:sbHeaders()});
-    if(r.ok){ var j=await r.json(); userTier=(j&&j[0]&&j[0].tier&&TIER_LV[j[0].tier])?j[0].tier:DEFAULT_TIER; }
-    else userTier=DEFAULT_TIER;   // 테이블 없거나 조회 실패 → 기본(프리미엄): 기존 동작 유지
-  }catch(e){ userTier=DEFAULT_TIER; }
+    var r=await fetch(sbBase()+'accounts?select=tier,name&email=eq.'+encodeURIComponent(em),{headers:sbHeaders()});
+    if(r.ok){ var j=await r.json(); var row=(j&&j[0])||null; userTier=(row&&row.tier&&TIER_LV[row.tier])?row.tier:DEFAULT_TIER; userName=(row&&row.name)?row.name:''; }
+    else { userTier=DEFAULT_TIER; userName=''; }   // 테이블 없거나 조회 실패 → 기본(프리미엄): 기존 동작 유지
+  }catch(e){ userTier=DEFAULT_TIER; userName=''; }
   applyTierUI();
 }
 /* 등급 뱃지 + 기능 잠금 UI. 잠긴 버튼은 disabled + 🔒 표시. 실제 차단은 각 액션의 requireTier가 담당(방어). */
 function applyTierUI(){
-  var b=document.getElementById('authBtn'); if(b&&authTok&&authEmail())b.textContent='👤 '+authEmail()+' · '+userTier;
+  var b=document.getElementById('authBtn'); if(b&&authTok&&authEmail())b.textContent='👤 '+(userName?userName+'님':authEmail());
   // AI(스탠다드+): 얼굴분석·종이차트 자동채우기
   var aiOk=hasTier('스탠다드');
   [['faceBtn','🙂 얼굴사진으로 분석 (초안)'],['autoBtn','📄 종이차트 사진으로 자동 채우기']].forEach(function(p){
@@ -457,10 +461,10 @@ let _tierAdminBusy=false;
 async function loadTierAdmin(){
   if(!isAdmin())return; var box=document.getElementById('tierList'); if(!box||_tierAdminBusy)return; _tierAdminBusy=true;
   try{
-    var r=await fetch(sbBase()+'accounts?select=email,tier&order=email.asc',{headers:sbHeaders()});
+    var r=await fetch(sbBase()+'accounts?select=email,name,tier&order=email.asc',{headers:sbHeaders()});
     if(!r.ok){ box.innerHTML='⚠ 등급 테이블(accounts)이 아직 없습니다. 대표가 Supabase SQL을 먼저 실행하세요.'; return; }
     var j=await r.json();
-    box.innerHTML=(j&&j.length)?('<b>지정된 계정 '+j.length+'명</b><br>'+j.map(function(a){return '· '+a.email+' → <b style="color:#C81D74">'+a.tier+'</b>';}).join('<br>')):'아직 지정된 계정이 없습니다(전원 기본 프리미엄).';
+    box.innerHTML=(j&&j.length)?('<b>지정된 계정 '+j.length+'명</b><br>'+j.map(function(a){return '· '+(a.name?('<b>'+a.name+'</b> ('+a.email+')'):a.email)+' → <b style="color:#C81D74">'+a.tier+'</b>';}).join('<br>')):'아직 지정된 계정이 없습니다(전원 기본 프리미엄).';
   }catch(e){ box.textContent='조회 실패: '+(e&&e.message||e); }
   finally{ _tierAdminBusy=false; }
 }
@@ -468,12 +472,14 @@ async function saveTierFor(){
   if(!isAdmin()){toast('대표만 변경할 수 있습니다');return;}
   var em=(document.getElementById('tierEmail').value||'').trim().toLowerCase();
   var t=document.getElementById('tierSel').value;
+  var nm=(document.getElementById('tierName').value||'').trim();
   if(!em){toast('이메일을 입력하세요');return;}
   try{
-    var r=await fetch(sbBase()+'accounts',{method:'POST',headers:sbHeaders({Prefer:'resolution=merge-duplicates,return=minimal'}),body:JSON.stringify({email:em,tier:t,updated_at:new Date().toISOString()})});
+    var body={email:em,tier:t,updated_at:new Date().toISOString()}; if(nm)body.name=nm;
+    var r=await fetch(sbBase()+'accounts',{method:'POST',headers:sbHeaders({Prefer:'resolution=merge-duplicates,return=minimal'}),body:JSON.stringify(body)});
     if(!r.ok)throw new Error('HTTP '+r.status+' '+await r.text());
-    toast('저장됨: '+em+' → '+t); document.getElementById('tierEmail').value='';
-    if(em===authEmail()){ userTier=t; applyTierUI(); }
+    toast('저장됨: '+(nm?nm+' ':'')+em+' → '+t); document.getElementById('tierEmail').value=''; document.getElementById('tierName').value='';
+    if(em===authEmail()){ userTier=t; if(nm)userName=nm; applyTierUI(); }
     loadTierAdmin();
   }catch(e){ toast('저장 실패: '+(e&&e.message||e)); }
 }
@@ -496,7 +502,30 @@ function authSchedule(){if(_authTimer)clearTimeout(_authTimer);_authTimer=setTim
 function authLogout(){authTok=null;authSave(null);if(_authTimer)clearTimeout(_authTimer);updateAuthUI();toast('로그아웃되었습니다');}
 function updateAuthUI(){const b=document.getElementById('authBtn');if(!b)return;const em=authEmail();b.textContent=(authTok&&em)?('👤 '+em):'🔒 로그인';b.className='modebtn'+((authTok&&em)?' on':'');applyAdminUI();applyTierUI();}
 async function authBoot(){updateAuthUI();let ok=false;if(cfg){const a=authLoad();if(a&&a.refresh_token)ok=await authRefresh();}updateAuthUI();if(ok){gateHide();loadAll();loadTier();}else{gateShow();}}
-function openLogin(){const e=document.getElementById('loginModal');if(!e)return;const li=!!(authTok&&authEmail());document.getElementById('loginStatus').textContent=li?('현재 로그인: '+authEmail()):'';document.getElementById('loginEmail').value=authEmail()||'';const pb=document.getElementById('pwChangeBox');if(pb)pb.style.display=li?'':'none';const ns=document.getElementById('pwChangeStatus');if(ns)ns.textContent='';e.style.display='flex';}
+function openLogin(){const e=document.getElementById('loginModal');if(!e)return;const li=!!(authTok&&authEmail());
+  var ti=document.getElementById('loginTitle'); if(ti)ti.textContent=li?'마이페이지':'로그인 (보안)';
+  var lf=document.getElementById('loginFormBox'); if(lf)lf.style.display=li?'none':'';
+  var db=document.getElementById('loginDoBtn'); if(db)db.style.display=li?'none':'';
+  document.getElementById('loginStatus').textContent='';document.getElementById('loginEmail').value=authEmail()||'';
+  const pb=document.getElementById('pwChangeBox');if(pb)pb.style.display=li?'':'none';const ns=document.getElementById('pwChangeStatus');if(ns)ns.textContent='';
+  renderMyPlan();
+  e.style.display='flex';}
+/* 마이페이지 요금제/등급 표시 */
+function renderMyPlan(){
+  var box=document.getElementById('myPlanBox'); if(!box)return;
+  if(!(authTok&&authEmail())){box.style.display='none';box.innerHTML='';return;}
+  box.style.display='';
+  var feats={'베이직':'차트 기입 · CRM · 애프터 전송','스탠다드':'베이직 + AI 분석 · 3D 시뮬레이션','프리미엄':'스탠다드 + 리세팅가이드'};
+  var rows=TIER_LIST.map(function(t){var cur=(t===userTier);
+    return '<div style="display:flex;justify-content:space-between;gap:10px;padding:9px 11px;border:1px solid '+(cur?'#C81D74':'#e6e6ea')+';border-radius:10px;margin-top:7px;'+(cur?'background:#fdf2f8':'')+'">'
+      +'<div><b>'+t+'</b>'+(cur?' <span style="color:#C81D74;font-size:12px">✓ 현재 등급</span>':'')+'<div class="subtle" style="font-size:12px">'+feats[t]+'</div></div>'
+      +'<div style="white-space:nowrap;font-weight:700">'+TIER_PRICE[t]+'</div></div>';
+  }).join('');
+  box.innerHTML='<div style="font-weight:800;font-size:17px">'+(userName?userName+'님':authEmail())+'</div>'
+    +'<div class="subtle" style="font-size:13px;margin-top:2px">'+authEmail()+' · 현재 <b style="color:#C81D74">'+userTier+'</b></div>'
+    +'<div style="font-weight:700;margin:14px 0 2px">요금제</div>'+rows
+    +'<div class="subtle" style="font-size:12px;margin-top:10px">💳 업그레이드는 곧 앱에서 결제 예정입니다. 지금은 대표에게 문의해 주세요.</div>';
+}
 async function authChangePw(newpw){if(!authTok)throw new Error('먼저 로그인하세요');const r=await fetch(authGw()+'/user',{method:'PUT',headers:{apikey:cfg.key,Authorization:'Bearer '+authTok,'Content-Type':'application/json'},body:JSON.stringify({password:newpw})});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.msg||j.error_description||j.error||('변경 실패 HTTP '+r.status));return j;}
 function doChangePw(){const np=(document.getElementById('newPw')||{}).value||'',st=document.getElementById('pwChangeStatus');if(np.length<6){st.textContent='6자 이상 입력하세요';return;}st.textContent='변경 중…';authChangePw(np).then(function(){st.textContent='✓ 변경되었습니다';document.getElementById('newPw').value='';toast('비밀번호가 변경되었습니다');}).catch(function(e){st.textContent='실패: '+(e&&e.message||e);});}
 function closeLogin(){const e=document.getElementById('loginModal');if(e)e.style.display='none';}
