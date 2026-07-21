@@ -136,7 +136,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v43 (2026-07-21)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v45 (2026-07-21)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">데이터 · 필터</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -223,19 +223,29 @@
       </div>
       <div class="subtle" style="margin-top:8px">JSON 백업엔 사진까지 포함됩니다(전체 복원용). CSV는 표 데이터만(사진 제외) 나와서 엑셀·통계 분석에 씁니다.</div>
     </div>
-    <div class="card pad">
+    <div class="card pad" id="filterCard">
       <h2 class="section" style="margin-top:0">필터 <span class="subtle" style="text-transform:none;letter-spacing:0;font-weight:600">조건을 더하면 모두 만족(AND)</span></h2>
       <div id="conds"></div>
       <button class="btn ghost" style="font-size:12px;padding:7px 12px" onclick="addCond()">+ 조건 추가</button>
       <span class="subtle" style="margin-left:12px">일치 <b id="filterCount" style="color:var(--brand)">0</b>건</span>
     </div>
-    <div class="card pad" style="margin-top:16px">
+    <div class="card pad" id="crosstabCard" style="margin-top:16px">
       <h2 class="section" style="margin-top:0">상관관계 교차표 <span class="subtle" style="text-transform:none;letter-spacing:0;font-weight:600">두 항목이 함께 나타나는 빈도</span></h2>
       <div class="rowline">
         <div class="field"><label>세로축 (행)</label><select id="xtRow" onchange="renderCrosstab()"></select></div>
         <div class="field"><label>가로축 (열)</label><select id="xtCol" onchange="renderCrosstab()"></select></div>
       </div>
       <div id="xtOut"></div>
+    </div>
+    <div class="card pad" id="tierAdminCard" style="margin-top:16px">
+      <h2 class="section" style="margin-top:0">구독 등급 관리 <span class="subtle" style="text-transform:none;letter-spacing:0;font-weight:600">관리사 계정별 등급 지정(대표 전용)</span></h2>
+      <div class="subtle" style="margin-bottom:8px">베이직 15,000 · 스탠다드 30,000 · 프리미엄 50,000 (원/월) · 미지정 계정은 기본 프리미엄</div>
+      <div class="rowline" style="align-items:flex-end">
+        <div class="field" style="flex:1;min-width:180px"><label>이메일</label><input id="tierEmail" placeholder="관리사 로그인 이메일"></div>
+        <div class="field"><label>등급</label><select id="tierSel"><option>베이직</option><option>스탠다드</option><option>프리미엄</option></select></div>
+        <button class="btn primary" onclick="saveTierFor()" style="height:38px">지정/변경</button>
+      </div>
+      <div id="tierList" class="subtle" style="margin-top:12px;line-height:1.9">불러오는 중…</div>
     </div>
     <div style="margin:22px 2px 12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
       <h2 class="section" style="margin:0">기록</h2>
@@ -403,12 +413,76 @@ function authLoad(){try{return JSON.parse(localStorage.getItem('soneed_auth')||'
 function authSave(o){try{o?localStorage.setItem('soneed_auth',JSON.stringify(o)):localStorage.removeItem('soneed_auth');}catch(e){}}
 function authGw(){return cfg?cfg.url.replace(/\/+$/,'')+'/auth/v1':'';}
 function authEmail(){const a=authLoad();return(a&&a.email)||null;}
+const ADMIN_EMAIL='soni0025@naver.com';
+function isAdmin(){return !!(authTok&&authEmail()===ADMIN_EMAIL);}
+/* 주인장(대표)만 보이는 UI 토글. 지금은 데이터 탭의 조건필터 카드. */
+function applyAdminUI(){var on=isAdmin();['filterCard','crosstabCard','tierAdminCard'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display=on?'':'none';});if(on)loadTierAdmin();}
+
+/* ===== 구독 등급(관리사 계정 단위) ===== 누적형. 미확인 시 기본=프리미엄(현 직속직원 전원, 잠금은 대표가 낮은 등급 지정 시에만 작동) */
+const TIER_LV={'베이직':1,'스탠다드':2,'프리미엄':3};
+const TIER_LIST=['베이직','스탠다드','프리미엄'];
+const TIER_PRICE={'베이직':'15,000원/월','스탠다드':'30,000원/월','프리미엄':'50,000원/월'};
+const DEFAULT_TIER='프리미엄';
+let userTier=DEFAULT_TIER;
+function tierLv(t){return TIER_LV[t]||0;}
+function hasTier(min){return tierLv(userTier)>=tierLv(min);}   // 내 등급이 min 이상인가
+function requireTier(min,featName){ if(hasTier(min))return true; toast('🔒 "'+featName+'"은(는) '+min+' 등급 전용입니다 ('+(TIER_PRICE[min]||'')+')'); return false; }
+async function loadTier(){
+  var em=authEmail();
+  if(!em||!authTok||!cfg){ userTier=DEFAULT_TIER; applyTierUI(); return; }
+  try{
+    var r=await fetch(sbBase()+'accounts?select=tier&email=eq.'+encodeURIComponent(em),{headers:sbHeaders()});
+    if(r.ok){ var j=await r.json(); userTier=(j&&j[0]&&j[0].tier&&TIER_LV[j[0].tier])?j[0].tier:DEFAULT_TIER; }
+    else userTier=DEFAULT_TIER;   // 테이블 없거나 조회 실패 → 기본(프리미엄): 기존 동작 유지
+  }catch(e){ userTier=DEFAULT_TIER; }
+  applyTierUI();
+}
+/* 등급 뱃지 + 기능 잠금 UI. 잠긴 버튼은 disabled + 🔒 표시. 실제 차단은 각 액션의 requireTier가 담당(방어). */
+function applyTierUI(){
+  var b=document.getElementById('authBtn'); if(b&&authTok&&authEmail())b.textContent='👤 '+authEmail()+' · '+userTier;
+  // AI(스탠다드+): 얼굴분석·종이차트 자동채우기
+  var aiOk=hasTier('스탠다드');
+  [['faceBtn','🙂 얼굴사진으로 분석 (초안)'],['autoBtn','📄 종이차트 사진으로 자동 채우기']].forEach(function(p){
+    var e=document.getElementById(p[0]); if(!e)return; e.disabled=!aiOk; e.textContent=aiOk?p[1]:(p[1]+' 🔒');
+  });
+  // 3D 시뮬레이션(스탠다드+): 패널 요약에 잠금 표시
+  var sm=document.querySelector('#fp_panel>summary');
+  if(sm){ var base=sm.getAttribute('data-base')||sm.textContent.replace(/\s*🔒.*$/,''); sm.setAttribute('data-base',base); sm.textContent=aiOk?base:(base+'  🔒 스탠다드+'); }
+  // 리세팅가이드(프리미엄): 버튼 라벨
+  var mb=document.getElementById('fp_method');
+  if(mb){ mb.textContent=hasTier('프리미엄')?'🩹 리세팅가이드':'🩹 리세팅가이드 🔒 프리미엄'; }
+}
+/* 대표 전용: 등급 관리 목록/저장 */
+let _tierAdminBusy=false;
+async function loadTierAdmin(){
+  if(!isAdmin())return; var box=document.getElementById('tierList'); if(!box||_tierAdminBusy)return; _tierAdminBusy=true;
+  try{
+    var r=await fetch(sbBase()+'accounts?select=email,tier&order=email.asc',{headers:sbHeaders()});
+    if(!r.ok){ box.innerHTML='⚠ 등급 테이블(accounts)이 아직 없습니다. 대표가 Supabase SQL을 먼저 실행하세요.'; return; }
+    var j=await r.json();
+    box.innerHTML=(j&&j.length)?('<b>지정된 계정 '+j.length+'명</b><br>'+j.map(function(a){return '· '+a.email+' → <b style="color:#C81D74">'+a.tier+'</b>';}).join('<br>')):'아직 지정된 계정이 없습니다(전원 기본 프리미엄).';
+  }catch(e){ box.textContent='조회 실패: '+(e&&e.message||e); }
+  finally{ _tierAdminBusy=false; }
+}
+async function saveTierFor(){
+  if(!isAdmin()){toast('대표만 변경할 수 있습니다');return;}
+  var em=(document.getElementById('tierEmail').value||'').trim().toLowerCase();
+  var t=document.getElementById('tierSel').value;
+  if(!em){toast('이메일을 입력하세요');return;}
+  try{
+    var r=await fetch(sbBase()+'accounts',{method:'POST',headers:sbHeaders({Prefer:'resolution=merge-duplicates,return=minimal'}),body:JSON.stringify({email:em,tier:t,updated_at:new Date().toISOString()})});
+    if(!r.ok)throw new Error('HTTP '+r.status+' '+await r.text());
+    toast('저장됨: '+em+' → '+t); document.getElementById('tierEmail').value='';
+    if(em===authEmail()){ userTier=t; applyTierUI(); }
+    loadTierAdmin();
+  }catch(e){ toast('저장 실패: '+(e&&e.message||e)); }
+}
 async function authLogin(email,pw){
   if(!cfg)throw new Error('먼저 공용 DB에 연결하세요(설정)');
   const r=await fetch(authGw()+'/token?grant_type=password',{method:'POST',headers:{apikey:cfg.key,'Content-Type':'application/json'},body:JSON.stringify({email:email,password:pw})});
   const j=await r.json().catch(()=>({}));
   if(!r.ok)throw new Error(j.msg||j.error_description||j.error||('로그인 실패 HTTP '+r.status));
-  authTok=j.access_token;authSave({email:email,refresh_token:j.refresh_token});authSchedule();updateAuthUI();return j;
+  authTok=j.access_token;authSave({email:email,refresh_token:j.refresh_token});authSchedule();updateAuthUI();loadTier();return j;
 }
 async function authRefresh(){
   const a=authLoad();if(!a||!a.refresh_token||!cfg)return false;
@@ -420,8 +494,8 @@ async function authRefresh(){
 }
 function authSchedule(){if(_authTimer)clearTimeout(_authTimer);_authTimer=setTimeout(function(){authRefresh();},45*60*1000);}
 function authLogout(){authTok=null;authSave(null);if(_authTimer)clearTimeout(_authTimer);updateAuthUI();toast('로그아웃되었습니다');}
-function updateAuthUI(){const b=document.getElementById('authBtn');if(!b)return;const em=authEmail();b.textContent=(authTok&&em)?('👤 '+em):'🔒 로그인';b.className='modebtn'+((authTok&&em)?' on':'');}
-async function authBoot(){updateAuthUI();let ok=false;if(cfg){const a=authLoad();if(a&&a.refresh_token)ok=await authRefresh();}updateAuthUI();if(ok){gateHide();loadAll();}else{gateShow();}}
+function updateAuthUI(){const b=document.getElementById('authBtn');if(!b)return;const em=authEmail();b.textContent=(authTok&&em)?('👤 '+em):'🔒 로그인';b.className='modebtn'+((authTok&&em)?' on':'');applyAdminUI();applyTierUI();}
+async function authBoot(){updateAuthUI();let ok=false;if(cfg){const a=authLoad();if(a&&a.refresh_token)ok=await authRefresh();}updateAuthUI();if(ok){gateHide();loadAll();loadTier();}else{gateShow();}}
 function openLogin(){const e=document.getElementById('loginModal');if(!e)return;const li=!!(authTok&&authEmail());document.getElementById('loginStatus').textContent=li?('현재 로그인: '+authEmail()):'';document.getElementById('loginEmail').value=authEmail()||'';const pb=document.getElementById('pwChangeBox');if(pb)pb.style.display=li?'':'none';const ns=document.getElementById('pwChangeStatus');if(ns)ns.textContent='';e.style.display='flex';}
 async function authChangePw(newpw){if(!authTok)throw new Error('먼저 로그인하세요');const r=await fetch(authGw()+'/user',{method:'PUT',headers:{apikey:cfg.key,Authorization:'Bearer '+authTok,'Content-Type':'application/json'},body:JSON.stringify({password:newpw})});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.msg||j.error_description||j.error||('변경 실패 HTTP '+r.status));return j;}
 function doChangePw(){const np=(document.getElementById('newPw')||{}).value||'',st=document.getElementById('pwChangeStatus');if(np.length<6){st.textContent='6자 이상 입력하세요';return;}st.textContent='변경 중…';authChangePw(np).then(function(){st.textContent='✓ 변경되었습니다';document.getElementById('newPw').value='';toast('비밀번호가 변경되었습니다');}).catch(function(e){st.textContent='실패: '+(e&&e.message||e);});}
@@ -649,6 +723,7 @@ window.addEventListener('resize',positionStickyThumbs);
 function schemaForPrompt(){const o={};FIELDS.filter(f=>f.type==='seg'||f.type==='select'||f.type==='multi').forEach(f=>{o[f.label]=f.opt.filter(x=>x!=='');});return o;}
 async function onChartPhoto(e){
   const file=e.target.files[0];if(!file)return;e.target.value='';
+  if(!requireTier('스탠다드','AI 자동 채우기'))return;
   const btn=document.getElementById('autoBtn');btn.disabled=true;const orig=btn.innerHTML;btn.innerHTML='<span class="spinner"></span>인식 중…';
   const msg=document.getElementById('autoMsg');msg.innerHTML='<div class="banner info">종이차트를 읽는 중입니다… (사진이 밝고 반듯할수록 정확합니다)</div>';
   try{
@@ -1034,6 +1109,7 @@ ${ref}
 }
 
 async function onFaceAnalyze(){
+  if(!requireTier('스탠다드','AI 얼굴 분석'))return;
   const slots=[['front','정면'],['up','고개 든'],['down','고개 숙인']].filter(([s])=>form['photo_'+s]);
   if(!slots.length){toast('먼저 위 "사진" 슬롯에 얼굴 사진(정면·고개 든·고개 숙인)을 넣어주세요');return;}
   const btn=document.getElementById('faceBtn');btn.disabled=true;const orig=btn.innerHTML;btn.innerHTML='<span class="spinner"></span>분석 중…';
@@ -1444,9 +1520,10 @@ function fpRestore(){
   var s=(typeof form!=="undefined"&&form)?form.face3d:null; if(!s)return;
   var map={amp:"fp_amp",tilt:"fp_tilt",comp:"fp_comp",draw:"fp_draw",roll:"fp_roll",ham:"fp_ham",nostrilR:"fp_nostR",nostrilL:"fp_nostL",tm:"fp_tm"};
   Object.keys(map).forEach(function(k){ if(k in s){ var e=$(map[k]); if(e)e.value=s[k]; } });
+  _fpOrder=(s.order&&s.order.slice)?s.order.slice():[];   // 저장된 움직인 순서 복원(없으면 기본순서로 나열)
   fpRender(num("fp_amp")); fpLog("저장된 조정값을 불러왔습니다.");
   // 저장된 시뮬레이션이면 리세팅가이드도 자동 표시(다시 안 눌러도 되게)
-  try{ var mb=$("fp_method"); if(mb&&P&&!mb.disabled) mb.click(); }catch(e){}
+  try{ var mb=$("fp_method"); if(mb&&P&&!mb.disabled&&hasTier('프리미엄')) mb.click(); }catch(e){}
 }
 var _fpLoading=false;
 function fpAutoLoad(){
@@ -1456,11 +1533,14 @@ function fpAutoLoad(){
   _fpLoading=true; try{ lb.click(); } finally { setTimeout(function(){_fpLoading=false;},1500); }
 }
 var _fpSl=/^fp_(amp|tilt|comp|draw|roll|ham|nostR|nostL|tm)$/;
-document.addEventListener("input",function(ev){ if(ev.target&&_fpSl.test(ev.target.id)) fpQ(num("fp_amp")); });
-document.addEventListener("change",function(ev){ if(ev.target&&_fpSl.test(ev.target.id)) fpQ(num("fp_amp")); });
+var _fpOrder=[];                                   // 슬라이더 움직인 순서(첫 터치 기준, 가이드 나열용)
+function _fpTouch(id){ if(_fpSl.test(id)&&_fpOrder.indexOf(id)<0)_fpOrder.push(id); }
+document.addEventListener("input",function(ev){ if(ev.target&&_fpSl.test(ev.target.id)){ _fpTouch(ev.target.id); fpQ(num("fp_amp")); } });
+document.addEventListener("change",function(ev){ if(ev.target&&_fpSl.test(ev.target.id)){ _fpTouch(ev.target.id); fpQ(num("fp_amp")); } });
 // 패널을 펼치면, 저장된 시뮬레이션이 있고 아직 안 불러왔으면 자동 로드
 (function(){ var pnl=$("fp_panel"); if(pnl)pnl.addEventListener("toggle",function(){ if(pnl.open) fpAutoLoad(); }); })();
 var _load=$("fp_load"); if(_load)_load.onclick=function(){
+  if(!requireTier('스탠다드','3D 얼굴 시뮬레이션')){ fpLog('🔒 3D 시뮬레이션은 스탠다드 등급 전용입니다.'); return; }
   var pf=(typeof form!=="undefined"&&form)?form.photo_front:null;
   if(!pf){ fpLog("저장된 정면사진이 없습니다. 위 [사진] 슬롯에 정면사진을 넣고 다시 시도하세요."); return; }
   fpLog("정면사진 불러오는 중…");
@@ -1482,38 +1562,36 @@ var _cmp=$("fp_cmp"); if(_cmp)_cmp.onclick=function(){
   if(!P||!srcC)return; cmpBefore=!cmpBefore; _cmp.textContent=cmpBefore?"👁 후(변형) 보기":"👁 전/후 비교";
   if(cmpBefore){ fpDraw($("fp_cvB"),srcC,showDots?P:null); fpLog("전(원본) 표시 중 — 다시 눌러 후(변형)로"); } else fpRender(num("fp_amp"));
 };
-var _reset=$("fp_reset"); if(_reset)_reset.onclick=function(){ cmpBefore=false; var cb=$("fp_cmp"); if(cb)cb.textContent="👁 전/후 비교"; ["fp_amp","fp_comp","fp_draw","fp_roll","fp_ham","fp_nostR","fp_nostL","fp_tm"].forEach(function(id){$(id).value=0;}); $("fp_tilt").value=10; $("fp_method_out").textContent=""; fpRender(0); };
+var _reset=$("fp_reset"); if(_reset)_reset.onclick=function(){ cmpBefore=false; var cb=$("fp_cmp"); if(cb)cb.textContent="👁 전/후 비교"; ["fp_amp","fp_comp","fp_draw","fp_roll","fp_ham","fp_nostR","fp_nostL","fp_tm"].forEach(function(id){$(id).value=0;}); $("fp_tilt").value=10; _fpOrder=[]; $("fp_method_out").textContent=""; fpRender(0); };
 var _dots=$("fp_dots"); if(_dots)_dots.onclick=function(){ showDots=!showDots; _dots.textContent="랜드마크 "+(showDots?"켬":"끔"); if(P)fpDraw($("fp_cvA"),srcC,showDots?P:null); fpRender(num("fp_amp")); };
+/* 슬라이더 하나의 가이드(현재 값 기준). 조정 안 됐으면 null. {name, lines} 반환 */
+function _fpGuide(id){
+  var v;
+  if(id==="fp_amp"){ v=num("fp_amp"); if(v>0)return{name:"2층회전 우측",lines:["· 우측으로 머리 돌린 후 오른광대와 후두면 압박","· 2층 or 3층 왼쪽 귀 뒤에서 우측으로 필러링","· 오른쪽 귀 풀링","· 이마 짚고 광대 왼쪽으로 평행이동"]}; if(v<0)return{name:"2층회전 좌측",lines:["· 좌측으로 머리 돌린 후 왼광대와 후두면 압박","· 2층 or 3층 오른쪽 귀 뒤에서 좌측으로 필러링","· 왼쪽 귀 풀링","· 이마 짚고 광대 오른쪽으로 평행이동"]}; return null; }
+  if(id==="fp_ham"){ v=num("fp_ham"); if(v>0)return{name:"2층 햄버거시프트",lines:["· 우측으로 머리 돌린 후 오른광대와 후두면 압박"]}; if(v<0)return{name:"2층 햄버거시프트",lines:["· 좌측으로 머리 돌린 후 왼광대와 후두면 압박"]}; return null; }
+  if(id==="fp_tm"){ v=num("fp_tm"); if(v>0)return{name:"턱&마루 시프트",lines:["· 왼 턱과 오른쪽 마루 럭비 프레싱"]}; if(v<0)return{name:"턱&마루 시프트",lines:["· 오른 턱과 왼쪽 마루 럭비 프레싱"]}; return null; }
+  if(id==="fp_draw"){ v=num("fp_draw"); if(v<0)return{name:"드로잉",lines:["· 왼쪽 턱 위로 들어올려 우측으로 드로잉"]}; if(v>0)return{name:"드로잉",lines:["· 오른쪽 턱 위로 들어올려 좌측으로 드로잉"]}; return null; }
+  if(id==="fp_comp"){ v=num("fp_comp"); if(v<0)return{name:"문어 왼쪽",lines:["· 왼쪽얼굴 문어 (턱 왼쪽으로 당기기)","· 오른쪽 얼굴 늘리기 (이마리프팅&사선내리기)"]}; if(v>0)return{name:"문어 오른쪽",lines:["· 오른쪽얼굴 문어 (턱 오른쪽으로 당기기)","· 왼쪽 얼굴 늘리기 (이마리프팅&사선내리기)"]}; return null; }
+  if(id==="fp_nostR"){ v=num("fp_nostR"); if(v>0)return{name:"콧볼 오른쪽",lines:["· 오른광대 후방경사화"]}; if(v<0)return{name:"콧볼 오른쪽",lines:["· 오른광대 전방경사화"]}; return null; }
+  if(id==="fp_nostL"){ v=num("fp_nostL"); if(v>0)return{name:"콧볼 왼쪽",lines:["· 왼광대 후방경사화"]}; if(v<0)return{name:"콧볼 왼쪽",lines:["· 왼광대 전방경사화"]}; return null; }
+  if(id==="fp_roll"){ v=num("fp_roll"); if(v>0)return{name:"기울이기",lines:["· 왼쪽 c0바운스"]}; if(v<0)return{name:"기울이기",lines:["· 오른쪽 c0바운스"]}; return null; }
+  return null; // fp_tilt(원근 기울기)는 가이드 없음
+}
 var _method=$("fp_method"); if(_method)_method.onclick=function(){
+  if(!requireTier('프리미엄','리세팅가이드'))return;
   if(!P)return;
-  var amp=num("fp_amp"),comp=num("fp_comp"),drw=num("fp_draw"),roll=num("fp_roll"),ham=num("fp_ham"),nR=num("fp_nostR"),nL=num("fp_nostL"),tm=num("fp_tm"),out=[];
-  // ② 회전
-  if(amp>0)out.push("【② 2층회전 우측】","· 우측으로 머리 돌린 후 오른광대와 후두면 압박","· 2층 or 3층 왼쪽 귀 뒤에서 우측으로 필러링","· 오른쪽 귀 풀링","· 이마 짚고 광대 왼쪽으로 평행이동");
-  else if(amp<0)out.push("【② 2층회전 좌측】","· 좌측으로 머리 돌린 후 왼광대와 후두면 압박","· 2층 or 3층 오른쪽 귀 뒤에서 좌측으로 필러링","· 왼쪽 귀 풀링","· 이마 짚고 광대 오른쪽으로 평행이동");
-  // ③ 2층 햄버거시프트
-  if(ham>0)out.push("【③ 2층 햄버거시프트】","· 우측으로 머리 돌린 후 오른광대와 후두면 압박");
-  else if(ham<0)out.push("【③ 2층 햄버거시프트】","· 좌측으로 머리 돌린 후 왼광대와 후두면 압박");
-  // ④ 턱&마루 시프트
-  if(tm>0)out.push("【④ 턱&마루 시프트】","· 왼 턱과 오른쪽 마루 럭비 프레싱");
-  else if(tm<0)out.push("【④ 턱&마루 시프트】","· 오른 턱과 왼쪽 마루 럭비 프레싱");
-  // ⑤ 드로잉
-  if(drw<0)out.push("【⑤ 드로잉】","· 왼쪽 턱 위로 들어올려 우측으로 드로잉");
-  else if(drw>0)out.push("【⑤ 드로잉】","· 오른쪽 턱 위로 들어올려 좌측으로 드로잉");
-  // ⑥ 문어
-  if(comp<0)out.push("【⑥ 문어 왼쪽】","· 왼쪽얼굴 문어 (턱 왼쪽으로 당기기)","· 오른쪽 얼굴 늘리기 (이마리프팅&사선내리기)");
-  else if(comp>0)out.push("【⑥ 문어 오른쪽】","· 오른쪽얼굴 문어 (턱 오른쪽으로 당기기)","· 왼쪽 얼굴 늘리기 (이마리프팅&사선내리기)");
-  // ⑦ 콧볼 오른쪽
-  if(nR>0)out.push("【⑦ 콧볼 오른쪽】","· 오른광대 후방경사화"); else if(nR<0)out.push("【⑦ 콧볼 오른쪽】","· 오른광대 전방경사화");
-  // ⑧ 콧볼 왼쪽
-  if(nL>0)out.push("【⑧ 콧볼 왼쪽】","· 왼광대 후방경사화"); else if(nL<0)out.push("【⑧ 콧볼 왼쪽】","· 왼광대 전방경사화");
-  // ⑨ 전체 기울이기
-  if(roll>0)out.push("【⑨ 기울이기】","· 왼쪽 c0바운스");
-  else if(roll<0)out.push("【⑨ 기울이기】","· 오른쪽 c0바운스");
-  $("fp_method_out").textContent=out.length?("🩹 리세팅가이드 (촉진 전 참고 · 순서대로 진행)\n"+out.join("\n")):"조정된 슬라이더가 없습니다.";
+  var DEF=["fp_amp","fp_ham","fp_tm","fp_draw","fp_comp","fp_nostR","fp_nostL","fp_roll"];
+  var seq=[];                                        // 움직인 순서 우선, 기록 없는 비제로는 기본순서로 뒤에
+  _fpOrder.forEach(function(id){ if(DEF.indexOf(id)>=0&&seq.indexOf(id)<0)seq.push(id); });
+  DEF.forEach(function(id){ if(seq.indexOf(id)<0)seq.push(id); });
+  var out=[],step=0;
+  seq.forEach(function(id){ var g=_fpGuide(id); if(g){ step++; out.push(step+". "+g.name); g.lines.forEach(function(l){out.push(l);}); out.push(""); } });
+  if(out.length&&out[out.length-1]==="")out.pop();
+  $("fp_method_out").textContent=out.length?("🩹 리세팅가이드 (촉진 전 참고 · 움직인 순서대로)\n\n"+out.join("\n")):"조정된 슬라이더가 없습니다.";
 };
 var _save=$("fp_save"); if(_save)_save.onclick=function(){
   if(typeof form==="undefined"||!form){ fpLog("저장 대상을 찾지 못했습니다."); return; }
-  form.face3d={v:1,amp:num("fp_amp"),tilt:num("fp_tilt"),comp:num("fp_comp"),draw:num("fp_draw"),roll:num("fp_roll"),ham:num("fp_ham"),nostrilR:num("fp_nostR"),nostrilL:num("fp_nostL"),tm:num("fp_tm"),method:($("fp_method_out").textContent||"")};
+  form.face3d={v:1,amp:num("fp_amp"),tilt:num("fp_tilt"),comp:num("fp_comp"),draw:num("fp_draw"),roll:num("fp_roll"),ham:num("fp_ham"),nostrilR:num("fp_nostR"),nostrilL:num("fp_nostL"),tm:num("fp_tm"),order:_fpOrder.slice(),method:($("fp_method_out").textContent||"")};
   if(typeof saveRecord==="function"){ saveRecord(); fpLog("✅ 차트에 조정값 저장됨."); }
   else fpLog("상단 [기록 저장]을 눌러주세요.");
 };
@@ -1524,6 +1602,7 @@ function fpResetPanel(){
   fpEnable(false);
   ["fp_amp","fp_comp","fp_draw","fp_roll","fp_ham","fp_nostR","fp_nostL","fp_tm"].forEach(function(id){var e=$(id);if(e)e.value=0;});
   var t=$("fp_tilt"); if(t)t.value=10;
+  _fpOrder=[];
   var mo=$("fp_method_out"); if(mo)mo.textContent="";
   var fb=$("fp_fit"); if(fb)fb.textContent="🔍 얼굴 확대";
   var cb=$("fp_cmp"); if(cb)cb.textContent="👁 전/후 비교";
