@@ -629,8 +629,8 @@ async function faceCropCanvas(src,maxLong){
       const P=out.faceLandmarks[0];let minx=1,miny=1,maxx=0,maxy=0;
       for(const p of P){if(p.x<minx)minx=p.x;if(p.x>maxx)maxx=p.x;if(p.y<miny)miny=p.y;if(p.y>maxy)maxy=p.y;}
       ox=minx*img.width;oy=miny*img.height;ow=(maxx-minx)*img.width;oh=(maxy-miny)*img.height;
-      const mx=ow*0.35,mT=oh*0.55,mB=oh*0.30;ox-=mx;oy-=mT;ow+=2*mx;oh+=mT+mB;
-    }else{ ow=img.width*0.6;oh=img.height*0.5;ox=(img.width-ow)/2;oy=img.height*0.08; }
+      const mx=ow*0.75,mT=oh*0.80,mB=oh*0.95;ox-=mx;oy-=mT;ow+=2*mx;oh+=mT+mB;  // 덜 확대(여유 넓게) → 원본 픽셀 더 써서 선명
+    }else{ ow=img.width*0.85;oh=img.height*0.75;ox=(img.width-ow)/2;oy=img.height*0.05; }
   }catch(e){ ow=img.width*0.6;oh=img.height*0.5;ox=(img.width-ow)/2;oy=img.height*0.08; }
   if(ox<0){ow+=ox;ox=0;}if(oy<0){oh+=oy;oy=0;}if(ox+ow>img.width)ow=img.width-ox;if(oy+oh>img.height)oh=img.height-oy;
   const s2=Math.min(1,maxLong/Math.max(ow,oh));
@@ -1327,10 +1327,12 @@ function makeField(o){
       if(nR!==0){ const gx2=(x-(cx-fW*0.085))/(fW*0.10); ddy+=-(nR/100)*fH*0.06*Math.exp(-0.5*(gx2*gx2+ny*ny)); } // 본인오른쪽=화면왼쪽
       if(nL!==0){ const gx3=(x-(cx+fW*0.085))/(fW*0.10); ddy+=-(nL/100)*fH*0.06*Math.exp(-0.5*(gx3*gx3+ny*ny)); } // 본인왼쪽=화면오른쪽
     }
-    if(tm!==0){                                      // ④ 턱&마루 시프트: 턱·마루 높이에서 측면을 중심으로 압축(옆에서 줄임)
+    if(tm!==0){                                      // ④ 턱&마루 시프트: 턱 측면 + 귀 위쪽 두상(측두부)을 측면에서 짜부(목은 건드리지 않음). tm<0=반대(부풀림)
       const kk=(tm/100)*0.45;
-      const jw2=Math.exp(-0.5*Math.pow((y-(chinY+fH*0.02))/(fH*0.18),2));
-      const cw2=Math.exp(-0.5*Math.pow((y-(foreY-fH*0.32))/(fH*0.24),2));
+      const earY=(P[IDX_OUT_A].y+P[IDX_OUT_B].y)/2;   // 귀·광대 높이 기준
+      let jw2=Math.exp(-0.5*Math.pow((y-(chinY-fH*0.06))/(fH*0.11),2));   // 턱 측면(턱선): chin 살짝 위
+      if(y>chinY) jw2*=Math.exp(-0.5*Math.pow((y-chinY)/(fH*0.05),2));    // 턱 아래(목)로는 빠르게 사라짐
+      const cw2=Math.exp(-0.5*Math.pow((y-(earY-fH*0.14))/(fH*0.18),2));  // 귀 위쪽 두상(측두부)
       ddx += -kk*(x-cx)*Math.max(jw2,cw2);
     }
     const fx=(x-minx)/cell, fy=(y-miny)/cell;         // 얼굴 영역은 IDW 변위 합산
@@ -1505,7 +1507,7 @@ var _method=$("fp_method"); if(_method)_method.onclick=function(){
   // ⑨ 전체 기울이기
   if(roll>0)out.push("【⑨ 기울이기】","· 왼쪽 c0바운스");
   else if(roll<0)out.push("【⑨ 기울이기】","· 오른쪽 c0바운스");
-  $("fp_method_out").textContent=out.length?("🩹 리세팅가이드 (촉진 전 참고 · 위→아래 순서대로 진행)\n"+out.join("\n")):"조정된 슬라이더가 없습니다.";
+  $("fp_method_out").textContent=out.length?("🩹 리세팅가이드 (촉진 전 참고 · 순서대로 진행)\n"+out.join("\n")):"조정된 슬라이더가 없습니다.";
 };
 var _save=$("fp_save"); if(_save)_save.onclick=function(){
   if(typeof form==="undefined"||!form){ fpLog("저장 대상을 찾지 못했습니다."); return; }
