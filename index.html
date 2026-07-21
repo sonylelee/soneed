@@ -136,7 +136,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v42 (2026-07-20)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v43 (2026-07-21)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">데이터 · 필터</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -196,15 +196,15 @@
           <div class="fpx-pane"><div class="fpx-h">원본</div><canvas id="fp_cvA"></canvas></div>
           <div class="fpx-pane"><div class="fpx-h">미리보기</div><canvas id="fp_cvB"></canvas></div>
         </div>
-        <div class="fpx-sl"><label>회전 ←화면왼쪽·오른쪽→</label><input type="range" id="fp_amp" min="-30" max="30" step="0.5" value="0" disabled><span id="fp_ampV">0.0%</span></div>
-        <div class="fpx-sl"><label>원근 기울기(카메라 아래 °)</label><input type="range" id="fp_tilt" min="0" max="30" step="1" value="10" disabled><span id="fp_tiltV">10°</span></div>
-        <div class="fpx-sl"><label>① 문어(본인 ←왼·오른→)</label><input type="range" id="fp_comp" min="-100" max="100" step="5" value="0" disabled><span id="fp_compV">0%</span></div>
-        <div class="fpx-sl"><label>② 드로잉(1·2층)</label><input type="range" id="fp_draw" min="-100" max="100" step="5" value="0" disabled><span id="fp_drawV">0%</span></div>
-        <div class="fpx-sl"><label>③ 전체 기울이기</label><input type="range" id="fp_roll" min="-12" max="12" step="0.5" value="0" disabled><span id="fp_rollV">0.0°</span></div>
-        <div class="fpx-sl"><label>④ 햄버거 시프트</label><input type="range" id="fp_ham" min="-100" max="100" step="5" value="0" disabled><span id="fp_hamV">0%</span></div>
-        <div class="fpx-sl"><label>⑤ 콧볼 오른쪽(+위/−아래)</label><input type="range" id="fp_nostR" min="-100" max="100" step="5" value="0" disabled><span id="fp_nostRV">0%</span></div>
-        <div class="fpx-sl"><label>⑥ 콧볼 왼쪽(+위/−아래)</label><input type="range" id="fp_nostL" min="-100" max="100" step="5" value="0" disabled><span id="fp_nostLV">0%</span></div>
-        <div class="fpx-sl"><label>⑦ 턱·마루 압축</label><input type="range" id="fp_tm" min="-100" max="100" step="5" value="0" disabled><span id="fp_tmV">0%</span></div>
+        <div class="fpx-sl"><label>① 원근 기울기(카메라 아래 °)</label><input type="range" id="fp_tilt" min="0" max="30" step="1" value="10" disabled><span id="fp_tiltV">10°</span></div>
+        <div class="fpx-sl"><label>② 회전 ←화면왼쪽·오른쪽→</label><input type="range" id="fp_amp" min="-30" max="30" step="0.5" value="0" disabled><span id="fp_ampV">0.0%</span></div>
+        <div class="fpx-sl"><label>③ 2층 햄버거시프트</label><input type="range" id="fp_ham" min="-100" max="100" step="5" value="0" disabled><span id="fp_hamV">0%</span></div>
+        <div class="fpx-sl"><label>④ 턱&마루 시프트</label><input type="range" id="fp_tm" min="-100" max="100" step="5" value="0" disabled><span id="fp_tmV">0%</span></div>
+        <div class="fpx-sl"><label>⑤ 드로잉(1·2층)</label><input type="range" id="fp_draw" min="-100" max="100" step="5" value="0" disabled><span id="fp_drawV">0%</span></div>
+        <div class="fpx-sl"><label>⑥ 문어(본인 ←왼·오른→)</label><input type="range" id="fp_comp" min="-100" max="100" step="5" value="0" disabled><span id="fp_compV">0%</span></div>
+        <div class="fpx-sl"><label>⑦ 콧볼 오른쪽(+위/−아래)</label><input type="range" id="fp_nostR" min="-100" max="100" step="5" value="0" disabled><span id="fp_nostRV">0%</span></div>
+        <div class="fpx-sl"><label>⑧ 콧볼 왼쪽(+위/−아래)</label><input type="range" id="fp_nostL" min="-100" max="100" step="5" value="0" disabled><span id="fp_nostLV">0%</span></div>
+        <div class="fpx-sl"><label>⑨ 전체 기울이기(수평 보정)</label><input type="range" id="fp_roll" min="-12" max="12" step="0.5" value="0" disabled><span id="fp_rollV">0.0°</span></div>
         <button type="button" class="btn primary" id="fp_method" disabled style="width:100%;margin-top:10px">🩹 리세팅가이드</button>
         <div id="fp_log">정면사진을 저장(또는 사진 슬롯에 넣은 뒤) [정면사진 불러오기]를 누르세요.</div>
         <div id="fp_method_out"></div>
@@ -555,10 +555,11 @@ async function makeAfterImage(){
   var after=afters[afters.length-1];
   toast('전/후 이미지 만드는 중…');
   try{
-    var bc=await faceCropThumb(before), ac=await faceCropThumb(after.photo_front);
-    var bi=await _img(bc), ai=await _img(ac);
+    var bi=await faceCropCanvas(before,1400), ai=await faceCropCanvas(after.photo_front,1400);
     var TW=460,TH=613,PAD=30,GAP=20,TOP=96,W=PAD*2+TW*2+GAP,H=TOP+TH+64;
-    var cv=document.createElement('canvas');cv.width=W;cv.height=H;var c=cv.getContext('2d');
+    var SS=2; // 슈퍼샘플링(2배)로 선명하게 렌더 후 다운스케일
+    var cv=document.createElement('canvas');cv.width=W*SS;cv.height=H*SS;var c=cv.getContext('2d');
+    c.scale(SS,SS);c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';
     c.fillStyle='#fff';c.fillRect(0,0,W,H);
     c.fillStyle='#C81D74';c.font='bold 30px -apple-system,sans-serif';c.textAlign='center';c.fillText('SONEED   '+(form.code||''),W/2,50);
     c.fillStyle='#999';c.font='15px sans-serif';c.fillText((form.branch||'')+'   얼굴윤곽 3D 분석',W/2,77);
@@ -570,7 +571,7 @@ async function makeAfterImage(){
     tile('BEFORE',bi,form.date||'첫 방문',PAD);
     tile('AFTER',ai,(after.date||'')+(after.session?(' · '+after.session):''),PAD+TW+GAP);
     c.fillStyle='#bbb';c.font='13px sans-serif';c.textAlign='center';c.fillText('SONEED 얼굴윤곽 교정',W/2,H-20);
-    var url=cv.toDataURL('image/jpeg',0.9);
+    var url=cv.toDataURL('image/jpeg',0.92);
     var o=document.getElementById('photoZoom');if(!o){o=document.createElement('div');o.id='photoZoom';o.onclick=function(){o.style.display='none';};document.body.appendChild(o);}
     o.innerHTML='<img src="'+url+'"><div style="position:fixed;bottom:14px;left:0;right:0;text-align:center;color:#fff;font-size:13px">사진을 길게 눌러 저장 · 화면 탭하면 닫기</div>';o.style.display='flex';
     var a=document.createElement('a');a.href=url;a.download='soneed_전후_'+(form.code||'')+'.jpg';document.body.appendChild(a);a.click();a.remove();
@@ -612,6 +613,31 @@ async function faceCropThumb(src){
     th.getContext('2d').drawImage(img,ox,oy,ow,oh,0,0,th.width,th.height);
     const url=th.toDataURL('image/jpeg',0.78);_cropCache[src]=url;return url;
   }catch(e){return src;}
+}
+/* 고객 전/후 이미지용 — 얼굴을 원본 고해상도로 크롭해 캔버스로 반환(썸네일 320px 재확대 흐림 방지). 캐시 안 함. */
+async function faceCropCanvas(src,maxLong){
+  maxLong=maxLong||1400;
+  const img=await _img(src);
+  let ox,oy,ow,oh;
+  try{
+    const lm=await getLandmarker();
+    const sc=Math.min(1,640/Math.max(img.width,img.height));
+    const dc=document.createElement('canvas');dc.width=Math.max(2,Math.round(img.width*sc));dc.height=Math.max(2,Math.round(img.height*sc));
+    dc.getContext('2d').drawImage(img,0,0,dc.width,dc.height);
+    const out=lm.detect(dc);
+    if(out.faceLandmarks&&out.faceLandmarks.length){
+      const P=out.faceLandmarks[0];let minx=1,miny=1,maxx=0,maxy=0;
+      for(const p of P){if(p.x<minx)minx=p.x;if(p.x>maxx)maxx=p.x;if(p.y<miny)miny=p.y;if(p.y>maxy)maxy=p.y;}
+      ox=minx*img.width;oy=miny*img.height;ow=(maxx-minx)*img.width;oh=(maxy-miny)*img.height;
+      const mx=ow*0.35,mT=oh*0.55,mB=oh*0.30;ox-=mx;oy-=mT;ow+=2*mx;oh+=mT+mB;
+    }else{ ow=img.width*0.6;oh=img.height*0.5;ox=(img.width-ow)/2;oy=img.height*0.08; }
+  }catch(e){ ow=img.width*0.6;oh=img.height*0.5;ox=(img.width-ow)/2;oy=img.height*0.08; }
+  if(ox<0){ow+=ox;ox=0;}if(oy<0){oh+=oy;oy=0;}if(ox+ow>img.width)ow=img.width-ox;if(oy+oh>img.height)oh=img.height-oy;
+  const s2=Math.min(1,maxLong/Math.max(ow,oh));
+  const cv=document.createElement('canvas');cv.width=Math.max(1,Math.round(ow*s2));cv.height=Math.max(1,Math.round(oh*s2));
+  const cx=cv.getContext('2d');cx.imageSmoothingEnabled=true;cx.imageSmoothingQuality='high';
+  cx.drawImage(img,ox,oy,ow,oh,0,0,cv.width,cv.height);
+  return cv;
 }
 function positionStickyThumbs(){const h=document.querySelector('header.top'),st=document.getElementById('stickyThumbs');if(h&&st)st.style.top=(h.offsetHeight-1)+'px';}
 function zoomPhoto(s){const src=form['photo_'+s];if(!src)return;let o=document.getElementById('photoZoom');if(!o){o=document.createElement('div');o.id='photoZoom';o.onclick=function(){o.style.display='none';};document.body.appendChild(o);}o.innerHTML='<img src="'+src+'">';o.style.display='flex';}
@@ -1243,7 +1269,7 @@ function makeField(o){
       }
     }
     if(dN!==0){                                     // (C) 드로잉: 3층(이마) 고정, 1·2층만 당김+한쪽 올림
-      const vw=Math.max(0,Math.min(1,(Yc+0.18*fH)/(0.11*fH)));  // 이마(3층)만 고정, 광대(2층)~턱(1층) 함께
+      const _u=Math.max(0,Math.min(1,(Yc/fH+0.13)/0.14)),_d=Math.max(0.45,Math.min(1,1-(Yc/fH-0.15)/0.30)),vw=_u*_d;  // 이마(3층)만 고정, 광대(2층)~턱(1층) 함께
       dX+=-dN*PULL*vw;
       dY+=-dN*LIFT*vw*(Xc/halfW);
     }
@@ -1287,7 +1313,7 @@ function makeField(o){
     let ddy=rx*srr + ry*(crr-1);
     if(hamMag>0){                                     // ④ 햄버거(전체 이미지)
       const ax=(x-caX)/(fW*0.16), ay=(y-caY)/(fH*0.22), wA=Math.exp(-0.5*(ax*ax+ay*ay));
-      ddx+=-hamSA*hamMag*wA; {const nbx=(x-cx)/(fW*0.13),nby=(y-(cy-fH*0.04))/(fH*0.20),wN=Math.exp(-0.5*(nbx*nbx+nby*nby)); ddx+=-hamSA*hamMag*0.7*wN;}                          // 광대 최외측(측면 최돌출) → 코쪽(중심)으로
+      ddx+=-hamSA*hamMag*wA; {const nbx=(x-cx)/(fW*0.13),nby=(y-(cy-fH*0.04))/(fH*0.20),wN=Math.exp(-0.5*(nbx*nbx+nby*nby)); ddx+=-hamSA*hamMag*0.7*wN;} {const jbx=(x-cx)/(fW*0.20),jby=(y-(cy+fH*0.30))/(fH*0.24),wJ=Math.exp(-0.5*(jbx*jbx+jby*jby)); ddx+=-hamSA*hamMag*0.95*wJ;}                          // 광대 최외측(측면 최돌출) → 코쪽(중심)으로
       const sBpos=-hamSA*(x-cx);                      // 반대쪽(side B) 바깥 방향 거리
       let og=(sBpos-fW*0.50)/(fW*0.14); og=og<0?0:(og>1?1:og);  // 얼굴 바깥에서만(볼 안 건드림)
       const vy=(y-(cy-fH*0.05))/(fH*0.42), vmB=Math.exp(-0.5*vy*vy);  // 귀 높이 근처만
@@ -1301,10 +1327,11 @@ function makeField(o){
       if(nR!==0){ const gx2=(x-(cx-fW*0.085))/(fW*0.10); ddy+=-(nR/100)*fH*0.06*Math.exp(-0.5*(gx2*gx2+ny*ny)); } // 본인오른쪽=화면왼쪽
       if(nL!==0){ const gx3=(x-(cx+fW*0.085))/(fW*0.10); ddy+=-(nL/100)*fH*0.06*Math.exp(-0.5*(gx3*gx3+ny*ny)); } // 본인왼쪽=화면오른쪽
     }
-    if(tm!==0){                                      // ⑦ 턱·마루 압축: 턱(아래)↑ + 마루/크라운(위)↓ 서로 가까워짐
-      const kk=(tm/100)*fH*0.16;
-      const jd=(y-(chinY+fH*0.02))/(fH*0.20); ddy+=-kk*Math.exp(-0.5*jd*jd);
-      const cd=(y-(foreY-fH*0.30))/(fH*0.22); ddy+= kk*Math.exp(-0.5*cd*cd);
+    if(tm!==0){                                      // ④ 턱&마루 시프트: 턱·마루 높이에서 측면을 중심으로 압축(옆에서 줄임)
+      const kk=(tm/100)*0.45;
+      const jw2=Math.exp(-0.5*Math.pow((y-(chinY+fH*0.02))/(fH*0.18),2));
+      const cw2=Math.exp(-0.5*Math.pow((y-(foreY-fH*0.32))/(fH*0.24),2));
+      ddx += -kk*(x-cx)*Math.max(jw2,cw2);
     }
     const fx=(x-minx)/cell, fy=(y-miny)/cell;         // 얼굴 영역은 IDW 변위 합산
     if(!(fx<0||fy<0||fx>=gW-1||fy>=gH-1)){
@@ -1378,13 +1405,14 @@ function fpRender(pct){
     fpDraw($("fp_cvB"),warped,moved,arrows);
   }catch(err){ fpLog("⚠ 렌더 오류: "+(err&&err.message||err)); return; }
   var L=[];
-  if(pct!==0)L.push("회전 "+(pct>0?"+":"")+(+pct).toFixed(1)+"% → "+(turn>0?"화면 오른쪽":"화면 왼쪽"));
-  if(comp!==0)L.push("① 문어 리프팅: 본인 "+(comp>0?"오른쪽":"왼쪽"));
-  if(drw!==0)L.push("② 드로잉");
-  if(roll!==0)L.push("③ 기울이기 "+(roll>0?"+":"")+roll.toFixed(1)+"°");
-  if(ham!==0)L.push("④ 햄버거: 본인 "+(ham>0?"오른쪽":"왼쪽"));
-  if(nR!==0)L.push("⑤ 콧볼 오른쪽 "+(nR>0?"올림":"내림"));
-  if(nL!==0)L.push("⑥ 콧볼 왼쪽 "+(nL>0?"올림":"내림"));
+  if(pct!==0)L.push("② 회전 "+(pct>0?"+":"")+(+pct).toFixed(1)+"% → "+(turn>0?"화면 오른쪽":"화면 왼쪽"));
+  if(ham!==0)L.push("③ 2층 햄버거: 본인 "+(ham>0?"오른쪽":"왼쪽"));
+  if(tm!==0)L.push("④ 턱&마루 시프트 "+(tm>0?"압축":"확장"));
+  if(drw!==0)L.push("⑤ 드로잉");
+  if(comp!==0)L.push("⑥ 문어 리프팅: 본인 "+(comp>0?"오른쪽":"왼쪽"));
+  if(nR!==0)L.push("⑦ 콧볼 오른쪽 "+(nR>0?"올림":"내림"));
+  if(nL!==0)L.push("⑧ 콧볼 왼쪽 "+(nL>0?"올림":"내림"));
+  if(roll!==0)L.push("⑨ 기울이기 "+(roll>0?"+":"")+roll.toFixed(1)+"°");
   fpLog(L.join("\n"));
 }
 var _pend=null,_raf=0;
@@ -1410,13 +1438,24 @@ function fpDetect(){
 }
 function fpRestore(){
   var s=(typeof form!=="undefined"&&form)?form.face3d:null; if(!s)return;
-  var map={amp:"fp_amp",tilt:"fp_tilt",comp:"fp_comp",draw:"fp_draw",roll:"fp_roll",ham:"fp_ham",nostrilR:"fp_nostR",nostrilL:"fp_nostL"};
+  var map={amp:"fp_amp",tilt:"fp_tilt",comp:"fp_comp",draw:"fp_draw",roll:"fp_roll",ham:"fp_ham",nostrilR:"fp_nostR",nostrilL:"fp_nostL",tm:"fp_tm"};
   Object.keys(map).forEach(function(k){ if(k in s){ var e=$(map[k]); if(e)e.value=s[k]; } });
   fpRender(num("fp_amp")); fpLog("저장된 조정값을 불러왔습니다.");
+  // 저장된 시뮬레이션이면 리세팅가이드도 자동 표시(다시 안 눌러도 되게)
+  try{ var mb=$("fp_method"); if(mb&&P&&!mb.disabled) mb.click(); }catch(e){}
+}
+var _fpLoading=false;
+function fpAutoLoad(){
+  if(typeof form==="undefined"||!form||!form.face3d||!form.photo_front) return;
+  if(P||_fpLoading) return; // 이미 불러왔거나 로딩 중이면 중복 방지
+  var lb=$("fp_load"); if(!lb) return;
+  _fpLoading=true; try{ lb.click(); } finally { setTimeout(function(){_fpLoading=false;},1500); }
 }
 var _fpSl=/^fp_(amp|tilt|comp|draw|roll|ham|nostR|nostL|tm)$/;
 document.addEventListener("input",function(ev){ if(ev.target&&_fpSl.test(ev.target.id)) fpQ(num("fp_amp")); });
 document.addEventListener("change",function(ev){ if(ev.target&&_fpSl.test(ev.target.id)) fpQ(num("fp_amp")); });
+// 패널을 펼치면, 저장된 시뮬레이션이 있고 아직 안 불러왔으면 자동 로드
+(function(){ var pnl=$("fp_panel"); if(pnl)pnl.addEventListener("toggle",function(){ if(pnl.open) fpAutoLoad(); }); })();
 var _load=$("fp_load"); if(_load)_load.onclick=function(){
   var pf=(typeof form!=="undefined"&&form)?form.photo_front:null;
   if(!pf){ fpLog("저장된 정면사진이 없습니다. 위 [사진] 슬롯에 정면사진을 넣고 다시 시도하세요."); return; }
@@ -1443,24 +1482,34 @@ var _reset=$("fp_reset"); if(_reset)_reset.onclick=function(){ cmpBefore=false; 
 var _dots=$("fp_dots"); if(_dots)_dots.onclick=function(){ showDots=!showDots; _dots.textContent="랜드마크 "+(showDots?"켬":"끔"); if(P)fpDraw($("fp_cvA"),srcC,showDots?P:null); fpRender(num("fp_amp")); };
 var _method=$("fp_method"); if(_method)_method.onclick=function(){
   if(!P)return;
-  var amp=num("fp_amp"),comp=num("fp_comp"),drw=num("fp_draw"),roll=num("fp_roll"),ham=num("fp_ham"),nR=num("fp_nostR"),nL=num("fp_nostL"),out=[];
-  if(amp>0)out.push("【2층회전 우측】","· 우측으로 머리 돌린 후 오른광대와 후두면 압박","· 2층 or 3층 왼쪽 귀 뒤에서 우측으로 필러링","· 오른쪽 귀 풀링","· 이마 짚고 광대 왼쪽으로 평행이동");
-  else if(amp<0)out.push("【2층회전 좌측】","· 좌측으로 머리 돌린 후 왼광대와 후두면 압박","· 2층 or 3층 오른쪽 귀 뒤에서 좌측으로 필러링","· 왼쪽 귀 풀링","· 이마 짚고 광대 오른쪽으로 평행이동");
-  if(comp<0)out.push("【문어 왼쪽】","· 왼쪽얼굴 문어 (턱 왼쪽으로 당기기)","· 오른쪽 얼굴 늘리기 (이마리프팅&사선내리기)");
-  else if(comp>0)out.push("【문어 오른쪽】","· 오른쪽얼굴 문어 (턱 오른쪽으로 당기기)","· 왼쪽 얼굴 늘리기 (이마리프팅&사선내리기)");
-  if(drw<0)out.push("【드로잉】","· 왼쪽 턱 위로 들어올려 우측으로 드로잉");
-  else if(drw>0)out.push("【드로잉】","· 오른쪽 턱 위로 들어올려 좌측으로 드로잉");
-  if(roll>0)out.push("【기울이기】","· 왼쪽 c0바운스");
-  else if(roll<0)out.push("【기울이기】","· 오른쪽 c0바운스");
-  if(ham>0)out.push("【햄버거】","· 우측으로 머리 돌린 후 오른광대와 후두면 압박");
-  else if(ham<0)out.push("【햄버거】","· 좌측으로 머리 돌린 후 왼광대와 후두면 압박");
-  if(nR>0)out.push("【콧볼 오른쪽】","· 오른광대 후방경사화"); else if(nR<0)out.push("【콧볼 오른쪽】","· 오른광대 전방경사화");
-  if(nL>0)out.push("【콧볼 왼쪽】","· 왼광대 후방경사화"); else if(nL<0)out.push("【콧볼 왼쪽】","· 왼광대 전방경사화");
-  $("fp_method_out").textContent=out.length?("🩹 리세팅가이드 (촉진 전 참고)\n"+out.join("\n")):"조정된 슬라이더가 없습니다.";
+  var amp=num("fp_amp"),comp=num("fp_comp"),drw=num("fp_draw"),roll=num("fp_roll"),ham=num("fp_ham"),nR=num("fp_nostR"),nL=num("fp_nostL"),tm=num("fp_tm"),out=[];
+  // ② 회전
+  if(amp>0)out.push("【② 2층회전 우측】","· 우측으로 머리 돌린 후 오른광대와 후두면 압박","· 2층 or 3층 왼쪽 귀 뒤에서 우측으로 필러링","· 오른쪽 귀 풀링","· 이마 짚고 광대 왼쪽으로 평행이동");
+  else if(amp<0)out.push("【② 2층회전 좌측】","· 좌측으로 머리 돌린 후 왼광대와 후두면 압박","· 2층 or 3층 오른쪽 귀 뒤에서 좌측으로 필러링","· 왼쪽 귀 풀링","· 이마 짚고 광대 오른쪽으로 평행이동");
+  // ③ 2층 햄버거시프트
+  if(ham>0)out.push("【③ 2층 햄버거시프트】","· 우측으로 머리 돌린 후 오른광대와 후두면 압박");
+  else if(ham<0)out.push("【③ 2층 햄버거시프트】","· 좌측으로 머리 돌린 후 왼광대와 후두면 압박");
+  // ④ 턱&마루 시프트
+  if(tm>0)out.push("【④ 턱&마루 시프트】","· 턱·마루 측면에서 서로 압축(부피 줄임)");
+  else if(tm<0)out.push("【④ 턱&마루 시프트】","· 턱·마루 측면 부피 살리기");
+  // ⑤ 드로잉
+  if(drw<0)out.push("【⑤ 드로잉】","· 왼쪽 턱 위로 들어올려 우측으로 드로잉");
+  else if(drw>0)out.push("【⑤ 드로잉】","· 오른쪽 턱 위로 들어올려 좌측으로 드로잉");
+  // ⑥ 문어
+  if(comp<0)out.push("【⑥ 문어 왼쪽】","· 왼쪽얼굴 문어 (턱 왼쪽으로 당기기)","· 오른쪽 얼굴 늘리기 (이마리프팅&사선내리기)");
+  else if(comp>0)out.push("【⑥ 문어 오른쪽】","· 오른쪽얼굴 문어 (턱 오른쪽으로 당기기)","· 왼쪽 얼굴 늘리기 (이마리프팅&사선내리기)");
+  // ⑦ 콧볼 오른쪽
+  if(nR>0)out.push("【⑦ 콧볼 오른쪽】","· 오른광대 후방경사화"); else if(nR<0)out.push("【⑦ 콧볼 오른쪽】","· 오른광대 전방경사화");
+  // ⑧ 콧볼 왼쪽
+  if(nL>0)out.push("【⑧ 콧볼 왼쪽】","· 왼광대 후방경사화"); else if(nL<0)out.push("【⑧ 콧볼 왼쪽】","· 왼광대 전방경사화");
+  // ⑨ 전체 기울이기
+  if(roll>0)out.push("【⑨ 기울이기】","· 왼쪽 c0바운스");
+  else if(roll<0)out.push("【⑨ 기울이기】","· 오른쪽 c0바운스");
+  $("fp_method_out").textContent=out.length?("🩹 리세팅가이드 (촉진 전 참고 · 위→아래 순서대로 진행)\n"+out.join("\n")):"조정된 슬라이더가 없습니다.";
 };
 var _save=$("fp_save"); if(_save)_save.onclick=function(){
   if(typeof form==="undefined"||!form){ fpLog("저장 대상을 찾지 못했습니다."); return; }
-  form.face3d={v:1,amp:num("fp_amp"),tilt:num("fp_tilt"),comp:num("fp_comp"),draw:num("fp_draw"),roll:num("fp_roll"),ham:num("fp_ham"),nostrilR:num("fp_nostR"),nostrilL:num("fp_nostL"),method:($("fp_method_out").textContent||"")};
+  form.face3d={v:1,amp:num("fp_amp"),tilt:num("fp_tilt"),comp:num("fp_comp"),draw:num("fp_draw"),roll:num("fp_roll"),ham:num("fp_ham"),nostrilR:num("fp_nostR"),nostrilL:num("fp_nostL"),tm:num("fp_tm"),method:($("fp_method_out").textContent||"")};
   if(typeof saveRecord==="function"){ saveRecord(); fpLog("✅ 차트에 조정값 저장됨."); }
   else fpLog("상단 [기록 저장]을 눌러주세요.");
 };
@@ -1475,7 +1524,15 @@ function fpResetPanel(){
   var fb=$("fp_fit"); if(fb)fb.textContent="🔍 얼굴 확대";
   var cb=$("fp_cmp"); if(cb)cb.textContent="👁 전/후 비교";
   ["fp_cvA","fp_cvB"].forEach(function(id){var cv=$(id); if(cv){cv.width=1;cv.height=1;}});
-  fpLog("기록이 바뀌었습니다. [정면사진 불러오기]를 눌러 이 기록의 사진으로 시작하세요.");
+  // 저장된 3D 조정값이 있는 기록이면: 패널을 펼치고 자동으로 불러오기(+가이드)
+  if(typeof form!=="undefined"&&form&&form.face3d&&form.photo_front){
+    fpLog("저장된 3D 조정값이 있습니다. 자동으로 불러오는 중…");
+    var pnl=$("fp_panel");
+    if(pnl){ if(pnl.open) fpAutoLoad(); else pnl.open=true; /* toggle 이벤트가 fpAutoLoad 실행 */ }
+    else fpAutoLoad();
+  } else {
+    fpLog("기록이 바뀌었습니다. [정면사진 불러오기]를 눌러 이 기록의 사진으로 시작하세요.");
+  }
 }
 if(typeof window.editRecord==="function"){ var _fpEdit=window.editRecord; window.editRecord=function(){ var r=_fpEdit.apply(this,arguments); try{fpResetPanel();}catch(e){} return r; }; }
 if(typeof window.clearForm==="function"){ var _fpClear=window.clearForm; window.clearForm=function(){ var r=_fpClear.apply(this,arguments); try{fpResetPanel();}catch(e){} return r; }; }
