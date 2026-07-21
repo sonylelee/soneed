@@ -1327,13 +1327,15 @@ function makeField(o){
       if(nR!==0){ const gx2=(x-(cx-fW*0.085))/(fW*0.10); ddy+=-(nR/100)*fH*0.06*Math.exp(-0.5*(gx2*gx2+ny*ny)); } // 본인오른쪽=화면왼쪽
       if(nL!==0){ const gx3=(x-(cx+fW*0.085))/(fW*0.10); ddy+=-(nL/100)*fH*0.06*Math.exp(-0.5*(gx3*gx3+ny*ny)); } // 본인왼쪽=화면오른쪽
     }
-    if(tm!==0){                                      // ④ 턱&마루 시프트: 턱 측면 + 귀 위쪽 두상(측두부)을 측면에서 짜부(목은 건드리지 않음). tm<0=반대(부풀림)
-      const kk=(tm/100)*0.45;
+    if(tm!==0){                                      // ④ 턱&마루 시프트: 대각 짜부 — 한쪽 턱 + 반대쪽 귀 위 두상(햄버거식). tm>0=본인왼쪽턱+본인오른쪽두상 / tm<0=반대 대각. (목은 안 건드림)
+      const kk=(Math.abs(tm)/100)*0.45;
+      const tmJaw=tm>0?1:-1, tmHead=-tmJaw;           // 화면부호: +1=화면오른쪽(본인왼쪽). 턱과 두상은 대각(반대쪽)
       const earY=(P[IDX_OUT_A].y+P[IDX_OUT_B].y)/2;   // 귀·광대 높이 기준
       let jw2=Math.exp(-0.5*Math.pow((y-(chinY-fH*0.06))/(fH*0.11),2));   // 턱 측면(턱선): chin 살짝 위
       if(y>chinY) jw2*=Math.exp(-0.5*Math.pow((y-chinY)/(fH*0.05),2));    // 턱 아래(목)로는 빠르게 사라짐
       const cw2=Math.exp(-0.5*Math.pow((y-(earY-fH*0.14))/(fH*0.18),2));  // 귀 위쪽 두상(측두부)
-      ddx += -kk*(x-cx)*Math.max(jw2,cw2);
+      const jawOn=Math.sign(x-cx)===tmJaw?1:0, headOn=Math.sign(x-cx)===tmHead?1:0;  // 대각: 각 밴드는 지정된 한쪽만
+      ddx += -kk*(x-cx)*Math.max(jw2*jawOn, cw2*headOn);
     }
     const fx=(x-minx)/cell, fy=(y-miny)/cell;         // 얼굴 영역은 IDW 변위 합산
     if(!(fx<0||fy<0||fx>=gW-1||fy>=gH-1)){
@@ -1409,7 +1411,7 @@ function fpRender(pct){
   var L=[];
   if(pct!==0)L.push("② 회전 "+(pct>0?"+":"")+(+pct).toFixed(1)+"% → "+(turn>0?"화면 오른쪽":"화면 왼쪽"));
   if(ham!==0)L.push("③ 2층 햄버거: 본인 "+(ham>0?"오른쪽":"왼쪽"));
-  if(tm!==0)L.push("④ 턱&마루 시프트 "+(tm>0?"압축":"확장"));
+  if(tm!==0)L.push("④ 턱&마루 시프트: "+(tm>0?"본인 왼쪽턱+오른쪽 두상":"본인 오른쪽턱+왼쪽 두상")+" 짜부");
   if(drw!==0)L.push("⑤ 드로잉");
   if(comp!==0)L.push("⑥ 문어 리프팅: 본인 "+(comp>0?"오른쪽":"왼쪽"));
   if(nR!==0)L.push("⑦ 콧볼 오른쪽 "+(nR>0?"올림":"내림"));
@@ -1492,8 +1494,8 @@ var _method=$("fp_method"); if(_method)_method.onclick=function(){
   if(ham>0)out.push("【③ 2층 햄버거시프트】","· 우측으로 머리 돌린 후 오른광대와 후두면 압박");
   else if(ham<0)out.push("【③ 2층 햄버거시프트】","· 좌측으로 머리 돌린 후 왼광대와 후두면 압박");
   // ④ 턱&마루 시프트
-  if(tm>0)out.push("【④ 턱&마루 시프트】","· 턱·마루 측면에서 서로 압축(부피 줄임)");
-  else if(tm<0)out.push("【④ 턱&마루 시프트】","· 턱·마루 측면 부피 살리기");
+  if(tm>0)out.push("【④ 턱&마루 시프트】","· 본인 왼쪽 턱 + 오른쪽 귀 위 두상 측면 짜부(대각)");
+  else if(tm<0)out.push("【④ 턱&마루 시프트】","· 본인 오른쪽 턱 + 왼쪽 귀 위 두상 측면 짜부(대각)");
   // ⑤ 드로잉
   if(drw<0)out.push("【⑤ 드로잉】","· 왼쪽 턱 위로 들어올려 우측으로 드로잉");
   else if(drw>0)out.push("【⑤ 드로잉】","· 오른쪽 턱 위로 들어올려 좌측으로 드로잉");
