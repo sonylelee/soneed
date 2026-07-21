@@ -70,11 +70,17 @@
   .aim{background:linear-gradient(90deg,rgba(255,79,158,.14),rgba(120,90,220,.12));border:1px solid rgba(255,79,158,.28);border-radius:var(--r);padding:16px;margin-top:14px;text-align:center}
   .aim b{color:#ffd0e6}
   .aiout{white-space:pre-wrap;font-size:14.5px;line-height:1.8;color:#e7eaf0}
+  .pslots{display:flex;gap:8px;margin-top:8px}
+  .pslot{flex:1;position:relative;aspect-ratio:3/4;border:1.5px dashed var(--line);border-radius:12px;background:var(--panel2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;overflow:hidden;text-align:center}
+  .pslot input{display:none}
+  .pslot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .pslot.filled{border-style:solid;border-color:var(--brand)}
+  .pslot .cap{position:relative;z-index:1;background:rgba(0,0,0,.55);padding:3px 7px;border-radius:6px;color:#fff}
   .foot{text-align:center;color:var(--faint);font-size:12px;margin-top:26px}
 </style>
 </head>
 <body>
-<header><div class="logo"><b>SONEED</b> <span>얼굴상 & 밸런스 · v2b</span></div></header>
+<header><div class="logo"><b>SONEED</b> <span>얼굴상 & 밸런스 · v3</span></div></header>
 <div class="wrap">
 
   <!-- STEP 1: 인트로 + 동의 -->
@@ -115,6 +121,7 @@
     <div class="card" style="margin-bottom:14px;padding:0;overflow:hidden">
       <div class="hero" id="hero"></div>
     </div>
+    <div class="card" style="margin-bottom:8px"><canvas id="cv"></canvas><div class="muted" style="text-align:center;margin-top:8px;font-size:12px">얼굴 밸런스 분석선 · 각도와 좌우 차이</div></div>
     <button class="btn ghost small" id="saveCard" style="margin-bottom:8px">📸 결과 이미지 저장 · 공유</button>
     <div class="card" id="findings" style="margin-top:8px"></div>
 
@@ -136,18 +143,25 @@
     <div class="foot">SONEED · 얼굴윤곽 밸런스</div>
   </section>
 
-  <!-- STEP 5: AI 동의 + 연락처 -->
+  <!-- STEP 5: AI 동의 + 연락처 + 3장 -->
   <section class="step" id="s-ai-consent">
     <h1>AI <em>정밀분석</em> 받기</h1>
-    <p class="sub">사진을 AI가 분석해 더 자세한 밸런스 해설을 드려요. 결과 안내·상담을 위해 연락처를 남겨주세요.</p>
+    <p class="sub">사진 3장(정면·고개 든·고개 숙인)으로 소니드 AI가 정밀 분석하고, 예약 시 관리사가 미리 확인해 상담해드려요.</p>
     <div class="card">
       <input type="text" id="leadName" placeholder="이름">
       <input type="tel" id="leadPhone" placeholder="연락처 (예: 010-1234-5678)">
-      <label class="consent" style="margin-top:14px"><input type="checkbox" id="agree2"><span>정밀분석을 위해 <b style="color:#ffd0e6">내 사진이 AI 분석 서버로 전송</b>되는 것과, 소니드가 남긴 연락처로 결과·예약 안내를 위해 연락하는 것에 동의합니다.</span></label>
+      <div style="margin-top:14px;font-weight:800;font-size:14px">정밀 분석용 사진 3장</div>
+      <div class="muted" style="font-size:12px;margin:4px 0 2px">정면은 이미 있어요. 고개 든/숙인 사진을 추가하면 훨씬 정확해요.</div>
+      <div class="pslots">
+        <label class="pslot" data-slot="front"><span class="cap">정면</span><input type="file" accept="image/*" capture="user"></label>
+        <label class="pslot" data-slot="up"><span class="cap">고개 든</span><input type="file" accept="image/*" capture="user"></label>
+        <label class="pslot" data-slot="down"><span class="cap">고개 숙인</span><input type="file" accept="image/*" capture="user"></label>
+      </div>
+      <label class="consent" style="margin-top:14px"><input type="checkbox" id="agree2"><span>정밀분석을 위해 <b style="color:#ffd0e6">내 얼굴 사진이 AI 분석 서버로 전송·처리</b>되고, 상담·관리 목적으로 <b style="color:#ffd0e6">소니드에 저장되어 담당 관리사에게 공유</b>되는 것과, 남긴 연락처로 결과·예약 안내 연락을 받는 것에 동의합니다.</span></label>
       <button class="btn primary" id="runAI" disabled style="opacity:.5">동의하고 정밀분석 시작</button>
       <button class="btn ghost" id="backResult" style="margin-top:10px">← 뒤로</button>
     </div>
-    <div class="disc">※ 정밀분석 단계에서는 얼굴 이미지가 분석을 위해 외부 AI 서비스로 전송됩니다. 입력하신 연락처는 상담·예약 안내 목적에 한해 사용됩니다.</div>
+    <div class="disc">※ 정밀분석은 얼굴 이미지(생체정보)를 AI 분석 서버로 전송하며, 상담·예약 및 관리사 사전확인 목적으로 소니드에 저장·공유됩니다. 연락처는 상담·예약 안내에만 사용됩니다. 동의 철회·삭제 요청은 소니드에 문의하실 수 있습니다.</div>
   </section>
 
   <!-- STEP 6: AI 분석중 -->
@@ -197,7 +211,7 @@ document.getElementById('bookDongtan2').href=NAVER.dongtan;
 const $=id=>document.getElementById(id);
 function go(id){document.querySelectorAll('.step').forEach(s=>s.classList.remove('on'));$(id).classList.add('on');window.scrollTo(0,0);}
 
-let _src=null,_P=null,_animal='cat',_score=0;
+let _src=null,_P=null,_animal='cat',_score=0,_photos={};
 
 /* 동의 → 시작 */
 $('agree').addEventListener('change',e=>{const b=$('startBtn');b.disabled=!e.target.checked;b.style.opacity=e.target.checked?1:.5;});
@@ -205,10 +219,17 @@ $('startBtn').onclick=()=>go('s-capture');
 $('backIntro').onclick=()=>go('s-intro');
 $('again').onclick=()=>reset();
 $('again2').onclick=()=>reset();
-$('toAI').onclick=()=>go('s-ai-consent');
+$('toAI').onclick=()=>{ if(_src&&!_photos.front){ _photos.front=_src.toDataURL('image/jpeg',0.85); setSlot('front',_photos.front); } go('s-ai-consent'); };
 $('backResult').onclick=()=>go('s-result');
 $('agree2').addEventListener('change',e=>{const b=$('runAI');b.disabled=!e.target.checked;b.style.opacity=e.target.checked?1:.5;});
-function reset(){$('photo').value='';$('agree').checked=false;$('startBtn').disabled=true;$('startBtn').style.opacity=.5;$('agree2').checked=false;$('runAI').disabled=true;$('runAI').style.opacity=.5;go('s-intro');}
+function reset(){$('photo').value='';$('agree').checked=false;$('startBtn').disabled=true;$('startBtn').style.opacity=.5;$('agree2').checked=false;$('runAI').disabled=true;$('runAI').style.opacity=.5;_photos={};document.querySelectorAll('.pslot').forEach(function(s){s.classList.remove('filled');var im=s.querySelector('img');if(im)im.remove();var i=s.querySelector('input');if(i)i.value='';});go('s-intro');}
+/* 사진 슬롯(정면/든/숙인) */
+function setSlot(slot,dataUrl){var el=document.querySelector('.pslot[data-slot="'+slot+'"]');if(!el)return;el.classList.add('filled');var im=el.querySelector('img');if(!im){im=document.createElement('img');el.appendChild(im);}im.src=dataUrl;}
+document.querySelectorAll('.pslot input').forEach(function(inp){
+  inp.addEventListener('change',function(e){var f=e.target.files[0];if(!f)return;var slot=e.target.closest('.pslot').getAttribute('data-slot');
+    var r=new FileReader();r.onload=function(){imgResize(r.result,900,0.85).then(function(u){_photos[slot]=u;setSlot(slot,u);});};r.readAsDataURL(f);});
+});
+function imgResize(dataUrl,max,q){return new Promise(function(res){var i=new Image();i.onload=function(){var m=Math.min(1,max/Math.max(i.width,i.height));var c=document.createElement('canvas');c.width=Math.round(i.width*m);c.height=Math.round(i.height*m);c.getContext('2d').drawImage(i,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',q));};i.onerror=function(){res(dataUrl);};i.src=dataUrl;});}
 
 /* MediaPipe */
 let _fl=null,_load=null;
@@ -265,20 +286,64 @@ function pickAnimal(f){
 }
 
 function result(){
-  const f=feats(_P); _score=f.score; _animal=pickAnimal(f);
+  const P=_P, f=feats(P); _score=f.score; _animal=pickAnimal(f);
   const a=ANIMALS[_animal];
   $('hero').innerHTML=`<div class="emo">${a.emo}</div><div class="type">나는 <b>${a.name}</b></div>
     <div class="sc">밸런스 점수 <b>${_score}</b> / 100</div><div class="tr">${a.tr}</div>`;
-  // 밸런스 findings
+
+  // ── 측정: 얼굴 정중선(이마10↔턱152) 기준 좌우 수직거리 + 각도 ──
+  const A=P[10], B=P[152], dxm=B.x-A.x, dym=B.y-A.y, mlen=Math.hypot(dxm,dym)||1;
+  const faceH=D(P[10],P[152]);
+  const perp=p=>((p.x-A.x)*dym-(p.y-A.y)*dxm)/mlen;      // 정중선까지 부호있는 수직거리(좌/우 부호 반대)
+  const eyeAng=Math.abs(Math.atan2(P[473].y-P[468].y,P[473].x-P[468].x)*180/Math.PI); // 눈 기울기
+  const earAng=Math.abs(Math.atan2(P[356].y-P[127].y,P[356].x-P[127].x)*180/Math.PI); // 귀선 기울기
+  // 좌우 쌍(화면 왼쪽점, 화면 오른쪽점) → |수직거리| 비교
+  const pair=(li,ri)=>{const L=Math.abs(perp(P[li])),R=Math.abs(perp(P[ri]));return {L,R,d:Math.abs(L-R)/faceH*100,big:L>=R?'사진 왼쪽':'사진 오른쪽'};};
+  const cheekW=pair(234,454);   // 광대 너비(외곽)
+  const cheekV=pair(116,345);   // 광대 볼륨(광대 앞쪽 도드라짐)
+  const earEx =pair(127,356);   // 귀 노출(귀앞 외곽 확장)
+  const jawO  =pair(172,397);   // 턱 외각(하악각)
+  const earH = Math.abs(P[356].y-P[127].y)/faceH*100;  // 귀 높이차
+  _viz={A,B,perp,mlen,dxm,dym};
+
+  // ── 결과 카드 ──
+  const dmsg=(p,ph)=> p.d<1.0 ? '좌우가 거의 비슷해요.' : (p.big+' '+ph);
   const F=[];
-  F.push(['⚖️', f.tilt<1.3?'눈높이 균형 좋아요':'눈높이가 살짝 기울어요', f.tilt<1.3?'양쪽 눈높이가 거의 수평이에요.':'얼굴이 약 '+f.tilt.toFixed(1)+'° 기울어 보여요.']);
-  F.push(['〰️', f.noseDx<1.2?'콧대 밸런스 좋아요':'콧대가 살짝 흘러요', f.noseDx<1.2?'콧대가 중심을 잘 따라와요.':'콧대가 중심에서 조금 벗어난 편이에요.']);
-  F.push(['🔀', f.noseOff<1.3?'좌우 볼륨 균형형':'한쪽 볼륨이 조금 더', f.noseOff<1.3?'좌우 볼륨이 균형 잡혀 있어요.':'좌우 중 한쪽이 살짝 도드라져요.']);
+  F.push(['⚖️', eyeAng<1.3?'눈 각도 · 수평 양호':'눈 각도 · '+eyeAng.toFixed(1)+'° 기울기', eyeAng<1.3?'양쪽 눈높이가 거의 수평이에요.':'양쪽 눈을 잇는 선이 약 '+eyeAng.toFixed(1)+'° 기울어 있어요.']);
+  F.push(['👂', earAng<1.6?'귀 각도 · 균형':'귀 각도 · '+earAng.toFixed(1)+'°', '양쪽 귀 위치를 잇는 선의 기울기예요. (높이차 '+earH.toFixed(1)+')']);
+  F.push(['🫧', earEx.d<1.0?'귀 노출 · 좌우 비슷':'귀 노출 차이', dmsg(earEx,'귀가 조금 더 보여요.')]);
+  F.push(['💠', cheekW.d<1.0?'광대 너비 · 좌우 비슷':'광대 너비 차이', dmsg(cheekW,'광대가 조금 더 넓어요.')]);
+  F.push(['🎈', cheekV.d<1.0?'광대 볼륨 · 좌우 비슷':'광대 볼륨 차이', dmsg(cheekV,'광대가 조금 더 도드라져요.')]);
+  F.push(['🔻', jawO.d<1.0?'턱 외각 · 좌우 비슷':'턱 외각(하악각) 차이', dmsg(jawO,'턱선이 조금 더 각져 보여요.')]);
   $('findings').innerHTML=F.map(x=>`<div class="finding"><div class="ic">${x[0]}</div><div><div class="t">${x[1]}</div><div class="d">${x[2]}</div></div></div>`).join('');
-  // 유도(다른 상 아니면 같은 상 또렷하게)
-  const dream = _animal==='cat'?ANIMALS.fox:ANIMALS.cat;
+
+  drawViz(P,_src,{eyeAng,earAng});
+  const dream=_animal==='cat'?ANIMALS.fox:ANIMALS.cat;
   $('aim').innerHTML=`혹시 더 또렷한 <b>${dream.name}</b> 같은 인상을 원하세요?<br><span class="muted" style="font-size:13px">소니드가 얼굴 밸런스를 다듬어 원하는 인상에 한 걸음 더 가까워지게 도와드려요.</span>`;
   go('s-result');
+}
+let _viz=null;
+function drawViz(P,src,ang){
+  let minx=1e9,miny=1e9,maxx=-1e9,maxy=-1e9;
+  for(const p of P){if(p.x<minx)minx=p.x;if(p.x>maxx)maxx=p.x;if(p.y<miny)miny=p.y;if(p.y>maxy)maxy=p.y;}
+  const mw=(maxx-minx)*0.22, mh=(maxy-miny)*0.30;
+  let ox=Math.max(0,minx-mw), oy=Math.max(0,miny-mh*1.1);
+  let ow=Math.min(src.width-ox,(maxx-minx)+mw*2), oh=Math.min(src.height-oy,(maxy-miny)+mh*2.1);
+  const cv=$('cv'), scale=Math.min(2,460/ow); cv.width=Math.round(ow*scale); cv.height=Math.round(oh*scale);
+  const g=cv.getContext('2d'); g.drawImage(src,ox,oy,ow,oh,0,0,cv.width,cv.height);
+  const tx=x=>(x-ox)*scale, ty=y=>(y-oy)*scale;
+  const line=(a,b,col,w,dash)=>{g.strokeStyle=col;g.lineWidth=w||2;g.setLineDash(dash||[]);g.beginPath();g.moveTo(tx(a.x),ty(a.y));g.lineTo(tx(b.x),ty(b.y));g.stroke();g.setLineDash([]);};
+  const dot=(p,col,r)=>{g.fillStyle=col;g.beginPath();g.arc(tx(p.x),ty(p.y),r||3.5,0,7);g.fill();};
+  line(P[10],P[152],'rgba(255,79,158,.9)',2,[6,5]);              // 정중선
+  line(P[468],P[473],'rgba(90,200,255,.95)',2.5);               // 눈선
+  line(P[127],P[356],'rgba(120,220,150,.9)',2,[5,4]);           // 귀선
+  [P[234],P[454]].forEach(p=>dot(p,'#ffd24a',4));               // 광대 외곽
+  [P[116],P[345]].forEach(p=>dot(p,'#ff8bc4',3.5));             // 광대 앞
+  [P[172],P[397]].forEach(p=>dot(p,'#8be0ff',3.5));             // 턱 외각
+  [P[468],P[473],P[127],P[356]].forEach(p=>dot(p,'#fff',2.5));
+  // 각도 라벨
+  g.fillStyle='#eaf6ff'; g.font='700 '+Math.round(13*scale)+'px -apple-system,sans-serif'; g.textAlign='left';
+  g.fillText('눈 '+ang.eyeAng.toFixed(1)+'°', tx(P[473].x)+6, ty(P[473].y)-6);
 }
 
 /* 결과 이미지 카드 저장/공유 */
@@ -303,39 +368,44 @@ $('saveCard').onclick=async()=>{
 };
 function wrap(g,text,x,y,maxw,lh){const words=text.split(' ');let line='',yy=y;for(const w of words){const t=line+w+' ';if(g.measureText(t).width>maxw&&line){g.fillText(line,x,yy);line=w+' ';yy+=lh;}else line=t;}g.fillText(line,x,yy);}
 
-/* AI 정밀분석 */
+/* AI 정밀분석 (3장) → 친근 리포트 + 리드 저장(사진+요약) */
 $('runAI').onclick=async()=>{
   const name=($('leadName').value||'').trim(), phone=($('leadPhone').value||'').trim();
   if(!name||!phone){alert('이름과 연락처를 입력해주세요');return;}
+  if(!_photos.front){alert('정면 사진이 필요해요');return;}
   go('s-ai-loading');
-  saveLead(name,phone);   // 리드 저장(실패해도 진행)
+  // 저장용 사진(640/0.6) — 관리사 사전확인용
+  const store={};
+  for(const k of ['front','up','down']) if(_photos[k]) store[k]=await imgResize(_photos[k],640,0.6);
+  // 친근 AI (가진 사진 모두)
+  let summary='';
   try{
-    const b64=shrink(_src);
+    const content=[];
+    for(const k of ['front','up','down']) if(_photos[k]){ const b64=(await imgResize(_photos[k],560,0.6)).split(',')[1]; content.push({type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}}); }
     const f=feats(_P);
-    const meas=`측정 참고값: 얼굴상=${ANIMALS[_animal].name}, 밸런스점수=${_score}, 눈기울기=${f.tilt.toFixed(1)}도, 콧대치우침=${f.noseDx.toFixed(1)}, 좌우볼륨차=${f.noseOff.toFixed(1)}`;
-    const prompt=`당신은 소니드(SONEED)의 얼굴 밸런스 안내 도우미입니다. 아래 정면 셀카와 측정 참고값을 보고, 일반 고객에게 친근하고 긍정적으로 얼굴 좌우 밸런스를 4가지 정도 짚어주세요.
+    const meas=`측정 참고: 얼굴상=${ANIMALS[_animal].name}, 밸런스점수=${_score}, 눈기울기=${f.tilt.toFixed(1)}도`;
+    content.push({type:'text',text:`당신은 소니드(SONEED)의 얼굴 밸런스 안내 도우미입니다. 위 사진(정면·고개 든·고개 숙인 중 제공된 것)과 측정 참고값을 보고, 일반 고객에게 친근하고 긍정적으로 얼굴 좌우 밸런스를 4가지 정도 짚어주세요.
 - 말투: "~해 보여요", "~한 편이에요" 처럼 부드럽고 따뜻하게. 단정·과장 금지.
 - 의학적 진단/치료/질병 표현 금지(미용·인상 관점만).
-- 각 항목은 한두 문장. 장점도 함께 언급.
-- 마지막에 "소니드의 30분 밸런스 관리로 좌우 균형을 부드럽게 다듬어볼 수 있어요" 한 줄.
+- 각 항목 한두 문장, 장점도 함께. 마지막에 "소니드의 30분 밸런스 관리로 좌우 균형을 부드럽게 다듬어볼 수 있어요" 한 줄.
 ${meas}
-JSON이나 코드블록 없이, 읽기 좋은 문단으로만 답하세요.`;
-    let resp,raw;
-    try{
-      resp=await fetch(RELAY,{method:'POST',headers:{'Content-Type':'application/json','x-app':'self-b2c'},
-        body:JSON.stringify({model:HAIKU,max_tokens:700,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},{type:'text',text:prompt}]}]})});
-    }catch(fe){ throw new Error('연결 실패(CORS/네트워크): '+(fe&&fe.message||fe)); }
-    raw=await resp.text();
-    let data={}; try{ data=JSON.parse(raw); }catch(pe){}
-    if(!resp.ok || (data&&data.error)){ throw new Error('HTTP '+resp.status+' · '+(data&&data.error?(typeof data.error==='string'?data.error:JSON.stringify(data.error)):raw.slice(0,140))); }
-    const text=(data.content||[]).filter(x=>x.type==='text').map(x=>x.text).join('\n').trim();
-    if(!text){throw new Error('빈응답 HTTP '+resp.status+' · '+raw.slice(0,140));}
-    $('aiText').textContent=text; go('s-ai-result');
-  }catch(e){ $('aiMsg').textContent='분석 실패: '+(e&&e.message||e); setTimeout(()=>go('s-result'),6000); }
+JSON·코드블록 없이 읽기 좋은 문단으로만.`});
+    const resp=await fetch(RELAY,{method:'POST',headers:{'Content-Type':'application/json','x-app':'self-b2c'},
+      body:JSON.stringify({model:HAIKU,max_tokens:700,messages:[{role:'user',content}]})});
+    const raw=await resp.text(); let data={}; try{ data=JSON.parse(raw); }catch(pe){}
+    if(resp.ok && !(data&&data.error)){ summary=(data.content||[]).filter(x=>x.type==='text').map(x=>x.text).join('\n').trim(); }
+  }catch(e){ summary=''; }
+  // 리드 저장(사진+요약) — AI 실패해도 반드시 저장(예약 리드 확보)
+  await saveLead(name,phone,store,summary);
+  $('aiText').textContent = summary || '분석 신청이 접수됐어요! 담당 관리사가 사진을 확인하고 연락드릴게요. 아래에서 예약도 바로 하실 수 있어요.';
+  go('s-ai-result');
 };
-function shrink(cv){const m=Math.min(1,560/Math.max(cv.width,cv.height));const c=document.createElement('canvas');c.width=Math.round(cv.width*m);c.height=Math.round(cv.height*m);c.getContext('2d').drawImage(cv,0,0,c.width,c.height);return c.toDataURL('image/jpeg',0.7).split(',')[1];}
-async function saveLead(name,phone){
-  try{ await fetch(SB_URL+'/rest/v1/leads',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify({name:name,phone:phone,animal:ANIMALS[_animal].name,score:_score})}); }catch(e){}
+async function saveLead(name,phone,photos,summary){
+  try{
+    const body={name:name,phone:phone,animal:ANIMALS[_animal].name,score:_score,ai_summary:summary||''};
+    if(photos){ if(photos.front)body.photo_front=photos.front; if(photos.up)body.photo_up=photos.up; if(photos.down)body.photo_down=photos.down; }
+    await fetch(SB_URL+'/rest/v1/leads',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(body)});
+  }catch(e){}
 }
 </script>
 </body>
