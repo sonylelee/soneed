@@ -44,13 +44,30 @@
   .acct-tbl td.em{color:var(--muted)}
   .acct-tbl tbody tr{cursor:pointer;transition:background .12s} .acct-tbl tbody tr:hover{background:var(--surface2)}
   .acct-tbl tbody tr:last-child td{border-bottom:0}
-  /* 프리미엄 폴리시(부드러운 인터랙션·정돈된 헤더/탭) */
+  /* ===== 다크 프리미엄 (헤더/네비는 어둡게, 콘텐츠 카드는 밝게 떠 보이게) ===== */
+  body{background:#E7E9EE}
   .btn,.tabs button,.modebtn{transition:transform .13s ease,box-shadow .13s ease,background .13s ease,color .13s ease}
   .btn:hover{transform:translateY(-1px)}
-  header.top{box-shadow:0 1px 0 rgba(20,25,35,.04),0 10px 26px rgba(20,25,35,.035)}
-  .logo b{background:linear-gradient(90deg,var(--brand),#9b1560);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-  .tabs{background:var(--surface2);box-shadow:inset 0 1px 2px rgba(20,25,35,.04)}
-  .tabs button.on{color:var(--brand);box-shadow:0 1px 2px rgba(20,25,35,.06),0 2px 8px rgba(200,29,116,.10)}
+  /* 어두운 헤더 */
+  header.top{background:linear-gradient(180deg,#181b22,#12141a);border-bottom:1px solid #262a33;box-shadow:0 8px 28px rgba(10,12,18,.28)}
+  header.top::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:linear-gradient(90deg,transparent,rgba(255,79,158,.55),rgba(120,90,220,.45),transparent)}
+  header.top{position:sticky}
+  .logo{color:#F3F4F7}
+  .logo b{background:linear-gradient(90deg,#ff5fa8,#c81d74);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 10px rgba(255,79,158,.25))}
+  .logo span{color:#8b93a2}
+  /* 어두운 탭 */
+  .tabs{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);box-shadow:inset 0 1px 2px rgba(0,0,0,.25)}
+  .tabs button{color:#aeb6c4}
+  .tabs button:hover{color:#e6e9ef}
+  .tabs button.on{background:#fff;color:var(--brand);box-shadow:0 2px 10px rgba(200,29,116,.28)}
+  /* 헤더 위 알약(기록수/로그인) 어둡게 */
+  .count-pill{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.12);color:#cdd3dd} .count-pill b{color:#ff5fa8}
+  .modebtn{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.13);color:#e2e6ec}
+  .modebtn:hover{background:rgba(255,255,255,.12)}
+  .modebtn.on{background:rgba(31,157,87,.18);border-color:rgba(52,199,120,.55);color:#5fe0a0}
+  /* 떠 보이는 카드 */
+  :root{--shadow:0 1px 2px rgba(16,20,30,.05),0 14px 34px rgba(16,20,30,.10)}
+  .card{border-color:#E4E7EC}
   h2.section{font-size:12.5px;font-weight:800;letter-spacing:.02em;color:var(--muted);text-transform:uppercase;margin:26px 2px 12px;display:flex;align-items:center;gap:10px}
   h2.section .tag{font-size:11px;font-weight:800;padding:3px 8px;border-radius:6px;letter-spacing:0;text-transform:none}
   .tag.all{background:var(--side-soft);color:var(--side)} .tag.dist{background:var(--dist-soft);color:var(--dist)} .tag.rot{background:var(--brand-soft);color:var(--brand)}
@@ -153,7 +170,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v49 (2026-07-21)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v50 (2026-07-21)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객 리포트</button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -511,8 +528,12 @@ async function renderAppCustomers(){
   if(!isAdmin())return; var box=document.getElementById('appCustList'); if(!box||_appCustBusy)return; _appCustBusy=true;
   try{
     var acc={};
-    try{ var r=await fetch(sbBase()+'accounts?select=email,name,tier',{headers:sbHeaders()});
-      if(r.ok){ (await r.json()).forEach(function(a){acc[(a.email||'').toLowerCase()]={name:a.name||'',tier:a.tier||''};}); } }catch(e){}
+    // 1순위: 대표 전용 RPC(auth display_name + 등급 라이브 조회). 없으면 accounts 테이블로 폴백.
+    var got=false;
+    try{ var rp=await fetch(sbBase()+'rpc/admin_app_users',{method:'POST',headers:sbHeaders(),body:'{}'});
+      if(rp.ok){ var jr=await rp.json(); if(Array.isArray(jr)){ jr.forEach(function(a){acc[(a.email||'').toLowerCase()]={name:a.name||'',tier:a.tier||''};}); got=true; } } }catch(e){}
+    if(!got){ try{ var r=await fetch(sbBase()+'accounts?select=email,name,tier',{headers:sbHeaders()});
+      if(r.ok){ (await r.json()).forEach(function(a){acc[(a.email||'').toLowerCase()]={name:a.name||'',tier:a.tier||''};}); } }catch(e){} }
     var cnt={};
     (records||[]).forEach(function(rec){ var e=(rec.savedBy||'').toLowerCase(); if(e)cnt[e]=(cnt[e]||0)+1; });
     var set={}; Object.keys(acc).forEach(function(e){set[e]=1;}); Object.keys(cnt).forEach(function(e){set[e]=1;});
