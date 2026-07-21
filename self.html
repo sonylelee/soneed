@@ -74,7 +74,7 @@
 </style>
 </head>
 <body>
-<header><div class="logo"><b>SONEED</b> <span>얼굴상 & 밸런스</span></div></header>
+<header><div class="logo"><b>SONEED</b> <span>얼굴상 & 밸런스 · v2</span></div></header>
 <div class="wrap">
 
   <!-- STEP 1: 인트로 + 동의 -->
@@ -323,8 +323,9 @@ JSON이나 코드블록 없이, 읽기 좋은 문단으로만 답하세요.`;
     const resp=await fetch(RELAY,{method:'POST',headers:{'Content-Type':'application/json','x-app':'self-b2c'},
       body:JSON.stringify({model:HAIKU,max_tokens:700,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},{type:'text',text:prompt}]}]})});
     const data=await resp.json();
+    if(data&&data.error){ throw new Error(typeof data.error==='string'?data.error:(data.error.message||JSON.stringify(data.error))); }
     const text=(data.content||[]).filter(x=>x.type==='text').map(x=>x.text).join('\n').trim();
-    if(!text){throw new Error('응답이 비어있어요');}
+    if(!text){throw new Error('응답이 비어있어요 (HTTP '+resp.status+')');}
     $('aiText').textContent=text; go('s-ai-result');
   }catch(e){ $('aiMsg').textContent='분석에 실패했어요('+(e&&e.message||e)+'). 잠시 후 다시 시도하거나, 바로 예약해 상담받으세요.'; setTimeout(()=>go('s-result'),2600); }
 };
