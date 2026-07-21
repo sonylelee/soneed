@@ -39,7 +39,7 @@ async function checkTier(event, supaBase, anon) {
 exports.handler = async (event) => {
   const cors = {
     "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "Content-Type, x-sb-token",
+    "Access-Control-Allow-Headers": "Content-Type, x-sb-token, x-app",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
   };
   if (event.httpMethod === "OPTIONS") {
@@ -52,10 +52,12 @@ exports.handler = async (event) => {
   if (!KEY) {
     return { statusCode: 500, headers: cors, body: JSON.stringify({ error: "서버에 ANTHROPIC_API_KEY 환경변수가 설정되지 않았습니다." }) };
   }
-  // 등급 하드락(환경변수가 있을 때만 작동)
+  // 등급 하드락(환경변수가 있을 때만 작동). 단 B2C 공개 체험(self.html)은 로그인 없이 허용.
+  const h0 = event.headers || {};
+  const isB2C = (h0["x-app"] || h0["X-App"]) === "self-b2c";
   const SUPA = process.env.SUPABASE_URL;
   const ANON = process.env.SUPABASE_ANON_KEY;
-  if (SUPA && ANON) {
+  if (SUPA && ANON && !isB2C) {
     const chk = await checkTier(event, SUPA.replace(/\/+$/, ""), ANON);
     if (!chk.ok) {
       return { statusCode: chk.code, headers: { ...cors, "Content-Type": "application/json" }, body: JSON.stringify({ error: chk.msg }) };
