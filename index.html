@@ -170,7 +170,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v50 (2026-07-21)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v51 (2026-07-21)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객 리포트</button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -363,7 +363,7 @@ const ICON512="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAIAAAB7GkO
 (function(){try{const m={name:"소니드 얼굴윤곽 분석",short_name:"소니드 분석",start_url:".",scope:".",display:"standalone",background_color:"#EEF0F3",theme_color:"#C81D74",icons:[{src:ICON180,sizes:"180x180",type:"image/png",purpose:"any"},{src:ICON512,sizes:"512x512",type:"image/png",purpose:"any maskable"}]};const l=document.createElement("link");l.rel="manifest";l.href=URL.createObjectURL(new Blob([JSON.stringify(m)],{type:"application/manifest+json"}));document.head.appendChild(l);}catch(e){}})();
 const NEUTRAL=['중립','대칭'];
 const PHOTO_SLOTS=[['front','정면'],['up','고개 든'],['down','고개 숙인']];
-const RELAY="https://admirable-salmiakki-a726d6.netlify.app/.netlify/functions/claude";
+const RELAY="https://soneed-relay.soni0025.workers.dev";
 const THERAPISTS=['','이소니','신대성','정수영','김현주','신경미','김려은','이수연','게스트1','게스트2'];
 
 /* 차트 항목 = 데이터 컬럼 (인쇄 차트 순서 그대로: 2D 진단 → 좌우 진단 → 회전 진단) */
