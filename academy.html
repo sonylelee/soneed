@@ -145,6 +145,25 @@ table.cur tr:nth-child(even) td{background:var(--mist)}
 footer{background:#141a34;color:#8b93b5;padding:40px 0;font-size:13px}
 footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px}
 .ph-note{background:#fff4d6;color:#8a6d1a;border:1px solid #e8d18a;border-radius:8px;padding:2px 8px;font-size:12px;font-weight:700}
+
+/* ===== 모바일 보정 ===== */
+@media(max-width:760px){
+  .hero h1{font-size:29px;line-height:1.28}
+  .hero h1 br, .pull br{display:none}       /* 강제 줄바꿈 제거 → 자연스럽게 흐름 */
+  .hero p.lead{font-size:16px}
+  h2.sec{font-size:24px}
+  section{padding:48px 0}
+  /* 커리큘럼 표: 좁은 화면에선 행마다 세로로 풀어 왼쪽 정렬 */
+  table.cur thead{display:none}
+  table.cur tr{display:block;border-top:2px solid var(--line);padding:10px 0}
+  table.cur tr:first-child{border-top:0}
+  table.cur tr:nth-child(even) td{background:transparent}
+  table.cur td{display:block;border:0;padding:3px 14px;text-align:left;font-size:14px}
+  table.cur td:first-child{padding-bottom:6px}
+  .benefits{gap:8px}
+  .pricebox{padding:32px 20px}
+  .pricebox .p{font-size:34px}
+}
 </style>
 </head>
 <body>
