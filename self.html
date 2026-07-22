@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<title>SONEED · 무료 얼굴상 & 밸런스 체험</title>
+<title>SONEED · 무료 얼굴상 & 비대칭 체험</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
 <meta name="theme-color" content="#12141a">
 <style>
@@ -98,18 +98,18 @@
 </style>
 </head>
 <body>
-<header><div class="logo"><b>SONEED</b> <span>얼굴상 & 밸런스 · v6c</span></div></header>
+<header><div class="logo"><b>SONEED</b> <span>얼굴상 & 비대칭 · v6e</span></div></header>
 <div class="wrap">
 
   <!-- STEP 1: 인트로 + 동의 -->
   <section class="step on" id="s-intro">
     <div class="badge">무료 · 20초 셀프 체험</div>
-    <h1>내 <em>얼굴상</em>은 뭘까?<br>동물상 + 밸런스 체크</h1>
-    <p class="sub">셀카 한 장이면 내 동물상과 얼굴 좌우 밸런스를 알려드려요. 친구들과 결과 공유해보세요!</p>
+    <h1>내 <em>얼굴상</em>은 뭘까?<br>동물상 + 비대칭 체크</h1>
+    <p class="sub">셀카 한 장이면 재미로 내 동물상 보고, 얼굴 좌우 비대칭까지 확인해봐요. 친구들과 결과 공유해보세요!</p>
     <div class="card">
       <div class="finding"><div class="ic">🐱</div><div><div class="t">내 동물상 찾기</div><div class="d">고양이·강아지·여우·토끼·사슴·곰상 중 무엇일까요?</div></div></div>
       <div class="finding"><div class="ic">📷</div><div><div class="t">사진은 내 폰에서만 분석</div><div class="d">기본 체험은 서버로 전송·저장하지 않아요.</div></div></div>
-      <div class="finding"><div class="ic">💬</div><div><div class="t">재미로 보는 참고 결과</div><div class="d">정확한 얼굴 밸런스 분석·관리는 소니드 관리사가 해드려요.</div></div></div>
+      <div class="finding"><div class="ic">💬</div><div><div class="t">재미로 보는 참고 결과</div><div class="d">정확한 얼굴 비대칭 분석·관리는 소니드 관리사가 해드려요.</div></div></div>
       <label class="consent"><input type="checkbox" id="agree"><span>사진이 내 기기에서 처리되는 것에 동의하며, 본 결과는 의료 진단이 아닌 재미·미용 참고용임을 이해했습니다.</span></label>
       <button class="btn primary" id="startBtn" disabled style="opacity:.5">동의하고 시작하기</button>
     </div>
@@ -148,35 +148,17 @@
     </div>
     <button class="btn primary" id="saveCard" style="margin-bottom:10px">📸 내 얼굴상 이미지 저장 · 공유하기</button>
     <div class="card" id="findings"></div>
-
-    <div class="hr"></div>
-    <div class="brandbox">
-      <div class="k">SONEED · 소니드</div>
-      <h3>얼굴 비대칭, 손으로 좋아지게</h3>
-      <p>소니드는 <b style="color:#fff">30분 건식 밸런스 관리</b>예요. 정밀 분석 후 니트릴 장갑으로 적은 압을 가해 얼굴 좌우 균형을 부드럽게 다듬어요. 시술·주사 없이요.</p>
-    </div>
-    <div class="brandbox" style="margin-top:14px">
-      <div class="k">SONEED TEAM</div>
-      <h3>얼굴분석의 대가, 이소니 원장</h3>
-      <img src="team/2.jpg" class="leader" loading="lazy" alt="이소니 원장">
-      <div style="font-weight:900;margin-top:8px;font-size:16px">이소니 원장</div>
-      <div class="muted" style="font-size:12px">소니드 대표 · 얼굴윤곽 분석 전문가</div>
-      <p style="margin-top:10px">원장과 소니드 전문가 팀이 직접 얼굴 비대칭을 봐드려요.</p>
-      <div class="team">
-        <img src="team/1.jpg" loading="lazy" alt="소니드 전문가"><img src="team/3.jpg" loading="lazy" alt="소니드 전문가"><img src="team/4.jpg" loading="lazy" alt="소니드 전문가"><img src="team/5.jpg" loading="lazy" alt="소니드 전문가"><img src="team/6.jpg" loading="lazy" alt="소니드 전문가"><img src="team/7.jpg" loading="lazy" alt="소니드 전문가">
-      </div>
-    </div>
     <div class="aim" id="aim"></div>
 
-    <button class="btn primary" id="toAI" style="margin-top:16px">🔬 정밀분석 받기 (무료)</button>
-    <p class="muted" style="text-align:center;margin:8px 0 4px;font-size:12px">더 자세한 밸런스 해설 · 연락처 입력 후 진행</p>
+    <button class="btn primary" id="toAI" style="margin-top:14px">🔬 내 얼굴 비대칭 정밀분석 (무료)</button>
+    <p class="muted" style="text-align:center;margin:8px 0 4px;font-size:12px">사진 3장으로 더 자세히 · 관리사 사전확인</p>
     <a class="iglink" href="#" target="_blank" rel="noopener">📷 소니드 인스타그램 보러가기</a>
     <div class="hr"></div>
     <h1 style="font-size:19px;margin:6px 0 12px">📍 예약할 지점을 골라주세요</h1>
     <a class="btn book" id="bookApgujeong" href="#" target="_blank" rel="noopener"><span class="loc">압구정점</span><span class="go">네이버 예약 →</span></a>
     <a class="btn book" id="bookDongtan" href="#" target="_blank" rel="noopener"><span class="loc">동탄본점</span><span class="go">네이버 예약 →</span></a>
     <button class="btn ghost" id="again" style="margin-top:16px">↺ 다시 체험하기</button>
-    <div class="foot"><a href="./privacy.html" target="_blank">개인정보처리방침</a> · SONEED 얼굴윤곽 밸런스</div>
+    <div class="foot"><a href="./privacy.html" target="_blank">개인정보처리방침</a> · SONEED 얼굴윤곽 비대칭</div>
   </section>
 
   <!-- STEP 5: AI 동의 + 연락처 + 3장 -->
@@ -195,7 +177,8 @@
       </div>
       <div style="margin-top:16px;font-weight:800;font-size:14px">생활 습관 체크 <span class="muted" style="font-weight:600;font-size:12px">(선택 · 비대칭 원인 파악에 도움돼요)</span></div>
       <div id="survey"></div>
-      <label class="consent" style="margin-top:14px"><input type="checkbox" id="agree2"><span>상담·관리 목적으로 <b style="color:#ffd0e6">내 얼굴 사진(생체정보)이 소니드에 저장되어 담당 관리사에게 공유</b>되는 것과, 남긴 연락처로 결과·예약 안내 연락을 받는 것에 동의합니다.</span></label>
+      <label class="consent" style="margin-top:14px"><input type="checkbox" id="agree2"><span>(필수) 상담·관리 목적으로 <b style="color:#ffd0e6">내 얼굴 사진(생체정보)이 소니드에 저장되어 담당 관리사에게 공유</b>되는 것과, 남긴 연락처로 결과·예약 안내 연락을 받는 것에 동의합니다.</span></label>
+      <label class="consent" style="margin-top:2px"><input type="checkbox" id="agreeMkt"><span>(선택) 이름·연락처를 활용한 이벤트·혜택 등 <b style="color:#ffd0e6">마케팅 정보 수신(문자·전화)</b>에 동의합니다.</span></label>
       <button class="btn primary" id="runAI" disabled style="opacity:.5">동의하고 정밀분석 시작</button>
       <button class="btn ghost" id="backResult" style="margin-top:10px">← 뒤로</button>
     </div>
@@ -205,22 +188,39 @@
   <!-- STEP 6: AI 분석중 -->
   <section class="step" id="s-ai-loading">
     <h1>정밀 분석 중…</h1>
-    <p class="sub" id="aiMsg">얼굴 밸런스를 꼼꼼히 보고 있어요. 잠시만요!</p>
+    <p class="sub" id="aiMsg">얼굴 비대칭을 꼼꼼히 보고 있어요. 잠시만요!</p>
     <div class="spinner"></div>
   </section>
 
   <!-- STEP 7: AI 결과 -->
   <section class="step" id="s-ai-result">
-    <h1>소니드 <em>정밀 밸런스</em> 리포트</h1>
-    <div class="card" style="margin-bottom:12px"><canvas id="cv"></canvas><div class="muted" style="text-align:center;margin-top:8px;font-size:12px">얼굴 밸런스 분석선 · 각도와 좌우 차이</div></div>
+    <h1>소니드 <em>정밀 비대칭</em> 리포트</h1>
+    <div class="card" style="margin-bottom:12px"><canvas id="cv"></canvas><div class="muted" style="text-align:center;margin-top:8px;font-size:12px">얼굴 비대칭 분석선 · 각도와 좌우 차이</div></div>
     <div class="card"><div class="aiout" id="aiText"></div></div>
-    <div class="aim" style="margin-top:14px"><b>더 자세한 건 소니드에서 직접!</b><br><span class="muted" style="font-size:13px">손으로 확인하는 정밀 분석과 30분 밸런스 관리로 이어가세요.</span></div>
+    <div class="aim" style="margin-top:14px"><b>더 자세한 건 소니드에서 직접!</b><br><span class="muted" style="font-size:13px">손으로 확인하는 정밀 분석과 30분 관리로 이어가세요.</span></div>
     <a class="btn book" id="bookApgujeong2" href="#" target="_blank" rel="noopener" style="margin-top:14px"><span class="loc">📍 압구정점</span><span class="go">네이버 예약 →</span></a>
     <a class="btn book" id="bookDongtan2" href="#" target="_blank" rel="noopener"><span class="loc">📍 동탄본점</span><span class="go">네이버 예약 →</span></a>
     <a class="iglink" href="#" target="_blank" rel="noopener">📷 소니드 인스타그램 보러가기</a>
+    <div class="hr"></div>
+    <div class="brandbox">
+      <div class="k">SONEED · 소니드</div>
+      <h3>얼굴 비대칭, 손으로 좋아지게</h3>
+      <p>소니드는 <b style="color:#fff">30분 건식 관리</b>예요. 정밀 분석 후 니트릴 장갑으로 적은 압을 가해 얼굴 좌우 비대칭을 부드럽게 개선해요. 시술·주사 없이요.</p>
+    </div>
+    <div class="brandbox" style="margin-top:14px">
+      <div class="k">SONEED</div>
+      <h3>정밀한 얼굴 분석의 시작, 소니드</h3>
+      <img src="team/2.jpg" class="leader" loading="lazy" alt="이소니 원장">
+      <div style="font-weight:900;margin-top:8px;font-size:16px">이소니 원장</div>
+      <div class="muted" style="font-size:12px">소니드 대표 · 얼굴윤곽 분석 전문가</div>
+      <p style="margin-top:10px">원장과 소니드 전문가 팀이 직접 얼굴 비대칭을 봐드려요.</p>
+      <div class="team">
+        <img src="team/1.jpg" loading="lazy" alt="소니드 전문가"><img src="team/3.jpg" loading="lazy" alt="소니드 전문가"><img src="team/4.jpg" loading="lazy" alt="소니드 전문가"><img src="team/5.jpg" loading="lazy" alt="소니드 전문가"><img src="team/6.jpg" loading="lazy" alt="소니드 전문가"><img src="team/7.jpg" loading="lazy" alt="소니드 전문가">
+      </div>
+    </div>
     <button class="btn ghost" id="again2" style="margin-top:16px">↺ 처음으로</button>
-    <div class="disc">본 AI 결과는 참고용 미용 정보이며 의학적 진단·치료가 아닙니다.</div>
-    <div class="foot"><a href="./privacy.html" target="_blank">개인정보처리방침</a> · SONEED 얼굴윤곽 밸런스</div>
+    <div class="disc">본 결과는 참고용 미용 정보이며 의학적 진단·치료가 아닙니다.</div>
+    <div class="foot"><a href="./privacy.html" target="_blank">개인정보처리방침</a> · SONEED 얼굴윤곽 비대칭</div>
   </section>
 
 </div>
@@ -268,7 +268,7 @@ $('again2').onclick=()=>reset();
 $('toAI').onclick=()=>{ if(_src&&!_photos.front){ _photos.front=_src.toDataURL('image/jpeg',0.85); setSlot('front',_photos.front); } go('s-ai-consent'); };
 $('backResult').onclick=()=>go('s-result');
 $('agree2').addEventListener('change',e=>{const b=$('runAI');b.disabled=!e.target.checked;b.style.opacity=e.target.checked?1:.5;});
-function reset(){stopCamera();$('agree').checked=false;$('startBtn').disabled=true;$('startBtn').style.opacity=.5;$('agree2').checked=false;$('runAI').disabled=true;$('runAI').style.opacity=.5;_photos={};_survey={};renderSurvey();document.querySelectorAll('.pslot').forEach(function(s){s.classList.remove('filled');var im=s.querySelector('img');if(im)im.remove();var i=s.querySelector('input');if(i)i.value='';});go('s-intro');}
+function reset(){stopCamera();$('agree').checked=false;$('startBtn').disabled=true;$('startBtn').style.opacity=.5;$('agree2').checked=false;var _am=$('agreeMkt');if(_am)_am.checked=false;$('runAI').disabled=true;$('runAI').style.opacity=.5;_photos={};_survey={};renderSurvey();document.querySelectorAll('.pslot').forEach(function(s){s.classList.remove('filled');var im=s.querySelector('img');if(im)im.remove();var i=s.querySelector('input');if(i)i.value='';});go('s-intro');}
 
 /* ── 카메라(전면·얼굴 가이드) ── */
 async function openCamera(){
@@ -338,7 +338,7 @@ async function analyzeCanvas(c){
     const lm=await getLandmarker(); const out=lm.detect(c);
     if(!out.faceLandmarks||!out.faceLandmarks.length){ $('loadMsg').textContent='얼굴을 못 찾았어요. 정면·밝은 곳에서 다시 찍어주세요.'; setTimeout(()=>{go('s-capture');openCamera();},1600); return; }
     _src=c; _P=out.faceLandmarks[0].map(p=>({x:p.x*c.width,y:p.y*c.height})); _photos.front=c.toDataURL('image/jpeg',0.85);
-    await stagedLoad(['얼굴을 인식하고 있어요…','눈 비대칭을 확인 중…','코 기울어짐을 확인 중…','광대 좌우 볼륨을 분석 중…','턱선 균형을 살펴보는 중…','밸런스 점수를 계산 중…']);
+    await stagedLoad(['얼굴을 인식하고 있어요…','눈 비대칭을 확인 중…','코 기울어짐을 확인 중…','광대 좌우 볼륨을 분석 중…','턱선 균형을 살펴보는 중…','대칭 점수를 계산 중…']);
     result();
   }catch(err){ $('loadMsg').textContent='오류: '+(err&&err.message||err); setTimeout(()=>{go('s-capture');openCamera();},4500); }
 }
@@ -383,11 +383,11 @@ function result(){
   const P=_P, f=feats(P); _score=f.score; _animal=pickAnimal(f);
   const a=ANIMALS[_animal];
   $('hero').innerHTML=`<div style="position:relative;display:inline-block">
-      <img src="${faceThumb(P,_src)}" style="width:158px;height:194px;object-fit:cover;border-radius:22px;border:2px solid rgba(255,255,255,.18)">
-      <div style="position:absolute;right:-12px;bottom:-14px;font-size:64px;line-height:1;filter:drop-shadow(0 3px 8px #000)">${a.emo}</div>
+      <img src="${faceThumb(P,_src)}" style="width:166px;height:202px;object-fit:cover;border-radius:22px;border:2px solid rgba(255,255,255,.18)">
+      <div style="position:absolute;inset:0;top:-6px;display:flex;align-items:center;justify-content:center;font-size:118px;line-height:1;filter:drop-shadow(0 3px 10px rgba(0,0,0,.6))">${a.emo}</div>
     </div>
     <div class="type" style="margin-top:14px">나는 <b>${a.name}</b></div>
-    <div class="sc">밸런스 점수 <b>${_score}</b> / 100</div><div class="tr">${a.tr}</div>`;
+    <div class="sc">대칭 점수 <b>${_score}</b> / 100</div><div class="tr">${a.tr}</div>`;
 
   // ── 측정: 얼굴 정중선(이마10↔턱152) 기준 좌우 수직거리 + 각도 ──
   const A=P[10], B=P[152], dxm=B.x-A.x, dym=B.y-A.y, mlen=Math.hypot(dxm,dym)||1;
@@ -415,7 +415,7 @@ function result(){
   $('findings').innerHTML=F.map(x=>`<div class="finding"><div class="ic">${x[0]}</div><div><div class="t">${x[1]}</div><div class="d">${x[2]}</div></div></div>`).join('');
 
   const dream=_animal==='cat'?ANIMALS.fox:ANIMALS.cat;
-  $('aim').innerHTML=`혹시 더 또렷한 <b>${dream.name}</b> 같은 인상을 원하세요?<br><span class="muted" style="font-size:13px">소니드가 얼굴 밸런스를 다듬어 원하는 인상에 한 걸음 더 가까워지게 도와드려요.</span>`;
+  $('aim').innerHTML=`혹시 더 또렷한 <b>${dream.name}</b> 같은 인상을 원하세요?<br><span class="muted" style="font-size:13px">소니드가 얼굴 비대칭을 개선해 원하는 인상에 한 걸음 더 가까워지게 도와드려요.</span>`;
   logEvent('result');
   go('s-result');
 }
@@ -468,19 +468,20 @@ $('saveCard').onclick=async()=>{
     const fw=330,fh=406,fx=(W-fw)/2,fy=118;
     g.save();roundRect(g,fx,fy,fw,fh,30);g.clip();
     const ir=img.width/img.height,rr=fw/fh;let sw,sh,sx,sy;if(ir>rr){sh=img.height;sw=sh*rr;sx=(img.width-sw)/2;sy=0;}else{sw=img.width;sh=sw/rr;sx=0;sy=(img.height-sh)/2;}
-    g.drawImage(img,sx,sy,sw,sh,fx,fy,fw,fh);g.restore();
+    g.drawImage(img,sx,sy,sw,sh,fx,fy,fw,fh);
+    g.font=Math.round(fw*0.82)+'px serif';g.textBaseline='middle';g.fillText(a.emo,fx+fw/2,fy+fh*0.42);  // 얼굴을 동물로 가림
+    g.textBaseline='alphabetic';g.restore();
     g.strokeStyle='rgba(255,255,255,.22)';g.lineWidth=3;roundRect(g,fx,fy,fw,fh,30);g.stroke();
-    g.font='150px serif';g.fillText(a.emo,fx+fw-30,fy+fh+18);   // 이모지 배지
-  }catch(e){ g.font='150px serif';g.fillText(a.emo,W/2,320); }
+  }catch(e){ g.font='170px serif';g.fillText(a.emo,W/2,330); }
   g.fillStyle='#fff';g.font='900 60px -apple-system,sans-serif';g.fillText('나는 '+a.name,W/2,640);
   g.fillStyle='#ff4f9e';g.font='900 112px -apple-system,sans-serif';g.fillText(String(_score),W/2,780);
-  g.fillStyle='#9aa2b1';g.font='700 26px -apple-system,sans-serif';g.fillText('밸런스 점수 / 100',W/2,825);
+  g.fillStyle='#9aa2b1';g.font='700 26px -apple-system,sans-serif';g.fillText('대칭 점수 / 100',W/2,825);
   g.fillStyle='#d7dbe3';g.font='400 25px -apple-system,sans-serif';wrap(g,a.tr,W/2,890,W-130,36);
   g.fillStyle='#8a93a2';g.font='700 24px -apple-system,sans-serif';g.fillText('무료 체험 · 인스타 @soneed_face',W/2,1010);
   const url=cv.toDataURL('image/jpeg',0.92);
   try{
     const blob=await(await fetch(url)).blob(); const file=new File([blob],'soneed_얼굴상.jpg',{type:'image/jpeg'});
-    if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file],title:'내 얼굴상',text:'나는 '+a.name+'! 밸런스 '+_score+'점 @soneed_face'}); return; }
+    if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file],title:'내 얼굴상',text:'나는 '+a.name+'! 대칭 '+_score+'점 @soneed_face'}); return; }
   }catch(e){}
   const link=document.createElement('a');link.href=url;link.download='soneed_얼굴상.jpg';document.body.appendChild(link);link.click();link.remove();
 };
@@ -500,16 +501,16 @@ function preciseReport(){
   const T=0.9;                                                    // 임계값 낮춰 더 자세히
   const sev=v=>v>=2.4?'뚜렷하게 ':(v>=1.5?'다소 ':'약간 ');       // 강도 표현
   const out=[];
-  out.push('🩷 소니드 정밀 밸런스 리포트\n\n얼굴은 누구나 좌우가 조금씩 다르답니다. 아래는 사진 측정을 바탕으로 한 참고용 미용 관점 분석이에요. 소니드의 시선으로 하나씩 짚어드릴게요.');
-  out.push('📐 기본 밸런스\n· 눈 기울기: 약 '+eyeAng.toFixed(1)+'°\n· 광대 너비 좌우차: '+cheekW.toFixed(1)+'\n· 얼굴 볼륨 좌우차: '+eyeLip.toFixed(1)+'\n· 콧대 중심 치우침: '+noseDx.toFixed(1));
+  out.push('🩷 소니드 정밀 비대칭 리포트\n\n얼굴은 누구나 좌우가 조금씩 다르답니다. 아래는 사진 측정을 바탕으로 한 참고용 미용 관점 분석이에요. 소니드의 시선으로 하나씩 짚어드릴게요.');
+  out.push('📐 기본 측정치\n· 눈 기울기: 약 '+eyeAng.toFixed(1)+'°\n· 광대 너비 좌우차: '+cheekW.toFixed(1)+'\n· 얼굴 볼륨 좌우차: '+eyeLip.toFixed(1)+'\n· 콧대 중심 치우침: '+noseDx.toFixed(1));
   if(earEx>=T) out.push('👂 두상 틀어짐 ('+sev(earEx).trim()+')\n두상 자체에서 틀어짐이 있으시네요~ 두상축과 얼굴 축이 잘 맞았을 때 그제야 가장 예쁜 얼굴이 드러난답니다. 머리를 압박하거나 옆으로 누워 머리를 괴는 동작을 주의하세요!');
   if(cheekW>=T) out.push('↔️ 안면 쏠림 ('+sev(cheekW).trim()+')\n얼굴 안면이 한쪽으로 쏠려 있어요. 안면의 중심축이 이동되어 코의 휘어짐을 만들 수 있습니다.');
   if(eyeLip>=T) out.push('🎈 볼륨 차이 ('+sev(eyeLip).trim()+')\n양쪽 얼굴의 볼륨 차이가 있어요. 이럴 경우 한쪽 얼굴은 보다 더 입체적이고 한쪽은 더 납작하게 느껴질 수 있어요. 얼굴 볼륨 개선이 필요해 보여요. 혹시 한쪽 얼굴이 압박받는 평소 습관이 없는지 확인해 주시고, 하지 말아주세요!');
   if(noseDx>=T) out.push('👃 코 회전 ('+sev(noseDx).trim()+')\n코가 휘었다고 느껴지시나요? 코의 휘어짐도 있지만 광대의 좌우 볼륨 차이가 코가 회전되게 했어요. 코 구멍의 크기나 모양도 달라요. 볼륨부터 개선해야 합니다!');
-  if(out.length<=2) out.push('✨ 전반적으로 좌우 밸런스가 좋은 편이에요! 지금의 균형을 유지하도록 한쪽으로 눕거나 턱 괴는 습관만 주의해 주세요.');
+  if(out.length<=2) out.push('✨ 전반적으로 좌우 대칭이 잘 맞는 편이에요! 지금의 균형을 유지하도록 한쪽으로 눕거나 턱 괴는 습관만 주의해 주세요.');
   const yes=SURVEY.filter(q=>_survey[q[0]]===true);
-  if(yes.length) out.push('📝 남겨주신 습관 체크\n'+yes.map(q=>'· '+q[1].replace('있나요?','있음').replace('찍나요?','찍음')).join('\n')+'\n이런 습관들이 좌우 밸런스에 영향을 줄 수 있어요. 오늘부터 반대쪽도 함께 써보고, 옆으로 눕거나 턱 괴는 자세를 줄여보세요.');
-  out.push('———\n💗 소니드의 30분 건식 밸런스 관리로 좌우 균형을 부드럽게 다듬어볼 수 있어요. 위 내용은 사진 기반 참고이며, 정확한 분석·관리는 소니드 관리사가 직접 봐드립니다. 아래에서 가까운 지점을 예약해보세요!');
+  if(yes.length) out.push('📝 남겨주신 습관 체크\n'+yes.map(q=>'· '+q[1].replace('있나요?','있음').replace('찍나요?','찍음')).join('\n')+'\n이런 습관들이 얼굴 비대칭에 영향을 줄 수 있어요. 오늘부터 반대쪽도 함께 써보고, 옆으로 눕거나 턱 괴는 자세를 줄여보세요.');
+  out.push('———\n💗 소니드의 30분 건식 관리로 좌우 균형을 부드럽게 다듬어볼 수 있어요. 위 내용은 사진 기반 참고이며, 정확한 분석·관리는 소니드 관리사가 직접 봐드립니다. 아래에서 가까운 지점을 예약해보세요!');
   return out.join('\n\n');
 }
 /* 정밀분석 (3장) → 소니드 전문 리포트 + 리드 저장(사진+리포트+설문) */
@@ -521,15 +522,16 @@ $('runAI').onclick=async()=>{
   const store={};
   for(const k of ['front','up','down']) if(_photos[k]) store[k]=await imgResize(_photos[k],640,0.6);
   const summary=preciseReport();
-  await saveLead(name,phone,store,summary,surveyText());  // 사진·리포트·설문 저장(관리사 사전확인)
+  const mkt=$('agreeMkt')?$('agreeMkt').checked:false;
+  await saveLead(name,phone,store,summary,surveyText(),mkt);  // 사진·리포트·설문·마케팅동의 저장
   logEvent('ai');
   $('aiText').textContent=summary;
   try{ drawViz(_P,_src); }catch(e){}
   go('s-ai-result');
 };
-async function saveLead(name,phone,photos,summary,survey){
+async function saveLead(name,phone,photos,summary,survey,marketing){
   try{
-    const body={name:name,phone:phone,animal:ANIMALS[_animal].name,score:_score,ai_summary:summary||'',survey:survey||''};
+    const body={name:name,phone:phone,animal:ANIMALS[_animal].name,score:_score,ai_summary:summary||'',survey:survey||'',marketing:!!marketing};
     if(photos){ if(photos.front)body.photo_front=photos.front; if(photos.up)body.photo_up=photos.up; if(photos.down)body.photo_down=photos.down; }
     await fetch(SB_URL+'/rest/v1/leads',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(body)});
   }catch(e){}

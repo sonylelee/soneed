@@ -44,6 +44,8 @@
   .acct-tbl td.em{color:var(--muted)}
   .acct-tbl tbody tr{cursor:pointer;transition:background .12s} .acct-tbl tbody tr:hover{background:var(--surface2)}
   .acct-tbl tbody tr:last-child td{border-bottom:0}
+  .leadcard{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px;background:var(--surface2)}
+  .leadcard details>div{margin-top:2px}
   /* ===== 다크 프리미엄 (헤더/네비는 어둡게, 콘텐츠 카드는 밝게 떠 보이게) ===== */
   body{background:#E7E9EE}
   .btn,.tabs button,.modebtn{transition:transform .13s ease,box-shadow .13s ease,background .13s ease,color .13s ease}
@@ -170,7 +172,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v51 (2026-07-21)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v52 (2026-07-22)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객 리포트</button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -283,6 +285,11 @@
     <div id="recList" class="recgrid"></div>
   </section>
   <section id="view-admin" style="display:none">
+    <div class="card pad" style="margin-bottom:16px">
+      <h2 class="section" style="margin-top:0">🌟 유입 고객 (체험 신청) <span class="subtle" style="text-transform:none;letter-spacing:0;font-weight:600">셀프 체험에서 정밀분석 신청한 고객</span></h2>
+      <div class="subtle" style="margin-bottom:10px">사진·연락처·설문·리포트를 확인하고 <b>차트로 가져오기</b>로 새 차트를 만드세요. 가져오면 목록에서 처리됩니다.</div>
+      <div id="leadList">불러오는 중…</div>
+    </div>
     <div class="card pad" style="margin-bottom:16px">
       <h2 class="section" style="margin-top:0">앱 고객 (구독자) 목록 <span class="subtle" style="text-transform:none;letter-spacing:0;font-weight:600">우리 앱을 쓰는 관리사 계정</span></h2>
       <div class="subtle" style="margin-bottom:10px">행을 누르면 아래 등급 지정칸에 자동으로 채워집니다.</div>
@@ -553,6 +560,57 @@ function pickCust(email,name,tier){
   var s=document.getElementById('tierSel'); if(s&&tier&&tier!=='프리미엄(기본)')s.value=(tier==='프리미엄'||tier==='스탠다드'||tier==='베이직')?tier:s.value;
 }
 function loadTierAdmin(){ renderAppCustomers(); }  // 하위호환
+
+/* ===== 유입 고객(체험 신청 leads) — 주인장 전용 ===== */
+let _leadBusy=false, _leadCache={};
+function _esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+async function renderIncomingLeads(){
+  if(!isAdmin())return; var box=document.getElementById('leadList'); if(!box||_leadBusy)return; _leadBusy=true;
+  try{
+    var r=await fetch(sbBase()+'leads?select=*&photo_front=not.is.null&claimed=eq.false&order=created_at.desc&limit=100',{headers:sbHeaders()});
+    if(!r.ok){ box.innerHTML='⚠ leads 테이블이 아직 없습니다. leads SQL을 먼저 실행하세요.'; return; }
+    var j=await r.json(); _leadCache={};
+    if(!j.length){ box.innerHTML='<div class="subtle">아직 유입 고객이 없습니다. 고객이 셀프 체험에서 정밀분석을 신청하면 여기에 나타납니다.</div>'; return; }
+    box.innerHTML=j.map(function(L){ _leadCache[L.id]=L;
+      var d=(L.created_at||'').slice(0,10);
+      var mkt=L.marketing?'<b style="color:#1F9D57">✓마케팅동의</b>':'<span class="subtle">마케팅미동의</span>';
+      var thumbs=['photo_front','photo_up','photo_down'].filter(function(k){return L[k];}).map(function(k){return '<img src="'+L[k]+'" style="width:52px;height:64px;object-fit:cover;border-radius:8px;margin-right:5px">';}).join('');
+      return '<div class="leadcard">'
+        +'<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">'
+        +'<div><b style="font-size:15px">'+_esc(L.name||'무명')+'</b> <span class="subtle">'+_esc(L.phone||'')+'</span><br>'
+        +'<span class="subtle" style="font-size:12px">'+d+' · '+_esc(L.animal||'')+' · 대칭 '+(L.score==null?'-':L.score)+' · '+mkt+'</span></div>'
+        +'<button class="btn primary" style="font-size:12px;padding:8px 12px;white-space:nowrap" onclick="importLead(\''+L.id+'\')">차트로 가져오기</button></div>'
+        +(thumbs?'<div style="margin-top:8px">'+thumbs+'</div>':'')
+        +(L.survey?'<details style="margin-top:6px"><summary class="subtle" style="font-size:12px">생활습관 설문</summary><div class="subtle" style="white-space:pre-wrap;font-size:12px;margin-top:4px">'+_esc(L.survey)+'</div></details>':'')
+        +(L.ai_summary?'<details style="margin-top:4px"><summary class="subtle" style="font-size:12px">셀프 리포트</summary><div class="subtle" style="white-space:pre-wrap;font-size:12px;margin-top:4px">'+_esc(L.ai_summary)+'</div></details>':'')
+        +'<div style="margin-top:8px"><button class="btn ghost" style="font-size:11px;padding:5px 10px" onclick="markLeadDone(\''+L.id+'\')">처리완료(숨기기)</button></div>'
+        +'</div>';
+    }).join('');
+  }catch(e){ box.textContent='조회 실패: '+(e&&e.message||e); }
+  finally{ _leadBusy=false; }
+}
+function importLead(id){
+  var L=_leadCache[id]; if(!L){toast('데이터를 찾지 못했습니다');return;}
+  clearForm();
+  form.code=L.name||'';
+  if(L.photo_front)form.photo_front=L.photo_front;
+  if(L.photo_up)form.photo_up=L.photo_up;
+  if(L.photo_down)form.photo_down=L.photo_down;
+  var notes='[체험 유입]\n연락처: '+(L.phone||'')+(L.marketing?' (마케팅 수신 동의)':'')+'\n동물상: '+(L.animal||'')+' / 대칭점수: '+(L.score==null?'-':L.score);
+  if(L.survey)notes+='\n\n[생활습관 설문]\n'+L.survey;
+  if(L.ai_summary)notes+='\n\n[셀프 리포트]\n'+L.ai_summary;
+  form.notes=notes;
+  renderForm(); applyFormToUI();
+  var es=document.getElementById('editState'); if(es)es.textContent=(form.code||'무제')+' · 체험 유입 (신규 차트)';
+  markLeadDone(id,true);
+  showView('entry');
+  toast('차트로 불러왔어요. AI 분석·촉진 후 저장하세요.');
+}
+async function markLeadDone(id,silent){
+  try{ await fetch(sbBase()+'leads?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:sbHeaders({Prefer:'return=minimal'}),body:JSON.stringify({claimed:true})}); }catch(e){}
+  delete _leadCache[id];
+  if(!silent){ renderIncomingLeads(); toast('처리완료로 표시했어요'); }
+}
 async function saveTierFor(){
   if(!isAdmin()){toast('대표만 변경할 수 있습니다');return;}
   var em=(document.getElementById('tierEmail').value||'').trim().toLowerCase();
@@ -1335,7 +1393,7 @@ function showView(v){
   document.getElementById('tabData').classList.toggle('on',v==='data');
   var ta=document.getElementById('tabAdmin'); if(ta)ta.classList.toggle('on',v==='admin');
   if(v==='data'){renderRecList();renderCrosstab();}
-  if(v==='admin'){renderAppCustomers();}
+  if(v==='admin'){renderIncomingLeads();renderAppCustomers();}
 }
 
 const FILTERABLE=FIELDS.filter(f=>f.type==='seg'||f.type==='select'||f.type==='multi').map(f=>({k:f.k,label:f.label,opt:f.opt.filter(o=>o!=='')}));
