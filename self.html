@@ -98,7 +98,7 @@
 </style>
 </head>
 <body>
-<header><div class="logo"><b>SONEED</b> <span>얼굴상 & 밸런스 · v6b</span></div></header>
+<header><div class="logo"><b>SONEED</b> <span>얼굴상 & 밸런스 · v6c</span></div></header>
 <div class="wrap">
 
   <!-- STEP 1: 인트로 + 동의 -->
@@ -402,7 +402,6 @@ function result(){
   const earEx =pair(127,356);   // 귀 노출(귀앞 외곽 확장)
   const jawO  =pair(172,397);   // 턱 외각(하악각)
   const earH = Math.abs(P[356].y-P[127].y)/faceH*100;  // 귀 높이차
-  _viz={A,B,perp,mlen,dxm,dym};
 
   // ── 결과 카드 ──
   const dmsg=(p,ph)=> p.d<1.0 ? '좌우가 거의 비슷해요.' : (p.big+' '+ph);
