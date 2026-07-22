@@ -99,7 +99,7 @@
 </style>
 </head>
 <body>
-<header><div class="logo"><b>SONEED</b> <span>얼굴상 & 비대칭 · v6f</span></div></header>
+<header><div class="logo"><b>SONEED</b> <span>얼굴상 & 비대칭 · v6g</span></div></header>
 <div class="wrap">
 
   <!-- STEP 1: 인트로 + 동의 -->
@@ -383,7 +383,7 @@ function pickAnimal(f){
 function result(){
   const P=_P, f=feats(P); _score=f.score; _animal=pickAnimal(f);
   const a=ANIMALS[_animal];
-  var fc=faceCrop(P,_src), HW=220, em=Math.round(fc.fw*HW*1.55);
+  var fc=faceCrop(P,_src), HW=220, em=Math.round(fc.fw*HW*2.2);
   $('hero').innerHTML=`<div style="position:relative;display:inline-block;width:${HW}px">
       <img src="${fc.url}" style="width:${HW}px;display:block;border-radius:18px;border:2px solid rgba(255,255,255,.14)">
       <div style="position:absolute;left:${(fc.fx*100).toFixed(1)}%;top:${(fc.fy*100).toFixed(1)}%;transform:translate(-50%,-50%);font-size:${em}px;line-height:1;filter:drop-shadow(0 3px 8px rgba(0,0,0,.55))">${a.emo}</div>
@@ -486,8 +486,8 @@ $('saveCard').onclick=async()=>{
     const cw2=360,ch2=Math.round(cw2*img.height/img.width),fx=(W-cw2)/2,fy=118;
     g.save();roundRect(g,fx,fy,cw2,ch2,30);g.clip();
     g.drawImage(img,0,0,img.width,img.height,fx,fy,cw2,ch2);
-    g.font=Math.round(fc.fw*cw2*1.55)+'px serif';g.textAlign='center';g.textBaseline='middle';
-    g.fillText(a.emo,fx+fc.fx*cw2,fy+fc.fy*ch2);   // 얼굴 위치에 동물탈
+    g.font=Math.round(fc.fw*cw2*2.2)+'px serif';g.textAlign='center';g.textBaseline='middle';
+    g.fillText(a.emo,fx+fc.fx*cw2,fy+fc.fy*ch2);   // 얼굴 위치에 동물탈(크게)
     g.textBaseline='alphabetic';g.restore();
     g.strokeStyle='rgba(255,255,255,.22)';g.lineWidth=3;roundRect(g,fx,fy,cw2,ch2,30);g.stroke();
   }catch(e){ g.font='170px serif';g.textAlign='center';g.fillText(a.emo,W/2,330); }
