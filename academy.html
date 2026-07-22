@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SONEED ACADEMY · 얼굴윤곽 관리사 양성 과정</title>
+<meta property="og:title" content="SONEED ACADEMY · 얼굴윤곽 관리사 양성 과정">
+<meta property="og:description" content="읽고 · 바꾸고 · 설계한다 — 소니드만의 3단계 얼굴윤곽 커리큘럼">
+<style>
+:root{
+  --navy:#26307a; --indigo:#3a4b9f; --steel:#4e6fa8; --blueg:#8aa0dc;
+  --ink:#2a3150; --slate:#5b6484; --mut:#8a93ac; --line:#e2e7f4;
+  --lav:#f0edfa; --blue50:#eef2fb; --mist:#f7f9fe; --card:#ffffff;
+  --dbg1:#20264c; --dbg2:#2c2b57; --soft:#b4bcda;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Segoe UI",Roboto,sans-serif;
+  color:var(--ink);background:#fbfcff;line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:0 22px}
+a{color:inherit;text-decoration:none}
+.kicker{font-size:13px;font-weight:800;letter-spacing:.08em;color:var(--indigo);text-transform:uppercase}
+h2.sec{font-size:30px;font-weight:800;color:var(--navy);margin:10px 0 6px;letter-spacing:-.01em}
+.sub{color:var(--slate);font-size:16px;margin-bottom:30px}
+section{padding:64px 0;border-top:1px solid var(--line)}
+.btn{display:inline-block;padding:15px 30px;border-radius:999px;font-weight:800;font-size:15px;transition:.15s}
+.btn-primary{background:linear-gradient(135deg,#2c3a95,#4a5fc0);color:#fff;box-shadow:0 8px 24px rgba(42,55,140,.28)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(42,55,140,.36)}
+.btn-ghost{background:rgba(255,255,255,.1);color:#fff;border:1.5px solid rgba(255,255,255,.5)}
+.btn-ghost:hover{background:rgba(255,255,255,.18)}
+
+/* nav */
+nav{position:sticky;top:0;z-index:50;background:rgba(251,252,255,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+nav .wrap{display:flex;align-items:center;justify-content:space-between;height:60px}
+.logo{font-weight:900;font-size:19px;color:var(--navy);letter-spacing:.02em}
+.logo b{background:linear-gradient(120deg,#3a4b9f,#8aa0dc);-webkit-background-clip:text;background-clip:text;color:transparent}
+.navlinks{display:flex;gap:26px;font-size:14px;font-weight:600;color:var(--slate)}
+.navlinks a:hover{color:var(--navy)}
+.nav-cta{padding:9px 20px;border-radius:999px;background:var(--navy);color:#fff;font-weight:700;font-size:14px}
+@media(max-width:760px){.navlinks{display:none}}
+
+/* hero */
+.hero{background:linear-gradient(150deg,var(--dbg1),var(--dbg2));color:#fff;padding:78px 0 66px;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;right:-120px;top:-80px;width:420px;height:420px;border-radius:50%;
+  background:radial-gradient(circle,rgba(138,160,220,.28),transparent 68%)}
+.hero .tag{display:inline-block;padding:7px 15px;border-radius:999px;background:rgba(138,160,220,.18);
+  color:#cdd6f5;font-weight:700;font-size:13px;letter-spacing:.06em;margin-bottom:20px}
+.hero h1{font-size:44px;line-height:1.2;font-weight:800;letter-spacing:-.02em;margin-bottom:16px}
+.hero h1 .em{background:linear-gradient(120deg,#a9b8ea,#e6ecfb);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p.lead{font-size:18px;color:#c7cef0;max-width:640px;margin-bottom:30px}
+.facts{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;max-width:720px;margin:34px 0 30px}
+.fact{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:16px 14px}
+.fact .l{font-size:12px;color:var(--soft);font-weight:700;margin-bottom:6px}
+.fact .v{font-size:17px;font-weight:800;color:#fff}
+.hero .cta{display:flex;gap:12px;flex-wrap:wrap}
+@media(max-width:760px){.hero h1{font-size:32px}.facts{grid-template-columns:repeat(2,1fr)}}
+
+/* why now */
+.pull{background:var(--blue50);border-left:5px solid var(--indigo);border-radius:0 14px 14px 0;padding:22px 26px;font-size:19px;font-weight:700;color:var(--navy);line-height:1.5}
+
+/* pillars */
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.pillar{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:28px 24px;box-shadow:0 6px 20px rgba(38,48,122,.05)}
+.pillar .no{font-size:14px;font-weight:900;color:var(--blueg)}
+.pillar h3{font-size:20px;color:var(--navy);margin:8px 0 10px;font-weight:800}
+.pillar p{color:var(--slate);font-size:15px}
+@media(max-width:760px){.grid3{grid-template-columns:1fr}}
+
+/* outcomes */
+.grid4{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.out{display:flex;gap:14px;background:var(--mist);border:1px solid var(--line);border-radius:14px;padding:20px 22px}
+.out .ic{flex:none;width:42px;height:42px;border-radius:12px;background:var(--lav);color:var(--indigo);
+  display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900}
+.out h4{font-size:16px;color:var(--navy);margin-bottom:4px}
+.out p{font-size:14px;color:var(--slate)}
+@media(max-width:760px){.grid4{grid-template-columns:1fr}}
+
+/* levels */
+.levels{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:34px}
+.lv{border-radius:18px;padding:26px 22px;color:#fff;position:relative;overflow:hidden}
+.lv.l1{background:linear-gradient(140deg,#3a4b9f,#5566b8)}
+.lv.l2{background:linear-gradient(140deg,#4e6fa8,#6d8ac2)}
+.lv.l3{background:linear-gradient(140deg,#6a5aa0,#8676bd)}
+.lv .lvno{font-size:13px;font-weight:800;opacity:.85;letter-spacing:.08em}
+.lv h3{font-size:22px;font-weight:800;margin:6px 0 10px}
+.lv p{font-size:14px;color:rgba(255,255,255,.9)}
+@media(max-width:760px){.levels{grid-template-columns:1fr}}
+
+table.cur{width:100%;border-collapse:collapse;font-size:14.5px;background:#fff;border-radius:14px;overflow:hidden;
+  box-shadow:0 6px 20px rgba(38,48,122,.06)}
+table.cur th{background:var(--navy);color:#fff;font-weight:700;padding:13px 14px;text-align:left;font-size:13px}
+table.cur td{padding:13px 14px;border-top:1px solid var(--line);vertical-align:top}
+table.cur tr:nth-child(even) td{background:var(--mist)}
+.lvchip{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:800;color:#fff}
+.c1{background:#3a4b9f}.c2{background:#4e6fa8}.c3{background:#6a5aa0}
+.tblwrap{overflow-x:auto}
+
+/* instructor */
+.inst{display:flex;gap:26px;align-items:center;background:linear-gradient(135deg,var(--mist),#fff);
+  border:1px solid var(--line);border-radius:20px;padding:30px}
+.inst .ph{flex:none;width:120px;height:120px;border-radius:50%;background:var(--lav);
+  display:flex;align-items:center;justify-content:center;font-size:40px;color:var(--indigo);font-weight:900}
+.inst h3{font-size:22px;color:var(--navy)}
+.inst .role{color:var(--indigo);font-weight:700;font-size:14px;margin:4px 0 10px}
+.inst p{color:var(--slate);font-size:15px}
+@media(max-width:640px){.inst{flex-direction:column;text-align:center}}
+
+/* audience */
+.aud{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.aud div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 20px;font-weight:600;color:var(--ink);font-size:15px}
+.aud div::before{content:"✓ ";color:var(--indigo);font-weight:900}
+@media(max-width:640px){.aud{grid-template-columns:1fr}}
+
+/* benefits + price */
+.pricebox{background:linear-gradient(150deg,var(--dbg1),var(--dbg2));color:#fff;border-radius:22px;padding:40px 34px;text-align:center}
+.pricebox .p{font-size:40px;font-weight:900;margin:6px 0}
+.pricebox .note{color:var(--soft);font-size:14px;margin-bottom:22px}
+.benefits{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:22px 0 26px}
+.benefits span{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);border-radius:999px;
+  padding:8px 16px;font-size:13.5px;color:#e6eaf7;font-weight:600}
+
+/* steps */
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.step{text-align:center;background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px 14px}
+.step .n{width:38px;height:38px;border-radius:50%;background:var(--navy);color:#fff;font-weight:800;
+  display:flex;align-items:center;justify-content:center;margin:0 auto 10px}
+.step h4{font-size:15px;color:var(--navy);margin-bottom:4px}
+.step p{font-size:13px;color:var(--mut)}
+@media(max-width:760px){.steps{grid-template-columns:repeat(2,1fr)}}
+
+/* scarcity */
+.scarce{background:var(--lav);border:1px dashed var(--indigo);border-radius:16px;padding:20px 24px;
+  text-align:center;color:var(--navy);font-weight:700;font-size:16px}
+
+/* form */
+.formsec{background:linear-gradient(150deg,var(--dbg1),var(--dbg2));color:#fff}
+.form{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:30px;max-width:520px;margin:0 auto}
+.form label{display:block;font-size:13px;color:var(--soft);font-weight:700;margin:14px 0 6px}
+.form input,.form textarea{width:100%;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.2);
+  background:rgba(255,255,255,.06);color:#fff;font-size:15px;font-family:inherit}
+.form input::placeholder,.form textarea::placeholder{color:#9aa3c8}
+.form .btn{width:100%;margin-top:22px;border:0;cursor:pointer}
+.mini{color:var(--mut);font-size:12px;text-align:center;margin-top:14px}
+
+footer{background:#141a34;color:#8b93b5;padding:40px 0;font-size:13px}
+footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.ph-note{background:#fff4d6;color:#8a6d1a;border:1px solid #e8d18a;border-radius:8px;padding:2px 8px;font-size:12px;font-weight:700}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <div class="logo"><b>SONEED</b> ACADEMY</div>
+    <div class="navlinks">
+      <a href="#why">왜 소니드</a>
+      <a href="#curriculum">커리큘럼</a>
+      <a href="#instructor">원장</a>
+      <a href="#price">수강 안내</a>
+    </div>
+    <a href="#apply" class="nav-cta">상담 신청</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="wrap">
+    <span class="tag">2026.8.22 Level 1 개강 · 동탄 본점</span>
+    <h1>읽고 · 바꾸고 · <span class="em">설계한다</span><br>얼굴윤곽 관리사 양성 과정</h1>
+    <p class="lead">눈대중이 아니라 <b>34개 항목의 구조 분석</b>으로 얼굴을 읽고, 손으로 교정하고, 인상까지 설계하는 — 소니드만의 3단계 커리큘럼.</p>
+    <div class="facts">
+      <div class="fact"><div class="l">기간</div><div class="v">레벨당 4주</div></div>
+      <div class="fact"><div class="l">일정</div><div class="v">일요일 10–14시</div></div>
+      <div class="fact"><div class="l">장소</div><div class="v">동탄 본점</div></div>
+      <div class="fact"><div class="l">수강료</div><div class="v">레벨당 490만원</div></div>
+    </div>
+    <div class="cta">
+      <a href="#apply" class="btn btn-primary">상담 신청하기</a>
+      <a href="#curriculum" class="btn btn-ghost">커리큘럼 보기</a>
+    </div>
+  </div>
+</header>
+
+<!-- WHY NOW -->
+<section id="why">
+  <div class="wrap">
+    <div class="kicker">Why SONEED</div>
+    <h2 class="sec">왜 지금, 소니드인가</h2>
+    <p class="sub">얼굴윤곽·비대칭 관리 시장은 커지는데, 정작 '분석'부터 제대로 가르치는 곳은 드뭅니다.</p>
+    <div class="pull">대부분의 작은얼굴 교육은 “이 근육 푸세요”에서 끝납니다.<br>소니드는 <b>“이 얼굴이 왜 이렇게 됐는가”</b>를 먼저 읽습니다 — 그래서 결과가 다릅니다.</div>
+  </div>
+</section>
+
+<!-- PILLARS -->
+<section>
+  <div class="wrap">
+    <div class="kicker">Differentiators</div>
+    <h2 class="sec">소니드 교육의 3가지 차별점</h2>
+    <p class="sub">기술을 흉내내는 게 아니라, 판단하는 관리사를 만듭니다.</p>
+    <div class="grid3">
+      <div class="pillar"><div class="no">01</div><h3>독자적 진단 체계</h3>
+        <p>2D·좌우·회전 <b>34개 항목</b>으로 얼굴 구조를 읽는 소니드만의 분석 체계. 후두골부터 앞으로, 원인을 찾아 들어갑니다.</p></div>
+      <div class="pillar"><div class="no">02</div><h3>디지털 도구 연동</h3>
+        <p>사진 분석·3D 시뮬레이션 등 <b>디지털 도구</b>와 함께 배우는, 국내에 없던 방식의 실전 교육.</p></div>
+      <div class="pillar"><div class="no">03</div><h3>인증 · 창업까지</h3>
+        <p>수료로 끝나지 않습니다. <b>소니드 인증 관리사</b> 자격과 실무·창업 경로로 이어집니다.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- OUTCOMES -->
+<section style="background:var(--mist)">
+  <div class="wrap">
+    <div class="kicker">After Completion</div>
+    <h2 class="sec">수료 후, 당신은</h2>
+    <p class="sub">과정을 마치면 '무엇을 할 수 있는지'가 분명해집니다.</p>
+    <div class="grid4">
+      <div class="out"><div class="ic">◎</div><div><h4>얼굴을 구조로 읽는다</h4><p>사진 3장으로 34개 항목의 비대칭을 스스로 분석한다.</p></div></div>
+      <div class="out"><div class="ic">✋</div><div><h4>손으로 교정한다</h4><p>차트값에 맞는 동작으로 촉진·교정하고 결과를 고정한다.</p></div></div>
+      <div class="out"><div class="ic">✦</div><div><h4>인상까지 설계한다</h4><p>전후방경사로 얼굴의 분위기·인상을 디자인한다.</p></div></div>
+      <div class="out"><div class="ic">✔</div><div><h4>소니드 인증 관리사</h4><p>인증 자격으로 실무·창업의 출발선에 선다.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- CURRICULUM -->
+<section id="curriculum">
+  <div class="wrap">
+    <div class="kicker">Curriculum</div>
+    <h2 class="sec">3단계 커리큘럼</h2>
+    <p class="sub">같은 기술도 '보는 깊이'가 달라집니다 — 읽기에서 설계까지. <b style="color:var(--indigo)">2026.8.22 Level 1 개강</b>, 이후 Level 2·3로 이어집니다.</p>
+    <div class="levels">
+      <div class="lv l1"><div class="lvno">LEVEL 1</div><h3>얼굴 읽기</h3><p>언어(용어) → 보는 법 → 예시 분석 → 촉진·기록. 34개 항목을 규칙대로 읽는다.</p></div>
+      <div class="lv l2"><div class="lvno">LEVEL 2</div><h3>얼굴 바꾸기</h3><p>차트 항목마다 정해진 동작과 그 효과. 타입별 진행 순서대로 교정한다.</p></div>
+      <div class="lv l3"><div class="lvno">LEVEL 3</div><h3>얼굴 디자인</h3><p>전후방경사·예쁜 얼굴의 정의·성형과 시술의 이해. 인상을 설계한다.</p></div>
+    </div>
+    <div class="tblwrap">
+    <table class="cur">
+      <thead><tr><th style="width:80px">단계</th><th style="width:70px">주차</th><th>주제</th><th style="width:170px">핵심 내용</th></tr></thead>
+      <tbody>
+        <tr><td><span class="lvchip c1">L1</span></td><td>1주</td><td>소니드 이론 · 얼굴 읽기의 언어</td><td>용어 · 뼈 랜드마크</td></tr>
+        <tr><td><span class="lvchip c1">L1</span></td><td>2주</td><td>2D 진단 — 사진으로 읽는 11항목</td><td>타입·기울기·회전·콧대…</td></tr>
+        <tr><td><span class="lvchip c1">L1</span></td><td>3주</td><td>좌우·회전 진단 + 왜곡과 표준 촬영</td><td>두께 읽기 · 촬영 규칙</td></tr>
+        <tr><td><span class="lvchip c1">L1</span></td><td>4주</td><td>분석 실습 · 촉진 · 기록 · 평가</td><td>케이스 실습 · 수료</td></tr>
+        <tr><td><span class="lvchip c2">L2</span></td><td>1주</td><td>동작 언어 · 준비 동작</td><td>스프레딩·프레싱·필러링…</td></tr>
+        <tr><td><span class="lvchip c2">L2</span></td><td>2주</td><td>2D 항목별 동작과 효과</td><td>차트 → 동작 매칭</td></tr>
+        <tr><td><span class="lvchip c2">L2</span></td><td>3주</td><td>좌우·회전 항목별 동작과 효과</td><td>차트 → 동작 매칭</td></tr>
+        <tr><td><span class="lvchip c2">L2</span></td><td>4주</td><td>타입별 진행 순서 · 클로징 · 평가</td><td>A/B 순서 · 결과 고정</td></tr>
+        <tr><td><span class="lvchip c3">L3</span></td><td>1주</td><td>얼굴 디자인 원리 · 층별 원근</td><td>1·2·3층 설계</td></tr>
+        <tr><td><span class="lvchip c3">L3</span></td><td>2주</td><td>전후방경사 만들기</td><td>전방·후방경사</td></tr>
+        <tr><td><span class="lvchip c3">L3</span></td><td>3주</td><td>예쁜 얼굴이란? · 성형과 시술의 이해</td><td>목표 설계 · 금기</td></tr>
+        <tr><td><span class="lvchip c3">L3</span></td><td>4주</td><td>종합 케이스 설계 · 인증 평가</td><td>수료 · 소니드 인증</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p class="mini" style="text-align:left;margin-top:12px">※ 각 레벨 4주 · 매주 일요일 10:00–14:00(점심 없이 4시간) · 동탄 본점. 세부 주제는 예시입니다. <span class="ph-note">세부 확정</span></p>
+  </div>
+</section>
+
+<!-- INSTRUCTOR -->
+<section id="instructor" style="background:var(--mist)">
+  <div class="wrap">
+    <div class="kicker">Instructor</div>
+    <h2 class="sec">교육을 이끄는 사람</h2>
+    <p class="sub"></p>
+    <div class="inst">
+      <div class="ph">李</div>
+      <div>
+        <h3>이소니 <span style="font-size:15px;color:var(--mut)">원장</span></h3>
+        <div class="role">소니드 얼굴윤곽 대표 · 독자 진단 체계 개발</div>
+        <p>수년간 독자적인 얼굴윤곽 진단 체계와 용어를 정립하고, 수많은 실제 케이스로 판독 기준을 직접 교정해 온 얼굴윤곽 분석 전문가. <span class="ph-note">상세 경력·이력 대표님 확정</span></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- AUDIENCE -->
+<section>
+  <div class="wrap">
+    <div class="kicker">For Whom</div>
+    <h2 class="sec">이런 분께 추천합니다</h2>
+    <p class="sub"></p>
+    <div class="aud">
+      <div>얼굴윤곽·에스테틱 분야로 창업을 준비하는 분</div>
+      <div>기존 뷰티 관리에 '분석 기반' 기술을 더하고 싶은 분</div>
+      <div>손기술만이 아니라 '왜'를 이해하고 싶은 관리사</div>
+      <div>소니드 인증 관리사로 실무에 서고 싶은 분</div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICE / BENEFITS -->
+<section id="price">
+  <div class="wrap">
+    <div class="kicker">Enrollment</div>
+    <h2 class="sec">수강 안내</h2>
+    <p class="sub">프리미엄 소수 정예로 운영됩니다.</p>
+    <div class="pricebox">
+      <div style="color:var(--soft);font-weight:700;font-size:14px">레벨당 (각 4주 과정)</div>
+      <div class="p">490<span style="font-size:22px;font-weight:700">만원</span></div>
+      <div class="note">Level 1 · 2 · 3 — 각 레벨 4주 · 매주 일요일 10:00–14:00 · 동탄 본점</div>
+      <div class="benefits">
+        <span>소니드 인증서</span><span>실습 키트</span><span>디지털 분석 도구</span>
+        <span>재수강 혜택</span><span>수료생 커뮤니티</span><span>실무·창업 연계</span>
+      </div>
+      <a href="#apply" class="btn btn-primary" style="background:#fff;color:var(--navy)">상담 신청하기</a>
+    </div>
+  </div>
+</section>
+
+<!-- STEPS + SCARCITY -->
+<section style="background:var(--mist)">
+  <div class="wrap">
+    <div class="kicker">Process</div>
+    <h2 class="sec">신청 절차</h2>
+    <p class="sub"></p>
+    <div class="steps">
+      <div class="step"><div class="n">1</div><h4>상담 신청</h4><p>간단한 문의 남기기</p></div>
+      <div class="step"><div class="n">2</div><h4>상담 · 등록</h4><p>과정 안내 후 등록</p></div>
+      <div class="step"><div class="n">3</div><h4>수강</h4><p>Level 1 → 3 진행</p></div>
+      <div class="step"><div class="n">4</div><h4>수료 · 인증</h4><p>소니드 인증 관리사</p></div>
+    </div>
+    <div style="height:22px"></div>
+    <div class="scarce">🔔 2026년 8월 22일 Level 1 개강 — 정원 [N]명, 신청 순서대로 마감됩니다.</div>
+  </div>
+</section>
+
+<!-- APPLY FORM -->
+<section id="apply" class="formsec">
+  <div class="wrap">
+    <div style="text-align:center;margin-bottom:26px">
+      <div class="kicker" style="color:var(--blueg)">Apply</div>
+      <h2 class="sec" style="color:#fff">상담 신청</h2>
+      <p class="sub" style="color:var(--soft)">아래 정보를 남겨주시면 담당자가 연락드립니다.</p>
+    </div>
+    <form class="form" onsubmit="return false">
+      <label>이름 *</label><input placeholder="성함">
+      <label>연락처 *</label><input placeholder="010-0000-0000">
+      <label>현재 하시는 일 (선택)</label><input placeholder="예: 에스테틱 운영 / 창업 준비 등">
+      <label>문의 내용</label><textarea rows="3" placeholder="궁금한 점을 적어주세요"></textarea>
+      <button class="btn btn-primary">신청 보내기</button>
+      <p class="mini">※ 폼 전송 기능은 연결 전입니다. <span class="ph-note">전송 방식(네이버폼·구글폼·DB) 대표님 선택</span></p>
+    </form>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div>
+      <div class="logo" style="color:#fff;margin-bottom:6px"><b style="color:#a9b8ea">SONEED</b> ACADEMY</div>
+      <div>소니드 얼굴윤곽 · 얼굴윤곽 관리사 양성</div>
+    </div>
+    <div style="text-align:right">
+      <div>문의 [전화 / 인스타 / 카카오]</div>
+      <div style="color:#5a628a;margin-top:6px">© SONEED. All rights reserved.</div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
