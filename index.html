@@ -172,7 +172,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v53 (2026-07-22)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v54 (2026-07-22)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객 리포트</button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -562,7 +562,7 @@ function pickCust(email,name,tier){
 function loadTierAdmin(){ renderAppCustomers(); }  // 하위호환
 
 /* ===== 유입 고객(체험 신청 leads) — 주인장 전용 ===== */
-let _leadBusy=false, _leadCache={};
+let _leadBusy=false, _leadCache={}, _pendingLeadId=null;
 function _esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 async function renderIncomingLeads(){
   if(!isAdmin())return; var box=document.getElementById('leadList'); if(!box||_leadBusy)return; _leadBusy=true;
@@ -602,9 +602,9 @@ function importLead(id){
   form.notes=notes;
   renderForm(); applyFormToUI();
   var es=document.getElementById('editState'); if(es)es.textContent=(form.code||'무제')+' · 체험 유입 (신규 차트)';
-  markLeadDone(id,true);
+  _pendingLeadId=id;   // 저장할 때 목록에서 처리(가져오기만으론 안 사라짐)
   showView('entry');
-  toast('차트로 불러왔어요. AI 분석·촉진 후 저장하세요.');
+  toast('차트로 불러왔어요. AI 분석·촉진 후 [기록 저장]하면 목록에서 처리돼요.');
 }
 async function markLeadDone(id,silent){
   try{ await fetch(sbBase()+'leads?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:sbHeaders({Prefer:'return=minimal'}),body:JSON.stringify({claimed:true})}); }catch(e){}
@@ -1378,12 +1378,13 @@ async function saveRecord(){
   try{await persistRecord(rec);}catch(e){if(e&&e.photoOnly){photoFail=true;}else{toast('저장 실패: '+(e.message||e));return;}}
   const i=records.findIndex(r=>String(r.id)===String(rec.id));if(i>=0)records[i]=rec;else records.unshift(rec);
   sortRecs();
+  if(_pendingLeadId){ markLeadDone(_pendingLeadId,true); _pendingLeadId=null; }   // 유입 고객: 저장 완료 시 목록에서 처리
   toast(photoFail?'기본정보는 저장됨 · 사진은 용량이 커서 저장 실패':(updateValidation()?'저장되었습니다':'저장됨 · 회전 오류가 남아있어요'));
   document.getElementById('editState').textContent=(form.code||'무제')+' · 저장됨 (편집 중)';document.getElementById('delBtn').style.display='';refreshAll();
 }
 function editRecord(id){const r=records.find(x=>String(x.id)===String(id));if(!r)return;form=Object.assign({},r);currentId=r.id;autoFilled={};renderForm();applyFormToUI();document.getElementById('editState').textContent=(r.code||'무제')+' · 편집 중';document.getElementById('delBtn').style.display='';document.getElementById('autoMsg').innerHTML='';const _fr2=document.getElementById('faceResult');if(_fr2)_fr2.innerHTML='';showView('entry');}
 async function deleteCurrent(){if(!currentId)return;if(!confirm('이 기록을 삭제할까요?'))return;try{await removeRecord(currentId);}catch(e){toast('삭제 실패: '+e.message);return;}records=records.filter(r=>String(r.id)!==String(currentId));clearForm();toast('삭제되었습니다');refreshAll();}
-function clearForm(){form={};currentId=null;autoFilled={};renderForm();renderStickyThumbs();document.getElementById('f_notes').value='';document.getElementById('autoMsg').innerHTML='';const _fr=document.getElementById('faceResult');if(_fr)_fr.innerHTML='';document.getElementById('editState').textContent='새 기록을 작성합니다.';document.getElementById('delBtn').style.display='none';updateValidation();}
+function clearForm(){form={};currentId=null;autoFilled={};_pendingLeadId=null;renderForm();renderStickyThumbs();document.getElementById('f_notes').value='';document.getElementById('autoMsg').innerHTML='';const _fr=document.getElementById('faceResult');if(_fr)_fr.innerHTML='';document.getElementById('editState').textContent='새 기록을 작성합니다.';document.getElementById('delBtn').style.display='none';updateValidation();}
 function showView(v){
   if(v==='admin'&&!isAdmin())v='data';   // 관리 페이지는 대표만
   document.getElementById('view-entry').style.display=v==='entry'?'':'none';
