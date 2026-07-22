@@ -94,7 +94,9 @@ table.cur{width:100%;border-collapse:collapse;font-size:14.5px;background:#fff;b
   box-shadow:0 6px 20px rgba(38,48,122,.06)}
 table.cur th{background:var(--navy);color:#fff;font-weight:700;padding:13px 14px;text-align:left;font-size:13px}
 table.cur td{padding:13px 14px;border-top:1px solid var(--line);vertical-align:top}
-table.cur tr:nth-child(even) td{background:var(--mist)}
+table.cur tr.rL1 td{background:#edf1fb}
+table.cur tr.rL2 td{background:#e7f7f1}
+table.cur tr.rL3 td{background:#f3edfb}
 .lvchip{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:800;color:#fff}
 .c1{background:#26307a}.c2{background:#059669}.c3{background:#7c3aed}
 .tblwrap{overflow-x:auto}
@@ -165,7 +167,6 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px}
   table.cur thead{display:none}
   table.cur tr{display:block;border-top:2px solid var(--line);padding:10px 0}
   table.cur tr:first-child{border-top:0}
-  table.cur tr:nth-child(even) td{background:transparent}
   table.cur td{display:block;border:0;padding:3px 14px;text-align:left;font-size:14px}
   table.cur td:first-child{padding-bottom:6px}
   .benefits{gap:8px}
@@ -265,15 +266,15 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px}
     <table class="cur">
       <thead><tr><th style="width:80px">단계</th><th style="width:70px">주차</th><th>주제</th><th style="width:170px">핵심 내용</th></tr></thead>
       <tbody>
-        <tr><td><span class="lvchip c1">L1</span></td><td>1주</td><td>소니드 이론 · 얼굴 읽기의 언어</td><td>용어 · 뼈 랜드마크</td></tr>
-        <tr><td><span class="lvchip c1">L1</span></td><td>2주</td><td>2D·좌우·회전 진단 + 왜곡·표준 촬영</td><td>34항목 읽는 법</td></tr>
-        <tr><td><span class="lvchip c1">L1</span></td><td>3주</td><td>분석 실습 · 촉진 · 기록 · 평가</td><td>케이스 실습 · 수료</td></tr>
-        <tr><td><span class="lvchip c2">L2</span></td><td>1주</td><td>동작 언어 · 준비 동작</td><td>스프레딩·프레싱·필러링…</td></tr>
-        <tr><td><span class="lvchip c2">L2</span></td><td>2주</td><td>차트 항목별 동작과 효과</td><td>2D·좌우·회전 → 동작</td></tr>
-        <tr><td><span class="lvchip c2">L2</span></td><td>3주</td><td>타입별 진행 순서 · 클로징 · 평가</td><td>A/B 순서 · 결과 고정</td></tr>
-        <tr><td><span class="lvchip c3">L3</span></td><td>1주</td><td>얼굴 디자인 원리 · 전후방경사</td><td>1·2·3층 설계</td></tr>
-        <tr><td><span class="lvchip c3">L3</span></td><td>2주</td><td>예쁜 얼굴이란? · 성형과 시술의 이해</td><td>목표 설계 · 금기</td></tr>
-        <tr><td><span class="lvchip c3">L3</span></td><td>3주</td><td>종합 케이스 설계 · 인증 평가</td><td>수료 · 소니드 인증</td></tr>
+        <tr class="rL1"><td><span class="lvchip c1">L1</span></td><td>1주</td><td>소니드 이론 · 얼굴 읽기의 언어</td><td>용어 · 뼈 랜드마크</td></tr>
+        <tr class="rL1"><td><span class="lvchip c1">L1</span></td><td>2주</td><td>2D·좌우·회전 진단 + 왜곡·표준 촬영</td><td>34항목 읽는 법</td></tr>
+        <tr class="rL1"><td><span class="lvchip c1">L1</span></td><td>3주</td><td>분석 실습 · 촉진 · 기록 · 평가</td><td>케이스 실습 · 수료</td></tr>
+        <tr class="rL2"><td><span class="lvchip c2">L2</span></td><td>1주</td><td>동작 언어 · 준비 동작</td><td>스프레딩·프레싱·필러링…</td></tr>
+        <tr class="rL2"><td><span class="lvchip c2">L2</span></td><td>2주</td><td>차트 항목별 동작과 효과</td><td>2D·좌우·회전 → 동작</td></tr>
+        <tr class="rL2"><td><span class="lvchip c2">L2</span></td><td>3주</td><td>타입별 진행 순서 · 클로징 · 평가</td><td>A/B 순서 · 결과 고정</td></tr>
+        <tr class="rL3"><td><span class="lvchip c3">L3</span></td><td>1주</td><td>얼굴 디자인 원리 · 전후방경사</td><td>1·2·3층 설계</td></tr>
+        <tr class="rL3"><td><span class="lvchip c3">L3</span></td><td>2주</td><td>예쁜 얼굴이란? · 성형과 시술의 이해</td><td>목표 설계 · 금기</td></tr>
+        <tr class="rL3"><td><span class="lvchip c3">L3</span></td><td>3주</td><td>종합 케이스 설계 · 인증 평가</td><td>수료 · 소니드 인증</td></tr>
       </tbody>
     </table>
     </div>
