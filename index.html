@@ -172,7 +172,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v52 (2026-07-22)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v53 (2026-07-22)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객 리포트</button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -568,7 +568,7 @@ async function renderIncomingLeads(){
   if(!isAdmin())return; var box=document.getElementById('leadList'); if(!box||_leadBusy)return; _leadBusy=true;
   try{
     var r=await fetch(sbBase()+'leads?select=*&photo_front=not.is.null&claimed=eq.false&order=created_at.desc&limit=100',{headers:sbHeaders()});
-    if(!r.ok){ box.innerHTML='⚠ leads 테이블이 아직 없습니다. leads SQL을 먼저 실행하세요.'; return; }
+    if(!r.ok){ var et=await r.text().catch(function(){return'';}); box.innerHTML='⚠ 유입 고객 조회 실패 (HTTP '+r.status+'): '+_esc(et.slice(0,220))+'<br><span class="subtle">leads 테이블·컬럼 SQL을 확인하세요.</span>'; return; }
     var j=await r.json(); _leadCache={};
     if(!j.length){ box.innerHTML='<div class="subtle">아직 유입 고객이 없습니다. 고객이 셀프 체험에서 정밀분석을 신청하면 여기에 나타납니다.</div>'; return; }
     box.innerHTML=j.map(function(L){ _leadCache[L.id]=L;
