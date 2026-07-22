@@ -99,7 +99,7 @@
 </style>
 </head>
 <body>
-<header><div class="logo"><b>SONEED</b> <span>얼굴상 & 비대칭 · v7b</span></div></header>
+<header><div class="logo"><b>SONEED</b> <span>얼굴상 & 비대칭 · v7c</span></div></header>
 <div class="wrap">
 
   <!-- STEP 1: 인트로 + 동의 -->
@@ -481,9 +481,13 @@ function drawViz(P,src){
   line(P[10],P[152],'rgba(255,79,158,.9)',2,[6,5]);              // 정중선
   line(P[468],P[473],'rgba(90,200,255,.95)',2.5);               // 눈선
   line(P[127],P[356],'rgba(120,220,150,.9)',2,[5,4]);           // 귀선
+  line(P[129],P[358],'rgba(200,160,255,.95)',2,[5,4]);          // 콧볼선(코 아래 좌우)
+  line(P[61],P[291],'rgba(255,170,120,.95)',2.5);               // 입술선(입꼬리 좌우)
   [P[234],P[454]].forEach(p=>dot(p,'#ffd24a',4));               // 광대 외곽
   [P[116],P[345]].forEach(p=>dot(p,'#ff8bc4',3.5));             // 광대 앞
   [P[172],P[397]].forEach(p=>dot(p,'#8be0ff',3.5));             // 턱 외각
+  [P[129],P[358]].forEach(p=>dot(p,'#d8bcff',3));               // 콧볼점
+  [P[61],P[291]].forEach(p=>dot(p,'#ffc699',3));                // 입꼬리점
   [P[468],P[473],P[127],P[356]].forEach(p=>dot(p,'#fff',2.5));
   // 각도 라벨
   g.fillStyle='#eaf6ff'; g.font='700 '+Math.round(13*scale)+'px -apple-system,sans-serif'; g.textAlign='left';
