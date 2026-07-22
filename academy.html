@@ -333,13 +333,13 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px}
       <h2 class="sec" style="color:#fff">상담 신청</h2>
       <p class="sub" style="color:var(--soft)">아래 정보를 남겨주시면 담당자가 연락드립니다.</p>
     </div>
-    <form class="form" onsubmit="return false">
-      <label>이름 *</label><input placeholder="성함">
-      <label>연락처 *</label><input placeholder="010-0000-0000">
-      <label>현재 하시는 일 (선택)</label><input placeholder="예: 에스테틱 운영 / 창업 준비 등">
-      <label>문의 내용</label><textarea rows="3" placeholder="궁금한 점을 적어주세요"></textarea>
-      <button class="btn btn-primary">신청 보내기</button>
-      <p class="mini">※ 폼 전송 기능은 연결 전입니다. <span class="ph-note">전송 방식(네이버폼·구글폼·DB) 대표님 선택</span></p>
+    <form class="form" id="applyForm" onsubmit="return submitApply(event)">
+      <label>이름 *</label><input id="af_name" placeholder="성함" required>
+      <label>연락처 *</label><input id="af_phone" placeholder="010-0000-0000" required>
+      <label>현재 하시는 일 (선택)</label><input id="af_job" placeholder="예: 에스테틱 운영 / 창업 준비 등">
+      <label>문의 내용</label><textarea id="af_msg" rows="3" placeholder="궁금한 점을 적어주세요"></textarea>
+      <button class="btn btn-primary" id="af_btn">신청 보내기</button>
+      <p class="mini" id="af_note">제출하시면 담당자가 순차적으로 연락드립니다.</p>
     </form>
   </div>
 </section>
@@ -357,5 +357,33 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px}
   </div>
 </footer>
 
+<script>
+const SB_URL="https://xzclowgorxhcbsfrrbop.supabase.co";
+const SB_KEY="sb_publishable_66Ts2AQrKrjfitjTi11uCQ_dGXiY_EZ";
+async function submitApply(e){
+  e.preventDefault();
+  var name=(document.getElementById('af_name').value||'').trim();
+  var phone=(document.getElementById('af_phone').value||'').trim();
+  if(!name||!phone){ alert('이름과 연락처를 입력해주세요.'); return false; }
+  var btn=document.getElementById('af_btn'), note=document.getElementById('af_note');
+  btn.disabled=true; btn.textContent='보내는 중…';
+  try{
+    var r=await fetch(SB_URL+'/rest/v1/academy_apps',{method:'POST',
+      headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json',Prefer:'return=minimal'},
+      body:JSON.stringify({name:name,phone:phone,
+        job:(document.getElementById('af_job').value||'').trim(),
+        message:(document.getElementById('af_msg').value||'').trim()})});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    document.getElementById('applyForm').innerHTML='<div style="text-align:center;padding:26px 6px">'
+      +'<div style="font-size:40px">✓</div>'
+      +'<h3 style="color:#fff;margin:10px 0 6px">신청이 접수되었습니다</h3>'
+      +'<p style="color:var(--soft)">순차적으로 연락드리겠습니다. 감사합니다 🙏</p></div>';
+  }catch(err){
+    btn.disabled=false; btn.textContent='신청 보내기';
+    note.innerHTML='⚠ 전송에 실패했어요. 잠시 후 다시 시도하시거나 문의처로 연락 주세요.';
+  }
+  return false;
+}
+</script>
 </body>
 </html>

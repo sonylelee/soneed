@@ -295,6 +295,11 @@
       <div id="leadList">불러오는 중…</div>
     </div>
     <div class="card pad" style="margin-bottom:16px">
+      <h2 class="section" style="margin-top:0">🎓 아카데미 신청 <span class="subtle" style="text-transform:none;letter-spacing:0;font-weight:600">교육 랜딩(academy)에서 상담 신청한 분</span></h2>
+      <div class="subtle" style="margin-bottom:10px">신청이 들어오면 여기 뜹니다. 연락 후 <b>처리완료</b>를 누르면 목록에서 숨겨집니다.</div>
+      <div id="acadList">불러오는 중…</div>
+    </div>
+    <div class="card pad" style="margin-bottom:16px">
       <h2 class="section" style="margin-top:0">앱 고객 (구독자) 목록 <span class="subtle" style="text-transform:none;letter-spacing:0;font-weight:600">우리 앱을 쓰는 관리사 계정</span></h2>
       <div class="subtle" style="margin-bottom:10px">행을 누르면 아래 등급 지정칸에 자동으로 채워집니다.</div>
       <div id="appCustList">불러오는 중…</div>
@@ -631,6 +636,33 @@ async function markLeadDone(id,silent){
   try{ await fetch(sbBase()+'leads?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:sbHeaders({Prefer:'return=minimal'}),body:JSON.stringify({claimed:true})}); }catch(e){}
   delete _leadCache[id];
   if(!silent){ renderIncomingLeads(); toast('처리완료로 표시했어요'); }
+}
+/* ===== 아카데미 신청(academy_apps) — 주인장 전용 ===== */
+let _acadBusy=false;
+async function renderAcademyApps(){
+  if(!isAdmin())return; var box=document.getElementById('acadList'); if(!box||_acadBusy)return; _acadBusy=true;
+  try{
+    var r=await fetch(sbBase()+'academy_apps?select=*&done=eq.false&order=created_at.desc&limit=200',{headers:sbHeaders()});
+    if(!r.ok){ var et=await r.text().catch(function(){return'';}); box.innerHTML='⚠ 아카데미 신청 조회 실패 (HTTP '+r.status+'): '+_esc(et.slice(0,220))+'<br><span class="subtle">academy_apps 테이블 SQL을 확인하세요.</span>'; return; }
+    var j=await r.json();
+    if(!j.length){ box.innerHTML='<div class="subtle">아직 신청이 없습니다. 아카데미 랜딩에서 상담 신청이 들어오면 여기에 나타납니다.</div>'; return; }
+    box.innerHTML=j.map(function(A){
+      var d=(A.created_at||'').slice(0,16).replace('T',' ');
+      return '<div class="leadcard">'
+        +'<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">'
+        +'<div><b style="font-size:15px">'+_esc(A.name||'무명')+'</b> <a href="tel:'+_esc(A.phone||'')+'" style="color:#2563EB">'+_esc(A.phone||'')+'</a>'
+        +(A.job?'<br><span class="subtle" style="font-size:12px">'+_esc(A.job)+'</span>':'')
+        +'<br><span class="subtle" style="font-size:12px">'+d+'</span></div>'
+        +'<button class="btn ghost" style="font-size:11px;padding:5px 10px;white-space:nowrap" onclick="markAcademyDone(\''+A.id+'\')">처리완료</button></div>'
+        +(A.message?'<div class="subtle" style="white-space:pre-wrap;font-size:13px;margin-top:6px">'+_esc(A.message)+'</div>':'')
+        +'</div>';
+    }).join('');
+  }catch(e){ box.textContent='조회 실패: '+(e&&e.message||e); }
+  finally{ _acadBusy=false; }
+}
+async function markAcademyDone(id){
+  try{ await fetch(sbBase()+'academy_apps?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:sbHeaders({Prefer:'return=minimal'}),body:JSON.stringify({done:true})}); }catch(e){}
+  renderAcademyApps(); toast('처리완료로 표시했어요');
 }
 async function saveTierFor(){
   if(!isAdmin()){toast('대표만 변경할 수 있습니다');return;}
@@ -1415,7 +1447,7 @@ function showView(v){
   document.getElementById('tabData').classList.toggle('on',v==='data');
   var ta=document.getElementById('tabAdmin'); if(ta)ta.classList.toggle('on',v==='admin');
   if(v==='data'){renderRecList();renderCrosstab();}
-  if(v==='admin'){renderStats();renderIncomingLeads();renderAppCustomers();}
+  if(v==='admin'){renderStats();renderIncomingLeads();renderAcademyApps();renderAppCustomers();}
 }
 
 const FILTERABLE=FIELDS.filter(f=>f.type==='seg'||f.type==='select'||f.type==='multi').map(f=>({k:f.k,label:f.label,opt:f.opt.filter(o=>o!=='')}));
