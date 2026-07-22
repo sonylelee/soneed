@@ -86,7 +86,8 @@
   #camWrap{position:relative;background:#000;border-radius:16px;overflow:hidden;border:1px solid var(--line)}
   #cam{width:100%;display:block;transform:scaleX(-1)}
   .camGuide{position:absolute;inset:0;pointer-events:none;display:flex;align-items:center;justify-content:center}
-  .camGuide .oval{width:60%;aspect-ratio:3/4;border:3px dashed rgba(255,255,255,.9);border-radius:50%;box-shadow:0 0 0 2000px rgba(0,0,0,.38)}
+  .camGuide{align-items:flex-start;padding-top:8%}
+  .camGuide .oval{width:44%;aspect-ratio:3/4;border:3px dashed rgba(255,255,255,.9);border-radius:50%;box-shadow:0 0 0 2000px rgba(0,0,0,.28)}
   .camHint{position:absolute;bottom:12px;left:0;right:0;text-align:center;color:#fff;font-weight:800;font-size:14px;text-shadow:0 1px 5px #000;pointer-events:none}
   .camEar{position:absolute;top:12px;left:0;right:0;text-align:center;color:#ffd0e6;font-weight:800;font-size:14px;text-shadow:0 1px 5px #000;pointer-events:none}
   /* 설문 */
@@ -98,7 +99,7 @@
 </style>
 </head>
 <body>
-<header><div class="logo"><b>SONEED</b> <span>얼굴상 & 비대칭 · v6e</span></div></header>
+<header><div class="logo"><b>SONEED</b> <span>얼굴상 & 비대칭 · v6f</span></div></header>
 <div class="wrap">
 
   <!-- STEP 1: 인트로 + 동의 -->
@@ -124,7 +125,7 @@
       <video id="cam" playsinline autoplay muted></video>
       <div class="camEar">👂 양쪽 귀가 보이게</div>
       <div class="camGuide"><div class="oval"></div></div>
-      <div class="camHint">이 안에 얼굴을 맞춰주세요</div>
+      <div class="camHint">얼굴은 이 원 안에 · 살짝 멀리서 어깨까지 나오게!</div>
     </div>
     <button class="btn primary" id="shutter" style="margin-top:12px">📸 지금 촬영</button>
     <label class="file" id="fileFallback" style="display:none;margin-top:12px">
@@ -382,9 +383,10 @@ function pickAnimal(f){
 function result(){
   const P=_P, f=feats(P); _score=f.score; _animal=pickAnimal(f);
   const a=ANIMALS[_animal];
-  $('hero').innerHTML=`<div style="position:relative;display:inline-block">
-      <img src="${faceThumb(P,_src)}" style="width:166px;height:202px;object-fit:cover;border-radius:22px;border:2px solid rgba(255,255,255,.18)">
-      <div style="position:absolute;inset:0;top:-6px;display:flex;align-items:center;justify-content:center;font-size:118px;line-height:1;filter:drop-shadow(0 3px 10px rgba(0,0,0,.6))">${a.emo}</div>
+  var fc=faceCrop(P,_src), HW=220, em=Math.round(fc.fw*HW*1.55);
+  $('hero').innerHTML=`<div style="position:relative;display:inline-block;width:${HW}px">
+      <img src="${fc.url}" style="width:${HW}px;display:block;border-radius:18px;border:2px solid rgba(255,255,255,.14)">
+      <div style="position:absolute;left:${(fc.fx*100).toFixed(1)}%;top:${(fc.fy*100).toFixed(1)}%;transform:translate(-50%,-50%);font-size:${em}px;line-height:1;filter:drop-shadow(0 3px 8px rgba(0,0,0,.55))">${a.emo}</div>
     </div>
     <div class="type" style="margin-top:14px">나는 <b>${a.name}</b></div>
     <div class="sc">대칭 점수 <b>${_score}</b> / 100</div><div class="tr">${a.tr}</div>`;
@@ -419,7 +421,23 @@ function result(){
   logEvent('result');
   go('s-result');
 }
-/* 얼굴 크롭 썸네일(히어로·카드용) */
+/* 넓은 크롭(머리+어깨) + 얼굴 위치/크기(크롭 대비 0~1) — 동물탈 마스크용 */
+function faceCrop(P,src){
+  let minx=1e9,miny=1e9,maxx=-1e9,maxy=-1e9;
+  for(const p of P){if(p.x<minx)minx=p.x;if(p.x>maxx)maxx=p.x;if(p.y<miny)miny=p.y;if(p.y>maxy)maxy=p.y;}
+  var fw=maxx-minx, fcx=(minx+maxx)/2, fcy=(miny+maxy)/2;
+  var cw=fw*2.7, ch=cw*1.28;                 // 넓게(어깨까지)
+  var ox=fcx-cw/2, oy=fcy-ch*0.40;           // 얼굴을 위쪽 40%에
+  if(ox<0)ox=0; if(oy<0)oy=0;
+  if(ox+cw>src.width)cw=src.width-ox;
+  if(oy+ch>src.height)ch=src.height-oy;
+  var scale=Math.min(2,380/cw);
+  var c=document.createElement('canvas'); c.width=Math.round(cw*scale); c.height=Math.round(ch*scale);
+  var g=c.getContext('2d'); g.fillStyle='#15181f'; g.fillRect(0,0,c.width,c.height);
+  g.drawImage(src,ox,oy,cw,ch,0,0,c.width,c.height);
+  return { url:c.toDataURL('image/jpeg',0.85), fx:(fcx-ox)/cw, fy:(fcy-oy)/ch, fw:fw/cw };
+}
+/* 얼굴 크롭 썸네일(구버전, 미사용 대비) */
 function faceThumb(P,src){
   let minx=1e9,miny=1e9,maxx=-1e9,maxy=-1e9;
   for(const p of P){if(p.x<minx)minx=p.x;if(p.x>maxx)maxx=p.x;if(p.y<miny)miny=p.y;if(p.y>maxy)maxy=p.y;}
@@ -464,15 +482,15 @@ $('saveCard').onclick=async()=>{
   g.textAlign='center';
   g.fillStyle='#ff6fb0';g.font='800 30px -apple-system,sans-serif';g.fillText('SONEED 얼굴상 체험',W/2,84);
   try{
-    const img=await imgFrom(faceThumb(_P,_src));
-    const fw=330,fh=406,fx=(W-fw)/2,fy=118;
-    g.save();roundRect(g,fx,fy,fw,fh,30);g.clip();
-    const ir=img.width/img.height,rr=fw/fh;let sw,sh,sx,sy;if(ir>rr){sh=img.height;sw=sh*rr;sx=(img.width-sw)/2;sy=0;}else{sw=img.width;sh=sw/rr;sx=0;sy=(img.height-sh)/2;}
-    g.drawImage(img,sx,sy,sw,sh,fx,fy,fw,fh);
-    g.font=Math.round(fw*0.82)+'px serif';g.textBaseline='middle';g.fillText(a.emo,fx+fw/2,fy+fh*0.42);  // 얼굴을 동물로 가림
+    const fc=faceCrop(_P,_src); const img=await imgFrom(fc.url);
+    const cw2=360,ch2=Math.round(cw2*img.height/img.width),fx=(W-cw2)/2,fy=118;
+    g.save();roundRect(g,fx,fy,cw2,ch2,30);g.clip();
+    g.drawImage(img,0,0,img.width,img.height,fx,fy,cw2,ch2);
+    g.font=Math.round(fc.fw*cw2*1.55)+'px serif';g.textAlign='center';g.textBaseline='middle';
+    g.fillText(a.emo,fx+fc.fx*cw2,fy+fc.fy*ch2);   // 얼굴 위치에 동물탈
     g.textBaseline='alphabetic';g.restore();
-    g.strokeStyle='rgba(255,255,255,.22)';g.lineWidth=3;roundRect(g,fx,fy,fw,fh,30);g.stroke();
-  }catch(e){ g.font='170px serif';g.fillText(a.emo,W/2,330); }
+    g.strokeStyle='rgba(255,255,255,.22)';g.lineWidth=3;roundRect(g,fx,fy,cw2,ch2,30);g.stroke();
+  }catch(e){ g.font='170px serif';g.textAlign='center';g.fillText(a.emo,W/2,330); }
   g.fillStyle='#fff';g.font='900 60px -apple-system,sans-serif';g.fillText('나는 '+a.name,W/2,640);
   g.fillStyle='#ff4f9e';g.font='900 112px -apple-system,sans-serif';g.fillText(String(_score),W/2,780);
   g.fillStyle='#9aa2b1';g.font='700 26px -apple-system,sans-serif';g.fillText('대칭 점수 / 100',W/2,825);
