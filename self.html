@@ -99,7 +99,7 @@
 </style>
 </head>
 <body>
-<header><div class="logo"><b>SONEED</b> <span>얼굴상 & 비대칭 · v6g</span></div></header>
+<header><div class="logo"><b>SONEED</b> <span>얼굴상 & 비대칭 · v6h</span></div></header>
 <div class="wrap">
 
   <!-- STEP 1: 인트로 + 동의 -->
@@ -383,10 +383,10 @@ function pickAnimal(f){
 function result(){
   const P=_P, f=feats(P); _score=f.score; _animal=pickAnimal(f);
   const a=ANIMALS[_animal];
-  var fc=faceCrop(P,_src), HW=220, em=Math.round(fc.fw*HW*2.2);
+  var fc=faceCrop(P,_src), HW=220, em=Math.round(fc.fw*HW*2.2), topY=(fc.fy-fc.fh*0.42)*100;
   $('hero').innerHTML=`<div style="position:relative;display:inline-block;width:${HW}px">
       <img src="${fc.url}" style="width:${HW}px;display:block;border-radius:18px;border:2px solid rgba(255,255,255,.14)">
-      <div style="position:absolute;left:${(fc.fx*100).toFixed(1)}%;top:${(fc.fy*100).toFixed(1)}%;transform:translate(-50%,-50%);font-size:${em}px;line-height:1;filter:drop-shadow(0 3px 8px rgba(0,0,0,.55))">${a.emo}</div>
+      <div style="position:absolute;left:${(fc.fx*100).toFixed(1)}%;top:${topY.toFixed(1)}%;transform:translate(-50%,-50%);font-size:${em}px;line-height:1;filter:drop-shadow(0 3px 8px rgba(0,0,0,.55))">${a.emo}</div>
     </div>
     <div class="type" style="margin-top:14px">나는 <b>${a.name}</b></div>
     <div class="sc">대칭 점수 <b>${_score}</b> / 100</div><div class="tr">${a.tr}</div>`;
@@ -435,7 +435,7 @@ function faceCrop(P,src){
   var c=document.createElement('canvas'); c.width=Math.round(cw*scale); c.height=Math.round(ch*scale);
   var g=c.getContext('2d'); g.fillStyle='#15181f'; g.fillRect(0,0,c.width,c.height);
   g.drawImage(src,ox,oy,cw,ch,0,0,c.width,c.height);
-  return { url:c.toDataURL('image/jpeg',0.85), fx:(fcx-ox)/cw, fy:(fcy-oy)/ch, fw:fw/cw };
+  return { url:c.toDataURL('image/jpeg',0.85), fx:(fcx-ox)/cw, fy:(fcy-oy)/ch, fw:fw/cw, fh:(maxy-miny)/ch };
 }
 /* 얼굴 크롭 썸네일(구버전, 미사용 대비) */
 function faceThumb(P,src){
@@ -487,7 +487,7 @@ $('saveCard').onclick=async()=>{
     g.save();roundRect(g,fx,fy,cw2,ch2,30);g.clip();
     g.drawImage(img,0,0,img.width,img.height,fx,fy,cw2,ch2);
     g.font=Math.round(fc.fw*cw2*2.2)+'px serif';g.textAlign='center';g.textBaseline='middle';
-    g.fillText(a.emo,fx+fc.fx*cw2,fy+fc.fy*ch2);   // 얼굴 위치에 동물탈(크게)
+    g.fillText(a.emo,fx+fc.fx*cw2,fy+(fc.fy-fc.fh*0.42)*ch2);   // 정수리까지 덮게 위로
     g.textBaseline='alphabetic';g.restore();
     g.strokeStyle='rgba(255,255,255,.22)';g.lineWidth=3;roundRect(g,fx,fy,cw2,ch2,30);g.stroke();
   }catch(e){ g.font='170px serif';g.textAlign='center';g.fillText(a.emo,W/2,330); }
