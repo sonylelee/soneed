@@ -101,6 +101,10 @@ table.cur tr:nth-child(even) td{background:var(--mist)}
   border:1px solid var(--line);border-radius:20px;padding:30px}
 .inst .ph{flex:none;width:120px;height:120px;border-radius:50%;background:var(--lav);
   display:flex;align-items:center;justify-content:center;font-size:40px;color:var(--indigo);font-weight:900}
+.inst .phimg{flex:none;width:130px;height:130px;border-radius:50%;object-fit:cover;object-position:center 22%;box-shadow:0 8px 22px rgba(38,48,122,.20)}
+.iglink{display:inline-flex;align-items:center;gap:7px;margin-top:14px;padding:9px 16px;border-radius:999px;
+  background:linear-gradient(120deg,#3a4b9f,#8aa0dc);color:#fff;font-weight:700;font-size:14px}
+.iglink:hover{opacity:.92}
 .inst h3{font-size:22px;color:var(--navy)}
 .inst .role{color:var(--indigo);font-weight:700;font-size:14px;margin:4px 0 10px}
 .inst p{color:var(--slate);font-size:15px}
@@ -187,7 +191,7 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px}
   <div class="wrap">
     <span class="tag">2026.8.22 Level 1 개강 · 동탄 본점</span>
     <h1>읽고 · 바꾸고 · <span class="em">설계한다</span><br>얼굴윤곽 관리사 양성 과정</h1>
-    <p class="lead">눈대중이 아니라 <b>34개 항목의 구조 분석</b>으로 얼굴을 읽고, 손으로 교정하고, 인상까지 설계하는 — 소니드만의 3단계 커리큘럼.</p>
+    <p class="lead">눈 대중이 아니라 <b>34개 항목의 구조 분석</b>으로<br>얼굴을 읽고, 손으로 교정하고, 인상까지 설계하는 —<br>소니드만의 3단계 커리큘럼.</p>
     <div class="facts">
       <div class="fact"><div class="l">기간</div><div class="v">레벨당 3주</div></div>
       <div class="fact"><div class="l">일정</div><div class="v">일요일 10–14시</div></div>
@@ -281,11 +285,12 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px}
     <h2 class="sec">교육을 이끄는 사람</h2>
     <p class="sub"></p>
     <div class="inst">
-      <div class="ph">李</div>
+      <img src="team/2.jpg" alt="이소니 원장" class="phimg">
       <div>
         <h3>이소니 <span style="font-size:15px;color:var(--mut)">원장</span></h3>
         <div class="role">소니드 얼굴윤곽 대표 · 독자 진단 체계 개발</div>
         <p>수년간 독자적인 얼굴윤곽 진단 체계와 용어를 정립하고, 수많은 실제 케이스로 판독 기준을 직접 교정해 온 얼굴윤곽 분석 전문가. <span class="ph-note">상세 경력·이력 대표님 확정</span></p>
+        <a href="https://www.instagram.com/soneed_sony" target="_blank" rel="noopener" class="iglink">📷 인스타그램 @soneed_sony →</a>
       </div>
     </div>
   </div>
@@ -368,7 +373,7 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px}
       <div>소니드 얼굴윤곽 · 얼굴윤곽 관리사 양성</div>
     </div>
     <div style="text-align:right">
-      <div>문의 [전화 / 인스타 / 카카오]</div>
+      <div>문의 <span class="ph-note">[전화/카카오]</span> · <a href="https://www.instagram.com/soneed_sony" target="_blank" rel="noopener" style="color:#a9b8ea;font-weight:700">Instagram @soneed_sony</a></div>
       <div style="color:#5a628a;margin-top:6px">© SONEED. All rights reserved.</div>
     </div>
   </div>
