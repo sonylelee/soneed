@@ -99,7 +99,7 @@
 </style>
 </head>
 <body>
-<header><div class="logo"><b>SONEED</b> <span>얼굴상 & 비대칭 · v6h</span></div></header>
+<header><div class="logo"><b>SONEED</b> <span>얼굴상 & 비대칭 · v7b</span></div></header>
 <div class="wrap">
 
   <!-- STEP 1: 인트로 + 동의 -->
@@ -151,8 +151,9 @@
     <div class="card" id="findings"></div>
     <div class="aim" id="aim"></div>
 
-    <button class="btn primary" id="toAI" style="margin-top:14px">🔬 내 얼굴 비대칭 정밀분석 (무료)</button>
-    <p class="muted" style="text-align:center;margin:8px 0 4px;font-size:12px">사진 3장으로 더 자세히 · 관리사 사전확인</p>
+    <div id="scarcity" style="text-align:center;margin:14px 0 6px;font-weight:800;color:#ffd0e6;font-size:13.5px"></div>
+    <button class="btn primary" id="toAI" style="margin-top:2px;font-size:17px;padding:18px;box-shadow:0 8px 28px rgba(200,29,116,.5)">🎁 무료 정밀 리포트 받기 (원장 직접)</button>
+    <p class="muted" style="text-align:center;margin:8px 0 4px;font-size:12px">30초 · 개선법까지 알려드려요 · 지금만 무료</p>
     <a class="iglink" href="#" target="_blank" rel="noopener">📷 소니드 인스타그램 보러가기</a>
     <div class="hr"></div>
     <h1 style="font-size:19px;margin:6px 0 12px">📍 예약할 지점을 골라주세요</h1>
@@ -233,6 +234,7 @@ const SB_URL="https://xzclowgorxhcbsfrrbop.supabase.co";
 const SB_KEY="sb_publishable_66Ts2AQrKrjfitjTi11uCQ_dGXiY_EZ";
 const HAIKU="claude-haiku-4-5-20251001";
 const INSTA="https://www.instagram.com/soneed_face";
+const MONTHLY_LIMIT=20;   // 이번 달 무료 정밀 리포트 선착순 정원
 const NAVER={
   apgujeong:"https://map.naver.com/p/entry/place/2078742264?placePath=%2Fticket%3Fentry%3Dpll%26from%3Dnx%26fromNxList%3Dtrue%26from%3Dmap%26fromPanelNum%3D1%26additionalHeight%3D76%26timestamp%3D202607212234%26locale%3Dko%26svcName%3Dmap_pcv5&placeSearchOption=entry%3Dpll%26fromNxList%3Dtrue&searchType=place&c=15.00,0,0,0,dh",
   dongtan:"https://map.naver.com/p/entry/place/1531652767?placePath=%2Fticket%3Fentry%3Dpll%26from%3Dnx%26fromNxList%3Dtrue%26from%3Dmap%26fromPanelNum%3D1%26additionalHeight%3D76%26timestamp%3D202607212234%26locale%3Dko%26svcName%3Dmap_pcv5&placeSearchOption=entry%3Dpll%26fromNxList%3Dtrue&searchType=place&c=15.00,0,0,0,dh"
@@ -257,6 +259,15 @@ function go(id){document.querySelectorAll('.step').forEach(s=>s.classList.remove
 const VISITOR=(()=>{try{let v=localStorage.getItem('sn_vid');if(!v){v=Math.random().toString(36).slice(2)+Date.now().toString(36);localStorage.setItem('sn_vid',v);}return v;}catch(e){return 'anon';}})();
 function logEvent(type){try{fetch(SB_URL+'/rest/v1/events',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify({type:type,visitor:VISITOR})});}catch(e){}}
 logEvent('visit');
+/* 희소성: 이번 달 신청 수 → 남은 자리 (RPC 없으면 정적 문구) */
+async function updateScarcity(){
+  var el=$('scarcity'); if(!el)return; var n=null;
+  try{ var r=await fetch(SB_URL+'/rest/v1/rpc/leads_this_month',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json'},body:'{}'});
+    if(r.ok){ var v=parseInt(await r.text(),10); if(!isNaN(v))n=v; } }catch(e){}
+  if(n!=null){ var left=Math.max(0,MONTHLY_LIMIT-n);
+    el.innerHTML = left>0 ? ('🔥 이번 달 무료 정밀 리포트 · <b style="color:#fff">남은 자리 '+left+'명</b>') : '🔥 이번 달 정원 마감 임박! 대기 신청 받아요';
+  } else { el.innerHTML='🔥 이번 달 무료 정밀 리포트 <b style="color:#fff">선착순 '+MONTHLY_LIMIT+'명</b> · 마감 임박!'; }
+}
 
 let _src=null,_P=null,_animal='cat',_score=0,_photos={},_survey={},_stream=null;
 
@@ -365,8 +376,8 @@ function feats(P){
   const tilt=Math.abs(Math.atan2(P[473].y-P[468].y,P[473].x-P[468].x)*180/Math.PI);
   const cxF=(P[234].x+P[454].x)/2, noseOff=Math.abs((P[1].x-cxF)/faceW*100);
   const glabX=(P[133].x+P[362].x)/2, noseDx=Math.abs((P[1].x-glabX)/faceW*100);
-  let score=100-Math.min(22,tilt*3.2)-Math.min(20,noseDx*2.6)-Math.min(18,noseOff*2.4);
-  score=Math.max(55,Math.round(score));
+  let score=95-Math.min(24,tilt*5.5)-Math.min(20,noseDx*4.5)-Math.min(18,noseOff*4.2);
+  score=Math.max(52,Math.round(score));
   return {ratio,slant,round,lip,tilt,noseDx,noseOff,score};
 }
 function pickAnimal(f){
@@ -383,10 +394,10 @@ function pickAnimal(f){
 function result(){
   const P=_P, f=feats(P); _score=f.score; _animal=pickAnimal(f);
   const a=ANIMALS[_animal];
-  var fc=faceCrop(P,_src), HW=220, em=Math.round(fc.fw*HW*2.2), topY=(fc.fy-fc.fh*0.42)*100;
+  var fc=faceCrop(P,_src), HW=220, maskW=Math.round(fc.fw*HW*2.75), topY=(fc.fy-fc.fh*0.44)*100;
   $('hero').innerHTML=`<div style="position:relative;display:inline-block;width:${HW}px">
       <img src="${fc.url}" style="width:${HW}px;display:block;border-radius:18px;border:2px solid rgba(255,255,255,.14)">
-      <div style="position:absolute;left:${(fc.fx*100).toFixed(1)}%;top:${topY.toFixed(1)}%;transform:translate(-50%,-50%);font-size:${em}px;line-height:1;filter:drop-shadow(0 3px 8px rgba(0,0,0,.55))">${a.emo}</div>
+      <img src="animals/${_animal}.png" style="position:absolute;left:${(fc.fx*100).toFixed(1)}%;top:${topY.toFixed(1)}%;transform:translate(-50%,-50%);width:${maskW}px;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))">
     </div>
     <div class="type" style="margin-top:14px">나는 <b>${a.name}</b></div>
     <div class="sc">대칭 점수 <b>${_score}</b> / 100</div><div class="tr">${a.tr}</div>`;
@@ -416,8 +427,14 @@ function result(){
   F.push(['🔻', jawO.d<1.0?'턱 외각 · 좌우 비슷':'턱 외각(하악각) 차이', dmsg(jawO,'턱선이 조금 더 각져 보여요.')]);
   $('findings').innerHTML=F.map(x=>`<div class="finding"><div class="ic">${x[0]}</div><div><div class="t">${x[1]}</div><div class="d">${x[2]}</div></div></div>`).join('');
 
-  const dream=_animal==='cat'?ANIMALS.fox:ANIMALS.cat;
-  $('aim').innerHTML=`혹시 더 또렷한 <b>${dream.name}</b> 같은 인상을 원하세요?<br><span class="muted" style="font-size:13px">소니드가 얼굴 비대칭을 개선해 원하는 인상에 한 걸음 더 가까워지게 도와드려요.</span>`;
+  // ── 정밀분석 유도: 가장 두드러진 비대칭을 콕 집어 호기심 자극 ──
+  var asyms=[[cheekV.d,'광대 좌우 볼륨 차이'],[cheekW.d,'광대 좌우 너비 차이'],[earEx.d,'좌우 귀·두상 틀어짐'],[jawO.d,'턱선 좌우 차이'],[eyeAng*0.8,'눈높이 기울기'],[f.noseDx,'콧대 휘어짐']];
+  asyms.sort(function(a,b){return b[0]-a[0];});
+  var top=asyms[0], hasAsym=top[0]>=1.0;
+  var line1 = hasAsym ? ('🔍 당신 얼굴에서 <b>'+top[1]+'</b>가 보여요!') : ('🔍 좌우가 꽤 대칭이에요! 그래도 미세한 차이가 숨어있어요');
+  var line2 = _score<80 ? ('대칭 점수 <b>'+_score+'점</b> — 개선 여지가 있어요. ') : '';
+  $('aim').innerHTML=line1+'<br><span style="font-size:13px">'+line2+'<b>왜 이렇게 됐는지 · 어떻게 개선하는지</b>는 원장이 정리한 <b style="color:#fff">무료 정밀 리포트</b>에서 알려드려요 👇</span>';
+  updateScarcity();
   logEvent('result');
   go('s-result');
 }
@@ -486,9 +503,10 @@ $('saveCard').onclick=async()=>{
     const cw2=360,ch2=Math.round(cw2*img.height/img.width),fx=(W-cw2)/2,fy=118;
     g.save();roundRect(g,fx,fy,cw2,ch2,30);g.clip();
     g.drawImage(img,0,0,img.width,img.height,fx,fy,cw2,ch2);
-    g.font=Math.round(fc.fw*cw2*2.2)+'px serif';g.textAlign='center';g.textBaseline='middle';
-    g.fillText(a.emo,fx+fc.fx*cw2,fy+(fc.fy-fc.fh*0.42)*ch2);   // 정수리까지 덮게 위로
-    g.textBaseline='alphabetic';g.restore();
+    var mw=fc.fw*cw2*2.75, mx=fx+fc.fx*cw2, my=fy+(fc.fy-fc.fh*0.44)*ch2;
+    try{ var am=await imgFrom('animals/'+_animal+'.png'); g.drawImage(am,mx-mw/2,my-mw/2,mw,mw); }  // 동물탈 이미지
+    catch(_){ g.font=Math.round(fc.fw*cw2*2.2)+'px serif';g.textAlign='center';g.textBaseline='middle';g.fillText(a.emo,mx,my);g.textBaseline='alphabetic'; }
+    g.restore();
     g.strokeStyle='rgba(255,255,255,.22)';g.lineWidth=3;roundRect(g,fx,fy,cw2,ch2,30);g.stroke();
   }catch(e){ g.font='170px serif';g.textAlign='center';g.fillText(a.emo,W/2,330); }
   g.fillStyle='#fff';g.font='900 60px -apple-system,sans-serif';g.fillText('나는 '+a.name,W/2,640);
