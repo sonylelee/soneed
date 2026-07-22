@@ -77,10 +77,27 @@
   .pslot.filled{border-style:solid;border-color:var(--brand)}
   .pslot .cap{position:relative;z-index:1;background:rgba(0,0,0,.55);padding:3px 7px;border-radius:6px;color:#fff}
   .foot{text-align:center;color:var(--faint);font-size:12px;margin-top:26px}
+  .foot a{color:var(--faint);text-decoration:underline}
+  .team{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:12px}
+  .team img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:8px;background:#222}
+  .iglink{display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(90deg,#f58529,#dd2a7b,#8134af);color:#fff;border-radius:14px;padding:14px;font-weight:800;text-decoration:none;margin-top:14px}
+  /* 카메라 */
+  #camWrap{position:relative;background:#000;border-radius:16px;overflow:hidden;border:1px solid var(--line)}
+  #cam{width:100%;display:block;transform:scaleX(-1)}
+  .camGuide{position:absolute;inset:0;pointer-events:none;display:flex;align-items:center;justify-content:center}
+  .camGuide .oval{width:60%;aspect-ratio:3/4;border:3px dashed rgba(255,255,255,.9);border-radius:50%;box-shadow:0 0 0 2000px rgba(0,0,0,.38)}
+  .camHint{position:absolute;bottom:12px;left:0;right:0;text-align:center;color:#fff;font-weight:800;font-size:14px;text-shadow:0 1px 5px #000;pointer-events:none}
+  .camEar{position:absolute;top:12px;left:0;right:0;text-align:center;color:#ffd0e6;font-weight:800;font-size:14px;text-shadow:0 1px 5px #000;pointer-events:none}
+  /* 설문 */
+  .sq{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;border-top:1px solid var(--line);font-size:13.5px}
+  .sq:first-child{border-top:0}
+  .sqbtns{display:flex;gap:6px;flex:0 0 auto}
+  .sqbtns button{border:1px solid var(--line);background:var(--panel2);color:var(--muted);border-radius:8px;padding:7px 13px;font-weight:800;font-size:12px;cursor:pointer}
+  .sqbtns button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
 </style>
 </head>
 <body>
-<header><div class="logo"><b>SONEED</b> <span>얼굴상 & 밸런스 · v3</span></div></header>
+<header><div class="logo"><b>SONEED</b> <span>얼굴상 & 밸런스 · v5</span></div></header>
 <div class="wrap">
 
   <!-- STEP 1: 인트로 + 동의 -->
@@ -98,13 +115,20 @@
     <div class="disc">※ 기본 체험은 얼굴 이미지를 저장·전송하지 않고 브라우저 내에서 처리합니다. 결과는 참고용 미용 정보이며 의학적 진단·치료를 대체하지 않습니다.</div>
   </section>
 
-  <!-- STEP 2: 촬영 -->
+  <!-- STEP 2: 촬영(카메라) -->
   <section class="step" id="s-capture">
-    <h1>정면 셀카를 올려주세요</h1>
-    <p class="sub">정면을 보고, 앞머리로 이마·눈썹이 가리지 않게. 밝은 곳일수록 정확해요.</p>
-    <label class="file">
+    <h1>정면 얼굴을 촬영해주세요</h1>
+    <p class="sub">📢 <b style="color:#ffd0e6">양쪽 귀가 꼭 보이게</b> 정면을 바라봐 주세요. 앞머리로 이마·눈썹이 가리지 않게, 밝은 곳에서!</p>
+    <div id="camWrap">
+      <video id="cam" playsinline autoplay muted></video>
+      <div class="camEar">👂 양쪽 귀가 보이게</div>
+      <div class="camGuide"><div class="oval"></div></div>
+      <div class="camHint">이 안에 얼굴을 맞춰주세요</div>
+    </div>
+    <button class="btn primary" id="shutter" style="margin-top:12px">📸 지금 촬영</button>
+    <label class="file" id="fileFallback" style="display:none;margin-top:12px">
       <input type="file" id="photo" accept="image/*" capture="user">
-      <div class="drop" id="drop"><b>📸 사진 찍기 / 앨범에서 고르기</b><br><span class="muted">여기를 눌러주세요</span></div>
+      <div class="drop"><b>📸 카메라로 촬영하기</b><br><span class="muted">여기를 눌러주세요</span></div>
     </label>
     <button class="btn ghost" id="backIntro" style="margin-top:12px">← 뒤로</button>
   </section>
@@ -131,56 +155,67 @@
       <h3>얼굴 비대칭, 손으로 좋아지게</h3>
       <p>소니드는 <b style="color:#fff">30분 건식 밸런스 관리</b>예요. 정밀 분석 후 니트릴 장갑으로 적은 압을 가해 얼굴 좌우 균형을 부드럽게 다듬어요. 시술·주사 없이요.</p>
     </div>
+    <div class="brandbox" style="margin-top:14px">
+      <div class="k">SONEED TEAM</div>
+      <h3>얼굴분석의 대가, 이소니 원장과 전문가 팀</h3>
+      <p>소니드 전문가들이 직접 얼굴 비대칭을 봐드려요. 함께 밸런스를 찾아봐요!</p>
+      <div class="team">
+        <img src="team/1.jpg" loading="lazy" alt="소니드 전문가"><img src="team/2.jpg" loading="lazy" alt="소니드 전문가"><img src="team/3.jpg" loading="lazy" alt="소니드 전문가"><img src="team/4.jpg" loading="lazy" alt="소니드 전문가"><img src="team/5.jpg" loading="lazy" alt="소니드 전문가"><img src="team/6.jpg" loading="lazy" alt="소니드 전문가"><img src="team/7.jpg" loading="lazy" alt="소니드 전문가">
+      </div>
+      <a class="iglink" id="igLink" href="#" target="_blank" rel="noopener">📷 소니드 인스타그램 보러가기</a>
+    </div>
     <div class="aim" id="aim"></div>
 
-    <button class="btn primary" id="toAI" style="margin-top:16px">🔬 AI 정밀분석 받기 (무료)</button>
+    <button class="btn primary" id="toAI" style="margin-top:16px">🔬 정밀분석 받기 (무료)</button>
     <p class="muted" style="text-align:center;margin:8px 0 4px;font-size:12px">더 자세한 밸런스 해설 · 연락처 입력 후 진행</p>
     <div class="hr"></div>
     <h1 style="font-size:19px;margin:6px 0 12px">📍 예약할 지점을 골라주세요</h1>
     <a class="btn book" id="bookApgujeong" href="#" target="_blank" rel="noopener"><span class="loc">압구정점</span><span class="go">네이버 예약 →</span></a>
     <a class="btn book" id="bookDongtan" href="#" target="_blank" rel="noopener"><span class="loc">동탄본점</span><span class="go">네이버 예약 →</span></a>
     <button class="btn ghost" id="again" style="margin-top:16px">↺ 다시 체험하기</button>
-    <div class="foot">SONEED · 얼굴윤곽 밸런스</div>
+    <div class="foot"><a href="./privacy.html" target="_blank">개인정보처리방침</a> · SONEED 얼굴윤곽 밸런스</div>
   </section>
 
   <!-- STEP 5: AI 동의 + 연락처 + 3장 -->
   <section class="step" id="s-ai-consent">
-    <h1>AI <em>정밀분석</em> 받기</h1>
-    <p class="sub">사진 3장(정면·고개 든·고개 숙인)으로 소니드 AI가 정밀 분석하고, 예약 시 관리사가 미리 확인해 상담해드려요.</p>
+    <h1><em>정밀분석</em> 받기</h1>
+    <p class="sub">사진 3장(정면·고개 든·고개 숙인)으로 소니드가 정밀 분석하고, 예약 시 관리사가 미리 확인해 상담해드려요.</p>
     <div class="card">
       <input type="text" id="leadName" placeholder="이름">
       <input type="tel" id="leadPhone" placeholder="연락처 (예: 010-1234-5678)">
       <div style="margin-top:14px;font-weight:800;font-size:14px">정밀 분석용 사진 3장</div>
-      <div class="muted" style="font-size:12px;margin:4px 0 2px">정면은 이미 있어요. 고개 든/숙인 사진을 추가하면 훨씬 정확해요.</div>
+      <div class="muted" style="font-size:12px;margin:4px 0 2px">정면은 이미 있어요. 든/숙인 사진은 <b style="color:#ffd0e6">양쪽 귀가 보이게</b> 촬영해 추가하면 훨씬 정확해요.</div>
       <div class="pslots">
         <label class="pslot" data-slot="front"><span class="cap">정면</span><input type="file" accept="image/*" capture="user"></label>
         <label class="pslot" data-slot="up"><span class="cap">고개 든</span><input type="file" accept="image/*" capture="user"></label>
         <label class="pslot" data-slot="down"><span class="cap">고개 숙인</span><input type="file" accept="image/*" capture="user"></label>
       </div>
-      <label class="consent" style="margin-top:14px"><input type="checkbox" id="agree2"><span>정밀분석을 위해 <b style="color:#ffd0e6">내 얼굴 사진이 AI 분석 서버로 전송·처리</b>되고, 상담·관리 목적으로 <b style="color:#ffd0e6">소니드에 저장되어 담당 관리사에게 공유</b>되는 것과, 남긴 연락처로 결과·예약 안내 연락을 받는 것에 동의합니다.</span></label>
+      <div style="margin-top:16px;font-weight:800;font-size:14px">생활 습관 체크 <span class="muted" style="font-weight:600;font-size:12px">(선택 · 비대칭 원인 파악에 도움돼요)</span></div>
+      <div id="survey"></div>
+      <label class="consent" style="margin-top:14px"><input type="checkbox" id="agree2"><span>상담·관리 목적으로 <b style="color:#ffd0e6">내 얼굴 사진(생체정보)이 소니드에 저장되어 담당 관리사에게 공유</b>되는 것과, 남긴 연락처로 결과·예약 안내 연락을 받는 것에 동의합니다.</span></label>
       <button class="btn primary" id="runAI" disabled style="opacity:.5">동의하고 정밀분석 시작</button>
       <button class="btn ghost" id="backResult" style="margin-top:10px">← 뒤로</button>
     </div>
-    <div class="disc">※ 정밀분석은 얼굴 이미지(생체정보)를 AI 분석 서버로 전송하며, 상담·예약 및 관리사 사전확인 목적으로 소니드에 저장·공유됩니다. 연락처는 상담·예약 안내에만 사용됩니다. 동의 철회·삭제 요청은 소니드에 문의하실 수 있습니다.</div>
+    <div class="disc">※ 정밀분석 결과는 얼굴 이미지를 이용자 기기 내에서 분석해 제공합니다. 입력하신 사진·정보는 상담·예약 및 관리사 사전확인 목적으로 소니드에 저장·공유되며, 연락처는 상담·예약 안내에만 사용됩니다. 동의 철회·삭제 요청은 소니드에 문의하실 수 있습니다.</div>
   </section>
 
   <!-- STEP 6: AI 분석중 -->
   <section class="step" id="s-ai-loading">
-    <h1>AI가 정밀 분석 중…</h1>
-    <p class="sub" id="aiMsg">얼굴 밸런스를 꼼꼼히 보고 있어요. 최대 20초 정도 걸려요.</p>
+    <h1>정밀 분석 중…</h1>
+    <p class="sub" id="aiMsg">얼굴 밸런스를 꼼꼼히 보고 있어요. 잠시만요!</p>
     <div class="spinner"></div>
   </section>
 
   <!-- STEP 7: AI 결과 -->
   <section class="step" id="s-ai-result">
-    <h1>AI <em>정밀 밸런스</em> 리포트</h1>
+    <h1>소니드 <em>정밀 밸런스</em> 리포트</h1>
     <div class="card"><div class="aiout" id="aiText"></div></div>
     <div class="aim" style="margin-top:14px"><b>더 자세한 건 소니드에서 직접!</b><br><span class="muted" style="font-size:13px">손으로 확인하는 정밀 분석과 30분 밸런스 관리로 이어가세요.</span></div>
     <a class="btn book" id="bookApgujeong2" href="#" target="_blank" rel="noopener" style="margin-top:14px"><span class="loc">📍 압구정점</span><span class="go">네이버 예약 →</span></a>
     <a class="btn book" id="bookDongtan2" href="#" target="_blank" rel="noopener"><span class="loc">📍 동탄본점</span><span class="go">네이버 예약 →</span></a>
     <button class="btn ghost" id="again2" style="margin-top:16px">↺ 처음으로</button>
     <div class="disc">본 AI 결과는 참고용 미용 정보이며 의학적 진단·치료가 아닙니다.</div>
-    <div class="foot">SONEED · 얼굴윤곽 밸런스</div>
+    <div class="foot"><a href="./privacy.html" target="_blank">개인정보처리방침</a> · SONEED 얼굴윤곽 밸런스</div>
   </section>
 
 </div>
@@ -191,6 +226,7 @@ const RELAY="https://soneed-relay.soni0025.workers.dev";
 const SB_URL="https://xzclowgorxhcbsfrrbop.supabase.co";
 const SB_KEY="sb_publishable_66Ts2AQrKrjfitjTi11uCQ_dGXiY_EZ";
 const HAIKU="claude-haiku-4-5-20251001";
+const INSTA="https://www.instagram.com/soneed_face";
 const NAVER={
   apgujeong:"https://map.naver.com/p/entry/place/2078742264?placePath=%2Fticket%3Fentry%3Dpll%26from%3Dnx%26fromNxList%3Dtrue%26from%3Dmap%26fromPanelNum%3D1%26additionalHeight%3D76%26timestamp%3D202607212234%26locale%3Dko%26svcName%3Dmap_pcv5&placeSearchOption=entry%3Dpll%26fromNxList%3Dtrue&searchType=place&c=15.00,0,0,0,dh",
   dongtan:"https://map.naver.com/p/entry/place/1531652767?placePath=%2Fticket%3Fentry%3Dpll%26from%3Dnx%26fromNxList%3Dtrue%26from%3Dmap%26fromPanelNum%3D1%26additionalHeight%3D76%26timestamp%3D202607212234%26locale%3Dko%26svcName%3Dmap_pcv5&placeSearchOption=entry%3Dpll%26fromNxList%3Dtrue&searchType=place&c=15.00,0,0,0,dh"
@@ -203,6 +239,7 @@ const ANIMALS={
   deer:  {emo:'🦌',name:'사슴상', tr:'청순하고 맑은 매력. 크고 선한 눈매가 돋보여요.'},
   bear:  {emo:'🐻',name:'곰상',   tr:'듬직하고 포근한 매력. 부드러운 윤곽이 편안해요.'}
 };
+var _ig=document.getElementById('igLink'); if(_ig)_ig.href=INSTA;
 document.getElementById('bookApgujeong').href=NAVER.apgujeong;
 document.getElementById('bookDongtan').href=NAVER.dongtan;
 document.getElementById('bookApgujeong2').href=NAVER.apgujeong;
@@ -210,19 +247,63 @@ document.getElementById('bookDongtan2').href=NAVER.dongtan;
 
 const $=id=>document.getElementById(id);
 function go(id){document.querySelectorAll('.step').forEach(s=>s.classList.remove('on'));$(id).classList.add('on');window.scrollTo(0,0);}
+/* 익명 사용 통계(개인정보 없음): 방문자ID(로컬) + 이벤트 종류 */
+const VISITOR=(()=>{try{let v=localStorage.getItem('sn_vid');if(!v){v=Math.random().toString(36).slice(2)+Date.now().toString(36);localStorage.setItem('sn_vid',v);}return v;}catch(e){return 'anon';}})();
+function logEvent(type){try{fetch(SB_URL+'/rest/v1/events',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify({type:type,visitor:VISITOR})});}catch(e){}}
+logEvent('visit');
 
-let _src=null,_P=null,_animal='cat',_score=0,_photos={};
+let _src=null,_P=null,_animal='cat',_score=0,_photos={},_survey={},_stream=null;
 
 /* 동의 → 시작 */
 $('agree').addEventListener('change',e=>{const b=$('startBtn');b.disabled=!e.target.checked;b.style.opacity=e.target.checked?1:.5;});
-$('startBtn').onclick=()=>go('s-capture');
-$('backIntro').onclick=()=>go('s-intro');
+$('startBtn').onclick=()=>{ go('s-capture'); openCamera(); };
+$('backIntro').onclick=()=>{ stopCamera(); go('s-intro'); };
 $('again').onclick=()=>reset();
 $('again2').onclick=()=>reset();
 $('toAI').onclick=()=>{ if(_src&&!_photos.front){ _photos.front=_src.toDataURL('image/jpeg',0.85); setSlot('front',_photos.front); } go('s-ai-consent'); };
 $('backResult').onclick=()=>go('s-result');
 $('agree2').addEventListener('change',e=>{const b=$('runAI');b.disabled=!e.target.checked;b.style.opacity=e.target.checked?1:.5;});
-function reset(){$('photo').value='';$('agree').checked=false;$('startBtn').disabled=true;$('startBtn').style.opacity=.5;$('agree2').checked=false;$('runAI').disabled=true;$('runAI').style.opacity=.5;_photos={};document.querySelectorAll('.pslot').forEach(function(s){s.classList.remove('filled');var im=s.querySelector('img');if(im)im.remove();var i=s.querySelector('input');if(i)i.value='';});go('s-intro');}
+function reset(){stopCamera();$('agree').checked=false;$('startBtn').disabled=true;$('startBtn').style.opacity=.5;$('agree2').checked=false;$('runAI').disabled=true;$('runAI').style.opacity=.5;_photos={};_survey={};renderSurvey();document.querySelectorAll('.pslot').forEach(function(s){s.classList.remove('filled');var im=s.querySelector('img');if(im)im.remove();var i=s.querySelector('input');if(i)i.value='';});go('s-intro');}
+
+/* ── 카메라(전면·얼굴 가이드) ── */
+async function openCamera(){
+  try{
+    stopCamera();
+    _stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1080},height:{ideal:1440}},audio:false});
+    var v=$('cam'); v.srcObject=_stream; await v.play();
+    $('camWrap').style.display=''; $('shutter').style.display=''; $('fileFallback').style.display='none';
+  }catch(e){
+    $('camWrap').style.display='none'; $('shutter').style.display='none'; $('fileFallback').style.display='';
+  }
+}
+function stopCamera(){ if(_stream){ try{_stream.getTracks().forEach(t=>t.stop());}catch(e){} _stream=null; } }
+$('shutter').onclick=()=>{
+  var v=$('cam'); if(!v.videoWidth){ return; }
+  var mw=Math.min(1,720/Math.max(v.videoWidth,v.videoHeight));
+  var c=document.createElement('canvas'); c.width=Math.round(v.videoWidth*mw); c.height=Math.round(v.videoHeight*mw);
+  var g=c.getContext('2d'); g.translate(c.width,0); g.scale(-1,1); g.drawImage(v,0,0,c.width,c.height);  // 미러(셀카 느낌 = 화면과 일치)
+  stopCamera(); analyzeCanvas(c);
+};
+
+/* ── 설문 ── */
+const SURVEY=[
+  ['photo_side','주로 한 쪽으로만(같은 방향) 사진을 찍나요?'],
+  ['chew','한 쪽으로 씹는 습관이 있나요?'],
+  ['sleep_side','한 쪽으로 자는 습관이 있나요?'],
+  ['chin_rest','턱을 괴는 습관이 있나요?'],
+  ['prone','엎드려 자는 습관이 있나요?'],
+  ['jaw_sound','턱에서 소리가 난 적이 있나요?']
+];
+function renderSurvey(){ var box=$('survey'); if(!box)return;
+  box.innerHTML=SURVEY.map(function(q){var v=_survey[q[0]];
+    return '<div class="sq"><div>'+q[1]+'</div><div class="sqbtns" data-k="'+q[0]+'">'
+      +'<button data-v="1" class="'+(v===true?'on':'')+'">예</button>'
+      +'<button data-v="0" class="'+(v===false?'on':'')+'">아니오</button></div></div>';
+  }).join('');
+  box.querySelectorAll('.sqbtns button').forEach(function(b){ b.onclick=function(){ var k=b.parentNode.getAttribute('data-k'); _survey[k]=(b.getAttribute('data-v')==='1'); renderSurvey(); }; });
+}
+renderSurvey();
+function surveyText(){ return SURVEY.filter(function(q){return q[0] in _survey;}).map(function(q){return q[1]+' → '+(_survey[q[0]]?'예':'아니오');}).join('\n'); }
 /* 사진 슬롯(정면/든/숙인) */
 function setSlot(slot,dataUrl){var el=document.querySelector('.pslot[data-slot="'+slot+'"]');if(!el)return;el.classList.add('filled');var im=el.querySelector('img');if(!im){im=document.createElement('img');el.appendChild(im);}im.src=dataUrl;}
 document.querySelectorAll('.pslot input').forEach(function(inp){
@@ -245,17 +326,23 @@ async function getLandmarker(){
 const imgFrom=src=>new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=src;});
 const D=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 
+async function analyzeCanvas(c){
+  go('s-loading');
+  try{
+    const lm=await getLandmarker(); const out=lm.detect(c);
+    if(!out.faceLandmarks||!out.faceLandmarks.length){ $('loadMsg').textContent='얼굴을 못 찾았어요. 정면·밝은 곳에서 다시 찍어주세요.'; setTimeout(()=>{go('s-capture');openCamera();},1600); return; }
+    _src=c; _P=out.faceLandmarks[0].map(p=>({x:p.x*c.width,y:p.y*c.height})); _photos.front=c.toDataURL('image/jpeg',0.85);
+    result();
+  }catch(err){ $('loadMsg').textContent='오류가 났어요. 다시 시도해주세요.'; setTimeout(()=>{go('s-capture');openCamera();},1600); }
+}
 $('photo').onchange=async e=>{
-  const f=e.target.files[0]; if(!f)return; go('s-loading');
+  const f=e.target.files[0]; if(!f)return;
   try{
     const url=URL.createObjectURL(f); const img=await imgFrom(url);
     const sc=Math.min(1,720/Math.max(img.width,img.height));
     const c=document.createElement('canvas'); c.width=Math.round(img.width*sc); c.height=Math.round(img.height*sc);
-    c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-    const lm=await getLandmarker(); const out=lm.detect(c); URL.revokeObjectURL(url);
-    if(!out.faceLandmarks||!out.faceLandmarks.length){ $('loadMsg').textContent='얼굴을 못 찾았어요. 정면·밝은 곳에서 다시 찍어주세요.'; setTimeout(()=>go('s-capture'),1600); return; }
-    _src=c; _P=out.faceLandmarks[0].map(p=>({x:p.x*c.width,y:p.y*c.height}));
-    result();
+    c.getContext('2d').drawImage(img,0,0,c.width,c.height); URL.revokeObjectURL(url);
+    analyzeCanvas(c);
   }catch(err){ $('loadMsg').textContent='오류가 났어요. 다시 시도해주세요.'; setTimeout(()=>go('s-capture'),1600); }
 };
 
@@ -320,6 +407,7 @@ function result(){
   drawViz(P,_src,{eyeAng,earAng});
   const dream=_animal==='cat'?ANIMALS.fox:ANIMALS.cat;
   $('aim').innerHTML=`혹시 더 또렷한 <b>${dream.name}</b> 같은 인상을 원하세요?<br><span class="muted" style="font-size:13px">소니드가 얼굴 밸런스를 다듬어 원하는 인상에 한 걸음 더 가까워지게 도와드려요.</span>`;
+  logEvent('result');
   go('s-result');
 }
 let _viz=null;
@@ -368,41 +456,45 @@ $('saveCard').onclick=async()=>{
 };
 function wrap(g,text,x,y,maxw,lh){const words=text.split(' ');let line='',yy=y;for(const w of words){const t=line+w+' ';if(g.measureText(t).width>maxw&&line){g.fillText(line,x,yy);line=w+' ';yy+=lh;}else line=t;}g.fillText(line,x,yy);}
 
-/* AI 정밀분석 (3장) → 친근 리포트 + 리드 저장(사진+요약) */
+/* 소니드 전문 정밀 리포트 — 측정값 → 대표 확정 전문 코멘트(규칙 기반, 일관·무비용) */
+function preciseReport(){
+  const P=_P; if(!P) return '';
+  const A=P[10],B=P[152],dxm=B.x-A.x,dym=B.y-A.y,mlen=Math.hypot(dxm,dym)||1,faceH=D(P[10],P[152]),faceW=D(P[234],P[454]);
+  const perp=p=>((p.x-A.x)*dym-(p.y-A.y)*dxm)/mlen;
+  const pairD=(li,ri)=>Math.abs(Math.abs(perp(P[li]))-Math.abs(perp(P[ri])))/faceH*100;
+  const earEx=pairD(127,356);                                   // 귀 노출 좌우차
+  const cheekW=pairD(234,454);                                  // 광대 너비 좌우차
+  const noseDx=Math.abs((P[1].x-(P[133].x+P[362].x)/2)/faceW*100); // 콧대 치우침(코 회전)
+  const eyeLip=Math.abs(D(P[33],P[61])-D(P[263],P[291]))/faceH*100; // 눈~입꼬리 거리 좌우차(볼륨)
+  const T=1.3, out=[];
+  out.push('🩷 소니드 정밀 밸런스 리포트\n얼굴은 누구나 좌우가 조금씩 달라요. 아래는 참고용 미용 관점 분석이에요.');
+  if(earEx>=T) out.push('👂 두상 틀어짐\n두상 자체에서 틀어짐이 있으시네요~ 두상축과 얼굴 축이 잘 맞았을 때 그제야 가장 예쁜 얼굴이 드러난답니다. 머리를 압박하거나 옆으로 누워 머리를 괴는 동작을 주의하세요!');
+  if(cheekW>=T) out.push('↔️ 안면 쏠림\n얼굴 안면이 한쪽으로 쏠려 있어요. 안면의 중심축이 이동되어 코의 휘어짐을 만들 수 있습니다.');
+  if(eyeLip>=T) out.push('🎈 볼륨 차이\n양쪽 얼굴의 볼륨 차이가 있어요. 이럴 경우 한쪽 얼굴은 보다 더 입체적이고 한쪽은 더 납작하게 느껴질 수 있어요. 얼굴 볼륨 개선이 필요해 보여요. 혹시 한쪽 얼굴이 압박받는 평소 습관이 없는지 확인해 주시고, 하지 말아주세요!');
+  if(noseDx>=T) out.push('👃 코 회전\n코가 휘었다고 느껴지시나요? 코의 휘어짐도 있지만 광대의 좌우 볼륨 차이가 코가 회전되게 했어요. 코 구멍의 크기나 모양도 달라요. 볼륨부터 개선해야 합니다!');
+  if(out.length===1) out.push('✨ 전반적으로 좌우 밸런스가 좋은 편이에요! 지금의 균형을 유지하도록 한쪽으로 눕거나 턱 괴는 습관만 주의해 주세요.');
+  const yes=SURVEY.filter(q=>_survey[q[0]]===true);
+  if(yes.length) out.push('📝 남겨주신 습관 체크\n'+yes.map(q=>'· '+q[1].replace('있나요?','있음').replace('찍나요?','찍음')).join('\n')+'\n이런 습관들이 좌우 밸런스에 영향을 줄 수 있으니 관리와 함께 살펴봐요.');
+  out.push('———\n소니드의 30분 밸런스 관리로 좌우 균형을 부드럽게 다듬어볼 수 있어요. 정확한 분석은 관리사가 직접 봐드립니다 💗');
+  return out.join('\n\n');
+}
+/* 정밀분석 (3장) → 소니드 전문 리포트 + 리드 저장(사진+리포트+설문) */
 $('runAI').onclick=async()=>{
   const name=($('leadName').value||'').trim(), phone=($('leadPhone').value||'').trim();
   if(!name||!phone){alert('이름과 연락처를 입력해주세요');return;}
   if(!_photos.front){alert('정면 사진이 필요해요');return;}
   go('s-ai-loading');
-  // 저장용 사진(640/0.6) — 관리사 사전확인용
   const store={};
   for(const k of ['front','up','down']) if(_photos[k]) store[k]=await imgResize(_photos[k],640,0.6);
-  // 친근 AI (가진 사진 모두)
-  let summary='';
-  try{
-    const content=[];
-    for(const k of ['front','up','down']) if(_photos[k]){ const b64=(await imgResize(_photos[k],560,0.6)).split(',')[1]; content.push({type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}}); }
-    const f=feats(_P);
-    const meas=`측정 참고: 얼굴상=${ANIMALS[_animal].name}, 밸런스점수=${_score}, 눈기울기=${f.tilt.toFixed(1)}도`;
-    content.push({type:'text',text:`당신은 소니드(SONEED)의 얼굴 밸런스 안내 도우미입니다. 위 사진(정면·고개 든·고개 숙인 중 제공된 것)과 측정 참고값을 보고, 일반 고객에게 친근하고 긍정적으로 얼굴 좌우 밸런스를 4가지 정도 짚어주세요.
-- 말투: "~해 보여요", "~한 편이에요" 처럼 부드럽고 따뜻하게. 단정·과장 금지.
-- 의학적 진단/치료/질병 표현 금지(미용·인상 관점만).
-- 각 항목 한두 문장, 장점도 함께. 마지막에 "소니드의 30분 밸런스 관리로 좌우 균형을 부드럽게 다듬어볼 수 있어요" 한 줄.
-${meas}
-JSON·코드블록 없이 읽기 좋은 문단으로만.`});
-    const resp=await fetch(RELAY,{method:'POST',headers:{'Content-Type':'application/json','x-app':'self-b2c'},
-      body:JSON.stringify({model:HAIKU,max_tokens:700,messages:[{role:'user',content}]})});
-    const raw=await resp.text(); let data={}; try{ data=JSON.parse(raw); }catch(pe){}
-    if(resp.ok && !(data&&data.error)){ summary=(data.content||[]).filter(x=>x.type==='text').map(x=>x.text).join('\n').trim(); }
-  }catch(e){ summary=''; }
-  // 리드 저장(사진+요약) — AI 실패해도 반드시 저장(예약 리드 확보)
-  await saveLead(name,phone,store,summary);
-  $('aiText').textContent = summary || '분석 신청이 접수됐어요! 담당 관리사가 사진을 확인하고 연락드릴게요. 아래에서 예약도 바로 하실 수 있어요.';
+  const summary=preciseReport();
+  await saveLead(name,phone,store,summary,surveyText());  // 사진·리포트·설문 저장(관리사 사전확인)
+  logEvent('ai');
+  $('aiText').textContent=summary;
   go('s-ai-result');
 };
-async function saveLead(name,phone,photos,summary){
+async function saveLead(name,phone,photos,summary,survey){
   try{
-    const body={name:name,phone:phone,animal:ANIMALS[_animal].name,score:_score,ai_summary:summary||''};
+    const body={name:name,phone:phone,animal:ANIMALS[_animal].name,score:_score,ai_summary:summary||'',survey:survey||''};
     if(photos){ if(photos.front)body.photo_front=photos.front; if(photos.up)body.photo_up=photos.up; if(photos.down)body.photo_down=photos.down; }
     await fetch(SB_URL+'/rest/v1/leads',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(body)});
   }catch(e){}
