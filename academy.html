@@ -16,7 +16,8 @@
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
 body{font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Segoe UI",Roboto,sans-serif;
-  color:var(--ink);background:#fbfcff;line-height:1.6;-webkit-font-smoothing:antialiased}
+  color:var(--ink);background:#fbfcff;line-height:1.6;-webkit-font-smoothing:antialiased;
+  word-break:keep-all;overflow-wrap:break-word}
 .wrap{max-width:1080px;margin:0 auto;padding:0 22px}
 a{color:inherit;text-decoration:none}
 .kicker{font-size:13px;font-weight:800;letter-spacing:.08em;color:var(--indigo);text-transform:uppercase}
@@ -79,8 +80,8 @@ nav .wrap{display:flex;align-items:center;justify-content:space-between;height:6
 .levels{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:34px}
 .lv{border-radius:18px;padding:26px 22px;color:#fff;position:relative;overflow:hidden}
 .lv.l1{background:linear-gradient(140deg,#3a4b9f,#5566b8)}
-.lv.l2{background:linear-gradient(140deg,#4e6fa8,#6d8ac2)}
-.lv.l3{background:linear-gradient(140deg,#6a5aa0,#8676bd)}
+.lv.l2{background:linear-gradient(140deg,#0e9aa4,#37b3b7)}
+.lv.l3{background:linear-gradient(140deg,#7b4fa0,#9d70c2)}
 .lv .lvno{font-size:13px;font-weight:800;opacity:.85;letter-spacing:.08em}
 .lv h3{font-size:22px;font-weight:800;margin:6px 0 10px}
 .lv p{font-size:14px;color:rgba(255,255,255,.9)}
@@ -92,7 +93,7 @@ table.cur th{background:var(--navy);color:#fff;font-weight:700;padding:13px 14px
 table.cur td{padding:13px 14px;border-top:1px solid var(--line);vertical-align:top}
 table.cur tr:nth-child(even) td{background:var(--mist)}
 .lvchip{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:800;color:#fff}
-.c1{background:#3a4b9f}.c2{background:#4e6fa8}.c3{background:#6a5aa0}
+.c1{background:#3a4b9f}.c2{background:#0e9aa4}.c3{background:#7b4fa0}
 .tblwrap{overflow-x:auto}
 
 /* instructor */
@@ -191,7 +192,7 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px}
       <div class="fact"><div class="l">기간</div><div class="v">레벨당 4주</div></div>
       <div class="fact"><div class="l">일정</div><div class="v">일요일 10–14시</div></div>
       <div class="fact"><div class="l">장소</div><div class="v">동탄 본점</div></div>
-      <div class="fact"><div class="l">수강료</div><div class="v">레벨당 490만원</div></div>
+      <div class="fact"><div class="l">수강료</div><div class="v">각 레벨 490만원</div></div>
     </div>
     <div class="cta">
       <a href="#apply" class="btn btn-primary">상담 신청하기</a>
@@ -315,9 +316,9 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px}
     <h2 class="sec">수강 안내</h2>
     <p class="sub">프리미엄 소수 정예로 운영됩니다.</p>
     <div class="pricebox">
-      <div style="color:var(--soft);font-weight:700;font-size:14px">레벨당 (각 4주 과정)</div>
+      <div style="color:var(--soft);font-weight:700;font-size:14px">레벨별 수강료 · 각 4주 과정</div>
       <div class="p">490<span style="font-size:22px;font-weight:700">만원</span></div>
-      <div class="note">Level 1 · 2 · 3 — 각 레벨 4주 · 매주 일요일 10:00–14:00 · 동탄 본점</div>
+      <div class="note">Level 1 · 2 · 3 — 레벨별 등록 · 매주 일요일 10:00–14:00 · 동탄 본점</div>
       <div class="benefits">
         <span>소니드 인증서</span><span>실습 키트</span><span>디지털 분석 도구</span>
         <span>재수강 혜택</span><span>수료생 커뮤니티</span><span>실무·창업 연계</span>
