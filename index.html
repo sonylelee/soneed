@@ -840,9 +840,9 @@ function parseExifDate(dv){if(dv.byteLength<4||dv.getUint16(0)!==0xFFD8)return n
 function parseExifIFD(dv,base){const little=dv.getUint16(base)===0x4949;const g16=o=>dv.getUint16(base+o,little),g32=o=>dv.getUint32(base+o,little);const getStr=(o,c)=>{let s='';for(let i=0;i<c;i++){const ch=dv.getUint8(base+o+i);if(ch===0)break;s+=String.fromCharCode(ch);}return s;};function scan(ifd,want){const n=g16(ifd);let ptr=null,val=null;for(let i=0;i<n;i++){const e=ifd+2+i*12;const tag=g16(e);if(tag===want)val=getStr(g32(e+8),g32(e+4));if(tag===0x8769)ptr=g32(e+8);}return{ptr,val};}const r0=scan(g32(4),0x0132);let dt=null;if(r0.ptr)dt=scan(r0.ptr,0x9003).val;if(!dt)dt=r0.val;const m=dt&&dt.match(/^(\d{4}):(\d{2}):(\d{2})/);return m?(m[1]+'-'+m[2]+'-'+m[3]):null;}
 function applyExifDate(file){readExifDate(file,d=>{if(d&&!form.date){form.date=d;const el=document.getElementById('f_date');if(el)el.value=d;}});}
 function onMulti(e,kind){const files=Array.from(e.target.files||[]).slice(0,3);e.target.value='';if(!files.length)return;
-  if(kind==='main'){PHOTO_SLOTS.forEach(([s],i)=>{if(files[i])resizeToDataURL(files[i],640,0.6,d=>{form['photo_'+s]=d;setPhotoPreview(s);});});applyExifDate(files[0]);}
+  if(kind==='main'){PHOTO_SLOTS.forEach(([s],i)=>{if(files[i])resizeToDataURL(files[i],1080,0.8,d=>{form['photo_'+s]=d;setPhotoPreview(s);});});applyExifDate(files[0]);}
   else{const after={id:newId(),session:'',date:todayStr()};if(!Array.isArray(form.afters))form.afters=[];form.afters.push(after);
-    PHOTO_SLOTS.forEach(([s],i)=>{if(files[i])resizeToDataURL(files[i],640,0.6,d=>{after['photo_'+s]=d;renderAfters();});});
+    PHOTO_SLOTS.forEach(([s],i)=>{if(files[i])resizeToDataURL(files[i],1080,0.8,d=>{after['photo_'+s]=d;renderAfters();});});
     readExifDate(files[0],d=>{if(d)after.date=d;renderAfters();});renderAfters();}}
 function afterField(i,a){const opts='<option value="">회차</option>'+Array.from({length:40},(_,n)=>'<option '+(a.session===(n+1)+'회'?'selected':'')+'>'+(n+1)+'회</option>').join('');
   const thumbs=PHOTO_SLOTS.map(([s,ko])=>{const src=a['photo_'+s];return '<div class="pslot"><div class="photo-drop" style="aspect-ratio:3/4">'+(src?'<img src="'+src+'">':'<div class="ph">'+ko+'</div>')+'</div><label>'+ko+'</label></div>';}).join('');
@@ -886,7 +886,7 @@ async function makeAfterImage(){
 }
 function renderAfters(){const box=document.getElementById('afters');if(!box)return;if(Array.isArray(form.afters))form.afters.sort((a,b)=>(a.date||'9999-99').localeCompare(b.date||'9999-99'));const arr=Array.isArray(form.afters)?form.afters:[];box.innerHTML=arr.map((a,i)=>afterField(i,a)).join('');}
 
-function onPhoto(s,e){const f=e.target.files[0];if(!f)return;resizeToDataURL(f,640,0.6,d=>{form['photo_'+s]=d;setPhotoPreview(s);});applyExifDate(f);}
+function onPhoto(s,e){const f=e.target.files[0];if(!f)return;resizeToDataURL(f,1080,0.8,d=>{form['photo_'+s]=d;setPhotoPreview(s);});applyExifDate(f);}
 function setPhotoPreview(s){const el=document.getElementById('drop_'+s);const src=form['photo_'+s];const ko=PHOTO_SLOTS.find(x=>x[0]===s)[1];el.innerHTML=src?`<img src="${src}">`:`<div class="ph">${ko}<br><small>클릭</small></div>`;renderStickyThumbs();}
 /* 스티키 사진 썸네일 — 아래 항목 체크할 때도 위 사진이 따라 내려와 보이게 */
 let _cropCache={};
