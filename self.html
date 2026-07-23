@@ -154,7 +154,7 @@
     <div class="aim" id="aim"></div>
 
     <div id="scarcity" style="text-align:center;margin:14px 0 6px;font-weight:800;color:#ffd0e6;font-size:13.5px"></div>
-    <button class="btn primary" id="toAI" style="margin-top:2px;font-size:17px;padding:18px;box-shadow:0 8px 28px rgba(200,29,116,.5)">🔍 AI 상세분석 받기 (무료 · 개선법까지)</button>
+    <button class="btn primary" id="toAI" style="margin-top:2px;font-size:17px;padding:18px;box-shadow:0 8px 28px rgba(200,29,116,.5)">🔍 내 얼굴 상세히 뜯어보기 (무료)</button>
     <p class="muted" style="text-align:center;margin:8px 0 4px;font-size:12px">30초 · 왜 그런지·어떻게 개선하는지 알려드려요 · 연락처 없이 바로</p>
     <a class="iglink" href="#" target="_blank" rel="noopener">📷 소니드 인스타그램 보러가기</a>
     <div class="hr"></div>
@@ -164,15 +164,14 @@
 
   <!-- STEP 5: 상세분석 동의 (연락처 없이) -->
   <section class="step" id="s-ai-consent">
-    <h1><em>AI 상세분석</em> 받기</h1>
+    <h1><em>내 얼굴</em> 상세히 뜯어보기</h1>
     <p class="sub">사진을 바탕으로 좌우 비대칭을 더 자세히 분석해, <b style="color:#ffd0e6">왜 그런지·어떻게 개선하는지</b>까지 알려드려요. 무료이고, 연락처는 필요 없어요.</p>
     <div class="card">
       <div style="font-weight:800;font-size:14px">더 정확하게 (선택)</div>
-      <div class="muted" style="font-size:12px;margin:4px 0 2px">고개 든/숙인 사진을 <b style="color:#ffd0e6">양쪽 귀가 보이게</b> 추가하면 더 정확해요. (없어도 분석돼요)</div>
+      <div class="muted" style="font-size:12px;margin:4px 0 2px">고개 든 사진을 <b style="color:#ffd0e6">양쪽 귀가 보이게</b> 추가하면 더 정확해요. (없어도 분석돼요)</div>
       <div class="pslots">
         <label class="pslot" data-slot="front"><span class="cap">정면</span><input type="file" accept="image/*" capture="user"></label>
         <label class="pslot" data-slot="up"><span class="cap">고개 든</span><input type="file" accept="image/*" capture="user"></label>
-        <label class="pslot" data-slot="down"><span class="cap">고개 숙인</span><input type="file" accept="image/*" capture="user"></label>
       </div>
       <div style="margin-top:16px;font-weight:800;font-size:14px">생활 습관 체크 <span class="muted" style="font-weight:600;font-size:12px">(선택 · 원인 파악에 도움돼요)</span></div>
       <div id="survey"></div>
@@ -195,10 +194,10 @@
     <h1>소니드 <em>정밀 비대칭</em> 리포트</h1>
     <div class="card" style="margin-bottom:12px"><canvas id="cv"></canvas><div class="muted" style="text-align:center;margin-top:8px;font-size:12px">얼굴 비대칭 분석선 · 각도와 좌우 차이</div></div>
     <div class="card"><div class="aiout" id="aiText"></div></div>
-    <div class="aim" style="margin-top:14px"><b>결과가 도움이 되셨나요?</b><br><span class="muted" style="font-size:13px">담당 관리사가 직접 결과를 봐드려요. 아래에 연락처를 남겨주세요.</span></div>
+    <div class="aim" style="margin-top:14px"><b>여기까지가 무료 상세분석이에요 🙌</b><br><span class="muted" style="font-size:13px">좀 더 자세한 상담(원장 직접 촉진·30분 관리)이 궁금하다면 아래에 남겨주세요.</span></div>
     <div class="card" id="leadBox" style="margin-top:12px">
-      <div style="font-weight:800;font-size:15px;margin-bottom:2px">결과 저장하고 무료 상담받기</div>
-      <div class="muted" style="font-size:12px;margin-bottom:8px">담당 관리사가 결과를 미리 확인하고 연락드려요.</div>
+      <div style="font-weight:800;font-size:15px;margin-bottom:2px">좀 더 자세한 상담을 원한다면?</div>
+      <div class="muted" style="font-size:12px;margin-bottom:8px">이름·연락처를 남기면 담당 관리사가 결과를 미리 확인하고 연락드려요. (선택)</div>
       <input type="text" id="leadName" placeholder="이름">
       <input type="tel" id="leadPhone" placeholder="연락처 (예: 010-1234-5678)">
       <label class="consent" style="margin-top:12px"><input type="checkbox" id="agree3"><span>(필수) 내 얼굴 사진·분석 결과·연락처가 <b style="color:#ffd0e6">소니드에 저장되어 담당 관리사에게 공유</b>되고, 남긴 연락처로 상담 연락을 받는 것에 동의합니다.</span></label>
@@ -564,7 +563,7 @@ $('runAI').onclick=async()=>{
   if(!_photos.front){alert('정면 사진이 필요해요');return;}
   go('s-ai-loading');
   const store={};
-  for(const k of ['front','up','down']) if(_photos[k]) store[k]=await imgResize(_photos[k],640,0.6);
+  for(const k of ['front','up']) if(_photos[k]) store[k]=await imgResize(_photos[k],640,0.6);
   const summary=preciseReport();
   _pending={store:store, summary:summary, survey:surveyText()};   // 연락처 남길 때 저장
   logEvent('ai');
