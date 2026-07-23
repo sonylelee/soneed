@@ -154,39 +154,33 @@
     <div class="aim" id="aim"></div>
 
     <div id="scarcity" style="text-align:center;margin:14px 0 6px;font-weight:800;color:#ffd0e6;font-size:13.5px"></div>
-    <button class="btn primary" id="toAI" style="margin-top:2px;font-size:17px;padding:18px;box-shadow:0 8px 28px rgba(200,29,116,.5)">🎁 무료 정밀 리포트 받기 (원장 직접)</button>
-    <p class="muted" style="text-align:center;margin:8px 0 4px;font-size:12px">30초 · 개선법까지 알려드려요 · 지금만 무료</p>
+    <button class="btn primary" id="toAI" style="margin-top:2px;font-size:17px;padding:18px;box-shadow:0 8px 28px rgba(200,29,116,.5)">🔍 AI 상세분석 받기 (무료 · 개선법까지)</button>
+    <p class="muted" style="text-align:center;margin:8px 0 4px;font-size:12px">30초 · 왜 그런지·어떻게 개선하는지 알려드려요 · 연락처 없이 바로</p>
     <a class="iglink" href="#" target="_blank" rel="noopener">📷 소니드 인스타그램 보러가기</a>
     <div class="hr"></div>
-    <h1 style="font-size:19px;margin:6px 0 12px">📍 예약할 지점을 골라주세요</h1>
-    <a class="btn book" id="bookApgujeong" href="#" target="_blank" rel="noopener"><span class="loc">압구정점</span><span class="go">네이버 예약 →</span></a>
-    <a class="btn book" id="bookDongtan" href="#" target="_blank" rel="noopener"><span class="loc">동탄본점</span><span class="go">네이버 예약 →</span></a>
-    <button class="btn ghost" id="again" style="margin-top:16px">↺ 다시 체험하기</button>
+    <button class="btn ghost" id="again" style="margin-top:4px">↺ 다시 체험하기</button>
     <div class="foot"><a href="./privacy.html" target="_blank">개인정보처리방침</a> · SONEED 얼굴윤곽 비대칭</div>
   </section>
 
-  <!-- STEP 5: AI 동의 + 연락처 + 3장 -->
+  <!-- STEP 5: 상세분석 동의 (연락처 없이) -->
   <section class="step" id="s-ai-consent">
-    <h1><em>정밀분석</em> 받기</h1>
-    <p class="sub">사진 3장(정면·고개 든·고개 숙인)으로 소니드가 정밀 분석하고, 예약 시 관리사가 미리 확인해 상담해드려요.</p>
+    <h1><em>AI 상세분석</em> 받기</h1>
+    <p class="sub">사진을 바탕으로 좌우 비대칭을 더 자세히 분석해, <b style="color:#ffd0e6">왜 그런지·어떻게 개선하는지</b>까지 알려드려요. 무료이고, 연락처는 필요 없어요.</p>
     <div class="card">
-      <input type="text" id="leadName" placeholder="이름">
-      <input type="tel" id="leadPhone" placeholder="연락처 (예: 010-1234-5678)">
-      <div style="margin-top:14px;font-weight:800;font-size:14px">정밀 분석용 사진 3장</div>
-      <div class="muted" style="font-size:12px;margin:4px 0 2px">정면은 이미 있어요. 든/숙인 사진은 <b style="color:#ffd0e6">양쪽 귀가 보이게</b> 촬영해 추가하면 훨씬 정확해요.</div>
+      <div style="font-weight:800;font-size:14px">더 정확하게 (선택)</div>
+      <div class="muted" style="font-size:12px;margin:4px 0 2px">고개 든/숙인 사진을 <b style="color:#ffd0e6">양쪽 귀가 보이게</b> 추가하면 더 정확해요. (없어도 분석돼요)</div>
       <div class="pslots">
         <label class="pslot" data-slot="front"><span class="cap">정면</span><input type="file" accept="image/*" capture="user"></label>
         <label class="pslot" data-slot="up"><span class="cap">고개 든</span><input type="file" accept="image/*" capture="user"></label>
         <label class="pslot" data-slot="down"><span class="cap">고개 숙인</span><input type="file" accept="image/*" capture="user"></label>
       </div>
-      <div style="margin-top:16px;font-weight:800;font-size:14px">생활 습관 체크 <span class="muted" style="font-weight:600;font-size:12px">(선택 · 비대칭 원인 파악에 도움돼요)</span></div>
+      <div style="margin-top:16px;font-weight:800;font-size:14px">생활 습관 체크 <span class="muted" style="font-weight:600;font-size:12px">(선택 · 원인 파악에 도움돼요)</span></div>
       <div id="survey"></div>
-      <label class="consent" style="margin-top:14px"><input type="checkbox" id="agree2"><span>(필수) 상담·관리 목적으로 <b style="color:#ffd0e6">내 얼굴 사진(생체정보)이 소니드에 저장되어 담당 관리사에게 공유</b>되는 것과, 남긴 연락처로 결과·예약 안내 연락을 받는 것에 동의합니다.</span></label>
-      <label class="consent" style="margin-top:2px"><input type="checkbox" id="agreeMkt"><span>(선택) 이름·연락처를 활용한 이벤트·혜택 등 <b style="color:#ffd0e6">마케팅 정보 수신(문자·전화)</b>에 동의합니다.</span></label>
-      <button class="btn primary" id="runAI" disabled style="opacity:.5">동의하고 정밀분석 시작</button>
+      <label class="consent" style="margin-top:14px"><input type="checkbox" id="agree2"><span>(필수) 상세분석을 위해 <b style="color:#ffd0e6">내 얼굴 사진이 분석</b>되는 것에 동의합니다. (기기 내 분석 · 참고용)</span></label>
+      <button class="btn primary" id="runAI" disabled style="opacity:.5">동의하고 상세분석 시작</button>
       <button class="btn ghost" id="backResult" style="margin-top:10px">← 뒤로</button>
     </div>
-    <div class="disc">※ 정밀분석 결과는 얼굴 이미지를 이용자 기기 내에서 분석해 제공합니다. 입력하신 사진·정보는 상담·예약 및 관리사 사전확인 목적으로 소니드에 저장·공유되며, 연락처는 상담·예약 안내에만 사용됩니다. 동의 철회·삭제 요청은 소니드에 문의하실 수 있습니다.</div>
+    <div class="disc">※ 상세분석은 참고용 미용 정보이며 의료 진단이 아닙니다. 결과를 저장하거나 상담을 원하실 때만, 이후 단계에서 연락처를 남기시면 됩니다.</div>
   </section>
 
   <!-- STEP 6: AI 분석중 -->
@@ -201,9 +195,18 @@
     <h1>소니드 <em>정밀 비대칭</em> 리포트</h1>
     <div class="card" style="margin-bottom:12px"><canvas id="cv"></canvas><div class="muted" style="text-align:center;margin-top:8px;font-size:12px">얼굴 비대칭 분석선 · 각도와 좌우 차이</div></div>
     <div class="card"><div class="aiout" id="aiText"></div></div>
-    <div class="aim" style="margin-top:14px"><b>더 자세한 건 소니드에서 직접!</b><br><span class="muted" style="font-size:13px">손으로 확인하는 정밀 분석과 30분 관리로 이어가세요.</span></div>
-    <a class="btn book" id="bookApgujeong2" href="#" target="_blank" rel="noopener" style="margin-top:14px"><span class="loc">📍 압구정점</span><span class="go">네이버 예약 →</span></a>
-    <a class="btn book" id="bookDongtan2" href="#" target="_blank" rel="noopener"><span class="loc">📍 동탄본점</span><span class="go">네이버 예약 →</span></a>
+    <div class="aim" style="margin-top:14px"><b>결과가 도움이 되셨나요?</b><br><span class="muted" style="font-size:13px">담당 관리사가 직접 결과를 봐드려요. 아래에 연락처를 남겨주세요.</span></div>
+    <div class="card" id="leadBox" style="margin-top:12px">
+      <div style="font-weight:800;font-size:15px;margin-bottom:2px">결과 저장하고 무료 상담받기</div>
+      <div class="muted" style="font-size:12px;margin-bottom:8px">담당 관리사가 결과를 미리 확인하고 연락드려요.</div>
+      <input type="text" id="leadName" placeholder="이름">
+      <input type="tel" id="leadPhone" placeholder="연락처 (예: 010-1234-5678)">
+      <label class="consent" style="margin-top:12px"><input type="checkbox" id="agree3"><span>(필수) 내 얼굴 사진·분석 결과·연락처가 <b style="color:#ffd0e6">소니드에 저장되어 담당 관리사에게 공유</b>되고, 남긴 연락처로 상담 연락을 받는 것에 동의합니다.</span></label>
+      <label class="consent" style="margin-top:2px"><input type="checkbox" id="agreeMkt"><span>(선택) 이름·연락처를 활용한 이벤트·혜택 등 <b style="color:#ffd0e6">마케팅 정보 수신</b>에 동의합니다.</span></label>
+      <button class="btn primary" id="saveLeadBtn" disabled style="opacity:.5;margin-top:10px">연락처 남기고 상담받기</button>
+    </div>
+    <div class="card" id="leadDone" style="display:none;text-align:center;margin-top:12px"><div style="font-size:34px">✓</div><div style="font-weight:800;margin-top:6px">접수되었습니다</div><div class="muted" style="font-size:13px;margin-top:4px">담당 관리사가 확인 후 연락드릴게요. 감사합니다 🙏</div></div>
+    <div class="disc" style="margin-top:10px">※ 입력하신 사진·정보는 상담 및 관리사 사전확인 목적으로 소니드에 저장·공유되며, 연락처는 상담 안내에만 사용됩니다. 동의 철회·삭제 요청은 소니드에 문의하실 수 있습니다.</div>
     <a class="iglink" href="#" target="_blank" rel="noopener">📷 소니드 인스타그램 보러가기</a>
     <div class="hr"></div>
     <div class="brandbox">
@@ -236,7 +239,7 @@ const SB_URL="https://xzclowgorxhcbsfrrbop.supabase.co";
 const SB_KEY="sb_publishable_66Ts2AQrKrjfitjTi11uCQ_dGXiY_EZ";
 const HAIKU="claude-haiku-4-5-20251001";
 const INSTA="https://www.instagram.com/soneed_face";
-const MONTHLY_LIMIT=20;   // 이번 달 무료 정밀 리포트 선착순 정원
+const MONTHLY_LIMIT=20;   // 이번 달 무료 AI 상세분석 선착순 정원
 const NAVER={
   apgujeong:"https://map.naver.com/p/entry/place/2078742264?placePath=%2Fticket%3Fentry%3Dpll%26from%3Dnx%26fromNxList%3Dtrue%26from%3Dmap%26fromPanelNum%3D1%26additionalHeight%3D76%26timestamp%3D202607212234%26locale%3Dko%26svcName%3Dmap_pcv5&placeSearchOption=entry%3Dpll%26fromNxList%3Dtrue&searchType=place&c=15.00,0,0,0,dh",
   dongtan:"https://map.naver.com/p/entry/place/1531652767?placePath=%2Fticket%3Fentry%3Dpll%26from%3Dnx%26fromNxList%3Dtrue%26from%3Dmap%26fromPanelNum%3D1%26additionalHeight%3D76%26timestamp%3D202607212234%26locale%3Dko%26svcName%3Dmap_pcv5&placeSearchOption=entry%3Dpll%26fromNxList%3Dtrue&searchType=place&c=15.00,0,0,0,dh"
@@ -250,10 +253,7 @@ const ANIMALS={
   bear:  {emo:'🐻',name:'곰상',   tr:'듬직하고 포근한 매력. 부드러운 윤곽이 편안해요.'}
 };
 document.querySelectorAll('.iglink').forEach(function(a){a.href=INSTA;});
-document.getElementById('bookApgujeong').href=NAVER.apgujeong;
-document.getElementById('bookDongtan').href=NAVER.dongtan;
-document.getElementById('bookApgujeong2').href=NAVER.apgujeong;
-document.getElementById('bookDongtan2').href=NAVER.dongtan;
+/* 네이버 예약 제거 — 연락처 DB 방식으로 전환 */
 
 const $=id=>document.getElementById(id);
 function go(id){document.querySelectorAll('.step').forEach(s=>s.classList.remove('on'));$(id).classList.add('on');window.scrollTo(0,0);}
@@ -267,11 +267,11 @@ async function updateScarcity(){
   try{ var r=await fetch(SB_URL+'/rest/v1/rpc/leads_this_month',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json'},body:'{}'});
     if(r.ok){ var v=parseInt(await r.text(),10); if(!isNaN(v))n=v; } }catch(e){}
   if(n!=null){ var left=Math.max(0,MONTHLY_LIMIT-n);
-    el.innerHTML = left>0 ? ('🔥 이번 달 무료 정밀 리포트 · <b style="color:#fff">남은 자리 '+left+'명</b>') : '🔥 이번 달 정원 마감 임박! 대기 신청 받아요';
-  } else { el.innerHTML='🔥 이번 달 무료 정밀 리포트 <b style="color:#fff">선착순 '+MONTHLY_LIMIT+'명</b> · 마감 임박!'; }
+    el.innerHTML = left>0 ? ('🔥 이번 달 무료 AI 상세분석 · <b style="color:#fff">남은 자리 '+left+'명</b>') : '🔥 이번 달 정원 마감 임박! 대기 신청 받아요';
+  } else { el.innerHTML='🔥 이번 달 무료 AI 상세분석 <b style="color:#fff">선착순 '+MONTHLY_LIMIT+'명</b> · 마감 임박!'; }
 }
 
-let _src=null,_P=null,_animal='cat',_score=0,_photos={},_survey={},_stream=null;
+let _src=null,_P=null,_animal='cat',_score=0,_photos={},_survey={},_stream=null,_pending=null;
 
 /* 동의 → 시작 */
 $('agree').addEventListener('change',e=>{const b=$('startBtn');b.disabled=!e.target.checked;b.style.opacity=e.target.checked?1:.5;});
@@ -282,7 +282,10 @@ $('again2').onclick=()=>reset();
 $('toAI').onclick=()=>{ if(_src&&!_photos.front){ _photos.front=_src.toDataURL('image/jpeg',0.85); setSlot('front',_photos.front); } go('s-ai-consent'); };
 $('backResult').onclick=()=>go('s-result');
 $('agree2').addEventListener('change',e=>{const b=$('runAI');b.disabled=!e.target.checked;b.style.opacity=e.target.checked?1:.5;});
-function reset(){stopCamera();$('agree').checked=false;$('startBtn').disabled=true;$('startBtn').style.opacity=.5;$('agree2').checked=false;var _am=$('agreeMkt');if(_am)_am.checked=false;$('runAI').disabled=true;$('runAI').style.opacity=.5;_photos={};_survey={};renderSurvey();document.querySelectorAll('.pslot').forEach(function(s){s.classList.remove('filled');var im=s.querySelector('img');if(im)im.remove();var i=s.querySelector('input');if(i)i.value='';});go('s-intro');}
+function reset(){stopCamera();$('agree').checked=false;$('startBtn').disabled=true;$('startBtn').style.opacity=.5;$('agree2').checked=false;$('runAI').disabled=true;$('runAI').style.opacity=.5;
+  var a3=$('agree3');if(a3)a3.checked=false;var _am=$('agreeMkt');if(_am)_am.checked=false;var sb=$('saveLeadBtn');if(sb){sb.disabled=true;sb.style.opacity=.5;sb.textContent='연락처 남기고 상담받기';}
+  var ln=$('leadName');if(ln)ln.value='';var lp=$('leadPhone');if(lp)lp.value='';var lb=$('leadBox');if(lb)lb.style.display='';var ld=$('leadDone');if(ld)ld.style.display='none';
+  _pending=null;_photos={};_survey={};renderSurvey();document.querySelectorAll('.pslot').forEach(function(s){s.classList.remove('filled');var im=s.querySelector('img');if(im)im.remove();var i=s.querySelector('input');if(i)i.value='';});go('s-intro');}
 
 /* ── 카메라(전면·얼굴 가이드) ── */
 async function openCamera(){
@@ -435,7 +438,7 @@ function result(){
   var top=asyms[0], hasAsym=top[0]>=1.0;
   var line1 = hasAsym ? ('🔍 당신 얼굴에서 <b>'+top[1]+'</b>가 보여요!') : ('🔍 좌우가 꽤 대칭이에요! 그래도 미세한 차이가 숨어있어요');
   var line2 = _score<80 ? ('대칭 점수 <b>'+_score+'점</b> — 개선 여지가 있어요. ') : '';
-  $('aim').innerHTML=line1+'<br><span style="font-size:13px">'+line2+'<b>왜 이렇게 됐는지 · 어떻게 개선하는지</b>는 원장이 정리한 <b style="color:#fff">무료 정밀 리포트</b>에서 알려드려요 👇</span>';
+  $('aim').innerHTML=line1+'<br><span style="font-size:13px">'+line2+'<b>왜 이렇게 됐는지 · 어떻게 개선하는지</b>는 원장이 정리한 <b style="color:#fff">무료 AI 상세분석</b>에서 알려드려요 👇</span>';
   updateScarcity();
   logEvent('result');
   go('s-result');
@@ -556,20 +559,29 @@ function preciseReport(){
   return out.join('\n\n');
 }
 /* 정밀분석 (3장) → 소니드 전문 리포트 + 리드 저장(사진+리포트+설문) */
+/* 상세분석: 연락처 없이 실행 → 결과 표시. 저장(DB)은 결과 후 연락처 남길 때 */
 $('runAI').onclick=async()=>{
-  const name=($('leadName').value||'').trim(), phone=($('leadPhone').value||'').trim();
-  if(!name||!phone){alert('이름과 연락처를 입력해주세요');return;}
   if(!_photos.front){alert('정면 사진이 필요해요');return;}
   go('s-ai-loading');
   const store={};
   for(const k of ['front','up','down']) if(_photos[k]) store[k]=await imgResize(_photos[k],640,0.6);
   const summary=preciseReport();
-  const mkt=$('agreeMkt')?$('agreeMkt').checked:false;
-  await saveLead(name,phone,store,summary,surveyText(),mkt);  // 사진·리포트·설문·마케팅동의 저장
+  _pending={store:store, summary:summary, survey:surveyText()};   // 연락처 남길 때 저장
   logEvent('ai');
   $('aiText').textContent=summary;
   try{ drawViz(_P,_src); }catch(e){}
   go('s-ai-result');
+};
+/* 결과 후: 연락처 + 저장동의 → DB 저장 */
+(function(){var a3=$('agree3');if(a3)a3.addEventListener('change',function(e){var b=$('saveLeadBtn');b.disabled=!e.target.checked;b.style.opacity=e.target.checked?1:.5;});})();
+$('saveLeadBtn').onclick=async()=>{
+  const name=($('leadName').value||'').trim(), phone=($('leadPhone').value||'').trim();
+  if(!name||!phone){alert('이름과 연락처를 입력해주세요');return;}
+  const d=_pending||{}, mkt=$('agreeMkt')?$('agreeMkt').checked:false;
+  const b=$('saveLeadBtn'); b.disabled=true; b.textContent='저장 중…';
+  await saveLead(name,phone,d.store||null,d.summary||'',d.survey||'',mkt);
+  logEvent('lead');
+  $('leadBox').style.display='none'; $('leadDone').style.display='';
 };
 async function saveLead(name,phone,photos,summary,survey,marketing){
   try{
