@@ -158,14 +158,17 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px}
 .ba-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
 .ba-grid img{width:100%;border-radius:16px;box-shadow:0 6px 20px rgba(38,48,122,.08);display:block}
 
-/* 회전 엠블럼(씰) */
+/* 회전 링(뒤 배경) */
 .hero .wrap{position:relative;z-index:3}
-.seal{position:absolute;right:6%;top:54px;width:152px;height:152px;z-index:1;pointer-events:none}
-.seal-ring{width:100%;height:100%;animation:spin 22s linear infinite;transform-origin:50% 50%}
-.seal-ring text{fill:#c7cef0;font-size:12px;font-weight:800;letter-spacing:1.5px}
-.seal-mark{position:absolute;left:50%;top:50%;width:50px;height:50px;transform:translate(-50%,-50%)}
+.orb{position:absolute;right:3%;top:44px;width:210px;height:210px;border-radius:50%;z-index:1;pointer-events:none;opacity:.7;
+  background:conic-gradient(from 0deg, transparent 0 50%, rgba(199,206,240,.75) 78%, rgba(255,255,255,.95) 90%, transparent 100%);
+  -webkit-mask:radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+          mask:radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+  animation:spin 9s linear infinite}
+.orb2{position:absolute;right:calc(3% + 34px);top:78px;width:142px;height:142px;border-radius:50%;z-index:1;pointer-events:none;
+  border:1px solid rgba(199,206,240,.18)}
 @keyframes spin{to{transform:rotate(360deg)}}
-@media(prefers-reduced-motion:reduce){.seal-ring{animation:none}}
+@media(prefers-reduced-motion:reduce){.orb{animation:none}}
 
 /* ===== 모바일 보정 ===== */
 @media(max-width:760px){
@@ -181,8 +184,8 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px}
   table.cur td:first-child{padding-bottom:6px}
   .benefits{gap:8px}
   .ba-grid{grid-template-columns:1fr;gap:14px}
-  .seal{width:104px;height:104px;right:12px;top:48px}
-  .seal-mark{width:36px;height:36px}
+  .orb{width:140px;height:140px;right:8px;top:40px}
+  .orb2{width:96px;height:96px;right:30px;top:62px}
   .pricebox{padding:32px 20px}
   .pricebox .p{font-size:34px}
 }
@@ -220,13 +223,8 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px}
       <a href="#curriculum" class="btn btn-ghost">커리큘럼 보기</a>
     </div>
   </div>
-  <div class="seal" aria-hidden="true">
-    <svg viewBox="0 0 200 200" class="seal-ring">
-      <defs><path id="sealPath" d="M100,100 m-76,0 a76,76 0 1,1 152,0 a76,76 0 1,1 -152,0"/></defs>
-      <text><textPath href="#sealPath">SONEED ACADEMY · 페이스리세팅 · SONEED ACADEMY · 페이스리세팅 · </textPath></text>
-    </svg>
-    <img src="soneed-mark-white.png" class="seal-mark" alt="">
-  </div>
+  <div class="orb" aria-hidden="true"></div>
+  <div class="orb2" aria-hidden="true"></div>
 </header>
 
 <!-- WHY NOW -->
@@ -337,7 +335,7 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px}
       <div>
         <h3>이소니 <span style="font-size:15px;color:var(--mut)">원장</span></h3>
         <div class="role">소니드 얼굴윤곽 대표 · 독자 진단 체계 개발</div>
-        <p>수년간 독자적인 얼굴윤곽 진단 체계와 용어를 정립하고, 수많은 실제 케이스로 판독 기준을<br>직접 개선해 온 얼굴윤곽 분석 전문가.<br><br>용인대학교 물리치료학과 석사 졸업<br>체형교정 및 카이로프랙틱 수료<br>미용사 면허</p>
+        <p>수년간 독자적인 얼굴윤곽 진단 체계와 용어를 정립하고, 수많은 실제 케이스로 판독 기준을<br>직접 개선해 온 얼굴윤곽 분석 전문가.<br><br><b style="display:inline-block;background:#f2ecfb;color:#7c3aed;padding:5px 14px;border-radius:10px;border:1px solid #e0d4f5;font-weight:800">프로미스나인 · BTS · 배우 차은우 등 탑 클래스 연예인 직접 케어</b><br><br>용인대학교 물리치료학과 석사 졸업<br>체형교정 및 카이로프랙틱 수료<br>미용사 면허</p>
         <a href="https://www.instagram.com/soneed_sony" target="_blank" rel="noopener" class="iglink">📷 인스타그램 @soneed_sony →</a>
       </div>
     </div>
