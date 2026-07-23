@@ -584,10 +584,10 @@ function _statPill(label,n){return '<div style="text-align:center;min-width:78px
 async function renderStats(){
   if(!isAdmin())return; var box=document.getElementById('statsBox'); if(!box)return;
   try{
-    var visit=await countEvents('visit'), result=await countEvents('result'), ai=await countEvents('ai');
+    var visit=await countEvents('visit'), result=await countEvents('result'), ai=await countEvents('ai'), lead=await countEvents('lead');
     box.innerHTML='<div style="display:flex;gap:22px;flex-wrap:wrap;align-items:flex-end">'
-      +_statPill('페이지 방문',visit)+_statPill('동물상 완료',result)+_statPill('정밀분석 신청',ai)
-      +'</div><div class="subtle" style="font-size:11px;margin-top:8px">방문=페이지 열람 · 동물상 완료=결과까지 본 사람 · 정밀분석 신청=연락처 남긴 리드</div>';
+      +_statPill('페이지 방문',visit)+_statPill('동물상 완료',result)+_statPill('정밀분석 완료',ai)+_statPill('상담 신청',lead)
+      +'</div><div class="subtle" style="font-size:11px;margin-top:8px">방문=페이지 열람 · 동물상 완료=결과까지 본 사람 · 정밀분석 완료=AI 정밀분석 실행한 사람 · 상담 신청=연락처 남긴 사람</div>';
   }catch(e){ box.innerHTML='<span class="subtle">통계를 못 불러왔어요('+_esc(e&&e.message||e)+'). events 테이블 SQL을 확인하세요.</span>'; }
 }
 
