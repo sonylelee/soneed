@@ -210,7 +210,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v76 (2026-07-26)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v77 (2026-07-26)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객 리포트</button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">🎓 아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -224,7 +224,8 @@
       <div class="grow subtle" id="editState">새 기록을 작성합니다.</div>
       <button class="btn auto" id="autoBtn" onclick="document.getElementById('chartInput').click()">📄 종이차트 사진으로 자동 채우기</button>
       <input type="file" id="chartInput" accept="image/*,.heic,.heif" style="display:none" onchange="onChartPhoto(event)">
-      <button class="btn auto" id="faceBtn" onclick="onFaceAnalyze()">🙂 얼굴사진으로 분석 (초안)</button>
+      <button class="btn auto" id="faceBtn" onclick="onFaceAnalyze()">🙂 얼굴 사진으로 AI 분석</button>
+      <button class="btn auto" id="codeBtn" onclick="onCodeAnalyze()">🔑 얼굴 사진으로 AI 코드분석</button>
       <button class="btn ghost" onclick="clearForm()">새로 작성</button>
     </div>
     <div id="autoMsg"></div>
@@ -606,7 +607,7 @@ function applyTierUI(){
   var b=document.getElementById('authBtn'); if(b&&authTok&&authEmail())b.textContent='👤 '+(userName?userName+'님':authEmail());
   // AI(스탠다드+): 얼굴분석·종이차트 자동채우기
   var aiOk=hasTier('스탠다드');
-  [['faceBtn','🙂 얼굴사진으로 분석 (초안)'],['autoBtn','📄 종이차트 사진으로 자동 채우기']].forEach(function(p){
+  [['faceBtn','🙂 얼굴 사진으로 AI 분석'],['codeBtn','🔑 얼굴 사진으로 AI 코드분석'],['autoBtn','📄 종이차트 사진으로 자동 채우기']].forEach(function(p){
     var e=document.getElementById(p[0]); if(!e)return; e.disabled=!aiOk; e.textContent=aiOk?p[1]:(p[1]+' 🔒');
   });
   // 3D 시뮬레이션(스탠다드+): 패널 요약에 잠금 표시
@@ -1737,7 +1738,7 @@ async function onFaceAnalyze(){
     content.push({type:'text',text:'['+ko+' 사진]'});
     content.push({type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}});
   }
-  content.push({type:'text',text:FACE_PROMPT+'\n\n'+measureText(meas,earsF,earsU)+'\n\n항목 목록: '+JSON.stringify(faceSchema())+'\n\n'+FCODE_PROMPT});
+  content.push({type:'text',text:FACE_PROMPT+'\n\n'+measureText(meas,earsF,earsU)+'\n\n항목 목록: '+JSON.stringify(faceSchema())});
 
   async function callOnce(){
     const ctl=new AbortController();const timer=setTimeout(()=>ctl.abort(),120000);
@@ -1768,13 +1769,43 @@ async function onFaceAnalyze(){
     for(const label in parsed){const key=LABEL2KEY[label];if(!key)continue;const f=FMAP[key];const o=parsed[label];if(!o)continue;const val=o.v;
       if(f.type==='multi'){const vals=(Array.isArray(val)?val:[val]).filter(x=>f.opt.includes(x));if(vals.length){form[key]=vals;form._src[key]="ai";form._ai[key]=vals;n++;}}
       else if(f.opt.includes(val)){form[key]=val;form._src[key]="ai";form._ai[key]=val;n++;}}
-    applyFcodeFromAI(parsed);
     renderForm();applyFormToUI();
     renderFaceResult(parsed,n);
   }catch(err){
     const m=String((err&&err.message)||err);
     const hint=(m.includes('Failed to fetch')||m.includes('Load failed')||m.includes('abort'))?'<br><span style="font-size:11px">네트워크가 끊기거나 분석이 오래 걸려 실패했습니다. 잠시 후 다시 눌러주세요.</span>':'';
     box.innerHTML='<div class="banner err"><b>분석 오류</b><br><span style="font-size:12px;white-space:pre-wrap;word-break:break-all">'+m.replace(/</g,'&lt;')+'</span>'+hint+'</div>';
+  }
+  btn.disabled=false;btn.innerHTML=orig;
+}
+/* 🔑 안면 코드만 AI 예측 (타입~콧볼 6자리 · 오른마루는 관리사 촉진 입력) */
+async function onCodeAnalyze(){
+  if(!requireTier('스탠다드','AI 코드분석'))return;
+  if(!form['photo_front']){toast('먼저 정면 얼굴 사진을 넣어주세요');return;}
+  const slots=[['front','정면'],['up','고개 든']].filter(([s])=>form['photo_'+s]);
+  const btn=document.getElementById('codeBtn');btn.disabled=true;const orig=btn.innerHTML;btn.innerHTML='<span class="spinner"></span>코드분석 중…';
+  const box=document.getElementById('faceResult');box.innerHTML='<div class="banner info">안면 코드를 분석하는 중입니다… (10~25초)</div>';
+  try{
+    const meas=await measureFront(form['photo_front']);
+    const earsU=form['photo_up']?await measureEarsUp(form['photo_up']):null;
+    const content=[];
+    for(const [s,ko] of slots){const b64=await shrinkForAI(form['photo_'+s],560,0.55);content.push({type:'text',text:'['+ko+' 사진]'});content.push({type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}});}
+    content.push({type:'text',text:'당신은 소니드 얼굴 분석 보조입니다. 아래 지침대로 "안면 코드"만 판정해 JSON 하나만 출력하세요(다른 설명 금지).\n\n'+measureText(meas,null,earsU)+'\n\n'+FCODE_PROMPT});
+    const resp=await fetch(RELAY,{method:"POST",headers:{"Content-Type":"application/json","x-sb-token":(authTok||"")},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:600,messages:[{role:"user",content}]})});
+    let data;try{data=await resp.json();}catch(je){throw new Error('응답을 읽지 못했습니다 (HTTP '+resp.status+')');}
+    if(!resp.ok||(data&&data.error)){throw new Error('API 오류 '+(resp.status||'')+' · '+((data&&data.error&&data.error.message)||JSON.stringify(data).slice(0,200)));}
+    const text=(data.content||[]).filter(x=>x.type==='text').map(x=>x.text).join('\n');
+    if(!text.trim())throw new Error('빈 응답을 받았습니다.');
+    const clean=text.replace(/```json|```/g,'').trim();const j0=clean.indexOf('{'),j1=clean.lastIndexOf('}');
+    if(j0<0||j1<0)throw new Error('JSON 형식이 아닙니다 · '+clean.slice(0,160));
+    const parsed=JSON.parse(clean.slice(j0,j1+1));
+    const ok=applyFcodeFromAI(parsed);
+    renderForm();applyFormToUI();
+    box.innerHTML=ok?('<div class="banner info">🔑 안면 코드 예측 완료 — <b>'+(form.face_code||'(오른마루 선택 시 코드 완성)')+'</b><br><span style="font-size:12px">타입~콧볼은 채워졌어요. <b>오른마루(두께)</b>는 촉진 후 직접 선택하면 코드가 완성됩니다.</span></div>')
+      :'<div class="banner err">코드를 읽지 못했어요. 정면 사진이 선명한지 확인해주세요.</div>';
+  }catch(err){
+    const m=String((err&&err.message)||err);
+    box.innerHTML='<div class="banner err"><b>코드분석 오류</b><br><span style="font-size:12px;white-space:pre-wrap;word-break:break-all">'+m.replace(/</g,'&lt;')+'</span></div>';
   }
   btn.disabled=false;btn.innerHTML=orig;
 }
