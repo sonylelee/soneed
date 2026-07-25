@@ -165,7 +165,21 @@
     .toolbar .grow{flex-basis:100%}
     .actions .btn{flex:1}
     .modal-box{padding:18px}
+    .fcode-grid{grid-template-columns:repeat(3,1fr)}
   }
+  /* 안면 코드 */
+  .fcode-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+  .fc-field{display:flex;flex-direction:column;gap:3px}
+  .fc-field label{font-size:12px;color:#666;font-weight:600}
+  .fc-field select{padding:8px 6px;border:1px solid #d7d2e6;border-radius:8px;font-size:15px;background:#fff}
+  .fcode-out{margin-top:12px;font-size:30px;font-weight:800;letter-spacing:1px;color:#7c3aed;text-align:center}
+  .fcode-sol{margin-top:10px}
+  .sol-list{display:flex;flex-wrap:wrap}
+  .sol-big{font-size:22px;line-height:1.55;font-weight:700;color:#1b1b1b;white-space:pre-wrap;background:#f6f2fd;border:1px solid #e2d7f7;border-radius:12px;padding:14px 16px}
+  #solOverlay{position:fixed;inset:0;background:rgba(15,12,25,.88);display:none;align-items:center;justify-content:center;z-index:9999;padding:20px}
+  #solOverlay .sol-ov-inner{background:#fff;border-radius:18px;max-width:560px;width:100%;max-height:88vh;overflow:auto;padding:26px 24px;text-align:center}
+  #solOverlay .sol-ov-code{font-size:34px;font-weight:800;color:#7c3aed;letter-spacing:1px;margin-bottom:14px}
+  #solOverlay .sol-ov-body{font-size:24px;line-height:1.6;font-weight:700;color:#111;white-space:pre-wrap;text-align:left}
 </style>
 
 <div id="lockScreen" style="position:fixed;inset:0;z-index:99999;background:#EEF0F3;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;padding:20px;font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Segoe UI',Roboto,'Malgun Gothic',sans-serif">
@@ -179,7 +193,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v58 (2026-07-25)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v60 (2026-07-26)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객 리포트</button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">🎓 아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -198,6 +212,12 @@
     </div>
     <div id="autoMsg"></div>
     <div id="faceResult"></div>
+    <div class="card pad" id="fcodeCard" style="border:2px solid #7c3aed">
+      <h2 class="section" style="margin-top:0">🔑 안면 코드 <span class="tag all">빠른 판독 · 첫 촉진용</span></h2>
+      <div id="fcodeSel" class="fcode-grid"></div>
+      <div id="fcodeOut" class="fcode-out">— 항목을 채우면 코드가 나옵니다</div>
+      <div id="fcodeSol" class="fcode-sol"></div>
+    </div>
     <div class="card pad">
       <h2 class="section" style="margin-top:0">사진</h2>
       <div class="photos" id="photos"></div>
@@ -294,6 +314,28 @@
     <div id="recList" class="recgrid"></div>
   </section>
   <section id="view-admin" style="display:none">
+    <div class="card pad" style="margin-bottom:16px;border:2px solid #7c3aed">
+      <h2 class="section" style="margin-top:0">🔑 안면 코드 솔루션 <span class="subtle" style="text-transform:none;letter-spacing:0;font-weight:600">코드별 시술 동작 · 관리사 공용</span></h2>
+      <div class="subtle" style="margin-bottom:10px">코드를 고르거나 아래 목록에서 눌러 솔루션(동작 순서)을 입력하세요. 저장하면 모든 관리사 폰에 같은 내용이 뜹니다.</div>
+      <div id="solAdmin">불러오는 중…</div>
+      <details style="margin-top:12px"><summary class="subtle">처음 한 번: solutions 테이블 SQL (Supabase → SQL Editor)</summary>
+        <pre id="solSqlBox">create table if not exists solutions (
+  code text primary key,
+  body text,
+  updated_at timestamptz default now()
+);
+alter table solutions enable row level security;
+-- 모든 로그인 관리사: 읽기 가능
+create policy "sol read" on solutions
+  for select to authenticated using (true);
+-- 대표만: 추가/수정/삭제
+create policy "sol write" on solutions
+  for all to authenticated
+  using ((auth.jwt()->>'email')='soni0025@naver.com')
+  with check ((auth.jwt()->>'email')='soni0025@naver.com');</pre>
+        <button class="btn ghost" onclick="var t=document.getElementById('solSqlBox').textContent;navigator.clipboard&&navigator.clipboard.writeText(t);toast('SQL 복사됨')">SQL 복사</button>
+      </details>
+    </div>
     <div class="card pad" style="margin-bottom:16px">
       <h2 class="section" style="margin-top:0">📊 셀프 체험 통계 <span class="subtle" style="text-transform:none;letter-spacing:0;font-weight:600">동물상·정밀분석 이용 현황</span></h2>
       <div id="statsBox" class="subtle">불러오는 중…</div>
@@ -796,6 +838,7 @@ async function loadAll(){
     else{const keys=await storeList();const vals=await Promise.all(keys.map(k=>storeGet(k)));for(const v of vals){if(!v)continue;try{records.push(JSON.parse(v));}catch(e){}}}
   }catch(e){const b=document.getElementById('storeBanner');b.style.display='block';b.textContent='공용 DB에서 불러오지 못했습니다: '+e.message+' — 설정에서 연결을 확인하세요.';}
   sortRecs();refreshAll();
+  loadSolutions();   // 코드별 솔루션 공용 로드
 }
 
 /* 설정 화면 */
@@ -833,6 +876,7 @@ function renderForm(){
   for(const g in groups)document.getElementById(groups[g]).innerHTML=FIELDS.filter(f=>f.g===g).map(fieldHTML).join('');
   document.getElementById('photos').innerHTML=PHOTO_SLOTS.map(([s,ko])=>`<div class="pslot"><div class="photo-drop" id="drop_${s}" onclick="pickPhoto('${s}')"><div class="ph">${ko}<br><small>클릭</small></div></div><input type="file" accept="image/*,.heic,.heif" id="pin_${s}" style="display:none" onchange="onPhoto('${s}',event)"><label>${ko}</label></div>`).join('');
   renderAfters();
+  renderFcode();
 }
 function pickSeg(k,v,btn){const box=btn.parentElement,already=form[k]===v;box.querySelectorAll('button').forEach(b=>b.classList.remove('on'));if(already)form[k]=null;else{form[k]=v;btn.classList.add('on');}markOk(k,btn);updateValidation();}
 function pickMulti(k,v,btn){let arr=Array.isArray(form[k])?form[k].slice():[];const i=arr.indexOf(v);if(i>=0){arr.splice(i,1);btn.classList.remove('on');}else{arr.push(v);btn.classList.add('on');}form[k]=arr.length?arr:null;markOk(k,btn);}
@@ -841,6 +885,126 @@ function applyFormToUI(){
   document.querySelectorAll('.seg').forEach(box=>{const k=box.dataset.k,multi=box.dataset.multi;box.querySelectorAll('button').forEach(b=>{const on=multi?(Array.isArray(form[k])&&form[k].includes(b.dataset.v)):(form[k]===b.dataset.v);b.classList.toggle('on',on);});});
   FIELDS.forEach(f=>{if(f.type==='seg')return;const el=document.getElementById('f_'+f.k);if(el)el.value=form[f.k]||'';});
   document.getElementById('f_notes').value=form.notes||'';PHOTO_SLOTS.forEach(([s])=>setPhotoPreview(s));updateValidation();renderAfters();
+}
+
+/* ===== 안면 코드 (빠른 판독) + 솔루션 ===== */
+const FCODE=[
+ {k:'t',label:'타입',opt:['A','B']},
+ {k:'clock',label:'후두골',opt:['7시','6시','5시']},
+ {k:'nose',label:'눈>코 밀림',opt:['왼','오']},
+ {k:'cheek',label:'광대 올라옴',opt:['왼','오']},
+ {k:'eye',label:'눈 높은쪽',opt:['왼','오']},
+ {k:'ala',label:'콧볼 올라감',opt:['왼','오']}
+];
+function fcodeStr(o){if(!o)return'';for(var i=0;i<FCODE.length;i++){if(!o[FCODE[i].k])return'';}return o.t+String(o.clock).replace('시','')+'-'+o.nose+o.cheek+o.eye+o.ala;}
+const FCODE_PROMPT=`[추가 출력 · 안면 코드]
+아래 6개를 사진(정면 위주)에서 기하학적으로 판정해 "안면코드" 객체로 함께 출력하라. 모든 좌우는 본인 기준(사진 왼쪽=본인 오른쪽 반전 적용). 자동 측정값이 있으면 그대로 따르라(재반전 금지).
+- 타입: "A"(우측 짧음) 또는 "B"(좌측 짧음)
+- 후두골: "7시" "6시" "5시" 중 하나(고개 든 사진 · 본인 오른귀 더 아래=7시 / 대칭=6시 / 본인 왼귀 더 아래=5시)
+- 눈코밀림: 양안 중심선 대비 코가 밀린 본인쪽 "왼" 또는 "오"
+- 광대올라옴: 코뿌리(콧대 시작) 레벨이 더 높은(올라온) 광대 본인쪽 "왼" 또는 "오"
+- 눈높은쪽: 더 높이 있는 눈 본인쪽 "왼" 또는 "오"
+- 콧볼올라감: 코 직선라인과 이루는 각이 더 좁은(올라간) 콧볼 본인쪽 "왼" 또는 "오"
+반드시 출력 JSON에 "안면코드":{"타입":..,"후두골":..,"눈코밀림":..,"광대올라옴":..,"눈높은쪽":..,"콧볼올라감":..} 를 포함하라. 값은 위에 지정한 문자열만 사용.`;
+function _fcNorm(k,v){v=String(v==null?'':v).trim();if(k==='t')return /b/i.test(v)?'B':(/a/i.test(v)?'A':null);if(k==='clock'){var d=v.match(/[567]/);return d?d[0]+'시':null;}if(/왼|left|(^|[^a-z])l([^a-z]|$)/i.test(v))return '왼';if(/오|right|(^|[^a-z])r([^a-z]|$)/i.test(v))return '오';return null;}
+function applyFcodeFromAI(parsed){
+  var fc=parsed&&(parsed['안면코드']||parsed['안면 코드']);if(!fc||typeof fc!=='object')return false;
+  var map={타입:'t',후두골:'clock',눈코밀림:'nose',광대올라옴:'cheek',눈높은쪽:'eye',콧볼올라감:'ala'};
+  if(!form.fcode)form.fcode={};var got=false;
+  for(var kk in map){var nv=_fcNorm(map[kk],fc[kk]);if(nv){form.fcode[map[kk]]=nv;got=true;}}
+  if(got)form.face_code=fcodeStr(form.fcode)||null;
+  return got;
+}
+function renderFcode(){
+  var box=document.getElementById('fcodeSel');if(!box)return;
+  var o=form.fcode||(form.fcode={});
+  box.innerHTML=FCODE.map(function(f){
+    var opts='<option value="">-</option>'+f.opt.map(function(x){return '<option'+(o[f.k]===x?' selected':'')+'>'+x+'</option>';}).join('');
+    return '<div class="fc-field"><label>'+f.label+'</label><select onchange="setFcode(\''+f.k+'\',this.value)">'+opts+'</select></div>';
+  }).join('');
+  renderFcodeOut();
+}
+function setFcode(k,v){if(!form.fcode)form.fcode={};form.fcode[k]=v||null;form.face_code=fcodeStr(form.fcode)||null;renderFcodeOut();}
+function renderFcodeOut(){var code=fcodeStr(form.fcode);var out=document.getElementById('fcodeOut');if(out)out.textContent=code||'— 항목을 채우면 코드가 나옵니다';renderFcodeSol(code);}
+/* 솔루션: 공용 DB(solutions 테이블) + 이 기기 localStorage 백업 */
+var solCache=null;
+function solStore(){try{return JSON.parse(localStorage.getItem('soneed_sol')||'{}');}catch(e){return{};}}
+function solGet(code){if(!code)return'';var m=solCache||solStore();return m[code]||'';}
+async function loadSolutions(){
+  if(mode==='cloud'){
+    try{
+      var r=await fetch(sbBase()+'solutions?select=code,body',{headers:sbHeaders()});
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      var rows=await r.json(),m={};rows.forEach(function(x){m[x.code]=x.body;});
+      solCache=m;try{localStorage.setItem('soneed_sol',JSON.stringify(m));}catch(e){}
+      if(document.getElementById('fcodeSel'))renderFcodeOut();
+      return m;
+    }catch(e){solCache=solStore();return solCache;}   // 폴백: 이 기기 저장분
+  }
+  solCache=solStore();return solCache;
+}
+async function solSet(code,txt){
+  if(!solCache)solCache=solStore();
+  if(txt)solCache[code]=txt;else delete solCache[code];
+  try{localStorage.setItem('soneed_sol',JSON.stringify(solCache));}catch(e){}
+  if(mode==='cloud'){
+    try{
+      if(txt)await fetch(sbBase()+'solutions',{method:'POST',headers:sbHeaders({Prefer:'resolution=merge-duplicates'}),body:JSON.stringify({code:code,body:txt})});
+      else await fetch(sbBase()+'solutions?code=eq.'+encodeURIComponent(code),{method:'DELETE',headers:sbHeaders({Prefer:'return=minimal'})});
+    }catch(e){toast('공용 저장 실패(이 기기엔 저장됨): '+(e.message||e));}
+  }
+}
+/* 관리 탭: 코드별 솔루션 일괄 편집 */
+var _solPick={t:'A',clock:'7시',nose:'왼',cheek:'오',eye:'오',ala:'오'};
+function renderSolAdmin(){
+  var box=document.getElementById('solAdmin');if(!box)return;
+  var code=fcodeStr(_solPick);
+  var sel=FCODE.map(function(f){
+    var opts=f.opt.map(function(x){return '<option'+(_solPick[f.k]===x?' selected':'')+'>'+x+'</option>';}).join('');
+    return '<div class="fc-field"><label>'+f.label+'</label><select onchange="_solPick[\''+f.k+'\']=this.value;renderSolAdmin()">'+opts+'</select></div>';
+  }).join('');
+  var cur=solGet(code);
+  var html='<div class="fcode-grid">'+sel+'</div>'+
+   '<div style="margin:10px 0;font-size:22px;font-weight:800;color:#7c3aed;text-align:center">'+code+'</div>'+
+   '<textarea id="solAdminTa" style="width:100%;min-height:120px" placeholder="이 코드의 시술 솔루션(동작)을 한 줄에 하나씩">'+_esc(cur)+'</textarea>'+
+   '<div style="margin-top:8px"><button class="btn primary" onclick="solAdminSave()">이 코드 저장</button></div>';
+  var m=solCache||solStore(),codes=Object.keys(m).filter(function(k){return m[k];}).sort();
+  html+='<h3 style="margin:16px 0 6px;font-size:14px">입력된 솔루션 ('+codes.length+')</h3>';
+  if(!codes.length)html+='<div class="subtle">아직 없습니다.</div>';
+  else html+='<div class="sol-list">'+codes.map(function(k){return '<button class="btn ghost" style="margin:3px" onclick="solAdminPick(\''+k+'\')">'+k+'</button>';}).join('')+'</div>';
+  box.innerHTML=html;
+}
+function solAdminPick(code){
+  var mm=code.match(/^([AB])(\d)-(.)(.)(.)(.)$/);if(!mm)return;
+  _solPick={t:mm[1],clock:mm[2]+'시',nose:mm[3],cheek:mm[4],eye:mm[5],ala:mm[6]};renderSolAdmin();
+}
+async function solAdminSave(){
+  var code=fcodeStr(_solPick),ta=document.getElementById('solAdminTa');if(!ta)return;
+  await solSet(code,ta.value.trim());toast('저장됨 · '+code);renderSolAdmin();
+  if(document.getElementById('fcodeSel'))renderFcodeOut();
+}
+function renderFcodeSol(code){
+  var box=document.getElementById('fcodeSol');if(!box)return;
+  if(!code){box.innerHTML='';return;}
+  var sol=solGet(code),html='';
+  if(sol)html+='<div class="sol-big">'+_esc(sol).replace(/\n/g,'<br>')+'</div>';
+  else html+='<div class="subtle" style="padding:8px 0">이 코드('+code+')의 솔루션이 아직 없습니다.</div>';
+  if(isAdmin())html+='<button class="btn ghost" style="margin-top:6px" onclick="editSol(\''+code+'\')">✏️ 솔루션 '+(sol?'편집':'입력')+'</button>';
+  box.innerHTML=html;
+}
+function editSol(code){
+  var cur=solGet(code),box=document.getElementById('fcodeSol');
+  box.innerHTML='<textarea id="solEdit" style="width:100%;min-height:130px" placeholder="이 코드의 시술 솔루션(동작 순서)을 한 줄에 하나씩 입력">'+_esc(cur)+'</textarea>'+
+   '<div style="margin-top:6px;display:flex;gap:8px"><button class="btn primary" onclick="saveSol(\''+code+'\')">저장</button><button class="btn ghost" onclick="renderFcodeSol(\''+code+'\')">취소</button></div>';
+  var t=document.getElementById('solEdit');if(t)t.focus();
+}
+async function saveSol(code){var t=document.getElementById('solEdit');if(!t)return;await solSet(code,t.value.trim());toast('솔루션 저장됨');renderFcodeSol(code);}
+function showSolOverlay(){
+  var code=form.face_code,sol=solGet(code);if(!code||!sol)return;
+  var ov=document.getElementById('solOverlay');
+  if(!ov){ov=document.createElement('div');ov.id='solOverlay';ov.onclick=function(){ov.style.display='none';};document.body.appendChild(ov);}
+  ov.innerHTML='<div class="sol-ov-inner"><div class="sol-ov-code">'+code+'</div><div class="sol-ov-body">'+_esc(sol).replace(/\n/g,'<br>')+'</div><div class="subtle" style="margin-top:16px">화면을 누르면 닫힙니다</div></div>';
+  ov.style.display='flex';
 }
 
 /* 회전 논리 검증 (마루뼈 기준 상대) */
@@ -1491,7 +1655,7 @@ async function onFaceAnalyze(){
     content.push({type:'text',text:'['+ko+' 사진]'});
     content.push({type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}});
   }
-  content.push({type:'text',text:FACE_PROMPT+'\n\n'+measureText(meas,earsF,earsU)+'\n\n항목 목록: '+JSON.stringify(faceSchema())});
+  content.push({type:'text',text:FACE_PROMPT+'\n\n'+measureText(meas,earsF,earsU)+'\n\n항목 목록: '+JSON.stringify(faceSchema())+'\n\n'+FCODE_PROMPT});
 
   async function callOnce(){
     const ctl=new AbortController();const timer=setTimeout(()=>ctl.abort(),120000);
@@ -1522,6 +1686,7 @@ async function onFaceAnalyze(){
     for(const label in parsed){const key=LABEL2KEY[label];if(!key)continue;const f=FMAP[key];const o=parsed[label];if(!o)continue;const val=o.v;
       if(f.type==='multi'){const vals=(Array.isArray(val)?val:[val]).filter(x=>f.opt.includes(x));if(vals.length){form[key]=vals;form._src[key]="ai";form._ai[key]=vals;n++;}}
       else if(f.opt.includes(val)){form[key]=val;form._src[key]="ai";form._ai[key]=val;n++;}}
+    applyFcodeFromAI(parsed);
     renderForm();applyFormToUI();
     renderFaceResult(parsed,n);
   }catch(err){
@@ -1606,6 +1771,7 @@ async function saveRecord(){
   if(_pendingLeadId){ markLeadDone(_pendingLeadId,true); _pendingLeadId=null; }   // 유입 고객: 저장 완료 시 목록에서 처리
   toast(photoFail?'기본정보는 저장됨 · 사진은 용량이 커서 저장 실패':(updateValidation()?'저장되었습니다':'저장됨 · 회전 오류가 남아있어요'));
   document.getElementById('editState').textContent=(form.code||'무제')+' · 저장됨 (편집 중)';document.getElementById('delBtn').style.display='';refreshAll();
+  showSolOverlay();   // 저장 시 이 코드의 솔루션을 큰 글자로
 }
 async function editRecord(id){var r=records.find(x=>String(x.id)===String(id));if(!r)return;
   _reportScroll=window.scrollY||document.documentElement.scrollTop||0;_restoreReport=true;
@@ -1627,7 +1793,7 @@ function showView(v){
   if(v==='data'){renderRecList();renderCrosstab();
     if(_restoreReport){var _y=_reportScroll;_restoreReport=false;requestAnimationFrame(function(){window.scrollTo(0,_y);setTimeout(function(){window.scrollTo(0,_y);},60);});}
   }
-  if(v==='admin'){renderStats();renderIncomingLeads();renderAppCustomers();}
+  if(v==='admin'){renderStats();renderIncomingLeads();renderAppCustomers();renderSolAdmin();}
   if(v==='academy'){renderAcademyApps();}
 }
 
