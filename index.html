@@ -209,7 +209,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v66 (2026-07-26)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v69 (2026-07-26)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객 리포트</button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">🎓 아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -233,6 +233,7 @@
       <div class="subtle" style="margin:-4px 0 8px;font-size:12px">AI가 타입~콧볼 예측 · <b>오른마루</b>는 촉진 후 직접 선택</div>
       <div id="fcodeSel" class="fcode-grid"></div>
       <div id="fcodeOut" class="fcode-out">— 항목을 채우면 코드가 나옵니다</div>
+      <button class="btn primary" id="fcodeGuideBtn" style="width:100%;margin-top:12px" onclick="showSolOverlay(true)">🩹 2D 리세팅가이드</button>
       <div id="fcodeSol" class="fcode-sol"></div>
     </div>
     <div class="card pad">
@@ -248,9 +249,12 @@
       <div class="grid" id="grid-2d"></div>
       <h2 class="section">좌우 진단 <span class="tag dist">촉진 · 거리/두께 상대</span></h2>
       <div class="grid" id="grid-lr"></div>
-      <h2 class="section">회전 진단 <span class="tag rot">기준뼈 대비 상대 회전</span></h2>
-      <div class="grid" id="grid-rot"></div>
-      <div id="rotWarn"></div>
+      <div id="rotSection">
+        <h2 class="section">회전 진단 <span class="tag rot">기준뼈 대비 상대 회전</span> <span class="tag" style="background:#fbe9f3;color:#C81D74">프리미엄 차트</span></h2>
+        <div class="grid" id="grid-rot"></div>
+        <div id="rotWarn"></div>
+      </div>
+      <div id="rotLocked" class="subtle" style="display:none;padding:10px 0;border-top:1px dashed #e2d7f7">🔒 회전 진단은 <b>프리미엄 등급</b> 차트입니다. 베이직·스탠다드는 심플 차트(2D·좌우)로 진행됩니다.</div>
       <h2 class="section">회차별 애프터 사진</h2>
       <div id="afters"></div>
       <button class="btn ghost" style="width:100%" onclick="document.getElementById('afterInput').click()">＋ 애프터 추가 (사진 3장 한 번에)</button>
@@ -609,6 +613,10 @@ function applyTierUI(){
   // 리세팅가이드(프리미엄): 버튼 라벨
   var mb=document.getElementById('fp_method');
   if(mb){ mb.textContent=hasTier('프리미엄')?'🩹 리세팅가이드':'🩹 리세팅가이드 🔒 프리미엄'; }
+  // 회전 진단 차트(프리미엄 전용): 베이직·스탠다드는 심플 차트
+  var prem=hasTier('프리미엄');
+  var rs=document.getElementById('rotSection'); if(rs)rs.style.display=prem?'':'none';
+  var rl=document.getElementById('rotLocked'); if(rl)rl.style.display=prem?'none':'';
 }
 /* 대표 전용: 앱 고객(관리사/구독자) 목록. accounts(등급·이름) + 기록의 savedBy(활동/기록수) 합집합. */
 let _appCustBusy=false;
@@ -948,15 +956,14 @@ function composeSolution(fc){
   if(!fc)return[];var out=[];
   if(fc.t==='A')out.push({h:'타입 A',lines:['Rt 이마 리프팅','Rt 광대 사선내리기','왼쪽으로 문어']});
   else if(fc.t==='B')out.push({h:'타입 B',lines:['Lt 이마 리프팅','Lt 광대 사선내리기','오른쪽으로 문어']});
-  if(fc.clock==='7시')out.push({h:'후두골 7시',lines:['Rt 유양돌기 위·앞으로 풀링','Lt 귀 뒤에서 오른쪽으로 필러링']});
-  else if(fc.clock==='5시')out.push({h:'후두골 5시',lines:['Lt 유양돌기 위·앞으로 풀링','Rt 귀 뒤에서 왼쪽으로 필러링']});
+  if(fc.clock==='7시')out.push({h:'후두골 7시',lines:['Rt 유양돌기 위·앞으로 풀링','Lt 귀 뒤에서 오른쪽으로 필러링','Lt C0 바운스']});
+  else if(fc.clock==='5시')out.push({h:'후두골 5시',lines:['Lt 유양돌기 위·앞으로 풀링','Rt 귀 뒤에서 왼쪽으로 필러링','Rt C0 바운스']});
   else if(fc.clock==='6시')out.push({h:'후두골 6시',lines:['없음']});
-  if(fc.nose==='오'){var ln=['Rt 광대 왼쪽으로 햄버거시프트'+(fc.t==='A'?' (보류)':''),'양쪽 광대 왼쪽으로 밀기','Rt 광대 왼쪽으로 푸싱'];if(fc.ala!=='오')ln.push('오른 턱 위로 들어올려 왼쪽으로 드로잉');out.push({h:'① 코 방향 · 오',lines:ln});}
-  else if(fc.nose==='왼'){var lw=['Lt 광대 오른쪽으로 햄버거시프트'+(fc.t==='B'?' (보류)':''),'양쪽 광대 오른쪽으로 밀기','Lt 광대 오른쪽으로 푸싱'];if(fc.ala!=='왼')lw.push('왼 턱 위로 들어올려 오른쪽으로 드로잉');out.push({h:'① 코 방향 · 왼',lines:lw});}
-  if(fc.cheek==='오')out.push({h:'② 광대(워터슬라이드) · 오',lines:['위 햄버거시프트에 오른회전 추가']});
-  else if(fc.cheek==='왼')out.push({h:'② 광대(워터슬라이드) · 왼',lines:['위 햄버거시프트에 왼회전 추가']});
-  if(fc.eye==='오'){var l=['Lt 이마 리프팅'];if(fc.ala==='오')l.push('(+콧볼 오) 왼턱 위로 들어 우측으로 드로잉 & 2·3층 스퀘어 크로스 프레싱(측면) 왼쪽 = 왼 이마 귀뒤+위로 밀고, 왼 광대 앞&아래로 당기기');out.push({h:'③ 눈 높이 · 오',lines:l});}
-  else if(fc.eye==='왼'){var l2=['Rt 이마 리프팅'];if(fc.ala==='왼')l2.push('(+콧볼 왼) 오른턱 위로 들어 우측으로 드로잉 & 2·3층 스퀘어 크로스 프레싱(측면) 오른쪽 = 오른 이마 귀뒤+위로 밀고, 오른 광대 앞&아래로 당기기');out.push({h:'③ 눈 높이 · 왼',lines:l2});}
+  var rot=(fc.cheek==='오'?' (오른회전 추가)':fc.cheek==='왼'?' (왼회전 추가)':'');   // ②워터슬라이드 = 시프트에 회전 병기
+  if(fc.nose==='오'){var ln=['Rt 광대 왼쪽으로 햄버거시프트'+rot+(fc.t==='A'?' (보류)':''),'양쪽 광대 왼쪽으로 밀기','Rt 광대 왼쪽으로 푸싱'];if(fc.ala!=='오')ln.push('오른 턱 위로 들어올려 왼쪽으로 드로잉');out.push({h:'① 코 방향 · 오',lines:ln});}
+  else if(fc.nose==='왼'){var lw=['Lt 광대 오른쪽으로 햄버거시프트'+rot+(fc.t==='B'?' (보류)':''),'양쪽 광대 오른쪽으로 밀기','Lt 광대 오른쪽으로 푸싱'];if(fc.ala!=='왼')lw.push('왼 턱 위로 들어올려 오른쪽으로 드로잉');out.push({h:'① 코 방향 · 왼',lines:lw});}
+  if(fc.eye==='오'){var l=['Lt 이마 리프팅'];if(fc.ala==='오')l.push('(+콧볼 오) 왼턱 위로 들어올려 우측으로 드로잉');if(fc.nose==='왼')l.push('(+코방향 왼) 2·3층 스퀘어 크로스 프레싱(측면) 오른쪽으로 돌린 후 = 왼쪽 이마 귀뒤+위로 밀고, 왼 광대 앞&아래로 당기기');out.push({h:'③ 눈 높이 · 오',lines:l});}
+  else if(fc.eye==='왼'){var l2=['Rt 이마 리프팅'];if(fc.ala==='왼')l2.push('(+콧볼 왼) 오른 턱 위로 들어올려 우측으로 드로잉');if(fc.nose==='오')l2.push('(+코방향 오) 2·3층 스퀘어 크로스 프레싱(측면) 왼쪽으로 돌린 후 = 오른쪽 이마 귀뒤+위로 밀고, 오른 광대 앞&아래로 당기기');out.push({h:'③ 눈 높이 · 왼',lines:l2});}
   if(fc.ala==='오')out.push({h:'④ 콧볼 · 오',lines:['Lt 광대 후방경사 & Rt 광대 전방경사']});
   else if(fc.ala==='왼')out.push({h:'④ 콧볼 · 왼',lines:['Rt 광대 후방경사 & Lt 광대 전방경사']});
   if(fc.par&&(fc.clock==='7시'||fc.clock==='6시'||fc.clock==='5시')){
@@ -1036,13 +1043,13 @@ async function solAdminSave(){
 }
 function renderFcodeSol(code){
   var box=document.getElementById('fcodeSol');if(!box)return;
-  var fc=form.fcode||{};
   var manual=code?solGet(code):'';
   var html='';
-  if(manual)html+='<div class="sol-note">직접 입력본</div><div class="sol-big">'+_esc(manual).replace(/\n/g,'<br>')+'</div>';
-  else{var card=solCardHTML(fc);if(card)html+='<div class="sol-note">자동 생성 · 코드에서 조립됨</div>'+card;else html+='<div class="subtle" style="padding:8px 0">항목을 채우면 솔루션이 자동으로 만들어집니다.</div>';}
-  if(isAdmin()&&code)html+='<button class="btn ghost" style="margin-top:8px" onclick="editSol(\''+code+'\')">✏️ 이 코드만 직접 '+(manual?'수정':'덮어쓰기')+'</button>';
-  box.innerHTML=html;
+  if(isAdmin()&&code){
+    if(manual)html+='<div class="sol-note" style="margin-top:8px">이 코드는 직접 입력본으로 덮여있음</div>';
+    html+='<button class="btn ghost" style="margin-top:8px" onclick="editSol(\''+code+'\')">✏️ 이 코드만 직접 '+(manual?'수정':'덮어쓰기')+'</button>';
+  }
+  box.innerHTML=html;   // 솔루션 본문은 [2D 리세팅가이드] 버튼 → 카드 오버레이로만 표시
 }
 function editSol(code){
   var cur=solGet(code),box=document.getElementById('fcodeSol');
@@ -1051,14 +1058,14 @@ function editSol(code){
   var t=document.getElementById('solEdit');if(t)t.focus();
 }
 async function saveSol(code){var t=document.getElementById('solEdit');if(!t)return;await solSet(code,t.value.trim());toast('솔루션 저장됨');renderFcodeSol(code);}
-function showSolOverlay(){
+function showSolOverlay(fromBtn){
   var fc=form.fcode||{},code=form.face_code||fcodeStr(fc);
   var manual=code?solGet(code):'';
   var body=manual?('<div class="sol-big">'+_esc(manual).replace(/\n/g,'<br>')+'</div>'):solCardHTML(fc);
-  if(!body)return;
+  if(!body){if(fromBtn)toast('먼저 코드 항목을 채워주세요');return;}
   var ov=document.getElementById('solOverlay');
   if(!ov){ov=document.createElement('div');ov.id='solOverlay';ov.onclick=function(){ov.style.display='none';};document.body.appendChild(ov);}
-  ov.innerHTML='<div class="sol-ov-inner"><div class="sol-ov-code">'+(code||'코드 미완성')+'</div><div class="sol-ov-body">'+body+'</div><div class="subtle" style="margin-top:16px">화면을 누르면 닫힙니다</div></div>';
+  ov.innerHTML='<div class="sol-ov-inner"><div style="font-size:13px;font-weight:800;color:#8a7fb0;letter-spacing:1px;margin-bottom:6px">🩹 2D 리세팅가이드</div><div class="sol-ov-code">'+(code||'코드 미완성')+'</div><div class="sol-ov-body">'+body+'</div><div class="subtle" style="margin-top:16px">화면을 누르면 닫힙니다</div></div>';
   ov.style.display='flex';
 }
 
