@@ -96,6 +96,34 @@
     background:var(--accent-soft);border-radius:0 12px 12px 0;font-size:15.5px;line-height:1.6}
   .diff b{color:var(--accent)}
 
+  /* feature (페이스 리세팅 특징) */
+  .feat{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:26px}
+  .fc{border:1px solid var(--line);border-top:2px solid var(--accent);border-radius:14px;
+    padding:18px 16px;background:var(--raised)}
+  .fh{font-weight:800;font-size:16.5px;letter-spacing:-.01em}
+  .fs{font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.5}
+  .foot-note{font-size:12.5px;color:var(--muted);margin-top:14px}
+
+  /* before & after gallery */
+  .gallery{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:24px}
+  .gallery img{width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:11px;border:1px solid var(--line);background:var(--line-soft)}
+  @media(max-width:680px){.gallery{grid-template-columns:repeat(2,1fr)}}
+
+  /* contact */
+  .contact{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+  .contact a{display:inline-flex;align-items:center;gap:8px;padding:11px 18px;border-radius:999px;
+    border:1px solid var(--line);background:var(--raised);color:var(--ink);font-weight:700;font-size:14.5px;
+    transition:border-color .15s,transform .15s}
+  .contact a:hover{border-color:var(--accent);transform:translateY(-1px)}
+  .contact a.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+
+  /* education quotes */
+  .quotes-i{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:24px}
+  .quotes-i blockquote{margin:0;background:var(--raised);border:1px solid var(--line);border-top:2px solid var(--accent);border-radius:12px;padding:20px}
+  .quotes-i p{font-size:14.5px;line-height:1.65;color:var(--ink);margin:0 0 12px}
+  .quotes-i cite{font-style:normal;font-size:12.5px;font-weight:700;color:var(--muted)}
+  @media(max-width:680px){.quotes-i{grid-template-columns:1fr}}
+
   /* value */
   .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:24px 0}
   .stat{border:1px solid var(--line);border-radius:14px;padding:20px 18px;background:var(--raised)}
@@ -179,6 +207,53 @@
     </div>
   </div>
 </header>
+
+<section id="what">
+  <div class="wrap">
+    <div class="eyebrow">페이스 리세팅이란</div>
+    <h2 class="stitle">손으로 얼굴 구조를 다시 맞추는 30분</h2>
+    <p class="lead" style="margin-top:16px;max-width:62ch">기구·주사·수술이 아니다. 니트릴 장갑을 낀 손으로 얼굴 구조(두개골 회전·후두골 위치·안면 비대칭)를 <b>읽고</b>, <b>적은 압으로 30분간 '리세팅'</b>해 얼굴 비대칭을 개선하는 건식 기술이다. 피부 표면이 아니라 <b>구조</b>를 다룬다.</p>
+    <div class="feat">
+      <div class="fc"><div class="fh">30분 건식</div><div class="fs">물·제품 없이 손으로. 관리 시간이 짧다.</div></div>
+      <div class="fc"><div class="fh">통증 없음</div><div class="fs">강한 압이 아니라 적은 압으로.</div></div>
+      <div class="fc"><div class="fh">다운타임 없음</div><div class="fs">끝나면 바로 일상 복귀.</div></div>
+      <div class="fc"><div class="fh">부작용 없음</div><div class="fs">절개·주입물이 없다.</div></div>
+    </div>
+    <p class="note big" style="margin-top:22px">보편화된 기술이 아니라, <b>받아보기 전엔 설명하기 어렵다.</b> 그래서 소니드는 이 기술을 <b>표준·용어·교육으로 체계화</b>하고 있고, 무엇인지 알리기 위해 <b>책을 집필 중</b>이다. — 이 '설명 가능하게 만드는 일' 자체가 진입장벽이자 자산이다.</p>
+    <p class="foot-note">※ 효과·경험은 개인차가 있을 수 있으며, 의료 행위가 아닌 미용 관리 기술입니다.</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="eyebrow">이 기술이 만드는 변화</div>
+    <h2 class="stitle">Before &amp; After</h2>
+    <p class="lead" style="margin-top:14px;max-width:56ch">시술 현장에서 축적된 실제 전후 사례. 얼굴 비대칭이 손 관리만으로 개선된 결과입니다.</p>
+    <div class="gallery">
+      <img src="before-after/ba01.jpg" loading="lazy" alt="소니드 Before &amp; After">
+      <img src="before-after/ba02.jpg" loading="lazy" alt="소니드 Before &amp; After">
+      <img src="before-after/ba03.jpg" loading="lazy" alt="소니드 Before &amp; After">
+      <img src="before-after/ba04.jpg" loading="lazy" alt="소니드 Before &amp; After">
+      <img src="before-after/ba05.jpg" loading="lazy" alt="소니드 Before &amp; After">
+      <img src="before-after/ba06.jpg" loading="lazy" alt="소니드 Before &amp; After">
+      <img src="before-after/ba07.jpg" loading="lazy" alt="소니드 Before &amp; After">
+      <img src="before-after/ba08.jpg" loading="lazy" alt="소니드 Before &amp; After">
+    </div>
+    <p class="foot-note">※ 개인차가 있을 수 있는 실제 관리 사례입니다.</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="eyebrow">교육 후기</div>
+    <h2 class="stitle">배운 사람들이 남긴 말</h2>
+    <div class="quotes-i">
+      <blockquote><p>“가장 크게 달라진 건 기술이 아니라 얼굴을 바라보는 시선이었습니다. 좋은 관리는 좋은 손이 아니라 <b>정확한 분석</b>에서 시작된다는 걸 배웠어요.”</p><cite>— 8주 과정 수강생</cite></blockquote>
+      <blockquote><p>“‘아파야 예뻐진다’는 다른 곳과 달리, 소니드는 <b>거의 아프지 않은데도 변화가 눈으로 확인</b>됩니다. 특히 비대칭에 강합니다.”</p><cite>— 윤곽관리 수강생</cite></blockquote>
+      <blockquote><p>“관리 받고 2기까지 들어, 지금은 두 달간 <b>10명 이상을 관리하는 페이스리세터</b>가 되었습니다.”</p><cite>— 페이스 리세팅 2기 수강생</cite></blockquote>
+    </div>
+  </div>
+</section>
 
 <section>
   <div class="wrap">
@@ -297,6 +372,18 @@
         <li>단일 파일 구조라 <b>기술 부채</b>가 있고 클라이언트 잠금은 우회 가능 → 스케일 시 하드닝 필요.</li>
         <li>얼굴 사진 = <b>생체정보(민감정보)</b>. AI 학습·저장의 목적별 동의와 기존 데이터 소급 동의 여부는 전문가 검토 필요(진행 예정). 이를 갖추는 것 자체가 심사·투자에서 신뢰 가점.</li>
       </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="eyebrow">문의 · 채널</div>
+    <h2 class="stitle">이야기 나누고 싶다면</h2>
+    <div class="contact">
+      <a class="pri" href="http://pf.kakao.com/_xkxestG" target="_blank" rel="noopener">💬 카카오톡 채널</a>
+      <a href="https://www.instagram.com/soneed_face" target="_blank" rel="noopener">📷 Instagram @soneed_face</a>
+      <a href="tel:01026239175">📞 010-2623-9175</a>
     </div>
   </div>
 </section>
