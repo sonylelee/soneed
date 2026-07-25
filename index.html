@@ -210,7 +210,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v71 (2026-07-26)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v72 (2026-07-26)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객 리포트</button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">🎓 아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -964,8 +964,8 @@ function composeSolution(fc){
   var rot=(fc.cheek==='오'?' (오른회전 추가)':fc.cheek==='왼'?' (왼회전 추가)':'');   // ②워터슬라이드 = 시프트에 회전 병기
   if(fc.nose==='오'){var ln=['Rt 광대 왼쪽으로 햄버거시프트'+rot+(fc.t==='A'?' (보류)':''),'양쪽 광대 왼쪽으로 밀기','Rt 광대 왼쪽으로 푸싱'];if(fc.ala!=='오')ln.push('오른 턱 위로 들어올려 왼쪽으로 드로잉');out.push({h:'① 코 방향 · 오',lines:ln});}
   else if(fc.nose==='왼'){var lw=['Lt 광대 오른쪽으로 햄버거시프트'+rot+(fc.t==='B'?' (보류)':''),'양쪽 광대 오른쪽으로 밀기','Lt 광대 오른쪽으로 푸싱'];if(fc.ala!=='왼')lw.push('왼 턱 위로 들어올려 오른쪽으로 드로잉');out.push({h:'① 코 방향 · 왼',lines:lw});}
-  if(fc.eye==='오'){var l=['Lt 이마 리프팅'];if(fc.ala==='오')l.push('(+콧볼 오) 왼턱 위로 들어올려 우측으로 드로잉');if(fc.nose==='왼')l.push('(+코방향 왼) 2·3층 스퀘어 크로스 프레싱(측면) 오른쪽으로 돌린 후 = 왼쪽 이마 귀뒤+위로 밀고, 왼 광대 앞&아래로 당기기');out.push({h:'③ 눈 높이 · 오',lines:l});}
-  else if(fc.eye==='왼'){var l2=['Rt 이마 리프팅'];if(fc.ala==='왼')l2.push('(+콧볼 왼) 오른 턱 위로 들어올려 우측으로 드로잉');if(fc.nose==='오')l2.push('(+코방향 오) 2·3층 스퀘어 크로스 프레싱(측면) 왼쪽으로 돌린 후 = 오른쪽 이마 귀뒤+위로 밀고, 오른 광대 앞&아래로 당기기');out.push({h:'③ 눈 높이 · 왼',lines:l2});}
+  if(fc.eye==='오'){var l=['Lt 이마 리프팅'];if(fc.ala==='오')l.push('(+콧볼 오) 왼턱 위로 들어올려 오른쪽으로 드로잉');if(fc.nose==='왼')l.push('(+코방향 왼) 2·3층 스퀘어 크로스 프레싱(측면): 오른쪽으로 돌린 후 왼쪽 이마 귀뒤+위로 밀고 왼 광대 앞&아래로 당기기 / 왼쪽으로 돌린 후 오른쪽 이마 앞+아래로 당기고 오른 광대 뒤&위로 밀기');out.push({h:'③ 눈 높이 · 오',lines:l});}
+  else if(fc.eye==='왼'){var l2=['Rt 이마 리프팅'];if(fc.ala==='왼')l2.push('(+콧볼 왼) 오른 턱 위로 들어올려 왼쪽으로 드로잉');if(fc.nose==='오')l2.push('(+코방향 오) 2·3층 스퀘어 크로스 프레싱(측면): 왼쪽으로 돌린 후 오른쪽 이마 귀뒤+위로 밀고 오른 광대 앞&아래로 당기기 / 오른쪽으로 돌린 후 왼쪽 이마 앞+아래로 당기고 왼 광대 뒤&위로 밀기');out.push({h:'③ 눈 높이 · 왼',lines:l2});}
   if(fc.ala==='오')out.push({h:'④ 콧볼 · 오',lines:['Lt 광대 후방경사 & Rt 광대 전방경사']});
   else if(fc.ala==='왼')out.push({h:'④ 콧볼 · 왼',lines:['Rt 광대 후방경사 & Lt 광대 전방경사']});
   if(fc.par&&(fc.clock==='7시'||fc.clock==='6시'||fc.clock==='5시')){
