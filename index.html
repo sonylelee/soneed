@@ -748,7 +748,32 @@ async function doLogin(){
   catch(e){st.textContent='로그인 실패: '+e.message;}
 }
 function doLogout(){authLogout();closeLogin();}
-async function cloudLoad(){const r=await fetch(sbBase()+'records?select=id,data,updated_at&order=updated_at.desc',{headers:sbHeaders()});if(!r.ok){if(r.status===401||r.status===403){openLogin();}throw new Error('HTTP '+r.status+' '+await r.text());}const rows=await r.json();updMap={};return rows.map(x=>{updMap[x.id]=x.updated_at;return Object.assign({},x.data,{id:x.id});});}
+/* 목록은 사진 제외한 가벼운 필드만 로드 → 편집 시 그 기록만 전체 로드(editRecord) */
+async function cloudLoad(){
+  var lk=FIELDS.map(function(f){return f.k;});
+  ['code','date','therapist','signup','branch','savedBy','thumb'].forEach(function(k){if(lk.indexOf(k)<0)lk.push(k);});
+  var sel=('id,updated_at,'+lk.map(function(k){return k+':data->'+k;}).join(',')).replace(/>/g,'%3E');
+  try{
+    const r=await fetch(sbBase()+'records?select='+sel+'&order=updated_at.desc',{headers:sbHeaders()});
+    if(r.status===401||r.status===403){openLogin();throw new Error('auth');}
+    if(!r.ok) throw new Error('light '+r.status);
+    const rows=await r.json();updMap={};
+    return rows.map(function(x){ updMap[x.id]=x.updated_at; var o={id:x.id,_light:true}; lk.forEach(function(k){ if(x[k]!=null) o[k]=x[k]; }); return o; });
+  }catch(e){
+    if(String(e&&e.message)==='auth') throw e;
+    /* 폴백: 전체 로드(구버전/오류 대비) */
+    const r=await fetch(sbBase()+'records?select=id,data,updated_at&order=updated_at.desc',{headers:sbHeaders()});
+    if(!r.ok){if(r.status===401||r.status===403){openLogin();}throw new Error('HTTP '+r.status+' '+await r.text());}
+    const rows=await r.json();updMap={};
+    return rows.map(x=>{updMap[x.id]=x.updated_at;return Object.assign({},x.data,{id:x.id});});
+  }
+}
+async function fetchFull(id){
+  var r=await fetch(sbBase()+'records?id=eq.'+encodeURIComponent(id)+'&select=data',{headers:sbHeaders()});
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  var j=await r.json(); if(!j.length) throw new Error('기록을 찾지 못했어요');
+  return Object.assign({}, j[0].data, {id:id});
+}
 async function cloudPut(id,dataObj){if(authEmail()){try{dataObj.savedBy=authEmail();}catch(e){}}const r=await fetch(sbBase()+'records',{method:'POST',headers:sbHeaders({Prefer:'resolution=merge-duplicates,return=minimal'}),body:JSON.stringify({id:String(id),data:dataObj,updated_at:new Date().toISOString()})});if(!r.ok)throw new Error('HTTP '+r.status+' '+await r.text());}
 async function cloudSaveRecord(rec){
   const core=JSON.parse(JSON.stringify(rec));
@@ -1571,6 +1596,7 @@ async function saveRecord(){
   const hasPhoto=PHOTO_SLOTS.some(([s])=>form['photo_'+s]);
   if(!form.code&&!hasPhoto){toast('고객 성함이나 사진 중 하나는 입력해 주세요');return;}
   const rec=Object.assign({},form);rec.id=currentId||newId();currentId=rec.id;
+  try{ if(rec.photo_front){ rec.thumb='data:image/jpeg;base64,'+await shrinkForAI(rec.photo_front,160,0.62); } }catch(e){}   // 목록용 작은 썸네일
   let photoFail=false;
   try{await persistRecord(rec);}catch(e){if(e&&e.photoOnly){photoFail=true;}else{toast('저장 실패: '+(e.message||e));return;}}
   const i=records.findIndex(r=>String(r.id)===String(rec.id));if(i>=0)records[i]=rec;else records.unshift(rec);
@@ -1579,7 +1605,9 @@ async function saveRecord(){
   toast(photoFail?'기본정보는 저장됨 · 사진은 용량이 커서 저장 실패':(updateValidation()?'저장되었습니다':'저장됨 · 회전 오류가 남아있어요'));
   document.getElementById('editState').textContent=(form.code||'무제')+' · 저장됨 (편집 중)';document.getElementById('delBtn').style.display='';refreshAll();
 }
-function editRecord(id){const r=records.find(x=>String(x.id)===String(id));if(!r)return;form=Object.assign({},r);currentId=r.id;autoFilled={};renderForm();applyFormToUI();document.getElementById('editState').textContent=(r.code||'무제')+' · 편집 중';document.getElementById('delBtn').style.display='';document.getElementById('autoMsg').innerHTML='';const _fr2=document.getElementById('faceResult');if(_fr2)_fr2.innerHTML='';showView('entry');}
+async function editRecord(id){var r=records.find(x=>String(x.id)===String(id));if(!r)return;
+  if(r._light && mode==='cloud'){ try{ toast('불러오는 중…'); var full=await fetchFull(id); var i=records.findIndex(x=>String(x.id)===String(id)); if(i>=0)records[i]=full; r=full; }catch(e){ toast('기록 불러오기 실패: '+(e.message||e)); return; } }
+  form=Object.assign({},r);currentId=r.id;autoFilled={};renderForm();applyFormToUI();document.getElementById('editState').textContent=(r.code||'무제')+' · 편집 중';document.getElementById('delBtn').style.display='';document.getElementById('autoMsg').innerHTML='';const _fr2=document.getElementById('faceResult');if(_fr2)_fr2.innerHTML='';showView('entry');}
 async function deleteCurrent(){if(!currentId)return;if(!confirm('이 기록을 삭제할까요?'))return;try{await removeRecord(currentId);}catch(e){toast('삭제 실패: '+e.message);return;}records=records.filter(r=>String(r.id)!==String(currentId));clearForm();toast('삭제되었습니다');refreshAll();}
 function clearForm(){form={};currentId=null;autoFilled={};_pendingLeadId=null;renderForm();renderStickyThumbs();document.getElementById('f_notes').value='';document.getElementById('autoMsg').innerHTML='';const _fr=document.getElementById('faceResult');if(_fr)_fr.innerHTML='';document.getElementById('editState').textContent='새 기록을 작성합니다.';document.getElementById('delBtn').style.display='none';updateValidation();}
 function showView(v){
@@ -1609,12 +1637,12 @@ function renderConds(){
 }
 function filtered(){return records.filter(r=>conds.every(c=>!c.v||getVals(r,c.k).includes(c.v)));}
 function applyFilter(){document.getElementById('filterCount').textContent=filtered().length;renderRecList();renderCrosstab();}
-function recPhoto(r){for(const [s] of PHOTO_SLOTS){if(r['photo_'+s])return r['photo_'+s];}return null;}
+function recPhoto(r){for(const [s] of PHOTO_SLOTS){if(r['photo_'+s])return r['photo_'+s];}return r.thumb||null;}
 function chipFor(r,k){let v=r[k];if(v==null||v==='')return'';if(Array.isArray(v))v=v.join(',');const neu=NEUTRAL.includes(v)?' neu':'';return `<span class="chip${neu}">${FMAP[k].label.split(' ')[0].slice(0,4)}:${v}</span>`;}
 function renderRecList(){
   const list=sortList(filtered()),box=document.getElementById('recList');
   if(list.length===0){box.innerHTML=`<div class="empty-note" style="grid-column:1/-1"><b>아직 기록이 없습니다.</b><br>‘기록 입력’ 탭에서 첫 데이터를 저장해 보세요.</div>`;return;}
-  box.innerHTML=list.map(r=>{const p=recPhoto(r);const thumb=p?`<img src="${p}">`:`<span>사진 없음</span>`;const sub=[r.date,r.therapist,r.signup].filter(Boolean).join(' · ');const chips=CHIP_KEYS.map(k=>chipFor(r,k)).filter(Boolean).join('');return `<div class="rec" onclick="editRecord('${r.id}')"><div class="thumb ${p?'':'empty'}">${thumb}</div><div class="meta"><div class="code">${r.code||'무제'}</div><div class="sub">${sub||'&nbsp;'}</div>${(r.savedBy&&r.savedBy!==authEmail())?'<div class="sub" style="color:#C81D74">👤 '+r.savedBy+'</div>':''}<div class="chips">${chips||'<span class="chip k">미입력</span>'}</div></div></div>`;}).join('');
+  box.innerHTML=list.map(r=>{const p=recPhoto(r);const thumb=p?`<img src="${p}" loading="lazy" decoding="async">`:`<span>사진 없음</span>`;const sub=[r.date,r.therapist,r.signup].filter(Boolean).join(' · ');const chips=CHIP_KEYS.map(k=>chipFor(r,k)).filter(Boolean).join('');return `<div class="rec" onclick="editRecord('${r.id}')"><div class="thumb ${p?'':'empty'}">${thumb}</div><div class="meta"><div class="code">${r.code||'무제'}</div><div class="sub">${sub||'&nbsp;'}</div>${(r.savedBy&&r.savedBy!==authEmail())?'<div class="sub" style="color:#C81D74">👤 '+r.savedBy+'</div>':''}<div class="chips">${chips||'<span class="chip k">미입력</span>'}</div></div></div>`;}).join('');
 }
 function fillXtSelects(){const opts='<option value="">(선택)</option>'+FILTERABLE.map(f=>`<option value="${f.k}">${f.label}</option>`).join('');const row=document.getElementById('xtRow'),col=document.getElementById('xtCol');row.innerHTML=opts;col.innerHTML=opts;row.value='zyg_maxilla';col.value='nasolabial';}
 function renderCrosstab(){
@@ -1632,7 +1660,14 @@ function renderCrosstab(){
 /* 백업 · 내보내기 */
 function download(fn,content,mime){const b=new Blob([content],{type:mime});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=fn;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1000);}
 function ts(){const d=new Date(),p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}`;}
-function exportJSON(){if(!records.length){toast('내보낼 기록이 없습니다');return;}download(`soneed_backup_${ts()}.json`,JSON.stringify(records),'application/json');toast(records.length+'건 백업 완료');}
+async function exportJSON(){if(!records.length){toast('내보낼 기록이 없습니다');return;}
+  var data=records;
+  if(mode==='cloud' && records.some(r=>r._light)){
+    toast('전체 데이터(사진 포함) 준비 중…');
+    try{ const r=await fetch(sbBase()+'records?select=id,data&order=updated_at.desc',{headers:sbHeaders()}); if(!r.ok)throw new Error('HTTP '+r.status); const rows=await r.json(); data=rows.map(x=>Object.assign({},x.data,{id:x.id})); }
+    catch(e){ toast('전체 데이터 로드 실패: '+(e.message||e)); return; }
+  }
+  download(`soneed_backup_${ts()}.json`,JSON.stringify(data),'application/json');toast(data.length+'건 백업 완료');}
 async function importJSON(e){const file=e.target.files[0];if(!file)return;e.target.value='';
   try{const arr=JSON.parse(await file.text());if(!Array.isArray(arr))throw 0;let added=0;
     for(const rec of arr){if(!rec)continue;if(!rec.id)rec.id=newId();await persistRecord(rec);const i=records.findIndex(r=>String(r.id)===String(rec.id));if(i>=0)records[i]=rec;else{records.push(rec);added++;}}
