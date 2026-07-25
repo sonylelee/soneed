@@ -179,7 +179,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v56 (2026-07-25)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v58 (2026-07-25)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객 리포트</button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">🎓 아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -410,7 +410,8 @@ const FIELDS=[
  {k:'skull_tilt',g:'2d',label:'투구 기울기',type:'seg',opt:['L','R','중립'],hint:'L=왼쪽 / R=오른쪽으로 기울어짐'},
  {k:'skull_rot',g:'2d',label:'투구 회전 (귀 보이는 쪽)',type:'seg',opt:['L','R','중립']},
  {k:'lateral_vol',g:'2d',label:'측면함유량 많은 쪽',type:'seg',opt:['L','R']},
- {k:'nose_diag',g:'2d',label:'콧대 사선',type:'seg',opt:['L','R','중립']},
+ {k:'nose_diag',g:'2d',label:'콧대 사선 (후두골 6시 중립기준 판독)',type:'seg',opt:['L','R','중립']},
+ {k:'ala_high',g:'2d',label:'콧볼 높은 쪽',type:'seg',opt:['L','R','대칭'],hint:'콧방울(콧볼) 높은 쪽 · 낮은 쪽=광대 전방경사 경향'},
  {k:'curve_apex',g:'2d',label:'CA위치',type:'seg',opt:['미간','코','인중']},
  {k:'waterslide',g:'2d',label:'워터슬라이드',type:'seg',opt:['L','R']},
  {k:'nasolabial',g:'2d',label:'팔자주름 더 심한 곳',type:'seg',opt:['L','R','대칭']},
@@ -894,7 +895,7 @@ function onMulti(e,kind){const files=Array.from(e.target.files||[]).slice(0,3);e
   else{const after={id:newId(),session:'',date:todayStr()};if(!Array.isArray(form.afters))form.afters=[];form.afters.push(after);
     PHOTO_SLOTS.forEach(([s],i)=>{if(files[i])resizeToDataURL(files[i],1280,0.85,d=>{after['photo_'+s]=d;renderAfters();});});
     readExifDate(files[0],d=>{if(d)after.date=d;renderAfters();});renderAfters();}}
-const AFTER_READS=[['occiput_clock','후두골 시간'],['type','타입'],['par_forehead','마루대비 이마'],['par_zygoma','마루대비 광대'],['par_jaw','마루대비 턱']];
+const AFTER_READS=[['type','타입'],['occiput_clock','후두골 시간'],['nose_diag','코 사선'],['eye_lip','눈>입술 먼쪽'],['waterslide','워터슬라이드'],['d_forehead_parietal','마루 두께']];
 function afterField(i,a){const opts='<option value="">회차</option>'+Array.from({length:40},(_,n)=>'<option '+(a.session===(n+1)+'회'?'selected':'')+'>'+(n+1)+'회</option>').join('');
   const thumbs=PHOTO_SLOTS.map(([s,ko])=>{const src=a['photo_'+s];return '<div class="pslot"><div class="photo-drop" style="aspect-ratio:3/4">'+(src?'<img src="'+src+'">':'<div class="ph">'+ko+'</div>')+'</div><label>'+ko+'</label></div>';}).join('');
   const reads=AFTER_READS.map(function(rk){var k=rk[0],ko=rk[1],f=FMAP[k];var o='<option value="">-</option>'+f.opt.filter(function(x){return x!=='';}).map(function(x){return '<option'+(a[k]===x?' selected':'')+' value="'+x+'">'+x+'</option>';}).join('');return '<div class="field" style="max-width:150px"><label>'+ko+'</label><select onchange="form.afters['+i+'][\''+k+'\']=this.value||null;renderAfterCompare()">'+o+'</select></div>';}).join('');
