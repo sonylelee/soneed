@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SONEED / Face OS — 투자·동업 요약</title>
+<meta name="description" content="얼굴 구조를 읽는 표준 — SONEED / Face OS의 현재 빌드·가치·사업모델·로드맵 요약.">
+<meta property="og:title" content="SONEED / Face OS — 투자·동업 요약">
+<meta property="og:description" content="얼굴을 '읽는 표준'을 만드는 회사. 독자 3D 구조 진단 체계를 소프트웨어·AI로 이미 구현해 작동 중.">
+<meta name="robots" content="noindex">
+<style>
+  :root{
+    --paper:#F7F5F2; --raised:#FFFFFF; --ink:#1A1B22; --ink-soft:#4A4750;
+    --muted:#7A7580; --line:#E4DFD9; --line-soft:#EDE9E3;
+    --accent:#C4185C; --accent-soft:#F7E4EC; --navy:#2A3360; --navy-soft:#E8EAF3;
+    --amber:#9A6A1E; --amber-soft:#F5EAD6; --ok:#2F7A55;
+    --font:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,-apple-system,sans-serif;
+    --maxw:880px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --paper:#0F1015; --raised:#171922; --ink:#EBE8EE; --ink-soft:#B7B2BE;
+      --muted:#847E8C; --line:#262834; --line-soft:#1E2029;
+      --accent:#F0468A; --accent-soft:#2A1622; --navy:#9FB0EC; --navy-soft:#191C2C;
+      --amber:#D6A24E; --amber-soft:#231C10; --ok:#5FB488;
+    }
+  }
+  :root[data-theme="light"]{
+    --paper:#F7F5F2; --raised:#FFFFFF; --ink:#1A1B22; --ink-soft:#4A4750;
+    --muted:#7A7580; --line:#E4DFD9; --line-soft:#EDE9E3;
+    --accent:#C4185C; --accent-soft:#F7E4EC; --navy:#2A3360; --navy-soft:#E8EAF3;
+    --amber:#9A6A1E; --amber-soft:#F5EAD6; --ok:#2F7A55;
+  }
+  :root[data-theme="dark"]{
+    --paper:#0F1015; --raised:#171922; --ink:#EBE8EE; --ink-soft:#B7B2BE;
+    --muted:#847E8C; --line:#262834; --line-soft:#1E2029;
+    --accent:#F0468A; --accent-soft:#2A1622; --navy:#9FB0EC; --navy-soft:#191C2C;
+    --amber:#D6A24E; --amber-soft:#231C10; --ok:#5FB488;
+  }
+
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font);
+    font-size:16.5px;line-height:1.75;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 26px}
+  section{padding:52px 0;border-top:1px solid var(--line-soft)}
+  section:first-of-type{border-top:0}
+  h1,h2,h3{text-wrap:balance;margin:0}
+  p{margin:0 0 1em}
+  b,strong{font-weight:700;color:var(--ink)}
+  .eyebrow{font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--accent);margin-bottom:14px}
+  .stitle{font-size:clamp(23px,3.2vw,29px);font-weight:800;letter-spacing:-.01em;line-height:1.2}
+  .lead{color:var(--ink-soft)}
+  .tnum{font-variant-numeric:tabular-nums}
+
+  /* theme toggle */
+  .tt{position:fixed;top:16px;right:16px;z-index:20;width:38px;height:38px;border-radius:50%;
+    border:1px solid var(--line);background:var(--raised);color:var(--ink-soft);cursor:pointer;
+    font-size:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+  .tt:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  /* HERO */
+  .hero{position:relative;overflow:hidden;padding:78px 0 60px;border-top:0}
+  .hero .grid-bg{position:absolute;inset:0;pointer-events:none;opacity:.5;
+    background:
+      linear-gradient(var(--line-soft) 1px,transparent 1px) 0 0/100% 34px,
+      linear-gradient(90deg,var(--line-soft) 1px,transparent 1px) 0 0/34px 100%;
+    -webkit-mask-image:radial-gradient(120% 90% at 78% 12%,#000 0%,transparent 62%);
+    mask-image:radial-gradient(120% 90% at 78% 12%,#000 0%,transparent 62%);}
+  .hero .cross{position:absolute;top:64px;right:34px;width:118px;height:118px;pointer-events:none;opacity:.9}
+  .hero-inner{position:relative}
+  .kicker{display:inline-flex;align-items:center;gap:9px;font-size:12.5px;font-weight:700;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:22px}
+  .kicker .dot{width:7px;height:7px;border-radius:50%;background:var(--accent)}
+  .kicker .b{color:var(--ink)}
+  h1{font-size:clamp(34px,6vw,56px);font-weight:800;letter-spacing:-.025em;line-height:1.06;margin:0 0 22px;max-width:16ch}
+  h1 .hl{color:var(--accent)}
+  .subhead{font-size:clamp(17px,2.2vw,20px);line-height:1.6;color:var(--ink-soft);max-width:52ch;margin:0}
+  .meta{display:flex;flex-wrap:wrap;gap:10px 26px;margin-top:34px;padding-top:22px;border-top:1px solid var(--line)}
+  .meta div{font-size:14px;color:var(--muted)}
+  .meta b{color:var(--ink);font-weight:700}
+
+  /* cards */
+  .cards{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:26px}
+  .card{background:var(--raised);border:1px solid var(--line);border-radius:14px;padding:18px 19px;
+    display:flex;flex-direction:column;gap:7px}
+  .card .top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .card .nm{font-weight:800;font-size:16px}
+  .card .ds{font-size:13.5px;line-height:1.55;color:var(--ink-soft);margin:0}
+  .pill{font-size:11px;font-weight:800;letter-spacing:.04em;padding:3px 10px;border-radius:999px;white-space:nowrap}
+  .pill.run{background:var(--accent-soft);color:var(--accent)}
+  .pill.done{background:var(--navy-soft);color:var(--navy)}
+  .pill.on{background:var(--line-soft);color:var(--muted)}
+  .diff{margin-top:20px;padding:18px 20px;border-left:3px solid var(--accent);
+    background:var(--accent-soft);border-radius:0 12px 12px 0;font-size:15.5px;line-height:1.6}
+  .diff b{color:var(--accent)}
+
+  /* value */
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:24px 0}
+  .stat{border:1px solid var(--line);border-radius:14px;padding:20px 18px;background:var(--raised)}
+  .stat .fig{font-size:clamp(24px,3.6vw,32px);font-weight:800;letter-spacing:-.02em;color:var(--accent);line-height:1.1}
+  .stat .lb{font-size:12.5px;color:var(--muted);margin-top:7px;font-weight:600}
+  .note{font-size:15px;line-height:1.7;color:var(--ink-soft)}
+  .note.big{border-radius:14px;background:var(--navy-soft);padding:18px 20px;color:var(--ink);border:1px solid var(--line)}
+
+  /* flow */
+  .flow{display:flex;align-items:stretch;gap:8px;overflow-x:auto;padding:6px 2px 12px;margin-top:22px}
+  .flow .node{flex:1 0 auto;min-width:104px;text-align:center;background:var(--raised);border:1px solid var(--line);
+    border-radius:12px;padding:14px 12px;font-weight:700;font-size:14px}
+  .flow .node small{display:block;font-weight:600;color:var(--muted);font-size:11.5px;margin-top:4px}
+  .flow .arw{display:flex;align-items:center;color:var(--accent);font-weight:800;flex:0 0 auto}
+  .bullets{display:grid;gap:11px;margin-top:22px;padding:0;list-style:none}
+  .bullets li{display:flex;gap:12px;font-size:15.5px;line-height:1.55;color:var(--ink-soft)}
+  .bullets li::before{content:"";flex:0 0 auto;width:7px;height:7px;border-radius:2px;background:var(--accent);margin-top:9px;transform:rotate(45deg)}
+  .rev{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:22px}
+  .rev .r{border:1px solid var(--line);border-radius:12px;padding:13px 16px;background:var(--raised)}
+  .rev .r .h{font-weight:800;font-size:14.5px}
+  .rev .r .h em{font-style:normal;color:var(--accent);font-weight:800}
+  .rev .r .s{font-size:12.5px;color:var(--muted);margin-top:2px}
+
+  /* roadmap */
+  .road{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:24px}
+  .phase{border-top:2px solid var(--accent);padding-top:15px}
+  .phase .t{font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+  .phase .l{list-style:none;padding:0;margin:11px 0 0;display:grid;gap:8px}
+  .phase .l li{font-size:14.5px;line-height:1.5;color:var(--ink-soft)}
+
+  /* ask + risk */
+  .ask{display:grid;gap:12px;margin-top:22px}
+  .ask .row{display:flex;gap:14px;align-items:baseline;border-bottom:1px solid var(--line-soft);padding-bottom:12px}
+  .ask .row .k{flex:0 0 116px;font-weight:800;font-size:14px;color:var(--navy)}
+  .ask .row .v{font-size:15px;line-height:1.6;color:var(--ink-soft)}
+  .risk{background:var(--amber-soft);border:1px solid color-mix(in srgb,var(--amber) 35%,transparent);
+    border-radius:16px;padding:26px 26px 22px}
+  .risk .eyebrow{color:var(--amber)}
+  .risk ul{margin:0;padding-left:0;list-style:none;display:grid;gap:12px}
+  .risk li{font-size:15px;line-height:1.6;color:var(--ink-soft);padding-left:20px;position:relative}
+  .risk li::before{content:"—";position:absolute;left:0;color:var(--amber);font-weight:800}
+  .risk b{color:var(--ink)}
+
+  footer{padding:30px 0 56px;border-top:1px solid var(--line-soft)}
+  footer p{font-size:13px;color:var(--muted);margin:0}
+
+  @media (max-width:680px){
+    section{padding:40px 0}
+    .cards,.stats,.rev,.road{grid-template-columns:1fr}
+    .ask .row{flex-direction:column;gap:3px}
+    .ask .row .k{flex-basis:auto}
+    .hero .cross{width:80px;height:80px;top:26px;right:22px}
+    .tt{top:12px;right:12px}
+  }
+  @media (prefers-reduced-motion:no-preference){
+    .card,.stat{transition:transform .2s ease, border-color .2s ease}
+    .card:hover,.stat:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--accent) 40%,var(--line))}
+  }
+</style>
+</head>
+<body>
+<button class="tt" id="tt" type="button" aria-label="라이트/다크 전환">◐</button>
+
+<header class="hero">
+  <div class="grid-bg"></div>
+  <svg class="cross" viewBox="0 0 100 100" fill="none" stroke="var(--accent)" stroke-width="1.4" aria-hidden="true">
+    <circle cx="50" cy="50" r="34" opacity=".55"/>
+    <circle cx="50" cy="50" r="3" fill="var(--accent)" stroke="none"/>
+    <path d="M50 6 V30 M50 70 V94 M6 50 H30 M70 50 H94" opacity=".7"/>
+    <path d="M33 40 L50 50 L40 66" opacity=".9"/>
+  </svg>
+  <div class="wrap hero-inner">
+    <div class="kicker"><span class="dot"></span> SONEED <span style="opacity:.4">/</span> <span class="b">FACE&nbsp;OS</span> · 투자 · 동업 요약</div>
+    <h1>얼굴을 <span class="hl">읽는 표준</span>을 만든다</h1>
+    <p class="subhead">얼굴을 '측정'하는 회사가 아니라, 얼굴 구조를 '읽는 표준'을 만드는 회사.
+      독자적 3D 구조 진단 체계를 소프트웨어·AI로 <b>이미 구현해 작동 중</b>입니다.</p>
+    <div class="meta">
+      <div>대표 <b>이소니</b> · 여성 창업가</div>
+      <div>현황 <b>신설법인 창업 예정</b></div>
+      <div>데이터 소스 <b>얼굴윤곽 시술 현장(소니드)</b></div>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <div class="eyebrow">문제</div>
+    <h2 class="stitle">미용·에스테틱 업계엔 얼굴 구조를 읽는 공통 기준이 없다</h2>
+    <p class="lead" style="margin-top:16px;max-width:60ch">관리사마다 진단이 다르니 기록도 다르고, 결과가 데이터로 남지 않는다.
+      얼굴 '구조 변화'를 표준화해 쌓는 데이터베이스가 사실상 없다. — 우리는 그 표준과 데이터를 만든다.</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="eyebrow">지금 "작동 중"인 것</div>
+    <h2 class="stitle">문서가 아니라, 실제로 돌아가는 제품</h2>
+    <div class="cards">
+      <div class="card"><div class="top"><span class="nm">진단 소프트웨어</span><span class="pill run">작동</span></div>
+        <p class="ds">사진 3장 → 얼굴 랜드마크 자동 측정(기울기·회전·후두골 시간) + AI가 촉진 전 차트 초안 자동 생성.</p></div>
+      <div class="card"><div class="top"><span class="nm">안면 코드 시스템</span><span class="pill run">작동</span></div>
+        <p class="ds">얼굴을 7자리 코드로 요약 → 코드에서 시술 솔루션을 자동 조립해 카드로 표시.</p></div>
+      <div class="card"><div class="top"><span class="nm">3D 얼굴 시뮬레이션</span><span class="pill run">작동</span></div>
+        <p class="ds">실제 깊이(z) 기반 회전 + 시술 방향 미리보기 슬라이더.</p></div>
+      <div class="card"><div class="top"><span class="nm">AI 정확도 추적</span><span class="pill run">작동</span></div>
+        <p class="ds">AI 초안 vs 관리사 확정값 저장 → 항목별 오차율 정량 분석(자체 학습 데이터화).</p></div>
+      <div class="card"><div class="top"><span class="nm">구독 SaaS 구조</span><span class="pill run">작동</span></div>
+        <p class="ds">관리사 계정·등급·기능 잠금·서버 하드락.</p></div>
+      <div class="card"><div class="top"><span class="nm">B2C 유입 깔때기</span><span class="pill run">작동</span></div>
+        <p class="ds">무료 셀프 얼굴 밸런스 체험(온디바이스)·동물상·공유카드 → 상담 유입.</p></div>
+      <div class="card"><div class="top"><span class="nm">교육 커리큘럼</span><span class="pill done">완성</span></div>
+        <p class="ds">레벨1(읽기)·2(코드→솔루션)·3(전체차트·원리) 슬라이드.</p></div>
+      <div class="card"><div class="top"><span class="nm">보안 · 백엔드</span><span class="pill on">적용</span></div>
+        <p class="ds">로그인·권한(RLS)·데이터 분리 저장.</p></div>
+    </div>
+    <div class="diff"><b>핵심 차별점</b> — 시중 앱은 눈·코 좌표(2D 랜드마크)를 잰다. 우리는 <b>두개골 회전·후두골 위치·안면 시프트 등 3D 구조를 판정</b>한다. 공개 알고리즘에 없는 독자 체계.</div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="eyebrow">이게 얼마짜리인가</div>
+    <h2 class="stitle">외주로 커밋했다면</h2>
+    <div class="stats">
+      <div class="stat"><div class="fig tnum">₩4천만~1억</div><div class="lb">예상 개발 비용</div></div>
+      <div class="stat"><div class="fig tnum">400~800h+</div><div class="lb">숙련 풀스택 작업량</div></div>
+      <div class="stat"><div class="fig tnum">6~12개월</div><div class="lb">요구사항 포함 기간</div></div>
+    </div>
+    <p class="note">진짜 병목은 돈이 아니라 <b>도메인 소통</b>이다. 개발자는 이 진단 체계를 모른다 — 전문가와 개발이 붙어 몇 달치를 압축한 상태.</p>
+    <p class="note big" style="margin-top:14px">그러나 앱은 <b>'그릇'</b>일 뿐이다. 진짜 자산은 <b>대표의 진단 체계(IP)와 쌓이는 정답 데이터</b> — 개발비로 살 수 없고, AI 오차추적으로 계속 정밀해지는 중이다.</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="eyebrow">사업 모델</div>
+    <h2 class="stitle">교육이 곧 고객 획득 채널이다</h2>
+    <div class="flow">
+      <div class="node">교육<small>일시 매출</small></div>
+      <div class="arw">→</div>
+      <div class="node">구독 전환<small>반복 · MRR</small></div>
+      <div class="arw">→</div>
+      <div class="node">데이터 축적<small>정답 데이터</small></div>
+      <div class="arw">→</div>
+      <div class="node">AI 고도화<small>정확도 ↑</small></div>
+      <div class="arw">→</div>
+      <div class="node">B2B 확장<small>기관 · 모듈</small></div>
+    </div>
+    <ul class="bullets">
+      <li><b>CAC 사실상 0</b> — 광고 대신 교육비를 받으며 고객을 획득한다.</li>
+      <li><b>높은 전환율</b> — 우리 언어(분석 체계)를 배운 관리사는 그 언어로 차트를 쓰려면 우리 SW가 필요하다.</li>
+      <li><b>낮은 이탈(Lock-in)</b> — 고객 차트·사진 이력이 쌓일수록 이전이 어렵다.</li>
+      <li><b>반복매출(MRR)</b> — 구독 기반 매출 구조.</li>
+    </ul>
+    <div class="rev">
+      <div class="r"><div class="h"><em>교육비</em> · 일시</div><div class="s">고객 획득 채널 겸 매출</div></div>
+      <div class="r"><div class="h"><em>구독료</em> · 반복 (핵심)</div><div class="s">SaaS · MRR 지표</div></div>
+      <div class="r"><div class="h"><em>B2B 기관 계약</em> · 반복</div><div class="s">체인 단위 · 객단가 ↑</div></div>
+      <div class="r"><div class="h"><em>인증 · 자격 갱신</em> · 반복</div><div class="s">표준 소유자만 가능</div></div>
+      <div class="r" style="grid-column:1/-1"><div class="h"><em>API · 라이선스</em> · 확장</div><div class="s">타사가 우리 분석 엔진을 사용 (후기 단계)</div></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="eyebrow">로드맵</div>
+    <h2 class="stitle">검증 → 반복매출 → Beauty OS 확장</h2>
+    <div class="road">
+      <div class="phase"><div class="t">단기</div>
+        <ul class="l"><li>데이터 축적(수백~수천 케이스)</li><li>AI 항목별 정확도 확정</li><li>안면 코드 솔루션 검증</li></ul></div>
+      <div class="phase"><div class="t">중기</div>
+        <ul class="l"><li>구독 결제 자동화</li><li>고객용 전후 결과물 · CRM</li><li>인증 관리사 체계</li></ul></div>
+      <div class="phase"><div class="t">장기</div>
+        <ul class="l"><li>B2B 병원 · 체인</li><li>Beauty OS 확장(피부·두피·체형)</li><li>Face OS = 그 첫 모듈</li></ul></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="eyebrow">투자 · 동업 제안</div>
+    <h2 class="stitle">무엇에 쓰고, 누구와 함께 가는가</h2>
+    <div class="ask">
+      <div class="row"><div class="k">자금 용도</div><div class="v">① 데이터 축적·검증 가속 &nbsp; ② 보안·구조 하드닝(스케일 대비) &nbsp; ③ 개인정보 체계·법무 &nbsp; ④ B2C 유입·마케팅</div></div>
+      <div class="row"><div class="k">파트너</div><div class="v">개발 스케일업 · 법무(생체정보) · B2B 영업 채널</div></div>
+      <div class="row" style="border-bottom:0"><div class="k">확장 관점</div><div class="v">대표 내년 초 베트남 이민 예정 — 원격·글로벌 확장 관점의 파트너십 논의 가능</div></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="risk">
+      <div class="eyebrow">솔직한 현황 · 리스크</div>
+      <h2 class="stitle" style="margin-bottom:16px">부풀리지 않는다</h2>
+      <ul>
+        <li>지금은 <b>잘 작동하는 고급 프로토타입~초기 제품</b> 단계. 완성된 엔터프라이즈 SaaS는 아직 아니다.</li>
+        <li>단일 파일 구조라 <b>기술 부채</b>가 있고 클라이언트 잠금은 우회 가능 → 스케일 시 하드닝 필요.</li>
+        <li>얼굴 사진 = <b>생체정보(민감정보)</b>. AI 학습·저장의 목적별 동의와 기존 데이터 소급 동의 여부는 전문가 검토 필요(진행 예정). 이를 갖추는 것 자체가 심사·투자에서 신뢰 가점.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p>이 문서는 투자·동업 논의용 요약이며, IP·법무·재무 판단은 전문가 자문에 따릅니다. · SONEED / Face OS · 2026.07</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var root=document.documentElement, btn=document.getElementById('tt');
+  try{var s=localStorage.getItem('soneed_inv_theme'); if(s)root.setAttribute('data-theme',s);}catch(e){}
+  btn.addEventListener('click',function(){
+    var cur=root.getAttribute('data-theme');
+    if(!cur){cur=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';}
+    var next=cur==='dark'?'light':'dark';
+    root.setAttribute('data-theme',next);
+    try{localStorage.setItem('soneed_inv_theme',next);}catch(e){}
+  });
+})();
+</script>
+</body>
+</html>
