@@ -264,8 +264,9 @@
         <input type="file" id="importInput" accept="application/json,.json" style="display:none" onchange="importJSON(event)">
         <button class="btn ghost" onclick="exportCSV()">CSV 내보내기 (엑셀)</button>
         <button class="btn ghost" id="syncBtn" onclick="loadAll()" style="display:none">↻ 최신 불러오기</button>
+        <button class="btn ghost" id="thumbBtn" onclick="backfillThumbs()">🖼 목록 썸네일 일괄 생성</button>
       </div>
-      <div class="subtle" style="margin-top:8px">JSON 백업엔 사진까지 포함됩니다(전체 복원용). CSV는 표 데이터만(사진 제외) 나와서 엑셀·통계 분석에 씁니다.</div>
+      <div class="subtle" style="margin-top:8px">JSON 백업엔 사진까지 포함됩니다(전체 복원용). CSV는 표 데이터만(사진 제외) 나와서 엑셀·통계 분석에 씁니다.<br>썸네일 생성: 기존 기록도 목록에서 작은 사진이 보이게 합니다(1회, 와이파이 권장).</div>
     </div>
     <div class="card pad" id="filterCard">
       <h2 class="section" style="margin-top:0">필터 <span class="subtle" style="text-transform:none;letter-spacing:0;font-weight:600">조건을 더하면 모두 만족(AND)</span></h2>
@@ -1606,10 +1607,12 @@ async function saveRecord(){
   document.getElementById('editState').textContent=(form.code||'무제')+' · 저장됨 (편집 중)';document.getElementById('delBtn').style.display='';refreshAll();
 }
 async function editRecord(id){var r=records.find(x=>String(x.id)===String(id));if(!r)return;
+  _reportScroll=window.scrollY||document.documentElement.scrollTop||0;_restoreReport=true;
   if(r._light && mode==='cloud'){ try{ toast('불러오는 중…'); var full=await fetchFull(id); var i=records.findIndex(x=>String(x.id)===String(id)); if(i>=0)records[i]=full; r=full; }catch(e){ toast('기록 불러오기 실패: '+(e.message||e)); return; } }
   form=Object.assign({},r);currentId=r.id;autoFilled={};renderForm();applyFormToUI();document.getElementById('editState').textContent=(r.code||'무제')+' · 편집 중';document.getElementById('delBtn').style.display='';document.getElementById('autoMsg').innerHTML='';const _fr2=document.getElementById('faceResult');if(_fr2)_fr2.innerHTML='';showView('entry');}
 async function deleteCurrent(){if(!currentId)return;if(!confirm('이 기록을 삭제할까요?'))return;try{await removeRecord(currentId);}catch(e){toast('삭제 실패: '+e.message);return;}records=records.filter(r=>String(r.id)!==String(currentId));clearForm();toast('삭제되었습니다');refreshAll();}
 function clearForm(){form={};currentId=null;autoFilled={};_pendingLeadId=null;renderForm();renderStickyThumbs();document.getElementById('f_notes').value='';document.getElementById('autoMsg').innerHTML='';const _fr=document.getElementById('faceResult');if(_fr)_fr.innerHTML='';document.getElementById('editState').textContent='새 기록을 작성합니다.';document.getElementById('delBtn').style.display='none';updateValidation();}
+var _reportScroll=0,_restoreReport=false;
 function showView(v){
   if((v==='admin'||v==='academy')&&!isAdmin())v='data';   // 관리·아카데미는 대표만
   document.getElementById('view-entry').style.display=v==='entry'?'':'none';
@@ -1620,7 +1623,9 @@ function showView(v){
   document.getElementById('tabData').classList.toggle('on',v==='data');
   var ta=document.getElementById('tabAdmin'); if(ta)ta.classList.toggle('on',v==='admin');
   var tac=document.getElementById('tabAcademy'); if(tac)tac.classList.toggle('on',v==='academy');
-  if(v==='data'){renderRecList();renderCrosstab();}
+  if(v==='data'){renderRecList();renderCrosstab();
+    if(_restoreReport){var _y=_reportScroll;_restoreReport=false;requestAnimationFrame(function(){window.scrollTo(0,_y);setTimeout(function(){window.scrollTo(0,_y);},60);});}
+  }
   if(v==='admin'){renderStats();renderIncomingLeads();renderAppCustomers();}
   if(v==='academy'){renderAcademyApps();}
 }
@@ -1668,6 +1673,27 @@ async function exportJSON(){if(!records.length){toast('내보낼 기록이 없�
     catch(e){ toast('전체 데이터 로드 실패: '+(e.message||e)); return; }
   }
   download(`soneed_backup_${ts()}.json`,JSON.stringify(data),'application/json');toast(data.length+'건 백업 완료');}
+async function backfillThumbs(){
+  if(mode!=='cloud'){toast('공용 DB(로그인) 상태에서만 가능합니다');return;}
+  if(!confirm('기존 기록에 목록용 썸네일을 만듭니다.\n사진을 다시 올리므로 시간이 걸려요(와이파이 권장). 진행할까요?'))return;
+  var btn=document.getElementById('thumbBtn'),old=btn?btn.textContent:'';if(btn){btn.disabled=true;}
+  toast('전체 기록 불러오는 중…');
+  var rows;
+  try{ const r=await fetch(sbBase()+'records?select=id,data&order=updated_at.desc',{headers:sbHeaders()}); if(!r.ok)throw new Error('HTTP '+r.status); rows=await r.json(); }
+  catch(e){ toast('불러오기 실패: '+(e.message||e)); if(btn){btn.disabled=false;btn.textContent=old;} return; }
+  var todo=rows.filter(function(x){var d=x.data||{};return d.photo_front && !d.thumb;});
+  if(!todo.length){ toast('생성할 썸네일이 없어요(이미 완료)'); if(btn){btn.disabled=false;btn.textContent=old;} return; }
+  var done=0,fail=0;
+  for(var i=0;i<todo.length;i++){
+    if(btn)btn.textContent='생성 중 '+(i+1)+'/'+todo.length+'…';
+    var rec=Object.assign({},todo[i].data,{id:todo[i].id});
+    try{ rec.thumb='data:image/jpeg;base64,'+await shrinkForAI(rec.photo_front,160,0.62); await persistRecord(rec); done++; }
+    catch(e){ fail++; }
+  }
+  if(btn){btn.disabled=false;btn.textContent=old;}
+  toast('완료 · '+done+'건 생성'+(fail?(' · 실패 '+fail):''));
+  await loadAll();
+}
 async function importJSON(e){const file=e.target.files[0];if(!file)return;e.target.value='';
   try{const arr=JSON.parse(await file.text());if(!Array.isArray(arr))throw 0;let added=0;
     for(const rec of arr){if(!rec)continue;if(!rec.id)rec.id=newId();await persistRecord(rec);const i=records.findIndex(r=>String(r.id)===String(rec.id));if(i>=0)records[i]=rec;else{records.push(rec);added++;}}
