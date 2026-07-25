@@ -181,9 +181,10 @@
   /* 안면 코드 */
   .fcode-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:8px}
   .fc-field{display:flex;flex-direction:column;gap:3px;min-width:0}
-  .fc-field label{font-size:12px;color:#666;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .fc-field label{font-size:11.5px;color:#666;font-weight:600;line-height:1.15;min-height:2.05em;display:flex;align-items:flex-end}
   .fc-field select{width:100%;padding:8px 6px;border:1px solid #d7d2e6;border-radius:8px;font-size:15px;background:#fff}
   .fcode-out{margin-top:12px;font-size:28px;font-weight:800;letter-spacing:1px;color:#7c3aed;text-align:center}
+  .fcode-tag{display:inline-block;margin:1px 0 3px;padding:1px 8px;border-radius:6px;background:#f3edfb;color:#7c3aed;font-size:12px;font-weight:800;letter-spacing:.5px}
   .fcode-sol{margin-top:10px}
   .sol-list{display:flex;flex-wrap:wrap}
   .sol-big{font-size:21px;line-height:1.55;font-weight:700;color:#1b1b1b;white-space:pre-wrap;background:#f6f2fd;border:1px solid #e2d7f7;border-radius:12px;padding:14px 16px;text-align:left}
@@ -209,7 +210,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v69 (2026-07-26)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v71 (2026-07-26)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객 리포트</button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">🎓 아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -331,6 +332,7 @@
         <option value="updated" selected>최근 업데이트순</option>
         <option value="date">날짜(회차)순</option>
       </select>
+      <input id="recSearch" oninput="onRecSearch(this.value)" placeholder="🔍 코드·이름 검색 (예: A7 · 왼오오오 · 홍길동)" style="flex:1;min-width:180px;font-size:13px;padding:6px 11px;border:1px solid #D3D7DE;border-radius:8px;background:#fff">
     </div>
     <div id="recList" class="recgrid"></div>
   </section>
@@ -820,7 +822,7 @@ function doLogout(){authLogout();closeLogin();}
 /* 목록은 사진 제외한 가벼운 필드만 로드 → 편집 시 그 기록만 전체 로드(editRecord) */
 async function cloudLoad(){
   var lk=FIELDS.map(function(f){return f.k;});
-  ['code','date','therapist','signup','branch','savedBy','thumb'].forEach(function(k){if(lk.indexOf(k)<0)lk.push(k);});
+  ['code','date','therapist','signup','branch','savedBy','thumb','face_code'].forEach(function(k){if(lk.indexOf(k)<0)lk.push(k);});
   var sel=('id,updated_at,'+lk.map(function(k){return k+':data->'+k;}).join(',')).replace(/>/g,'%3E');
   try{
     const r=await fetch(sbBase()+'records?select='+sel+'&order=updated_at.desc',{headers:sbHeaders()});
@@ -916,10 +918,10 @@ function applyFormToUI(){
 const FCODE=[
  {k:'t',label:'타입',opt:['A','B']},
  {k:'clock',label:'후두골',opt:['7시','6시','5시']},
- {k:'nose',label:'눈>코',opt:['왼','오']},
- {k:'cheek',label:'광대',opt:['왼','오']},
- {k:'eye',label:'눈높이',opt:['왼','오']},
- {k:'ala',label:'콧볼',opt:['왼','오']},
+ {k:'nose',label:'눈>코 (높은 쪽)',opt:['왼','오']},
+ {k:'cheek',label:'광대 (높은 쪽)',opt:['왼','오']},
+ {k:'eye',label:'눈높이 (높은 쪽)',opt:['왼','오']},
+ {k:'ala',label:'콧볼 (높은 쪽)',opt:['왼','오']},
  {k:'par',label:'오른마루',opt:['두꺼움','얇음']}
 ];
 function fcodeStr(o){if(!o)return'';for(var i=0;i<FCODE.length;i++){if(!o[FCODE[i].k])return'';}return o.t+String(o.clock).replace('시','')+'-'+o.nose+o.cheek+o.eye+o.ala+'-'+(o.par==='두꺼움'?'T':'F');}
@@ -956,8 +958,8 @@ function composeSolution(fc){
   if(!fc)return[];var out=[];
   if(fc.t==='A')out.push({h:'타입 A',lines:['Rt 이마 리프팅','Rt 광대 사선내리기','왼쪽으로 문어']});
   else if(fc.t==='B')out.push({h:'타입 B',lines:['Lt 이마 리프팅','Lt 광대 사선내리기','오른쪽으로 문어']});
-  if(fc.clock==='7시')out.push({h:'후두골 7시',lines:['Rt 유양돌기 위·앞으로 풀링','Lt 귀 뒤에서 오른쪽으로 필러링','Lt C0 바운스']});
-  else if(fc.clock==='5시')out.push({h:'후두골 5시',lines:['Lt 유양돌기 위·앞으로 풀링','Rt 귀 뒤에서 왼쪽으로 필러링','Rt C0 바운스']});
+  if(fc.clock==='7시')out.push({h:'후두골 7시',lines:['Rt 유양돌기 위·앞으로 풀링','Lt 귀 뒤에서 오른쪽으로 필러링','Lt C0 바운스 (촉진 후 진행)']});
+  else if(fc.clock==='5시')out.push({h:'후두골 5시',lines:['Lt 유양돌기 위·앞으로 풀링','Rt 귀 뒤에서 왼쪽으로 필러링','Rt C0 바운스 (촉진 후 진행)']});
   else if(fc.clock==='6시')out.push({h:'후두골 6시',lines:['없음']});
   var rot=(fc.cheek==='오'?' (오른회전 추가)':fc.cheek==='왼'?' (왼회전 추가)':'');   // ②워터슬라이드 = 시프트에 회전 병기
   if(fc.nose==='오'){var ln=['Rt 광대 왼쪽으로 햄버거시프트'+rot+(fc.t==='A'?' (보류)':''),'양쪽 광대 왼쪽으로 밀기','Rt 광대 왼쪽으로 푸싱'];if(fc.ala!=='오')ln.push('오른 턱 위로 들어올려 왼쪽으로 드로잉');out.push({h:'① 코 방향 · 오',lines:ln});}
@@ -1869,14 +1871,17 @@ function renderConds(){
   box.innerHTML=conds.map((c,i)=>{const fopts=FILTERABLE.map(f=>`<option value="${f.k}" ${f.k===c.k?'selected':''}>${f.label}</option>`).join('');const vopts='<option value="">(값 선택)</option>'+FFMAP[c.k].opt.map(o=>`<option ${o===c.v?'selected':''}>${o}</option>`).join('');return `<div class="cond"><select onchange="conds[${i}].k=this.value;conds[${i}].v='';renderConds()">${fopts}</select><span class="subtle">=</span><select onchange="conds[${i}].v=this.value;applyFilter()">${vopts}</select><button class="x" onclick="conds.splice(${i},1);renderConds()">×</button></div>`;}).join('');
   applyFilter();
 }
-function filtered(){return records.filter(r=>conds.every(c=>!c.v||getVals(r,c.k).includes(c.v)));}
+var _recQuery='';
+function onRecSearch(v){_recQuery=(v||'').trim().toLowerCase();renderRecList();}
+function _matchQuery(r){ if(!_recQuery)return true; var hay=((r.face_code||'')+' '+(r.code||'')).toLowerCase(); return hay.indexOf(_recQuery)>=0; }
+function filtered(){return records.filter(r=>_matchQuery(r)&&conds.every(c=>!c.v||getVals(r,c.k).includes(c.v)));}
 function applyFilter(){document.getElementById('filterCount').textContent=filtered().length;renderRecList();renderCrosstab();}
 function recPhoto(r){for(const [s] of PHOTO_SLOTS){if(r['photo_'+s])return r['photo_'+s];}return r.thumb||null;}
 function chipFor(r,k){let v=r[k];if(v==null||v==='')return'';if(Array.isArray(v))v=v.join(',');const neu=NEUTRAL.includes(v)?' neu':'';return `<span class="chip${neu}">${FMAP[k].label.split(' ')[0].slice(0,4)}:${v}</span>`;}
 function renderRecList(){
   const list=sortList(filtered()),box=document.getElementById('recList');
   if(list.length===0){box.innerHTML=`<div class="empty-note" style="grid-column:1/-1"><b>아직 기록이 없습니다.</b><br>‘기록 입력’ 탭에서 첫 데이터를 저장해 보세요.</div>`;return;}
-  box.innerHTML=list.map(r=>{const p=recPhoto(r);const thumb=p?`<img src="${p}" loading="lazy" decoding="async">`:`<span>사진 없음</span>`;const sub=[r.date,r.therapist,r.signup].filter(Boolean).join(' · ');const chips=CHIP_KEYS.map(k=>chipFor(r,k)).filter(Boolean).join('');return `<div class="rec" onclick="editRecord('${r.id}')"><div class="thumb ${p?'':'empty'}">${thumb}</div><div class="meta"><div class="code">${r.code||'무제'}</div><div class="sub">${sub||'&nbsp;'}</div>${(r.savedBy&&r.savedBy!==authEmail())?'<div class="sub" style="color:#C81D74">👤 '+r.savedBy+'</div>':''}<div class="chips">${chips||'<span class="chip k">미입력</span>'}</div></div></div>`;}).join('');
+  box.innerHTML=list.map(r=>{const p=recPhoto(r);const thumb=p?`<img src="${p}" loading="lazy" decoding="async">`:`<span>사진 없음</span>`;const sub=[r.date,r.therapist,r.signup].filter(Boolean).join(' · ');const chips=CHIP_KEYS.map(k=>chipFor(r,k)).filter(Boolean).join('');return `<div class="rec" onclick="editRecord('${r.id}')"><div class="thumb ${p?'':'empty'}">${thumb}</div><div class="meta"><div class="code">${r.code||'무제'}</div>${r.face_code?`<div class="fcode-tag">${r.face_code}</div>`:''}<div class="sub">${sub||'&nbsp;'}</div>${(r.savedBy&&r.savedBy!==authEmail())?'<div class="sub" style="color:#C81D74">👤 '+r.savedBy+'</div>':''}<div class="chips">${chips||'<span class="chip k">미입력</span>'}</div></div></div>`;}).join('');
 }
 function fillXtSelects(){const opts='<option value="">(선택)</option>'+FILTERABLE.map(f=>`<option value="${f.k}">${f.label}</option>`).join('');const row=document.getElementById('xtRow'),col=document.getElementById('xtCol');row.innerHTML=opts;col.innerHTML=opts;row.value='zyg_maxilla';col.value='nasolabial';}
 function renderCrosstab(){
