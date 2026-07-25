@@ -123,6 +123,13 @@
   .rec .thumb img{width:100%;height:100%;object-fit:cover} .rec .thumb.empty{color:var(--faint);font-size:12px;font-weight:700}
   .rec .meta{padding:10px 11px} .rec .meta .code{font-weight:800} .rec .meta .sub{font-size:11.5px;color:var(--muted);margin-top:2px}
   .rec .chips{display:flex;gap:4px;flex-wrap:wrap;margin-top:7px}
+  @media(max-width:600px){
+    .recgrid{grid-template-columns:repeat(auto-fill,minmax(102px,1fr));gap:8px}
+    .rec .meta{padding:6px 7px}
+    .rec .meta .code{font-size:13px}
+    .rec .meta .sub{font-size:10px;margin-top:1px}
+    .rec .chips{display:none}
+  }
   .chip{font-size:10.5px;font-weight:800;padding:2px 6px;border-radius:5px;background:var(--side-soft);color:var(--side)}
   .chip.neu{background:var(--neutral-soft);color:var(--neutral)} .chip.k{background:var(--surface2);color:var(--muted)}
   .cond{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap} .cond select{width:auto;min-width:200px}
@@ -185,7 +192,7 @@
     <div class="toolbar">
       <div class="grow subtle" id="editState">새 기록을 작성합니다.</div>
       <button class="btn auto" id="autoBtn" onclick="document.getElementById('chartInput').click()">📄 종이차트 사진으로 자동 채우기</button>
-      <input type="file" id="chartInput" accept="image/*" style="display:none" onchange="onChartPhoto(event)">
+      <input type="file" id="chartInput" accept="image/*,.heic,.heif" style="display:none" onchange="onChartPhoto(event)">
       <button class="btn auto" id="faceBtn" onclick="onFaceAnalyze()">🙂 얼굴사진으로 분석 (초안)</button>
       <button class="btn ghost" onclick="clearForm()">새로 작성</button>
     </div>
@@ -196,7 +203,7 @@
       <div class="photos" id="photos"></div>
       <button class="btn ghost" style="margin-top:10px;width:100%" onclick="document.getElementById('main3Input').click()">사진 3장 한 번에 넣기 (앨범에서 여러 장 선택)</button>
       <div id="stickyThumbs" class="sticky-thumbs"></div>
-      <input type="file" id="main3Input" accept="image/*" multiple style="display:none" onchange="onMulti(event,'main')">
+      <input type="file" id="main3Input" accept="image/*,.heic,.heif" multiple style="display:none" onchange="onMulti(event,'main')">
 
       <h2 class="section">기본 정보</h2>
       <div class="grid" id="grid-meta"></div>
@@ -211,7 +218,8 @@
       <div id="afters"></div>
       <button class="btn ghost" style="width:100%" onclick="document.getElementById('afterInput').click()">＋ 애프터 추가 (사진 3장 한 번에)</button>
       <button class="btn primary" style="width:100%;margin-top:8px" onclick="makeAfterImage()">📸 고객에게 보낼 전/후 이미지 만들기</button>
-      <input type="file" id="afterInput" accept="image/*" multiple style="display:none" onchange="onMulti(event,'after')">
+      <div id="afterCompare" style="margin-top:12px"></div>
+      <input type="file" id="afterInput" accept="image/*,.heic,.heif" multiple style="display:none" onchange="onMulti(event,'after')">
       <h2 class="section">특이사항</h2>
       <textarea id="f_notes" placeholder="관리 순서, 특이사항, 다음 회차 계획 등"></textarea>
       <div class="actions">
@@ -796,7 +804,7 @@ function markOk(k,el){if(!form._src)form._src={};if(!form._ai)form._ai={};form._
 function renderForm(){
   const groups={meta:'grid-meta','2d':'grid-2d',lr:'grid-lr',rot:'grid-rot'};
   for(const g in groups)document.getElementById(groups[g]).innerHTML=FIELDS.filter(f=>f.g===g).map(fieldHTML).join('');
-  document.getElementById('photos').innerHTML=PHOTO_SLOTS.map(([s,ko])=>`<div class="pslot"><div class="photo-drop" id="drop_${s}" onclick="pickPhoto('${s}')"><div class="ph">${ko}<br><small>클릭</small></div></div><input type="file" accept="image/*" id="pin_${s}" style="display:none" onchange="onPhoto('${s}',event)"><label>${ko}</label></div>`).join('');
+  document.getElementById('photos').innerHTML=PHOTO_SLOTS.map(([s,ko])=>`<div class="pslot"><div class="photo-drop" id="drop_${s}" onclick="pickPhoto('${s}')"><div class="ph">${ko}<br><small>클릭</small></div></div><input type="file" accept="image/*,.heic,.heif" id="pin_${s}" style="display:none" onchange="onPhoto('${s}',event)"><label>${ko}</label></div>`).join('');
   renderAfters();
 }
 function pickSeg(k,v,btn){const box=btn.parentElement,already=form[k]===v;box.querySelectorAll('button').forEach(b=>b.classList.remove('on'));if(already)form[k]=null;else{form[k]=v;btn.classList.add('on');}markOk(k,btn);updateValidation();}
@@ -833,7 +841,23 @@ function updateValidation(){
 /* 사진 */
 let photoTarget=null;
 function pickPhoto(s){photoTarget=s;document.getElementById('pin_'+s).click();}
-function resizeToDataURL(file,max,q,cb){const rd=new FileReader();rd.onload=()=>{const img=new Image();img.onload=()=>{const sc=Math.min(1,max/Math.max(img.width,img.height));const cv=document.createElement('canvas');cv.width=Math.round(img.width*sc);cv.height=Math.round(img.height*sc);cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);cb(cv.toDataURL('image/jpeg',q));};img.src=rd.result;};rd.readAsDataURL(file);}
+function loadScriptOnce(src){return new Promise(function(res,rej){if(document.querySelector('script[data-lib="'+src+'"]'))return res();var s=document.createElement('script');s.src=src;s.setAttribute('data-lib',src);s.onload=res;s.onerror=rej;document.head.appendChild(s);});}
+/* HEIC/HEIF → JPEG 변환(브라우저에서 못 읽는 경우). iOS가 자동 JPEG로 주면 그냥 통과 */
+async function normHeic(file){
+  try{
+    var isHeic=/heic|heif/i.test(file.type||'')||/\.(heic|heif)$/i.test(file.name||'');
+    if(!isHeic) return file;
+    if(!window.heic2any) await loadScriptOnce('https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js');
+    var blob=await window.heic2any({blob:file,toType:'image/jpeg',quality:0.92});
+    if(Array.isArray(blob)) blob=blob[0];
+    return new File([blob],(file.name||'photo').replace(/\.(heic|heif)$/i,'.jpg'),{type:'image/jpeg'});
+  }catch(e){ return file; }
+}
+function resizeToDataURL(file,max,q,cb){
+  normHeic(file).then(function(f){
+    const rd=new FileReader();rd.onload=()=>{const img=new Image();img.onload=()=>{const sc=Math.min(1,max/Math.max(img.width,img.height));const cv=document.createElement('canvas');cv.width=Math.round(img.width*sc);cv.height=Math.round(img.height*sc);cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);cb(cv.toDataURL('image/jpeg',q));};img.onerror=()=>toast('사진을 읽지 못했어요 (HEIC면 잠시 후 다시 시도해 주세요)');img.src=rd.result;};rd.readAsDataURL(f);
+  });
+}
 function todayStr(){return new Date().toISOString().slice(0,10);}
 function readExifDate(file,cb){const r=new FileReader();r.onerror=()=>cb(null);r.onload=()=>{try{cb(parseExifDate(new DataView(r.result)));}catch(e){cb(null);}};r.readAsArrayBuffer(file.slice(0,256*1024));}
 function parseExifDate(dv){if(dv.byteLength<4||dv.getUint16(0)!==0xFFD8)return null;let off=2;const len=dv.byteLength;while(off+4<len){if(dv.getUint8(off)!==0xFF){off++;continue;}const marker=dv.getUint8(off+1);if(marker===0xE1){const size=dv.getUint16(off+2);const s=off+4;if(s+6<len&&dv.getUint32(s)===0x45786966)return parseExifIFD(dv,s+6);off+=2+size;}else if(marker===0xD8||marker===0xD9||(marker>=0xD0&&marker<=0xD7)){off+=2;}else{const size=dv.getUint16(off+2);off+=2+size;}}return null;}
@@ -844,47 +868,132 @@ function onMulti(e,kind){const files=Array.from(e.target.files||[]).slice(0,3);e
   else{const after={id:newId(),session:'',date:todayStr()};if(!Array.isArray(form.afters))form.afters=[];form.afters.push(after);
     PHOTO_SLOTS.forEach(([s],i)=>{if(files[i])resizeToDataURL(files[i],1280,0.85,d=>{after['photo_'+s]=d;renderAfters();});});
     readExifDate(files[0],d=>{if(d)after.date=d;renderAfters();});renderAfters();}}
+const AFTER_READS=[['occiput_clock','후두골 시간'],['type','타입'],['par_forehead','마루대비 이마'],['par_zygoma','마루대비 광대'],['par_jaw','마루대비 턱']];
 function afterField(i,a){const opts='<option value="">회차</option>'+Array.from({length:40},(_,n)=>'<option '+(a.session===(n+1)+'회'?'selected':'')+'>'+(n+1)+'회</option>').join('');
   const thumbs=PHOTO_SLOTS.map(([s,ko])=>{const src=a['photo_'+s];return '<div class="pslot"><div class="photo-drop" style="aspect-ratio:3/4">'+(src?'<img src="'+src+'">':'<div class="ph">'+ko+'</div>')+'</div><label>'+ko+'</label></div>';}).join('');
+  const reads=AFTER_READS.map(function(rk){var k=rk[0],ko=rk[1],f=FMAP[k];var o='<option value="">-</option>'+f.opt.filter(function(x){return x!=='';}).map(function(x){return '<option'+(a[k]===x?' selected':'')+' value="'+x+'">'+x+'</option>';}).join('');return '<div class="field" style="max-width:150px"><label>'+ko+'</label><select onchange="form.afters['+i+'][\''+k+'\']=this.value||null;renderAfterCompare()">'+o+'</select></div>';}).join('');
   return '<div class="card pad" style="margin-bottom:10px"><div class="rowline" style="margin-bottom:10px">'
-    +'<div class="field" style="max-width:130px"><label>회차</label><select onchange="form.afters['+i+'].session=this.value||null">'+opts+'</select></div>'
+    +'<div class="field" style="max-width:130px"><label>회차</label><select onchange="form.afters['+i+'].session=this.value||null;renderAfterCompare()">'+opts+'</select></div>'
     +'<div class="field" style="max-width:190px"><label>날짜</label><input type="date" value="'+(a.date||'')+'" onchange="form.afters['+i+'].date=this.value||null;renderAfters()"></div>'
-    +'<div style="margin-left:auto"><button class="btn danger" style="padding:8px 12px;font-size:12px" onclick="form.afters.splice('+i+',1);renderAfters()">삭제</button></div>'
-    +'</div><div class="photos">'+thumbs+'</div></div>';}
+    +'<div style="margin-left:auto;display:flex;gap:6px;align-items:flex-end"><button class="btn auto" style="padding:8px 12px;font-size:12px;white-space:nowrap" onclick="onAfterFaceAnalyze('+i+')">🤖 AI 판독</button><button class="btn danger" style="padding:8px 12px;font-size:12px" onclick="form.afters.splice('+i+',1);renderAfters()">삭제</button></div>'
+    +'</div>'
+    +'<div class="rowline" style="margin-bottom:10px;flex-wrap:wrap;gap:8px"><div style="width:100%;font-size:12px;color:var(--muted);font-weight:700;margin-bottom:-2px">판독값 (이 회차 · 촉진 후 기록)</div>'+reads+'</div>'
+    +'<div class="photos">'+thumbs+'</div></div>';}
 /* 고객에게 보낼 전/후 비교 이미지 — BEFORE(첫 정면) | AFTER(최신 애프터). 얼굴크롭으로 프레이밍 일관 */
 function fpDrawCover(c,img,x,y,w,h){var ir=img.width/img.height,rr=w/h,sw,sh,sx,sy;if(ir>rr){sh=img.height;sw=sh*rr;sx=(img.width-sw)/2;sy=0;}else{sw=img.width;sh=sw/rr;sx=0;sy=(img.height-sh)/2;}c.drawImage(img,sx,sy,sw,sh,x,y,w,h);}
-async function makeAfterImage(){
-  var before=form.photo_front;
-  if(!before){toast('BEFORE(정면 사진)가 없습니다');return;}
-  var afters=(form.afters||[]).filter(function(a){return a.photo_front;});
-  if(!afters.length){toast('애프터 사진을 먼저 추가하세요');return;}
-  var after=afters[afters.length-1];
-  toast('전/후 이미지 만드는 중…');
-  try{
-    var bi=await faceCropCanvas(before,1400), ai=await faceCropCanvas(after.photo_front,1400);
-    var TW=460,TH=613,PAD=30,GAP=20,TOP=96,W=PAD*2+TW*2+GAP,H=TOP+TH+64;
-    var SS=2; // 슈퍼샘플링(2배)로 선명하게 렌더 후 다운스케일
-    var cv=document.createElement('canvas');cv.width=W*SS;cv.height=H*SS;var c=cv.getContext('2d');
-    c.scale(SS,SS);c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';
-    c.fillStyle='#fff';c.fillRect(0,0,W,H);
-    c.fillStyle='#C81D74';c.font='bold 30px -apple-system,sans-serif';c.textAlign='center';c.fillText('SONEED   '+(form.code||''),W/2,50);
-    c.fillStyle='#999';c.font='15px sans-serif';c.fillText((form.branch||'')+'   얼굴윤곽 3D 분석',W/2,77);
-    function tile(label,img,dt,x){var y=TOP;
-      c.save();c.beginPath();c.rect(x,y,TW,TH);c.clip();fpDrawCover(c,img,x,y,TW,TH);c.restore();
-      c.fillStyle='rgba(200,29,116,.92)';c.fillRect(x,y,TW,42);c.fillStyle='#fff';c.font='bold 21px sans-serif';c.textAlign='center';c.fillText(label,x+TW/2,y+29);
-      c.fillStyle='rgba(0,0,0,.55)';c.fillRect(x,y+TH-36,TW,36);c.fillStyle='#fff';c.font='16px sans-serif';c.fillText(dt,x+TW/2,y+TH-12);
-      c.strokeStyle='#e6e6ea';c.lineWidth=1;c.strokeRect(x+0.5,y+0.5,TW,TH);}
-    tile('BEFORE',bi,form.date||'첫 방문',PAD);
-    tile('AFTER',ai,(after.date||'')+(after.session?(' · '+after.session):''),PAD+TW+GAP);
-    c.fillStyle='#bbb';c.font='13px sans-serif';c.textAlign='center';c.fillText('SONEED 얼굴윤곽 교정',W/2,H-20);
-    var url=cv.toDataURL('image/jpeg',0.92);
-    var o=document.getElementById('photoZoom');if(!o){o=document.createElement('div');o.id='photoZoom';o.onclick=function(){o.style.display='none';};document.body.appendChild(o);}
-    o.innerHTML='<img src="'+url+'"><div style="position:fixed;bottom:14px;left:0;right:0;text-align:center;color:#fff;font-size:13px">사진을 길게 눌러 저장 · 화면 탭하면 닫기</div>';o.style.display='flex';
-    var a=document.createElement('a');a.href=url;a.download='soneed_전후_'+(form.code||'')+'.jpg';document.body.appendChild(a);a.click();a.remove();
-    toast('전/후 이미지 생성 완료');
-  }catch(e){toast('실패: '+(e&&e.message||e));}
+/* 전/후 이미지 — 편집(드래그 이동·슬라이더 확대) 후 💾 저장 */
+var _baState={before:null,after:null,meta:null};
+var BA_FW=210,BA_FH=280;
+function makeAfterImage(){
+  var shots=[];
+  if(form.photo_front) shots.push({label:'초기 · '+(form.date||'첫 방문'), src:form.photo_front, dt:form.date||'첫 방문'});
+  (form.afters||[]).filter(function(a){return a.photo_front;}).slice().sort(function(a,b){return (a.date||'9999').localeCompare(b.date||'9999');}).forEach(function(a){
+    shots.push({label:(a.session||'회차')+(a.date?(' · '+a.date):''), src:a.photo_front, dt:(a.date||'')+(a.session?(' · '+a.session):'')});
+  });
+  if(shots.length<2){toast('비교하려면 정면 사진이 2장 이상 필요해요 (초기 + 애프터)');return;}
+  openBAEditor(shots, {code:form.code||'', branch:form.branch||''});
 }
-function renderAfters(){const box=document.getElementById('afters');if(!box)return;if(Array.isArray(form.afters))form.afters.sort((a,b)=>(a.date||'9999-99').localeCompare(b.date||'9999-99'));const arr=Array.isArray(form.afters)?form.afters:[];box.innerHTML=arr.map((a,i)=>afterField(i,a)).join('');}
+function baTileHTML(which,label){
+  return '<div style="text-align:center">'
+    +'<select id="basel_'+which+'" onchange="baPick(\''+which+'\')" style="width:'+BA_FW+'px;margin-bottom:8px;padding:7px 8px;border-radius:8px;border:1px solid #3a3f4c;background:#1b1e26;color:#fff;font-size:13px;font-weight:700"></select>'
+    +'<div class="ba-frame" data-w="'+which+'" style="width:'+BA_FW+'px;height:'+BA_FH+'px;overflow:hidden;position:relative;border-radius:12px;background:#000;touch-action:none;cursor:grab">'
+      +'<img id="baimg_'+which+'" draggable="false" style="position:absolute;left:0;top:0;transform-origin:0 0;user-select:none;-webkit-user-drag:none;max-width:none">'
+      +'<div style="position:absolute;left:0;top:0;right:0;background:rgba(200,29,116,.92);color:#fff;font-weight:800;font-size:13px;padding:5px 0;text-align:center;pointer-events:none">'+label+'</div>'
+    +'</div>'
+    +'<input type="range" min="1" max="3.2" step="0.02" value="1" oninput="baZoom(\''+which+'\',this.value)" style="width:'+BA_FW+'px;margin-top:8px">'
+  +'</div>';
+}
+function baModal(){
+  var m=document.getElementById('baEditor'); if(m) return m;
+  m=document.createElement('div'); m.id='baEditor';
+  m.style.cssText='position:fixed;inset:0;background:rgba(15,17,25,.93);z-index:9999;display:none;flex-direction:column;align-items:center;justify-content:center;padding:16px';
+  m.innerHTML='<div style="color:#fff;font-weight:800;font-size:16px;margin-bottom:2px">전/후 이미지 편집</div>'
+    +'<div style="color:#9aa2b1;font-size:12px;margin-bottom:12px">사진을 <b style="color:#fff">드래그</b>해 위치 이동 · <b style="color:#fff">슬라이더</b>로 확대/축소</div>'
+    +'<div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center">'+baTileHTML('before','BEFORE')+baTileHTML('after','AFTER')+'</div>'
+    +'<div style="display:flex;gap:10px;margin-top:16px">'
+      +'<button class="btn ghost" onclick="baModal().style.display=\'none\'" style="min-width:84px">취소</button>'
+      +'<button class="btn ghost" onclick="baReset()" style="min-width:84px">초기화</button>'
+      +'<button class="btn primary" onclick="baSave()" style="min-width:150px">💾 저장하기</button>'
+    +'</div>';
+  document.body.appendChild(m); return m;
+}
+function openBAEditor(shots, meta){
+  var m=baModal(); m.style.display='flex'; _baState.meta=meta; _baState.shots=shots;
+  ['before','after'].forEach(function(w){
+    var sel=document.getElementById('basel_'+w);
+    sel.innerHTML=shots.map(function(sh,i){return '<option value="'+i+'">'+_esc(sh.label)+'</option>';}).join('');
+    sel.value=(w==='before')?0:(shots.length-1);
+  });
+  baPick('before'); baPick('after');
+}
+function baPick(w){
+  var shots=_baState.shots||[]; var sel=document.getElementById('basel_'+w); var sh=shots[parseInt(sel&&sel.value)]; if(!sh)return;
+  var img=document.getElementById('baimg_'+w); var im=new Image();
+  im.onload=function(){ _baState[w]={iw:im.naturalWidth,ih:im.naturalHeight,zoom:1,tx:0,ty:0,el:img,src:sh.src,dt:sh.dt}; img.src=sh.src; baInit(w); baWire(w); };
+  im.src=sh.src;
+}
+function baInit(w){ var st=_baState[w]; if(!st)return; st.base=Math.max(BA_FW/st.iw,BA_FH/st.ih); st.zoom=1; baApply(w,true); var fr=document.querySelector('.ba-frame[data-w="'+w+'"]'); var sl=fr&&fr.parentNode.querySelector('input[type=range]'); if(sl)sl.value=1; }
+function baClamp(w){ var st=_baState[w]; var S=st.base*st.zoom; st.tx=Math.min(0,Math.max(BA_FW-st.iw*S,st.tx)); st.ty=Math.min(0,Math.max(BA_FH-st.ih*S,st.ty)); }
+function baApply(w,center){ var st=_baState[w]; if(!st)return; var S=st.base*st.zoom; if(center){st.tx=(BA_FW-st.iw*S)/2;st.ty=(BA_FH-st.ih*S)/2;} baClamp(w); st.el.style.transform='translate('+st.tx+'px,'+st.ty+'px) scale('+S+')'; }
+function baZoom(w,val){ var st=_baState[w]; if(!st)return; var oldS=st.base*st.zoom, cx=(BA_FW/2-st.tx)/oldS, cy=(BA_FH/2-st.ty)/oldS; st.zoom=parseFloat(val); var S=st.base*st.zoom; st.tx=BA_FW/2-cx*S; st.ty=BA_FH/2-cy*S; baClamp(w); st.el.style.transform='translate('+st.tx+'px,'+st.ty+'px) scale('+S+')'; }
+function baWire(w){ var fr=document.querySelector('.ba-frame[data-w="'+w+'"]'); if(!fr||fr._wired)return; fr._wired=true; var drag=false,lx=0,ly=0;
+  fr.addEventListener('pointerdown',function(e){drag=true;lx=e.clientX;ly=e.clientY;try{fr.setPointerCapture(e.pointerId);}catch(_){}fr.style.cursor='grabbing';});
+  fr.addEventListener('pointermove',function(e){if(!drag)return;var st=_baState[w];st.tx+=(e.clientX-lx);st.ty+=(e.clientY-ly);lx=e.clientX;ly=e.clientY;baClamp(w);var S=st.base*st.zoom;st.el.style.transform='translate('+st.tx+'px,'+st.ty+'px) scale('+S+')';});
+  var end=function(){drag=false;fr.style.cursor='grab';};
+  fr.addEventListener('pointerup',end);fr.addEventListener('pointercancel',end);fr.addEventListener('pointerleave',end);
+}
+function baReset(){ baInit('before'); baInit('after'); }
+function baSave(){
+  var meta=_baState.meta||{}; if(!_baState.before||!_baState.after){toast('사진을 불러오는 중이에요');return;}
+  var TW=460,TH=613,PAD=30,GAP=20,TOP=96,W=PAD*2+TW*2+GAP,H=TOP+TH+64,SS=2,ratio=TW/BA_FW;
+  var cv=document.createElement('canvas');cv.width=W*SS;cv.height=H*SS;var c=cv.getContext('2d');
+  c.scale(SS,SS);c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';
+  c.fillStyle='#fff';c.fillRect(0,0,W,H);
+  c.fillStyle='#C81D74';c.font='bold 30px -apple-system,sans-serif';c.textAlign='center';c.fillText('SONEED   '+(meta.code||''),W/2,50);
+  c.fillStyle='#999';c.font='15px sans-serif';c.fillText((meta.branch||'')+'   얼굴윤곽 3D 분석',W/2,77);
+  function tile(w,label,dt,x){ var st=_baState[w],y=TOP,S=st.base*st.zoom;
+    c.save();c.beginPath();c.rect(x,y,TW,TH);c.clip();
+    c.drawImage(st.el, x+st.tx*ratio, y+st.ty*ratio, st.iw*S*ratio, st.ih*S*ratio); c.restore();
+    c.fillStyle='rgba(200,29,116,.92)';c.fillRect(x,y,TW,42);c.fillStyle='#fff';c.font='bold 21px sans-serif';c.textAlign='center';c.fillText(label,x+TW/2,y+29);
+    c.fillStyle='rgba(0,0,0,.55)';c.fillRect(x,y+TH-36,TW,36);c.fillStyle='#fff';c.font='16px sans-serif';c.fillText(dt,x+TW/2,y+TH-12);
+    c.strokeStyle='#e6e6ea';c.lineWidth=1;c.strokeRect(x+0.5,y+0.5,TW,TH);
+  }
+  tile('before','BEFORE',(_baState.before&&_baState.before.dt)||'',PAD);
+  tile('after','AFTER',(_baState.after&&_baState.after.dt)||'',PAD+TW+GAP);
+  c.fillStyle='#bbb';c.font='13px sans-serif';c.textAlign='center';c.fillText('SONEED 얼굴윤곽 교정',W/2,H-20);
+  var url=cv.toDataURL('image/jpeg',0.92);
+  baModal().style.display='none';
+  var o=document.getElementById('photoZoom');if(!o){o=document.createElement('div');o.id='photoZoom';o.onclick=function(){o.style.display='none';};document.body.appendChild(o);}
+  o.innerHTML='<img src="'+url+'"><div style="position:fixed;bottom:14px;left:0;right:0;text-align:center;color:#fff;font-size:13px">사진을 길게 눌러 저장 · 화면 탭하면 닫기</div>';o.style.display='flex';
+  var a=document.createElement('a');a.href=url;a.download='soneed_전후_'+(meta.code||'')+'.jpg';document.body.appendChild(a);a.click();a.remove();
+  toast('전/후 이미지 저장 완료');
+}
+function renderAfters(){const box=document.getElementById('afters');if(!box)return;if(Array.isArray(form.afters))form.afters.sort((a,b)=>(a.date||'9999-99').localeCompare(b.date||'9999-99'));const arr=Array.isArray(form.afters)?form.afters:[];box.innerHTML=arr.map((a,i)=>afterField(i,a)).join('');renderAfterCompare();}
+function renderAfterCompare(){
+  var box=document.getElementById('afterCompare'); if(!box) return;
+  var afters=Array.isArray(form.afters)?form.afters:[];
+  var withRead=afters.filter(function(a){return AFTER_READS.some(function(rk){return a[rk[0]];});});
+  var hasInit=AFTER_READS.some(function(rk){return form[rk[0]];});
+  if(!withRead.length && !hasInit){ box.innerHTML=''; return; }
+  var cols=[{h:'초기(진단)',get:function(rk){return form[rk[0]];}}];
+  afters.forEach(function(a){ if(AFTER_READS.some(function(rk){return a[rk[0]];})) cols.push({h:(a.session||a.date||'회차'),get:function(rk){return a[rk[0]];}}); });
+  var th='text-align:left;padding:6px 8px;color:#999;font-size:11px;white-space:nowrap';
+  var html='<h2 class="section" style="margin-top:4px">회차별 판독 변화 <span class="subtle" style="text-transform:none;letter-spacing:0;font-weight:600">시술 전후 비교</span></h2>'
+    +'<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">'
+    +'<tr><th style="'+th+'">항목</th>'+cols.map(function(c){return '<th style="'+th+'">'+_esc(c.h)+'</th>';}).join('')+'</tr>';
+  AFTER_READS.forEach(function(rk){
+    var init=form[rk[0]]||'';
+    html+='<tr><td style="padding:6px 8px;font-weight:700;white-space:nowrap">'+rk[1]+'</td>';
+    cols.forEach(function(c,ci){
+      var v=c.get(rk); v=(v==null||v==='')?'-':v;
+      var changed=ci>0 && v!=='-' && init && v!==init;
+      html+='<td style="padding:6px 8px;white-space:nowrap'+(changed?';color:var(--brand);font-weight:800':'')+'">'+_esc(v)+(changed?' ✓':'')+'</td>';
+    });
+    html+='</tr>';
+  });
+  html+='</table></div><div class="subtle" style="font-size:11px;margin-top:6px">초기(진단)값과 달라진 회차는 <b style="color:var(--brand)">색+✓</b>로 표시돼요. 회차 판독값은 촉진 후 기록하세요.</div>';
+  box.innerHTML=html;
+}
 
 function onPhoto(s,e){const f=e.target.files[0];if(!f)return;resizeToDataURL(f,1280,0.85,d=>{form['photo_'+s]=d;setPhotoPreview(s);});applyExifDate(f);}
 function setPhotoPreview(s){const el=document.getElementById('drop_'+s);const src=form['photo_'+s];const ko=PHOTO_SLOTS.find(x=>x[0]===s)[1];el.innerHTML=src?`<img src="${src}">`:`<div class="ph">${ko}<br><small>클릭</small></div>`;renderStickyThumbs();}
@@ -1394,6 +1503,37 @@ async function onFaceAnalyze(){
     box.innerHTML='<div class="banner err"><b>분석 오류</b><br><span style="font-size:12px;white-space:pre-wrap;word-break:break-all">'+m.replace(/</g,'&lt;')+'</span>'+hint+'</div>';
   }
   btn.disabled=false;btn.innerHTML=orig;
+}
+/* 애프터 회차 AI 판독 → after._ai(AI 기록) 저장 + 관리사 확정용 초안(after[k]) 채움 */
+async function onAfterFaceAnalyze(i){
+  if(!requireTier('스탠다드','애프터 AI 판독'))return;
+  var a=(form.afters||[])[i]; if(!a){toast('회차를 찾지 못했어요');return;}
+  var slots=[['front','정면'],['up','고개 든'],['down','고개 숙인']].filter(function(x){return a['photo_'+x[0]];});
+  if(!slots.length){toast('이 회차에 애프터 사진(정면·든·숙인)을 먼저 넣어주세요');return;}
+  toast('애프터 AI 판독 중… 20~40초');
+  try{
+    var meas=a.photo_front?await measureFront(a.photo_front):null;
+    var earsF=a.photo_front?await measureEarsFront(a.photo_front):null;
+    var earsU=a.photo_up?await measureEarsUp(a.photo_up):null;
+    var content=[];
+    for(var si=0;si<slots.length;si++){var s=slots[si][0],ko=slots[si][1];var b64=await shrinkForAI(a['photo_'+s],560,0.55);content.push({type:'text',text:'['+ko+' 사진]'});content.push({type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}});}
+    content.push({type:'text',text:FACE_PROMPT+'\n\n'+measureText(meas,earsF,earsU)+'\n\n항목 목록: '+JSON.stringify(faceSchema())});
+    var resp=await fetch(RELAY,{method:"POST",headers:{"Content-Type":"application/json","x-sb-token":(authTok||"")},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:4000,messages:[{role:"user",content:content}]})});
+    var data=await resp.json();
+    if(!resp.ok||(data&&data.error))throw new Error((data&&data.error&&data.error.message)||('HTTP '+resp.status));
+    var text=(data.content||[]).filter(function(x){return x.type==='text';}).map(function(x){return x.text;}).join('\n');
+    var clean=text.replace(/```json|```/g,'').trim();var j0=clean.indexOf('{'),j1=clean.lastIndexOf('}');
+    if(j0<0||j1<0)throw new Error('JSON 형식이 아닙니다');
+    var parsed=JSON.parse(clean.slice(j0,j1+1));
+    if(!a._ai)a._ai={};
+    var TK=AFTER_READS.map(function(rk){return rk[0];}), n=0;
+    for(var label in parsed){var key=LABEL2KEY[label];if(!key)continue;var f=FMAP[key];var o=parsed[label];if(!o)continue;var val=o.v;var ok=false;
+      if(f.type==='multi'){var vals=(Array.isArray(val)?val:[val]).filter(function(x){return f.opt.includes(x);});if(vals.length){a._ai[key]=vals;val=vals;ok=true;}}
+      else if(f.opt.includes(val)){a._ai[key]=val;ok=true;}
+      if(ok){n++; if(TK.indexOf(key)>=0 && (a[key]==null||a[key]==='')) a[key]=val;}}
+    renderAfters();
+    toast('애프터 AI 판독 완료 · '+n+'개 (판독값 칸에 초안으로 채움 · 촉진 후 확정하세요)');
+  }catch(e){toast('애프터 AI 판독 실패: '+((e&&e.message)||e));}
 }
 
 function faceC(c){return c==='높음'?'#1D9E75':c==='중'?'#BA7517':'#A32D2D';}
