@@ -210,7 +210,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v72 (2026-07-26)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v76 (2026-07-26)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객 리포트</button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">🎓 아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -475,7 +475,7 @@ const FIELDS=[
  {k:'skull_tilt',g:'2d',label:'투구 기울기',type:'seg',opt:['L','R','중립'],hint:'L=왼쪽 / R=오른쪽으로 기울어짐'},
  {k:'skull_rot',g:'2d',label:'투구 회전 (귀 보이는 쪽)',type:'seg',opt:['L','R','중립']},
  {k:'lateral_vol',g:'2d',label:'측면함유량 많은 쪽',type:'seg',opt:['L','R']},
- {k:'nose_diag',g:'2d',label:'콧대 사선 (후두골 6시 중립기준 판독)',type:'seg',opt:['L','R','중립']},
+ {k:'nose_diag',g:'2d',label:'코 방향 (눈동자선 수직 대비 · 6시 중립기준)',type:'seg',opt:['L','R','중립']},
  {k:'ala_high',g:'2d',label:'콧볼 높은 쪽',type:'seg',opt:['L','R','대칭'],hint:'콧방울(콧볼) 높은 쪽 · 낮은 쪽=광대 전방경사 경향'},
  {k:'curve_apex',g:'2d',label:'CA위치',type:'seg',opt:['미간','코','인중']},
  {k:'waterslide',g:'2d',label:'워터슬라이드',type:'seg',opt:['L','R']},
@@ -892,7 +892,7 @@ function fieldHTML(f){
   const _s=(form._src||{})[f.k];const cls=(f.g==='meta')?'':(_s==='ai'?' ai':(_s==='ok'?' ok':''));let inner='';
   if(f.type==='seg'){inner=`<div class="seg" data-k="${f.k}">`+f.opt.map(o=>{const neu=NEUTRAL.includes(o)?' neu':'';return `<button type="button" data-v="${o}" class="${neu.trim()}" onclick="pickSeg('${f.k}','${o}',this)">${o}</button>`;}).join('')+`</div>`;}
   else if(f.type==='multi'){inner=`<div class="seg" data-k="${f.k}" data-multi="1">`+f.opt.map(o=>`<button type="button" data-v="${o}" onclick="pickMulti('${f.k}','${o}',this)">${o}</button>`).join('')+`</div>`;}
-  else if(f.type==='select'){inner=`<select id="f_${f.k}" onchange="form['${f.k}']=this.value||null;markOk('${f.k}',this);updateValidation()">`+f.opt.map(o=>`<option value="${o}">${o||'—'}</option>`).join('')+`</select>`;}
+  else if(f.type==='select'){inner=`<select id="f_${f.k}" onchange="form['${f.k}']=this.value||null;markOk('${f.k}',this);syncChartToCode('${f.k}');updateValidation()">`+f.opt.map(o=>`<option value="${o}">${o||'—'}</option>`).join('')+`</select>`;}
   else{const t=f.type==='num'?'number':f.type==='date'?'date':'text';inner=`<input type="${t}" id="f_${f.k}" oninput="form['${f.k}']=this.value||null;markOk('${f.k}',this)">`;}
   return `<div class="field${cls}"><label>${f.label}${hint}</label>${inner}</div>`;
 }
@@ -905,7 +905,25 @@ function renderForm(){
   renderAfters();
   renderFcode();
 }
-function pickSeg(k,v,btn){const box=btn.parentElement,already=form[k]===v;box.querySelectorAll('button').forEach(b=>b.classList.remove('on'));if(already)form[k]=null;else{form[k]=v;btn.classList.add('on');}markOk(k,btn);updateValidation();}
+function pickSeg(k,v,btn){const box=btn.parentElement,already=form[k]===v;box.querySelectorAll('button').forEach(b=>b.classList.remove('on'));if(already)form[k]=null;else{form[k]=v;btn.classList.add('on');}markOk(k,btn);syncChartToCode(k);updateValidation();}
+/* ★ 코드 ↔ 차트 양방향 연동: 타입·후두골·두께 3개만 */
+function syncChartToCode(k){
+  if(k!=='type'&&k!=='occiput_clock'&&k!=='d_forehead_parietal')return;
+  if(!form.fcode)form.fcode={};
+  if(k==='type')form.fcode.t=form.type||null;
+  else if(k==='occiput_clock'){var c=form.occiput_clock||'';form.fcode.clock=c?(c.indexOf('7')>=0?'7시':c.indexOf('5')>=0?'5시':'6시'):null;}
+  else if(k==='d_forehead_parietal'){var d=form.d_forehead_parietal;form.fcode.par=d==='R'?'두꺼움':(d==='L'?'얇음':null);}
+  form.face_code=fcodeStr(form.fcode)||null;
+  if(document.getElementById('fcodeSel'))renderFcode();
+}
+function syncCodeToChart(k){
+  var fc=form.fcode||{};
+  if(k==='t')form.type=fc.t||null;
+  else if(k==='clock')form.occiput_clock=fc.clock?(fc.clock==='6시'?'6시(중립)':fc.clock):null;
+  else if(k==='par')form.d_forehead_parietal=fc.par==='두꺼움'?'R':(fc.par==='얇음'?'L':null);
+  else return;
+  applyFormToUI();
+}
 function pickMulti(k,v,btn){let arr=Array.isArray(form[k])?form[k].slice():[];const i=arr.indexOf(v);if(i>=0){arr.splice(i,1);btn.classList.remove('on');}else{arr.push(v);btn.classList.add('on');}form[k]=arr.length?arr:null;markOk(k,btn);}
 function getVals(r,k){const v=r[k];if(v==null||v==='')return[];return Array.isArray(v)?v:[v];}
 function applyFormToUI(){
@@ -919,7 +937,7 @@ const FCODE=[
  {k:'t',label:'타입',opt:['A','B']},
  {k:'clock',label:'후두골',opt:['7시','6시','5시']},
  {k:'nose',label:'눈>코 (높은 쪽)',opt:['왼','오']},
- {k:'cheek',label:'광대 (높은 쪽)',opt:['왼','오']},
+ {k:'cheek',label:'광대 전면레벨(나온 쪽)',opt:['왼','오']},
  {k:'eye',label:'눈높이 (높은 쪽)',opt:['왼','오']},
  {k:'ala',label:'콧볼 (높은 쪽)',opt:['왼','오']},
  {k:'par',label:'오른마루',opt:['두꺼움','얇음']}
@@ -930,14 +948,14 @@ const FCODE_PROMPT=`[추가 출력 · 안면 코드]
 - 타입: "A"(우측 짧음) 또는 "B"(좌측 짧음)
 - 후두골: "7시" "6시" "5시" 중 하나(고개 든 사진 · 본인 오른귀 더 아래=7시 / 대칭=6시 / 본인 왼귀 더 아래=5시)
 - 눈코밀림: 양안 중심선 대비 코가 밀린 본인쪽 "왼" 또는 "오"
-- 광대올라옴: 코뿌리(콧대 시작) 레벨이 더 높은(올라온) 광대 본인쪽 "왼" 또는 "오"
+- 광대전면: 더 앞으로 나온(전면 레벨이 높은) 광대 본인쪽 "왼" 또는 "오"
 - 눈높은쪽: 더 높이 있는 눈 본인쪽 "왼" 또는 "오"
 - 콧볼올라감: 코 직선라인과 이루는 각이 더 좁은(올라간) 콧볼 본인쪽 "왼" 또는 "오"
-반드시 출력 JSON에 "안면코드":{"타입":..,"후두골":..,"눈코밀림":..,"광대올라옴":..,"눈높은쪽":..,"콧볼올라감":..} 를 포함하라. 값은 위에 지정한 문자열만 사용.`;
+반드시 출력 JSON에 "안면코드":{"타입":..,"후두골":..,"눈코밀림":..,"광대전면":..,"눈높은쪽":..,"콧볼올라감":..} 를 포함하라. 값은 위에 지정한 문자열만 사용.`;
 function _fcNorm(k,v){v=String(v==null?'':v).trim();if(k==='t')return /b/i.test(v)?'B':(/a/i.test(v)?'A':null);if(k==='clock'){var d=v.match(/[567]/);return d?d[0]+'시':null;}if(/왼|left|(^|[^a-z])l([^a-z]|$)/i.test(v))return '왼';if(/오|right|(^|[^a-z])r([^a-z]|$)/i.test(v))return '오';return null;}
 function applyFcodeFromAI(parsed){
   var fc=parsed&&(parsed['안면코드']||parsed['안면 코드']);if(!fc||typeof fc!=='object')return false;
-  var map={타입:'t',후두골:'clock',눈코밀림:'nose',광대올라옴:'cheek',눈높은쪽:'eye',콧볼올라감:'ala'};
+  var map={타입:'t',후두골:'clock',눈코밀림:'nose',광대전면:'cheek',광대올라옴:'cheek',눈높은쪽:'eye',콧볼올라감:'ala'};
   if(!form.fcode)form.fcode={};var got=false;
   for(var kk in map){var nv=_fcNorm(map[kk],fc[kk]);if(nv){form.fcode[map[kk]]=nv;got=true;}}
   if(got)form.face_code=fcodeStr(form.fcode)||null;
@@ -952,7 +970,7 @@ function renderFcode(){
   }).join('');
   renderFcodeOut();
 }
-function setFcode(k,v){if(!form.fcode)form.fcode={};form.fcode[k]=v||null;form.face_code=fcodeStr(form.fcode)||null;renderFcodeOut();}
+function setFcode(k,v){if(!form.fcode)form.fcode={};form.fcode[k]=v||null;form.face_code=fcodeStr(form.fcode)||null;syncCodeToChart(k);renderFcodeOut();}
 /* ★ 코드 → 솔루션 자동 조립 (대표 확정 규칙 · CLAUDE.md §17-2). 자리별 동작을 쌓는다. */
 function composeSolution(fc){
   if(!fc)return[];var out=[];
@@ -961,7 +979,7 @@ function composeSolution(fc){
   if(fc.clock==='7시')out.push({h:'후두골 7시',lines:['Rt 유양돌기 위·앞으로 풀링','Lt 귀 뒤에서 오른쪽으로 필러링','Lt C0 바운스 (촉진 후 진행)']});
   else if(fc.clock==='5시')out.push({h:'후두골 5시',lines:['Lt 유양돌기 위·앞으로 풀링','Rt 귀 뒤에서 왼쪽으로 필러링','Rt C0 바운스 (촉진 후 진행)']});
   else if(fc.clock==='6시')out.push({h:'후두골 6시',lines:['없음']});
-  var rot=(fc.cheek==='오'?' (오른회전 추가)':fc.cheek==='왼'?' (왼회전 추가)':'');   // ②워터슬라이드 = 시프트에 회전 병기
+  var rot=(fc.cheek==='오'?' (오른회전 추가)':fc.cheek==='왼'?' (왼회전 추가)':'');   // ②광대 전면레벨 = 안면 국소 회전을 시프트 줄에 병기(두개골 스파이럴 회전과 별개)
   if(fc.nose==='오'){var ln=['Rt 광대 왼쪽으로 햄버거시프트'+rot+(fc.t==='A'?' (보류)':''),'양쪽 광대 왼쪽으로 밀기','Rt 광대 왼쪽으로 푸싱'];if(fc.ala!=='오')ln.push('오른 턱 위로 들어올려 왼쪽으로 드로잉');out.push({h:'① 코 방향 · 오',lines:ln});}
   else if(fc.nose==='왼'){var lw=['Lt 광대 오른쪽으로 햄버거시프트'+rot+(fc.t==='B'?' (보류)':''),'양쪽 광대 오른쪽으로 밀기','Lt 광대 오른쪽으로 푸싱'];if(fc.ala!=='왼')lw.push('왼 턱 위로 들어올려 오른쪽으로 드로잉');out.push({h:'① 코 방향 · 왼',lines:lw});}
   if(fc.eye==='오'){var l=['Lt 이마 리프팅'];if(fc.ala==='오')l.push('(+콧볼 오) 왼턱 위로 들어올려 오른쪽으로 드로잉');if(fc.nose==='왼')l.push('(+코방향 왼) 2·3층 스퀘어 크로스 프레싱(측면): 오른쪽으로 돌린 후 왼쪽 이마 귀뒤+위로 밀고 왼 광대 앞&아래로 당기기 / 왼쪽으로 돌린 후 오른쪽 이마 앞+아래로 당기고 오른 광대 뒤&위로 밀기');out.push({h:'③ 눈 높이 · 오',lines:l});}
@@ -970,7 +988,7 @@ function composeSolution(fc){
   else if(fc.ala==='왼')out.push({h:'④ 콧볼 · 왼',lines:['Rt 광대 후방경사 & Lt 광대 전방경사']});
   if(fc.par&&(fc.clock==='7시'||fc.clock==='6시'||fc.clock==='5시')){
     var t=fc.par==='두꺼움',c=fc.clock,L;
-    if(c==='7시')L=t?['Rt 마루두께 줄이기','Lt 마루두께 늘리기']:['Rt 마루두께 늘리기','Lt 마루두께 줄이기'];
+    if(c==='7시')L=t?['Rt 마루두께 줄이기','Lt 마루두께 늘리기']:['Rt 유양돌기 앞으로 밀며 Rt 마루 늘리기','Lt 마루두께 줄이기'];
     else if(c==='6시')L=t?['Rt 마루 줄이기','Lt 유양돌기 앞으로 조금 풀링','Lt 유양돌기 앞으로 밀며 Lt 마루 늘리기']:['Lt 마루 줄이기','Rt 유양돌기 앞으로 조금 풀링','Rt 유양돌기 앞으로 밀며 Rt 마루 늘리기'];
     else L=t?['Rt 마루 줄이기','Lt 유양돌기 앞으로 밀며 Lt 마루 늘리기']:['Lt 마루 줄이기','Rt 유양돌기 앞으로 밀며 Rt 마루 늘리기'];
     out.push({h:'오른마루 두께 '+(t?'두꺼움(T)':'얇음(F)')+' · '+c,lines:L});
@@ -1123,7 +1141,7 @@ function onMulti(e,kind){const files=Array.from(e.target.files||[]).slice(0,3);e
   else{const after={id:newId(),session:'',date:todayStr()};if(!Array.isArray(form.afters))form.afters=[];form.afters.push(after);
     PHOTO_SLOTS.forEach(([s],i)=>{if(files[i])resizeToDataURL(files[i],1280,0.85,d=>{after['photo_'+s]=d;renderAfters();});});
     readExifDate(files[0],d=>{if(d)after.date=d;renderAfters();});renderAfters();}}
-const AFTER_READS=[['type','타입'],['occiput_clock','후두골 시간'],['nose_diag','코 사선'],['eye_lip','눈>입술 먼쪽'],['waterslide','워터슬라이드'],['d_forehead_parietal','마루 두께']];
+const AFTER_READS=[['type','타입'],['occiput_clock','후두골 시간'],['nose_diag','코 방향'],['eye_lip','눈>입술 먼쪽'],['waterslide','워터슬라이드'],['d_forehead_parietal','마루 두께']];
 function afterField(i,a){const opts='<option value="">회차</option>'+Array.from({length:40},(_,n)=>'<option '+(a.session===(n+1)+'회'?'selected':'')+'>'+(n+1)+'회</option>').join('');
   const thumbs=PHOTO_SLOTS.map(([s,ko])=>{const src=a['photo_'+s];return '<div class="pslot"><div class="photo-drop" style="aspect-ratio:3/4">'+(src?'<img src="'+src+'">':'<div class="ph">'+ko+'</div>')+'</div><label>'+ko+'</label></div>';}).join('');
   const reads=AFTER_READS.map(function(rk){var k=rk[0],ko=rk[1],f=FMAP[k];var o='<option value="">-</option>'+f.opt.filter(function(x){return x!=='';}).map(function(x){return '<option'+(a[k]===x?' selected':'')+' value="'+x+'">'+x+'</option>';}).join('');return '<div class="field" style="max-width:150px"><label>'+ko+'</label><select onchange="form.afters['+i+'][\''+k+'\']=this.value||null;renderAfterCompare()">'+o+'</select></div>';}).join('');
@@ -1368,7 +1386,7 @@ const FACE_PROMPT=`당신은 소니드 얼굴윤곽 분석 보조입니다. 위 
 - 타입: 눈썹 끝→입술 끝 거리가 '긴 쪽의 반대'가 짧은 쪽. A=우측이 짧음, B=좌측이 짧음.
 - 투구 기울기(L/R/중립): 양쪽 눈동자 정중앙을 수평선에 대보아 '더 아래로 내려간 쪽'으로 기울어진 것(눈이 왼쪽이 낮으면 L, 오른쪽이 낮으면 R). 눈썹은 높은 쪽이 반대. 귀 바깥 외곽 라인 기울기로 교차확인.
 - 측면함유량 많은 쪽: 정면에서 측면이 더 보이는 쪽(회전 영향 큼).
-- 콧대 사선(L/R/중립): 콧대 축이 기운 방향.
+- 코 방향(L/R/중립): 좌우 눈동자를 이은 직선의 90도 수직선 대비, 코(코끝)가 빗겨난 방향. (콧대 사선을 이 기준으로 통일)
 - CA위치(미간/코/인중): 눈썹-눈-코-인중-입술 정중 라인이 휘는 정점 위치. 코끝이 정점=코, 미간이 정점(눈썹↔코 각도차 큼)=미간, 인중이 정점(코끝↔인중 각도 큼)=인중.
 - 워터슬라이드(L/R): 광대가 같은 사이드의 이마(3층)·턱(1층)보다 더 튀어나온 쪽 + 고개 든 사진에서 베드 면 기준 더 솟는 광대 쪽.
 - 팔자주름: 사진상 더 길고 그림자 큰 쪽.
@@ -1397,7 +1415,7 @@ const FACE_PROMPT=`당신은 소니드 얼굴윤곽 분석 보조입니다. 위 
 
 · 측면함유량 = 투구 회전과 같은 사이드(표기 기준 동일). 따로 추측하지 말고 투구 회전에서 도출.
 
-· 콧대 사선: 미간에서 출발한 콧대가 본인 오른쪽으로 내려오면 R, 본인 왼쪽으로 내려오면 L.
+· 코 방향: 좌우 눈동자를 이은 직선의 90도 수직선을 기준으로, 코끝이 본인 오른쪽으로 빗겨나면 R, 본인 왼쪽으로 빗겨나면 L. (눈선 기울기 보정 · 후두골 6시 중립기준 판독. 예전 '미간→코끝' 방식 대신 눈동자선 기준으로 통일)
 
 · 워터슬라이드: 광대가 같은 사이드의 이마(3층)·턱(1층)보다 더 튀어나온 쪽으로 직접 판독할 것. ※ 과거 "럭비프레스의 광대 쪽과 같다"는 상관은 실제 데이터 검증 결과 일치율이 낮아(약 절반) **근거로 쓰지 말 것.** 럭비프레스 값을 보고 워터슬라이드를 추론하지 말고 사진에서 직접 볼 것. 애매하면 생략.
 
@@ -1424,7 +1442,7 @@ const FACE_PROMPT=`당신은 소니드 얼굴윤곽 분석 보조입니다. 위 
   - A타입(우측이 짧음): 거리/두께 항목들이 왼쪽(L)으로 길게 나오는 경우가 많고, 회전은 R이 많다.
   - B타입(좌측이 짧음): 위의 반대. 거리/두께는 R이 많고, 회전은 L이 많다.
 
-· ★정중선 계열(콧대 사선 · 인중 · 광대뼈 대비 상악 회전) 좌우 반전 — 특히 자주 틀림:
+· ★정중선 계열(코 방향 · 인중 · 광대뼈 대비 상악 회전) 좌우 반전 — 특히 자주 틀림:
   이 항목들은 "어느 쪽이 낮은가"가 아니라 "선이 어느 방향으로 기울었는가"를 읽기 때문에 반전을 놓치기 쉽다. 사진에서 본 사선 방향을 그대로 적지 말고 반드시 뒤집어라.
   - 사진(이미지)상 콧대·인중이 **오른쪽 아래로** 흐르면 → 그것은 **본인의 왼쪽 아래로** 흐르는 것 → **L**로 기록.
   - 사진(이미지)상 **왼쪽 아래로** 흐르면 → **본인의 오른쪽 아래** → **R**로 기록.
@@ -1570,11 +1588,11 @@ async function measureFront(dataUrl){
     /* 2) 타입: 눈썹바깥끝↔입꼬리 거리 (임계 0.3%) */
     const dSL=dist(brow.L,mouth.L), dSR=dist(brow.R,mouth.R);
     const shortScreen = Math.abs(dSL-dSR)<faceH*0.003 ? '거의같음' : (dSL<dSR?'화면왼쪽':'화면오른쪽');
-    /* 3) 콧대: 미간(눈썹 사이) → 코끝의 x 이동. 수직 기준 그대로 (기울기 보정 없음)
-       미간은 좌우 눈 안쪽 끝의 중점으로 잡는다(랜드마크 168은 부정확할 수 있음). */
-    const EYE_IN_A=133, EYE_IN_B=362;   /* 좌우 눈 안쪽 끝 */
-    const glabX=(P[EYE_IN_A].x+P[EYE_IN_B].x)/2;   /* 미간 x */
-    const noseDx=P[NOSE_TIP].x-glabX;              /* +면 코끝이 화면 오른쪽으로 내려감 */
+    /* 3) 코 방향(코드와 통일): 좌우 눈동자(iris) 직선의 90도 수직선 대비 코끝 편차. 눈선 기울기 보정. */
+    const eyeMidX=(iris.L.x+iris.R.x)/2, eyeMidY=(iris.L.y+iris.R.y)/2;
+    const eAng=Math.atan2(iris.R.y-iris.L.y, iris.R.x-iris.L.x);   /* 눈동자선 기울기 */
+    const _nx=P[NOSE_TIP].x-eyeMidX, _ny=P[NOSE_TIP].y-eyeMidY;
+    const noseDx=_nx*Math.cos(-eAng)-_ny*Math.sin(-eAng);          /* 눈선 수직 기준 코끝 편차 · +면 화면 오른쪽 */
     const noseScreen = Math.abs(noseDx)<faceW*0.004 ? '거의수직' : (noseDx>0?'화면오른쪽':'화면왼쪽');
     /* 4) 옆폭 */
     const sSL=Math.abs(eyeOut.L.x-cheek.L.x), sSR=Math.abs(cheek.R.x-eyeOut.R.x);
@@ -1677,7 +1695,7 @@ function measureText(m,ef,eu){
     lines.push(`· 투구 기울기 = ${tilt}   (눈동자 높이차 ${m.eye_dy_norm}%)`);
     lines.push(`· 투구 회전(귀 보이는 쪽) = ${rot}   (코 중심 치우침 ${m.nose_off}% — 얼굴이 회전하면 코가 반대쪽으로 치우치고 그 쪽 귀가 더 노출된다)`);
     if(m.rot_ear_own!=='중립') lines.push(`· 측면함유량 = ${m.rot_ear_own==='본인오른쪽'?'R':'L'} (투구 회전과 동일)`);
-    lines.push(`· 콧대 사선 = ${nose}`);
+    lines.push(`· 코 방향 = ${nose}`);
     lines.push(`· 얼굴 형태 = ${shape}   (가로/세로 ${m.wh}%)`);
   }
   if(eu){
