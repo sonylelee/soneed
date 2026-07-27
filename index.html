@@ -210,7 +210,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v80 (2026-07-27)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v81 (2026-07-27)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객 리포트</button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">🎓 아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -994,6 +994,9 @@ function composeSolution(fc){
     else L=t?['Rt 마루 줄이기','Lt 유양돌기 앞으로 밀며 Lt 마루 늘리기']:['Lt 마루 줄이기','Rt 유양돌기 앞으로 밀며 Rt 마루 늘리기'];
     out.push({h:'오른마루 두께 '+(t?'두꺼움(T)':'얇음(F)')+' · '+c,lines:L});
   }
+  // 특수 조합 (타입 + 후두골 + 콧볼)
+  if(fc.t==='B'&&fc.clock==='7시'&&fc.ala==='왼')out.push({h:'특수 · B7 + 콧볼 왼',lines:['오른쪽 광대 후방경사 시키면서 왼쪽 후두부 늘리기']});
+  if(fc.t==='A'&&fc.clock==='5시'&&fc.ala==='오')out.push({h:'특수 · A5 + 콧볼 오',lines:['왼쪽 광대 후방경사 시키며 오른쪽 후두부 늘리기']});
   return out;
 }
 function solCardHTML(fc){
