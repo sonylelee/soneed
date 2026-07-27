@@ -185,6 +185,7 @@
   .fc-field select{width:100%;padding:8px 6px;border:1px solid #d7d2e6;border-radius:8px;font-size:15px;background:#fff}
   .fcode-out{margin-top:12px;font-size:28px;font-weight:800;letter-spacing:1px;color:#7c3aed;text-align:center}
   .fcode-tag{display:inline-block;margin:1px 0 3px;padding:1px 8px;border-radius:6px;background:#f3edfb;color:#7c3aed;font-size:12px;font-weight:800;letter-spacing:.5px}
+  .fc-warn{background:#fdecef;border:1px solid #f2b8c4;color:#c0264a;font-size:13px;font-weight:700;border-radius:10px;padding:9px 12px;margin-top:8px;line-height:1.45;text-align:left}
   .fcode-sol{margin-top:10px}
   .sol-list{display:flex;flex-wrap:wrap}
   .sol-big{font-size:21px;line-height:1.55;font-weight:700;color:#1b1b1b;white-space:pre-wrap;background:#f6f2fd;border:1px solid #e2d7f7;border-radius:12px;padding:14px 16px;text-align:left}
@@ -210,7 +211,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v81 (2026-07-27)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v82 (2026-07-27)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객 리포트</button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">🎓 아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -235,6 +236,7 @@
       <div class="subtle" style="margin:-4px 0 8px;font-size:12px">AI가 타입~콧볼 예측 · <b>오른마루</b>는 촉진 후 직접 선택</div>
       <div id="fcodeSel" class="fcode-grid"></div>
       <div id="fcodeOut" class="fcode-out">— 항목을 채우면 코드가 나옵니다</div>
+      <div id="fcodeWarn"></div>
       <button class="btn primary" id="fcodeGuideBtn" style="width:100%;margin-top:12px" onclick="saveAndGuide()">💾 저장 및 리세팅 가이드</button>
       <div id="fcodeSol" class="fcode-sol"></div>
     </div>
@@ -1005,7 +1007,17 @@ function solCardHTML(fc){
     return '<div class="sol-sec"><div class="sol-h">'+_esc(sec.h)+'</div>'+sec.lines.map(function(x){return '<div class="sol-li">· '+_esc(x)+'</div>';}).join('')+'</div>';
   }).join('')+'</div>';
 }
-function renderFcodeOut(){var code=fcodeStr(form.fcode);var out=document.getElementById('fcodeOut');if(out)out.textContent=code||'— 항목을 채우면 코드가 나옵니다';renderFcodeSol(code);}
+function fcodeConflict(fc){
+  if(!fc)return'';
+  if(fc.nose&&fc.eye&&fc.nose===fc.eye)return '⚠ 눈>코(예각)와 눈>코(둔각)이 같은 쪽('+fc.nose+')이에요 — 둘은 반대여야 정상입니다. 다시 확인하세요.';
+  return '';
+}
+function renderFcodeOut(){
+  var code=fcodeStr(form.fcode);
+  var out=document.getElementById('fcodeOut');if(out)out.textContent=code||'— 항목을 채우면 코드가 나옵니다';
+  var w=document.getElementById('fcodeWarn');if(w){var m=fcodeConflict(form.fcode);w.innerHTML=m?'<div class="fc-warn">'+m+'</div>':'';}
+  renderFcodeSol(code);
+}
 /* 솔루션: 공용 DB(solutions 테이블) + 이 기기 localStorage 백업 */
 var solCache=null;
 function solStore(){try{return JSON.parse(localStorage.getItem('soneed_sol')||'{}');}catch(e){return{};}}
@@ -1087,6 +1099,7 @@ function showSolOverlay(fromBtn){
   var fc=form.fcode||{},code=form.face_code||fcodeStr(fc);
   var manual=code?solGet(code):'';
   var body=manual?('<div class="sol-big">'+_esc(manual).replace(/\n/g,'<br>')+'</div>'):solCardHTML(fc);
+  var conf=fcodeConflict(fc);if(conf)body='<div class="fc-warn" style="margin-bottom:12px">'+conf+'</div>'+body;
   if(!body){if(fromBtn)toast('먼저 코드 항목을 채워주세요');return;}
   var ov=document.getElementById('solOverlay');
   if(!ov){ov=document.createElement('div');ov.id='solOverlay';ov.onclick=function(){ov.style.display='none';};document.body.appendChild(ov);}
