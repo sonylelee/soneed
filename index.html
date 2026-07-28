@@ -216,7 +216,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v87 (2026-07-28)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v89 (2026-07-28)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트</button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">🎓 아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -789,7 +789,19 @@ async function authRefresh(){
 function authSchedule(){if(_authTimer)clearTimeout(_authTimer);_authTimer=setTimeout(function(){authRefresh();},45*60*1000);}
 function authLogout(){authTok=null;authSave(null);if(_authTimer)clearTimeout(_authTimer);updateAuthUI();toast('로그아웃되었습니다');}
 function updateAuthUI(){const b=document.getElementById('authBtn');if(!b)return;const em=authEmail();b.textContent=(authTok&&em)?('👤 '+em):'🔒 로그인';b.className='modebtn'+((authTok&&em)?' on':'');applyAdminUI();applyTierUI();}
-async function authBoot(){updateAuthUI();let ok=false;if(cfg){const a=authLoad();if(a&&a.refresh_token)ok=await authRefresh();}updateAuthUI();if(ok){gateHide();loadAll();loadTier();}else{gateShow();}}
+async function authBoot(){
+  updateAuthUI();
+  const a=cfg?authLoad():null;
+  if(a&&a.refresh_token){
+    gateHide();                                   // 저장된 세션 있으면 앱을 먼저 보여주고(낙관적)
+    const ok=await authRefresh();                 // 토큰 갱신은 백그라운드로
+    updateAuthUI();
+    if(ok){ loadAll(); loadTier(); }
+    else { gateShow(); }                          // 갱신 실패(세션 만료) 시에만 로그인 화면
+  } else {
+    gateShow();
+  }
+}
 function openLogin(){const e=document.getElementById('loginModal');if(!e)return;const li=!!(authTok&&authEmail());
   var ti=document.getElementById('loginTitle'); if(ti)ti.textContent=li?'마이페이지':'로그인 (보안)';
   var lf=document.getElementById('loginFormBox'); if(lf)lf.style.display=li?'none':'';
@@ -1326,10 +1338,10 @@ async function faceCropThumb(src){
       ow=img.width*0.6;oh=img.height*0.5;ox=(img.width-ow)/2;oy=img.height*0.08;
     }
     if(ox<0){ow+=ox;ox=0;}if(oy<0){oh+=oy;oy=0;}if(ox+ow>img.width)ow=img.width-ox;if(oy+oh>img.height)oh=img.height-oy;
-    const th=document.createElement('canvas');const s2=Math.min(1,320/Math.max(ow,oh));
+    const th=document.createElement('canvas');const s2=Math.min(1,620/Math.max(ow,oh));
     th.width=Math.max(1,Math.round(ow*s2));th.height=Math.max(1,Math.round(oh*s2));
-    th.getContext('2d').drawImage(img,ox,oy,ow,oh,0,0,th.width,th.height);
-    const url=th.toDataURL('image/jpeg',0.78);_cropCache[src]=url;return url;
+    const g=th.getContext('2d');g.imageSmoothingQuality='high';g.drawImage(img,ox,oy,ow,oh,0,0,th.width,th.height);
+    const url=th.toDataURL('image/jpeg',0.9);_cropCache[src]=url;return url;
   }catch(e){return src;}
 }
 /* 고객 전/후 이미지용 — 얼굴을 원본 고해상도로 크롭해 캔버스로 반환(썸네일 320px 재확대 흐림 방지). 캐시 안 함. */
