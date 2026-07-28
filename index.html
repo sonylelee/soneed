@@ -91,6 +91,8 @@
   /* 스티키 사진 썸네일 + 확대 라이트박스 */
   .sticky-thumbs{position:sticky;top:56px;z-index:15;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding:6px 8px;margin:10px 0;background:rgba(255,255,255,.96);backdrop-filter:blur(4px);border:1px solid var(--line);border-radius:12px;box-shadow:0 2px 10px rgba(20,25,35,.09)}
   .sticky-thumbs:empty{display:none}
+  .sticky-thumbs .st-toggle{flex-basis:100%;text-align:center;border:1px solid var(--line);background:#fff;color:#71717a;font-size:11px;font-weight:800;padding:4px 12px;border-radius:999px;cursor:pointer}
+  .sticky-thumbs .st-toggle:hover{background:#f6f7f9}
   .sticky-thumbs .st-item{position:relative;cursor:zoom-in;overflow:hidden;border-radius:8px}
   .sticky-thumbs img{height:min(180px,26vh);width:auto;max-width:40vw;object-fit:cover;border-radius:8px;display:block}
   .sticky-thumbs span{position:absolute;left:3px;bottom:3px;font-size:9px;background:rgba(0,0,0,.55);color:#fff;padding:1px 4px;border-radius:4px}
@@ -152,7 +154,10 @@
   @keyframes sp{to{transform:rotate(360deg)}}
   @supports(padding:max(0px)){header.top{padding-top:env(safe-area-inset-top)}}
   @media(max-width:720px){input[type=text],input[type=number],input[type=date],select,textarea{font-size:16px}}
+  .m-br{display:none}
   @media(max-width:600px){
+    .m-br{display:inline}
+    .tabs button{line-height:1.15;padding-top:7px;padding-bottom:7px}
     .wrap{padding:0 12px}
     .top .wrap{flex-wrap:wrap;height:auto;min-height:0;padding:9px 12px;gap:9px;align-items:center}
     .logo{font-size:15px;flex-basis:100%;line-height:1.25}
@@ -211,8 +216,8 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v82 (2026-07-27)</span></div>
-  <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객 리포트</button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">🎓 아카데미</button></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v87 (2026-07-28)</span></div>
+  <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트</button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">🎓 아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
   <span class="count-pill">기록 <b id="totalCount">0</b></span>
@@ -225,8 +230,8 @@
       <div class="grow subtle" id="editState">새 기록을 작성합니다.</div>
       <button class="btn auto" id="autoBtn" onclick="document.getElementById('chartInput').click()">📄 종이차트 사진으로 자동 채우기</button>
       <input type="file" id="chartInput" accept="image/*,.heic,.heif" style="display:none" onchange="onChartPhoto(event)">
-      <button class="btn auto" id="faceBtn" onclick="onFaceAnalyze()">🙂 얼굴 사진으로 AI 분석</button>
-      <button class="btn auto" id="codeBtn" onclick="onCodeAnalyze()">🔑 얼굴 사진으로 AI 코드분석</button>
+      <button class="btn auto" id="faceBtn" onclick="onFaceAnalyze()">🙂 심화차트 AI 분석</button>
+      <button class="btn auto" id="codeBtn" onclick="onCodeAnalyze()">🔑 AI 코드분석</button>
       <button class="btn ghost" onclick="clearForm()">새로 작성</button>
     </div>
     <div id="autoMsg"></div>
@@ -335,7 +340,8 @@
         <option value="updated" selected>최근 업데이트순</option>
         <option value="date">날짜(회차)순</option>
       </select>
-      <input id="recSearch" oninput="onRecSearch(this.value)" placeholder="🔍 코드·이름 검색 (예: A7 · 왼오오오 · 홍길동)" style="flex:1;min-width:180px;font-size:13px;padding:6px 11px;border:1px solid #D3D7DE;border-radius:8px;background:#fff">
+      <input id="recSearch" list="recCodeList" oninput="onRecSearch(this.value)" placeholder="🔍 코드·이름 검색 (예: A7 · 왼오오오 · 홍길동)" style="flex:1;min-width:180px;font-size:13px;padding:6px 11px;border:1px solid #D3D7DE;border-radius:8px;background:#fff">
+      <datalist id="recCodeList"></datalist>
     </div>
     <div id="recList" class="recgrid"></div>
   </section>
@@ -609,7 +615,7 @@ function applyTierUI(){
   var b=document.getElementById('authBtn'); if(b&&authTok&&authEmail())b.textContent='👤 '+(userName?userName+'님':authEmail());
   // AI(스탠다드+): 얼굴분석·종이차트 자동채우기
   var aiOk=hasTier('스탠다드');
-  [['faceBtn','🙂 얼굴 사진으로 AI 분석'],['codeBtn','🔑 얼굴 사진으로 AI 코드분석'],['autoBtn','📄 종이차트 사진으로 자동 채우기']].forEach(function(p){
+  [['faceBtn','🙂 심화차트 AI 분석'],['codeBtn','🔑 AI 코드분석'],['autoBtn','📄 종이차트 사진으로 자동 채우기']].forEach(function(p){
     var e=document.getElementById(p[0]); if(!e)return; e.disabled=!aiOk; e.textContent=aiOk?p[1]:(p[1]+' 🔒');
   });
   // 3D 시뮬레이션(스탠다드+): 패널 요약에 잠금 표시
@@ -1290,8 +1296,14 @@ function onPhoto(s,e){const f=e.target.files[0];if(!f)return;resizeToDataURL(f,1
 function setPhotoPreview(s){const el=document.getElementById('drop_'+s);const src=form['photo_'+s];const ko=PHOTO_SLOTS.find(x=>x[0]===s)[1];el.innerHTML=src?`<img src="${src}">`:`<div class="ph">${ko}<br><small>클릭</small></div>`;renderStickyThumbs();}
 /* 스티키 사진 썸네일 — 아래 항목 체크할 때도 위 사진이 따라 내려와 보이게 */
 let _cropCache={};
+var _stickyCollapsed=(function(){try{return localStorage.getItem('soneed_sticky_collapsed')==='1';}catch(e){return false;}})();
+function toggleSticky(){_stickyCollapsed=!_stickyCollapsed;try{localStorage.setItem('soneed_sticky_collapsed',_stickyCollapsed?'1':'0');}catch(e){}renderStickyThumbs();}
 function renderStickyThumbs(){const box=document.getElementById('stickyThumbs');if(!box)return;
-  box.innerHTML=PHOTO_SLOTS.map(([s,ko])=>{const src=form['photo_'+s];if(!src)return '';const shown=_cropCache[src]||src;return `<div class="st-item" onclick="zoomPhoto('${s}')"><img src="${shown}"><span>${ko}</span></div>`;}).join('');
+  const have=PHOTO_SLOTS.some(([s])=>form['photo_'+s]);
+  if(!have){box.innerHTML='';return;}
+  const toggle=`<button type="button" class="st-toggle" onclick="toggleSticky()">${_stickyCollapsed?'📷 사진 펼치기 ▾':'사진 접기 ▴'}</button>`;
+  if(_stickyCollapsed){box.innerHTML=toggle;positionStickyThumbs();return;}
+  box.innerHTML=toggle+PHOTO_SLOTS.map(([s,ko])=>{const src=form['photo_'+s];if(!src)return '';const shown=_cropCache[src]||src;return `<div class="st-item" onclick="zoomPhoto('${s}')"><img src="${shown}"><span>${ko}</span></div>`;}).join('');
   positionStickyThumbs();
   PHOTO_SLOTS.forEach(([s])=>{const src=form['photo_'+s];if(src&&!_cropCache[src]){faceCropThumb(src).then(()=>renderStickyThumbs());}});}
 /* 사진마다 얼굴 거리가 달라 실제 얼굴인식으로 크롭 — 결과는 캐시(원본 dataURL 기준) */
@@ -1901,7 +1913,6 @@ async function saveRecord(){
   if(_pendingLeadId){ markLeadDone(_pendingLeadId,true); _pendingLeadId=null; }   // 유입 고객: 저장 완료 시 목록에서 처리
   toast(photoFail?'기본정보는 저장됨 · 사진은 용량이 커서 저장 실패':(updateValidation()?'저장되었습니다':'저장됨 · 회전 오류가 남아있어요'));
   document.getElementById('editState').textContent=(form.code||'무제')+' · 저장됨 (편집 중)';document.getElementById('delBtn').style.display='';refreshAll();
-  showSolOverlay();   // 저장 시 이 코드의 솔루션을 큰 글자로
 }
 async function editRecord(id){var r=records.find(x=>String(x.id)===String(id));if(!r)return;
   _reportScroll=window.scrollY||document.documentElement.scrollTop||0;_restoreReport=true;
@@ -1944,7 +1955,15 @@ function filtered(){return records.filter(r=>_matchQuery(r)&&conds.every(c=>!c.v
 function applyFilter(){document.getElementById('filterCount').textContent=filtered().length;renderRecList();renderCrosstab();}
 function recPhoto(r){for(const [s] of PHOTO_SLOTS){if(r['photo_'+s])return r['photo_'+s];}return r.thumb||null;}
 function chipFor(r,k){let v=r[k];if(v==null||v==='')return'';if(Array.isArray(v))v=v.join(',');const neu=NEUTRAL.includes(v)?' neu':'';return `<span class="chip${neu}">${FMAP[k].label.split(' ')[0].slice(0,4)}:${v}</span>`;}
+function fillCodeList(){
+  var dl=document.getElementById('recCodeList');if(!dl)return;
+  var seen={},arr=[];
+  (records||[]).forEach(function(r){var c=r.face_code;if(c&&!seen[c]){seen[c]=1;arr.push(c);}});
+  arr.sort();
+  dl.innerHTML=arr.map(function(c){return '<option value="'+c+'">';}).join('');
+}
 function renderRecList(){
+  fillCodeList();
   const list=sortList(filtered()),box=document.getElementById('recList');
   if(list.length===0){box.innerHTML=`<div class="empty-note" style="grid-column:1/-1"><b>아직 기록이 없습니다.</b><br>‘기록 입력’ 탭에서 첫 데이터를 저장해 보세요.</div>`;return;}
   box.innerHTML=list.map(r=>{const p=recPhoto(r);const thumb=p?`<img src="${p}" loading="lazy" decoding="async">`:`<span>사진 없음</span>`;const sub=[r.date,r.therapist,r.signup].filter(Boolean).join(' · ');const chips=CHIP_KEYS.map(k=>chipFor(r,k)).filter(Boolean).join('');return `<div class="rec" onclick="editRecord('${r.id}')"><div class="thumb ${p?'':'empty'}">${thumb}</div><div class="meta"><div class="code">${r.code||'무제'}</div>${r.face_code?`<div class="fcode-tag">${r.face_code}</div>`:''}<div class="sub">${sub||'&nbsp;'}</div>${(r.savedBy&&r.savedBy!==authEmail())?'<div class="sub" style="color:#C81D74">👤 '+r.savedBy+'</div>':''}<div class="chips">${chips||'<span class="chip k">미입력</span>'}</div></div></div>`;}).join('');
@@ -2364,7 +2383,7 @@ function fpResetPanel(){
     fpLog("기록이 바뀌었습니다. [정면사진 불러오기]를 눌러 이 기록의 사진으로 시작하세요.");
   }
 }
-if(typeof window.editRecord==="function"){ var _fpEdit=window.editRecord; window.editRecord=function(){ var r=_fpEdit.apply(this,arguments); try{fpResetPanel();}catch(e){} return r; }; }
+if(typeof window.editRecord==="function"){ var _fpEdit=window.editRecord; window.editRecord=async function(){ var r=await _fpEdit.apply(this,arguments); try{fpResetPanel();}catch(e){} return r; }; }
 if(typeof window.clearForm==="function"){ var _fpClear=window.clearForm; window.clearForm=function(){ var r=_fpClear.apply(this,arguments); try{fpResetPanel();}catch(e){} return r; }; }
 })();
 
