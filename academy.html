@@ -159,6 +159,7 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px}
 .ba-grid img{width:100%;border-radius:16px;box-shadow:0 6px 20px rgba(38,48,122,.08);display:block}
 
 /* 회전 링(뒤 배경) */
+#heroFaces{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none}
 .hero .wrap{position:relative;z-index:3}
 .orb{position:absolute;right:3%;top:44px;width:210px;height:210px;border-radius:50%;z-index:1;pointer-events:none;opacity:.7;
   background:conic-gradient(from 0deg, transparent 0 50%, rgba(199,206,240,.75) 78%, rgba(255,255,255,.95) 90%, transparent 100%);
@@ -197,7 +198,7 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px}
   <div class="wrap">
     <div class="logo"><img src="soneed-mark.png" alt="SONEED" style="height:32px;width:32px;border-radius:8px;vertical-align:middle;margin-right:9px;box-shadow:0 2px 6px rgba(38,48,122,.25)"><b>SONEED</b> ACADEMY</div>
     <div class="navlinks">
-      <a href="#why">왜 소니드</a>
+      <a href="#problem">왜 소니드인가</a>
       <a href="#curriculum">커리큘럼</a>
       <a href="#instructor">원장</a>
       <a href="#price">수강 안내</a>
@@ -212,13 +213,7 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px}
   <div class="wrap">
     <span class="tag">대한민국 최초 · 얼굴 데이터 기반 분석 교육</span>
     <h1>얼굴을 외우지 마세요.<br><span class="em">얼굴을 읽으세요.</span></h1>
-    <p class="lead"><b style="color:#fff">SONEED Academy</b> · Beauty OS 기반 얼굴 분석 교육</p>
-    <div class="facts">
-      <div class="fact"><div class="l">기간</div><div class="v">각 레벨 3주</div></div>
-      <div class="fact"><div class="l">일정</div><div class="v">일요일 10–14시</div></div>
-      <div class="fact"><div class="l">장소</div><div class="v">동탄 본점</div></div>
-      <div class="fact"><div class="l">수강료</div><div class="v">각 레벨 490만원</div></div>
-    </div>
+    <p class="lead"><b style="color:#fff">SONEED Academy</b><br>Beauty OS 기반 얼굴 분석 교육</p>
     <div class="cta">
       <a href="#apply" class="btn btn-primary">교육 신청하기</a>
       <a href="#curriculum" class="btn btn-ghost">커리큘럼 보기</a>
@@ -240,6 +235,8 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px}
   .quote-band p{font-size:clamp(24px,4vw,40px);font-weight:800;line-height:1.42;color:#fff;letter-spacing:-.01em}
   .quote-band .en{margin-top:16px;font-size:14px;letter-spacing:.32em;color:var(--blueg);text-transform:uppercase;font-weight:700}
   .kw{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:28px}
+  .kwbrk{display:none}
+  @media(max-width:600px){.kwbrk{display:block;flex-basis:100%;height:0}}
   .kw span{padding:10px 20px;border:1px solid var(--line);border-radius:999px;background:#fff;font-weight:700;color:var(--indigo);font-size:15px}
   .bos-line{text-align:center;margin-top:38px;font-size:clamp(20px,3.4vw,30px);font-weight:800;color:var(--navy)}
   .bos-line em{font-style:normal;color:var(--indigo)}
@@ -269,7 +266,7 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px}
 </style>
 
 <!-- 문제 제기 -->
-<section class="dark prob">
+<section class="dark prob" id="problem">
   <div class="wrap">
     <div class="kicker">The Problem</div>
     <h2 class="sec">대부분의 관리사는 얼굴을 <b>관리</b>하지만<br>얼굴을 <b>분석</b>하지 못합니다.</h2>
@@ -289,7 +286,7 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px}
     <div class="kicker">Beauty OS · 대한민국 최초</div>
     <h2 class="sec">얼굴을 데이터로 분석하는 교육 시스템</h2>
     <div class="os-en">Every Face Has Data.</div>
-    <div class="kw"><span>좌우 비대칭</span><span>각도</span><span>회전</span><span>볼륨</span><span>레이어</span></div>
+    <div class="kw"><span>좌우 비대칭</span><span>각도</span><span>회전</span><span class="kwbrk"></span><span>볼륨</span><span>레이어</span></div>
     <div class="bos-line">관리가 아니라 <em>분석</em>을 배우세요.</div>
   </div>
 </section>
@@ -358,7 +355,7 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px}
   <div class="wrap">
     <div class="kicker">Face Resetting</div>
     <h2 class="sec">페이스 리세팅이란</h2>
-    <p class="sub">기구·주사·수술이 아니라, 손으로 얼굴 '구조'를 다시 맞추는 30분.</p>
+    <p class="sub">기구·주사·수술이 아니라,<br>손으로 얼굴 '구조'를 다시 맞추는 30분.</p>
     <div class="pull">건식의 적은 압으로 아프지 않게<br>얼굴의 <b>부피 및 균형</b>을 바로잡습니다.<br>우리는 <b>전체적인 구조</b>를 다룹니다.</div>
     <div class="grid4">
       <div class="out"><div class="ic">◔</div><div><h4>30분 건식</h4><p>물·제품 없이 손으로. 관리 시간이 짧습니다.</p></div></div>
@@ -372,7 +369,7 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px}
 
 <!-- BRAND SHOT -->
 <section style="padding:0;border-top:0;background:#1c1712">
-  <img src="care1.jpg" loading="lazy" alt="소니드 페이스 리세팅 관리 현장" style="width:100%;display:block;max-height:78vh;object-fit:cover">
+  <img src="care1.jpg" loading="lazy" alt="소니드 페이스 리세팅 관리 현장" style="width:100%;display:block;max-height:44vh;object-fit:cover">
 </section>
 
 <!-- BEFORE & AFTER -->
@@ -532,7 +529,7 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px}
       <div class="p">490<span style="font-size:22px;font-weight:700">만원</span></div>
       <div class="note">Level 1 · 2 · 3 — 레벨별 등록 · 매주 일요일 10:00–14:00 · 동탄 본점</div>
       <div class="benefits">
-        <span>소니드 인증서</span><span>실습 키트</span><span>디지털 분석 도구</span>
+        <span>소니드 인증서</span><span>디지털 분석 도구</span>
         <span>재수강 혜택</span><span>수료생 커뮤니티</span><span>창업 · 활동 안내</span>
       </div>
       <a href="#apply" class="btn btn-primary" style="background:#fff;color:var(--navy)">상담 신청하기</a>
@@ -594,6 +591,12 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px}
       <span>Beauty OS 초기 멤버 자격</span>
       <span>커리큘럼 업데이트 우선 제공</span>
       <span>교육생 커뮤니티 참여</span>
+    </div>
+    <div class="facts" style="max-width:760px;margin:28px auto 0">
+      <div class="fact"><div class="l">기간</div><div class="v">각 레벨 3주</div></div>
+      <div class="fact"><div class="l">일정</div><div class="v">일요일 10–14시</div></div>
+      <div class="fact"><div class="l">장소</div><div class="v">동탄 본점</div></div>
+      <div class="fact"><div class="l">수강료</div><div class="v">각 레벨 490만원</div></div>
     </div>
     <p style="font-size:clamp(20px,3.2vw,28px);font-weight:800;color:#fff;margin:34px 0 6px;line-height:1.45">기술을 배우는 교육이 아닙니다.<br>사람의 얼굴을 <span style="color:#a9b8ea">읽는 법</span>을 배우는 교육입니다.</p>
     <a href="#apply" class="btn btn-primary" style="margin-top:16px">3기 지원하기</a>
