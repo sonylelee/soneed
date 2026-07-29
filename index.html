@@ -248,7 +248,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v99 (2026-07-29)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v100 (2026-07-29)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트</button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">🎓 아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -298,7 +298,8 @@
       <div id="rotLocked" class="subtle" style="display:none;padding:10px 0;border-top:1px dashed #e2d7f7">🔒 회전 진단은 <b>프리미엄 등급</b> 차트입니다. 베이직·스탠다드는 심플 차트(2D·좌우)로 진행됩니다.</div>
       <h2 class="section">회차별 애프터 사진</h2>
       <div id="afters"></div>
-      <button class="btn ghost" style="width:100%" onclick="document.getElementById('afterInput').click()">＋ 애프터 추가 (사진 3장 한 번에)</button>
+      <button class="btn primary" style="width:100%" onclick="camNewAfter()">📷 애프터 촬영 추가 (정면·든·숙임 이어서 · 초회차 겹침)</button>
+      <button class="btn ghost" style="width:100%;margin-top:6px" onclick="document.getElementById('afterInput').click()">🖼 앨범에서 3장 넣기</button>
       <button class="btn primary" style="width:100%;margin-top:8px" onclick="makeAfterImage()">📸 고객에게 보낼 전/후 이미지 만들기</button>
       <div id="afterCompare" style="margin-top:12px"></div>
       <input type="file" id="afterInput" accept="image/*,.heic,.heif" multiple style="display:none" onchange="onMulti(event,'after')">
@@ -1521,8 +1522,16 @@ function closeCam(){stopCam();document.getElementById('camModal').style.display=
 /* 시작 슬롯부터 끝(고개 숙임)까지 이어 촬영. 애프터는 각 슬롯의 비포를 오버레이 */
 function _buildSteps(startSlot,mk){var started=false,st=[];PHOTO_SLOTS.forEach(function(p){var s=p[0],ko=p[1];if(s===startSlot)started=true;if(started)st.push(mk(s,ko));});return st;}
 function _confirmOverwrite(s){if(!form['photo_'+s])return true;return confirm('⚠️ 초회차(원본) 사진을 새로 촬영하면 기존 사진이 바뀝니다.\n회차(애프터) 사진은 아래 "회차별 애프터"에서 촬영/추가하세요.\n그래도 초회차를 다시 찍을까요?');}
-function camMain(s){if(!_confirmOverwrite(s))return;openCamSeq(_buildSteps(s,function(s,ko){return {ko:ko,ref:function(){return form['photo_'+s]||null;},assign:function(d){form['photo_'+s]=d;setPhotoPreview(s);}};}));}
-function camAfter(i,s){openCamSeq(_buildSteps(s,function(s,ko){return {ko:ko+'(애프터)',ref:function(){return form['photo_'+s]||null;},assign:function(d){if(form.afters&&form.afters[i]){form.afters[i]['photo_'+s]=d;renderAfters();}}};}));}
+/* 초회차(원본): 겹칠 비포가 없으니 오버레이 없음 */
+function camMain(s){if(!_confirmOverwrite(s))return;openCamSeq(_buildSteps(s,function(s,ko){return {ko:ko,ref:function(){return null;},assign:function(d){form['photo_'+s]=d;setPhotoPreview(s);}};}));}
+/* ★ 애프터 추가: 카메라로 정면→든→숙임 이어서 촬영 · 각 슬롯에 초회차(비포) 반투명 겹침 · 새 회차 생성(덮어쓰기 없음) */
+function camNewAfter(){
+  if(!camSupported()){document.getElementById('afterInput').click();return;}
+  var after={id:newId(),session:'',date:todayStr()},pushed=false;
+  openCamSeq(_buildSteps('front',function(s,ko){return {ko:ko+'(애프터)',ref:function(){return form['photo_'+s]||null;},assign:function(d){after['photo_'+s]=d;if(!pushed){if(!Array.isArray(form.afters))form.afters=[];form.afters.push(after);pushed=true;}renderAfters();}};}));
+}
+/* 회차 내 개별 슬롯 재촬영: 그 슬롯 1장만(다른 슬롯 안 건드림) · 초회차 겹침 */
+function camAfter(i,s){var ko=(PHOTO_SLOTS.find(function(x){return x[0]===s;})||[null,''])[1];openCamSeq([{ko:ko+'(애프터)',ref:function(){return form['photo_'+s]||null;},assign:function(d){if(form.afters&&form.afters[i]){form.afters[i]['photo_'+s]=d;renderAfters();}}}]);}
 window.addEventListener('resize',positionStickyThumbs);
 /* 3D 시뮬레이션(맨 아래) 영역이 화면에 들어오면 따라오는 사진 숨김 — 폰에서 방해 안 되게 */
 (function(){var fp=document.getElementById('fp_panel'),st=document.getElementById('stickyThumbs');if(fp&&st&&window.IntersectionObserver){new IntersectionObserver(function(es){var vis=es[0]&&es[0].isIntersecting;st.style.display=vis?'none':'';}).observe(fp);}})();
