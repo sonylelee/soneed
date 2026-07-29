@@ -180,6 +180,14 @@
   #camModal .cam-strip img.sel{border-color:#00e6a0;box-shadow:0 0 0 2px rgba(0,230,160,.4)}
   #camModal .cam-use{background:#00c48c;color:#062;border:none;font-weight:800;padding:11px 16px;border-radius:12px;font-size:13.5px;cursor:pointer;display:none}
   #camModal .cam-count{color:#9fe;font-size:11.5px;text-align:center;margin-bottom:7px;min-height:14px}
+  #baOv{position:fixed;inset:0;z-index:10001;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.5);padding:16px}
+  #baOv .ba-card{background:#fff;border-radius:16px;max-width:470px;width:100%;max-height:88vh;overflow:auto;padding:20px 22px;box-shadow:0 12px 40px rgba(0,0,0,.3)}
+  #baOv .ba-h{font-size:17px;font-weight:800;color:#26307a;margin-bottom:12px}
+  #baOv .ba-t{width:100%;border-collapse:collapse;font-size:13px}
+  #baOv .ba-t th{background:#f3edfb;color:#4a4652;text-align:left;padding:7px 9px;font-size:11.5px}
+  #baOv .ba-t td{padding:7px 9px;border-bottom:1px solid #eee}
+  #baOv .ba-t td.n{text-align:right;font-variant-numeric:tabular-nums}
+  #baOv .ba-note{font-size:11.5px;color:#8a8592;line-height:1.6;margin-top:12px;background:#faf7f3;border-radius:8px;padding:9px 11px}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   .toolbar{display:flex;gap:10px;align-items:center;margin:4px 2px 16px;flex-wrap:wrap} .toolbar .grow{flex:1}
   .spinner{width:15px;height:15px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;display:inline-block;vertical-align:-2px;margin-right:7px;animation:sp .7s linear infinite}
@@ -248,7 +256,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v100 (2026-07-29)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v103 (2026-07-29)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트</button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">🎓 아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -298,7 +306,7 @@
       <div id="rotLocked" class="subtle" style="display:none;padding:10px 0;border-top:1px dashed #e2d7f7">🔒 회전 진단은 <b>프리미엄 등급</b> 차트입니다. 베이직·스탠다드는 심플 차트(2D·좌우)로 진행됩니다.</div>
       <h2 class="section">회차별 애프터 사진</h2>
       <div id="afters"></div>
-      <button class="btn primary" style="width:100%" onclick="camNewAfter()">📷 애프터 촬영 추가 (정면·든·숙임 이어서 · 초회차 겹침)</button>
+      <button class="btn primary" style="width:100%" onclick="camNewAfter()">📷 애프터 촬영 추가<br><span style="font-size:11px;font-weight:400;opacity:.85">정면·든·숙임 이어서 · 초회차 겹침</span></button>
       <button class="btn ghost" style="width:100%;margin-top:6px" onclick="document.getElementById('afterInput').click()">🖼 앨범에서 3장 넣기</button>
       <button class="btn primary" style="width:100%;margin-top:8px" onclick="makeAfterImage()">📸 고객에게 보낼 전/후 이미지 만들기</button>
       <div id="afterCompare" style="margin-top:12px"></div>
@@ -1259,12 +1267,12 @@ function onMulti(e,kind){const files=Array.from(e.target.files||[]).slice(0,3);e
     readExifDate(files[0],d=>{if(d)after.date=d;renderAfters();});renderAfters();}}
 const AFTER_READS=[['type','타입'],['occiput_clock','후두골 시간'],['nose_diag','코 방향'],['eye_lip','눈>입술 먼쪽'],['waterslide','워터슬라이드'],['d_forehead_parietal','마루 두께']];
 function afterField(i,a){const opts='<option value="">회차</option>'+Array.from({length:40},(_,n)=>'<option '+(a.session===(n+1)+'회'?'selected':'')+'>'+(n+1)+'회</option>').join('');
-  const thumbs=PHOTO_SLOTS.map(([s,ko])=>{const src=a['photo_'+s];const hasB=!!form['photo_'+s];return '<div class="pslot"><div class="photo-drop" style="aspect-ratio:3/4">'+(src?'<img src="'+src+'">':'<div class="ph">'+ko+'</div>')+'</div><button type="button" class="mini-cam" onclick="camAfter('+i+',\''+s+'\')">📷 '+(hasB?'비포 겹쳐 촬영':'앱에서 촬영')+'</button><label>'+ko+'</label></div>';}).join('');
+  const thumbs=PHOTO_SLOTS.map(([s,ko])=>{const src=a['photo_'+s];return '<div class="pslot"><div class="photo-drop" style="aspect-ratio:3/4">'+(src?'<img src="'+src+'">':'<div class="ph">'+ko+'</div>')+'</div><label>'+ko+'</label></div>';}).join('');
   const reads=AFTER_READS.map(function(rk){var k=rk[0],ko=rk[1],f=FMAP[k];var o='<option value="">-</option>'+f.opt.filter(function(x){return x!=='';}).map(function(x){return '<option'+(a[k]===x?' selected':'')+' value="'+x+'">'+x+'</option>';}).join('');return '<div class="field" style="max-width:150px"><label>'+ko+'</label><select onchange="form.afters['+i+'][\''+k+'\']=this.value||null;renderAfterCompare()">'+o+'</select></div>';}).join('');
   return '<div class="card pad" style="margin-bottom:10px"><div class="rowline" style="margin-bottom:10px">'
     +'<div class="field" style="max-width:130px"><label>회차</label><select onchange="form.afters['+i+'].session=this.value||null;renderAfterCompare()">'+opts+'</select></div>'
     +'<div class="field" style="max-width:190px"><label>날짜</label><input type="date" value="'+(a.date||'')+'" onchange="form.afters['+i+'].date=this.value||null;renderAfters()"></div>'
-    +'<div style="margin-left:auto;display:flex;gap:6px;align-items:flex-end"><button class="btn auto" style="padding:8px 12px;font-size:12px;white-space:nowrap" onclick="onAfterFaceAnalyze('+i+')">🤖 AI 판독</button><button class="btn danger" style="padding:8px 12px;font-size:12px" onclick="form.afters.splice('+i+',1);renderAfters()">삭제</button></div>'
+    +'<div style="margin-left:auto;display:flex;gap:6px;align-items:flex-end;flex-wrap:wrap;justify-content:flex-end"><button class="btn" style="padding:8px 12px;font-size:12px;white-space:nowrap;background:#eef6ff;color:#26307a;border:1px solid #cfe0f5" onclick="showBAImprove('+i+')">📊 전/후 개선률</button><button class="btn auto" style="padding:8px 12px;font-size:12px;white-space:nowrap" onclick="onAfterFaceAnalyze('+i+')">AI 판독</button><button class="btn danger" style="padding:8px 12px;font-size:12px" onclick="form.afters.splice('+i+',1);renderAfters()">삭제</button></div>'
     +'</div>'
     +'<div class="rowline" style="margin-bottom:10px;flex-wrap:wrap;gap:8px"><div style="width:100%;font-size:12px;color:var(--muted);font-weight:700;margin-bottom:-2px">판독값 (이 회차 · 촉진 후 기록)</div>'+reads+'</div>'
     +'<div class="photos">'+thumbs+'</div></div>';}
@@ -1532,6 +1540,49 @@ function camNewAfter(){
 }
 /* 회차 내 개별 슬롯 재촬영: 그 슬롯 1장만(다른 슬롯 안 건드림) · 초회차 겹침 */
 function camAfter(i,s){var ko=(PHOTO_SLOTS.find(function(x){return x[0]===s;})||[null,''])[1];openCamSeq([{ko:ko+'(애프터)',ref:function(){return form['photo_'+s]||null;},assign:function(d){if(form.afters&&form.afters[i]){form.afters[i]['photo_'+s]=d;renderAfters();}}}]);}
+/* ★ 전/후 개선률: 초회차 vs 이 회차 애프터를 측정엔진에 돌려 측정 가능한 항목의 전→후·% 표시 (겹치기 촬영으로 각도 맞췄을 때 신뢰) */
+async function showBAImprove(i){
+  var a=(form.afters||[])[i]; if(!a){toast('회차 정보를 찾지 못했어요');return;}
+  if(!form.photo_front){toast('초회차 정면 사진이 없어요');return;}
+  if(!a.photo_front){toast('이 회차 정면 애프터 사진이 없어요 — 먼저 촬영/추가하세요');return;}
+  progShow('전/후 측정 중');
+  var bF=null,aF=null,bU=null,aU=null;
+  try{
+    bF=await measureFront(form.photo_front);
+    aF=await measureFront(a.photo_front);
+    if(form.photo_up&&a.photo_up){bU=await measureEarsUp(form.photo_up);aU=await measureEarsUp(a.photo_up);}
+  }catch(e){}
+  progHide();
+  if(!bF||!aF){toast('얼굴 인식 실패 — 정면 사진이 선명한지 확인하세요');return;}
+  var rows=[];
+  function push(label,bv,av){
+    bv=(bv==null?null:Math.abs(bv));av=(av==null?null:Math.abs(av));
+    if(bv==null||av==null){rows.push({label:label,na:true});return;}
+    var diff=av-bv, pct=(bv>=0.1)?Math.round((bv-av)/bv*100):null,verdict=diff<-0.08?'개선':(diff>0.08?'악화':'유지');
+    rows.push({label:label,bv:bv,av:av,pct:pct,verdict:verdict});
+  }
+  push('눈 기울기 (좌우 눈높이)',bF.eye_dy_norm,aF.eye_dy_norm);
+  push('코 편차 (밀림)',bF.nose_dx,aF.nose_dx);
+  push('회전 치우침',bF.nose_off,aF.nose_off);
+  push('콧볼 높낮이',bF.ala_diff,aF.ala_diff);
+  if(bU&&aU) push('후두골 기울기 (고개 든)',bU.dy_norm,aU.dy_norm);
+  var html='<div class="ba-card"><div class="ba-h">📊 전/후 개선률'+(a.session?(' · '+a.session):'')+(a.date?(' · '+a.date):'')+'</div>';
+  html+='<table class="ba-t"><tr><th>항목</th><th>전</th><th>후</th><th>결과</th></tr>';
+  rows.forEach(function(r){
+    if(r.na){html+='<tr><td>'+r.label+'</td><td class="n" colspan="3" style="color:#aaa">사진 부족</td></tr>';return;}
+    var res,col;
+    if(r.bv<0.1&&r.av<0.1){res='양쪽 대칭';col='#8a8592';}
+    else{col=r.verdict==='개선'?'#1f9d55':(r.verdict==='악화'?'#d64545':'#8a8592');res=(r.pct!=null)?(r.pct>0?r.pct+'% 개선':(r.pct<0?Math.abs(r.pct)+'% 악화':'유지')):r.verdict;}
+    html+='<tr><td>'+r.label+'</td><td class="n">'+r.bv.toFixed(2)+'</td><td class="n">'+r.av.toFixed(2)+'</td><td class="n" style="color:'+col+';font-weight:800">'+res+'</td></tr>';
+  });
+  html+='<tr><td>얼굴 가로세로비 <span style="color:#aaa">(작아지면 갸름)</span></td><td class="n">'+bF.wh.toFixed(1)+'</td><td class="n">'+aF.wh.toFixed(1)+'</td><td class="n" style="color:#8a8592">참고</td></tr>';
+  html+='</table>';
+  html+='<div class="ba-note">숫자 = 비대칭 크기(0에 가까울수록 대칭). <b>초회차 겹치기로 각도를 맞춰 촬영했을 때 신뢰</b>할 수 있어요. 타입·팔자·CA·회전진단 등 나머지 항목은 사진으로 측정 불가 → <b>촉진 판단</b>.</div>';
+  html+='<button class="btn primary" style="width:100%;margin-top:12px" onclick="document.getElementById(\'baOv\').style.display=\'none\'">닫기</button></div>';
+  var o=document.getElementById('baOv');
+  if(!o){o=document.createElement('div');o.id='baOv';o.onclick=function(e){if(e.target===o)o.style.display='none';};document.body.appendChild(o);}
+  o.innerHTML=html;o.style.display='flex';
+}
 window.addEventListener('resize',positionStickyThumbs);
 /* 3D 시뮬레이션(맨 아래) 영역이 화면에 들어오면 따라오는 사진 숨김 — 폰에서 방해 안 되게 */
 (function(){var fp=document.getElementById('fp_panel'),st=document.getElementById('stickyThumbs');if(fp&&st&&window.IntersectionObserver){new IntersectionObserver(function(es){var vis=es[0]&&es[0].isIntersecting;st.style.display=vis?'none':'';}).observe(fp);}})();
@@ -1831,6 +1882,7 @@ async function measureFront(dataUrl){
       wh: r(faceW/faceH*100),
       rot_ear_own: rotScreen,
       nose_off: r(noseOff/faceW*100),
+      nose_dx: r(noseDx/faceW*100),
       ala_own: own(alaScreen),
       ala_diff: r(alaDiff*100)
     };
