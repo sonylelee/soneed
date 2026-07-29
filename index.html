@@ -216,7 +216,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v91 (2026-07-29)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v92 (2026-07-29)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트</button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">🎓 아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -968,10 +968,11 @@ const FCODE_PROMPT=`[추가 출력 · 안면 코드]
 아래 6개를 사진(정면 위주)에서 기하학적으로 판정해 "안면코드" 객체로 함께 출력하라. 모든 좌우는 본인 기준(사진 왼쪽=본인 오른쪽 반전 적용). 자동 측정값이 있으면 그대로 따르라(재반전 금지).
 - 타입: "A"(우측 짧음) 또는 "B"(좌측 짧음)
 - 후두골: "7시" "6시" "5시" 중 하나(고개 든 사진 · 본인 오른귀 더 아래=7시 / 대칭=6시 / 본인 왼귀 더 아래=5시)
-- 눈코밀림: 양안 중심선 대비 코가 밀린 본인쪽 "왼" 또는 "오"
-- 광대전면: 더 앞으로 나온(전면 레벨이 높은) 광대 본인쪽 "왼" 또는 "오"
-- 눈높은쪽: 더 높이 있는 눈 본인쪽 "왼" 또는 "오"
-- 콧볼올라감: 코 직선라인과 이루는 각이 더 좁은(올라간) 콧볼 본인쪽 "왼" 또는 "오"
+- 눈코밀림: 양안 중심선 대비 코가 밀린 본인쪽 "왼"/"오"/"중립"(안 밀렸으면 중립)
+- 광대전면: 더 앞으로 나온(전면 레벨이 높은) 광대 본인쪽 "왼"/"오"/"중립"(대칭이면 중립)
+- 눈높은쪽: 더 높이 있는 눈 본인쪽 "왼"/"오"/"중립"(대칭이면 중립)
+- 콧볼올라감: 코 직선라인과 이루는 각이 더 좁은(올라간) 콧볼 본인쪽 "왼"/"오"/"중립"(대칭이면 중립)
+★★ 필수 규칙: "눈코밀림"(예각 쪽)과 "눈높은쪽"(둔각 쪽)은 같은 각의 반대편이므로 반드시 서로 반대쪽이다 — 둘을 같은 쪽으로 내면 오류다. 코가 왼쪽으로 밀렸으면 눈높은쪽은 오, 오른쪽이면 왼. 코가 중립(안 밀림)이면 눈높은쪽도 중립.
 반드시 출력 JSON에 "안면코드":{"타입":..,"후두골":..,"눈코밀림":..,"광대전면":..,"눈높은쪽":..,"콧볼올라감":..} 를 포함하라. 값은 위에 지정한 문자열만 사용.`;
 function _fcNorm(k,v){v=String(v==null?'':v).trim();if(k==='t')return /b/i.test(v)?'B':(/a/i.test(v)?'A':null);if(k==='clock'){var d=v.match(/[567]/);return d?d[0]+'시':null;}if(/중립|중앙|대칭|neutral|middle/i.test(v))return '중립';if(/왼|left|(^|[^a-z])l([^a-z]|$)/i.test(v))return '왼';if(/오|right|(^|[^a-z])r([^a-z]|$)/i.test(v))return '오';return null;}
 function applyFcodeFromAI(parsed){
@@ -979,6 +980,8 @@ function applyFcodeFromAI(parsed){
   var map={타입:'t',후두골:'clock',눈코밀림:'nose',광대전면:'cheek',광대올라옴:'cheek',눈높은쪽:'eye',콧볼올라감:'ala'};
   if(!form.fcode)form.fcode={};var got=false;
   for(var kk in map){var nv=_fcNorm(map[kk],fc[kk]);if(nv){form.fcode[map[kk]]=nv;got=true;}}
+  /* ★ 코(예각)와 눈(둔각)은 같은 각의 반대편 → 항상 서로 반대. AI가 같게/모순되게 줘도 눈을 코의 반대로 강제(코=측정 기반 우선, 중립은 중립). */
+  if(form.fcode.nose){var _op=function(v){return v==='왼'?'오':(v==='오'?'왼':'중립');};form.fcode.eye=_op(form.fcode.nose);}
   if(got)form.face_code=fcodeStr(form.fcode)||null;
   return got;
 }
@@ -1703,22 +1706,16 @@ async function measureEarsUp(dataUrl){
     const out=lm.detect(cv);
     if(!out.faceLandmarks||!out.faceLandmarks.length)return null;
     const P=out.faceLandmarks[0].map(p=>({x:p.x*img.width,y:p.y*img.height}));
-    const EAR_A=127, EAR_B=356;   /* 귀 앞(관자놀이 뒤쪽) — 고개 들어도 귀를 따라감 */
-    const EYE_A=33,  EYE_B=263;   /* 좌우 눈 바깥 — 얼굴 기울기 기준 */
+    const EAR_A=127, EAR_B=356;   /* 귀앞점(관자놀이 뒤) — 귀 구멍 위치 예상, 고개 들어도 귀를 따라감 */
     const CHIN=152, FH=10;
     const dist=(p,q)=>Math.hypot(p.x-q.x,p.y-q.y);
     const faceH=dist(P[FH],P[CHIN])||1;
 
-    /* 얼굴 기울기(눈선의 회전각)를 구해 그만큼 되돌린 좌표계에서 귀 높이를 비교 */
-    const eA=P[EYE_A], eB=P[EYE_B];
-    const ang=Math.atan2(eB.y-eA.y, eB.x-eA.x);   /* 눈선의 기울기 */
-    const cos=Math.cos(-ang), sin=Math.sin(-ang);
-    const rot=p=>({x:p.x*cos - p.y*sin, y:p.x*sin + p.y*cos});
-
-    const a=rot(P[EAR_A]), b=rot(P[EAR_B]);
+    /* ★ 대표 기준(v92): 좌우 귀 구멍(예상점)을 잇는 선의 '수평 대비' 기울기로 판정. 눈선 보정 안 함 — 기준은 수평. */
+    const a=P[EAR_A], b=P[EAR_B];
     const scrL = a.x<b.x?a:b;    /* 화면 왼쪽 귀 */
     const scrR = a.x<b.x?b:a;
-    const dy=scrR.y-scrL.y;      /* +면 화면오른쪽 귀가 아래 */
+    const dy=scrR.y-scrL.y;      /* +면 화면오른쪽 귀가 아래 (수평 기준) */
     const lowScreen = Math.abs(dy)<faceH*0.006 ? '거의같음' : (dy>0?'화면오른쪽':'화면왼쪽');
     const own=s=>s==='화면왼쪽'?'본인오른쪽':(s==='화면오른쪽'?'본인왼쪽':s);
     return { low_own: own(lowScreen), dy_norm: Math.round(Math.abs(dy)/faceH*1000)/10 };
