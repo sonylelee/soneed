@@ -216,7 +216,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v90 (2026-07-28)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v91 (2026-07-29)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트</button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">🎓 아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -957,13 +957,13 @@ function applyFormToUI(){
 const FCODE=[
  {k:'t',label:'타입',opt:['A','B']},
  {k:'clock',label:'후두골',opt:['7시','6시','5시']},
- {k:'nose',label:'눈>코(예각인 쪽)',opt:['왼','오']},
- {k:'cheek',label:'광대 전면레벨(나온 쪽)',opt:['왼','오']},
- {k:'eye',label:'눈>코 (둔각인 쪽)',opt:['왼','오']},
- {k:'ala',label:'콧볼 (높은 쪽)',opt:['왼','오']},
- {k:'par',label:'오른마루',opt:['두꺼움','얇음']}
+ {k:'nose',label:'눈>코(예각인 쪽)',opt:['왼','오','중립']},
+ {k:'cheek',label:'광대 전면레벨(나온 쪽)',opt:['왼','오','중립']},
+ {k:'eye',label:'눈>코 (둔각인 쪽)',opt:['왼','오','중립']},
+ {k:'ala',label:'콧볼 (높은 쪽)',opt:['왼','오','중립']},
+ {k:'par',label:'오른마루',opt:['두꺼움','얇음','중립']}
 ];
-function fcodeStr(o){if(!o)return'';for(var i=0;i<FCODE.length;i++){if(!o[FCODE[i].k])return'';}return o.t+String(o.clock).replace('시','')+'-'+o.nose+o.cheek+o.eye+o.ala+'-'+(o.par==='두꺼움'?'T':'F');}
+function fcodeStr(o){if(!o||!o.t||!o.clock)return'';var z=function(v){return(!v||v==='중립')?'0':v;};var p=o.par==='두꺼움'?'T':(o.par==='얇음'?'F':'0');return o.t+String(o.clock).replace('시','')+'-'+z(o.nose)+z(o.cheek)+z(o.eye)+z(o.ala)+'-'+p;}
 const FCODE_PROMPT=`[추가 출력 · 안면 코드]
 아래 6개를 사진(정면 위주)에서 기하학적으로 판정해 "안면코드" 객체로 함께 출력하라. 모든 좌우는 본인 기준(사진 왼쪽=본인 오른쪽 반전 적용). 자동 측정값이 있으면 그대로 따르라(재반전 금지).
 - 타입: "A"(우측 짧음) 또는 "B"(좌측 짧음)
@@ -973,7 +973,7 @@ const FCODE_PROMPT=`[추가 출력 · 안면 코드]
 - 눈높은쪽: 더 높이 있는 눈 본인쪽 "왼" 또는 "오"
 - 콧볼올라감: 코 직선라인과 이루는 각이 더 좁은(올라간) 콧볼 본인쪽 "왼" 또는 "오"
 반드시 출력 JSON에 "안면코드":{"타입":..,"후두골":..,"눈코밀림":..,"광대전면":..,"눈높은쪽":..,"콧볼올라감":..} 를 포함하라. 값은 위에 지정한 문자열만 사용.`;
-function _fcNorm(k,v){v=String(v==null?'':v).trim();if(k==='t')return /b/i.test(v)?'B':(/a/i.test(v)?'A':null);if(k==='clock'){var d=v.match(/[567]/);return d?d[0]+'시':null;}if(/왼|left|(^|[^a-z])l([^a-z]|$)/i.test(v))return '왼';if(/오|right|(^|[^a-z])r([^a-z]|$)/i.test(v))return '오';return null;}
+function _fcNorm(k,v){v=String(v==null?'':v).trim();if(k==='t')return /b/i.test(v)?'B':(/a/i.test(v)?'A':null);if(k==='clock'){var d=v.match(/[567]/);return d?d[0]+'시':null;}if(/중립|중앙|대칭|neutral|middle/i.test(v))return '중립';if(/왼|left|(^|[^a-z])l([^a-z]|$)/i.test(v))return '왼';if(/오|right|(^|[^a-z])r([^a-z]|$)/i.test(v))return '오';return null;}
 function applyFcodeFromAI(parsed){
   var fc=parsed&&(parsed['안면코드']||parsed['안면 코드']);if(!fc||typeof fc!=='object')return false;
   var map={타입:'t',후두골:'clock',눈코밀림:'nose',광대전면:'cheek',광대올라옴:'cheek',눈높은쪽:'eye',콧볼올라감:'ala'};
@@ -986,7 +986,8 @@ function renderFcode(){
   var box=document.getElementById('fcodeSel');if(!box)return;
   var o=form.fcode||(form.fcode={});
   box.innerHTML=FCODE.map(function(f){
-    var opts='<option value="">-</option>'+f.opt.map(function(x){return '<option'+(o[f.k]===x?' selected':'')+'>'+x+'</option>';}).join('');
+    var hasNeu=f.opt.indexOf('중립')>=0,cur=o[f.k];
+    var opts=(hasNeu?'':'<option value="">-</option>')+f.opt.map(function(x){var sel=(cur===x)||(hasNeu&&!cur&&x==='중립');return '<option'+(sel?' selected':'')+'>'+x+'</option>';}).join('');
     return '<div class="fc-field"><label>'+f.label+'</label><select onchange="setFcode(\''+f.k+'\',this.value)">'+opts+'</select></div>';
   }).join('');
   renderFcodeOut();
@@ -1007,7 +1008,7 @@ function composeSolution(fc){
   else if(fc.eye==='왼'){var l2=['Rt 이마 리프팅'];if(fc.ala==='왼')l2.push('(+콧볼 왼) 오른 턱 위로 들어올려 왼쪽으로 드로잉');if(fc.nose==='오')l2.push('(+코방향 오) 2·3층 스퀘어 크로스 프레싱(측면): 왼쪽으로 돌린 후 오른쪽 이마 귀뒤+위로 밀고 오른 광대 앞&아래로 당기기 / 오른쪽으로 돌린 후 왼쪽 이마 앞+아래로 당기고 왼 광대 뒤&위로 밀기');out.push({h:'③ 눈 높이 · 왼',lines:l2});}
   if(fc.ala==='오')out.push({h:'④ 콧볼 · 오',lines:['Lt 광대 후방경사 & Rt 광대 전방경사']});
   else if(fc.ala==='왼')out.push({h:'④ 콧볼 · 왼',lines:['Rt 광대 후방경사 & Lt 광대 전방경사']});
-  if(fc.par&&(fc.clock==='7시'||fc.clock==='6시'||fc.clock==='5시')){
+  if((fc.par==='두꺼움'||fc.par==='얇음')&&(fc.clock==='7시'||fc.clock==='6시'||fc.clock==='5시')){
     var t=fc.par==='두꺼움',c=fc.clock,L;
     if(c==='7시')L=t?['Rt 마루두께 줄이기','Lt 마루두께 늘리기']:['Rt 유양돌기 앞으로 밀며 Rt 마루 늘리기','Lt 마루두께 줄이기'];
     else if(c==='6시')L=t?['Rt 마루 줄이기','Lt 유양돌기 앞으로 조금 풀링','Lt 유양돌기 앞으로 밀며 Lt 마루 늘리기']:['Lt 마루 줄이기','Rt 유양돌기 앞으로 조금 풀링','Rt 유양돌기 앞으로 밀며 Rt 마루 늘리기'];
@@ -1027,7 +1028,7 @@ function solCardHTML(fc){
 }
 function fcodeConflict(fc){
   if(!fc)return'';
-  if(fc.nose&&fc.eye&&fc.nose===fc.eye)return '⚠ 눈>코(예각)와 눈>코(둔각)이 같은 쪽('+fc.nose+')이에요 — 둘은 반대여야 정상입니다. 다시 확인하세요.';
+  if(fc.nose&&fc.eye&&fc.nose!=='중립'&&fc.eye!=='중립'&&fc.nose===fc.eye)return '⚠ 눈>코(예각)와 눈>코(둔각)이 같은 쪽('+fc.nose+')이에요 — 둘은 반대여야 정상입니다. 다시 확인하세요.';
   return '';
 }
 function renderFcodeOut(){
