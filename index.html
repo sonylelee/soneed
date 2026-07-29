@@ -216,7 +216,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v92 (2026-07-29)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v93 (2026-07-29)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트</button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">🎓 아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -1960,7 +1960,8 @@ function renderConds(){
 }
 var _recQuery='';
 function onRecSearch(v){_recQuery=(v||'').trim().toLowerCase();renderRecList();}
-function _matchQuery(r){ if(!_recQuery)return true; var hay=((r.face_code||'')+' '+(r.code||'')).toLowerCase(); return hay.indexOf(_recQuery)>=0; }
+function recCode(r){return (r&&(r.face_code||fcodeStr(r.fcode||{})))||'';}  /* 저장된 코드 없으면 구성요소로 재계산(중립=0 포함) */
+function _matchQuery(r){ if(!_recQuery)return true; var hay=(recCode(r)+' '+(r.code||'')).toLowerCase(); return hay.indexOf(_recQuery)>=0; }
 function filtered(){return records.filter(r=>_matchQuery(r)&&conds.every(c=>!c.v||getVals(r,c.k).includes(c.v)));}
 function applyFilter(){document.getElementById('filterCount').textContent=filtered().length;renderRecList();renderCrosstab();}
 function recPhoto(r){for(const [s] of PHOTO_SLOTS){if(r['photo_'+s])return r['photo_'+s];}return r.thumb||null;}
@@ -1968,7 +1969,7 @@ function chipFor(r,k){let v=r[k];if(v==null||v==='')return'';if(Array.isArray(v)
 function fillCodeList(){
   var dl=document.getElementById('recCodeList');if(!dl)return;
   var seen={},arr=[];
-  (records||[]).forEach(function(r){var c=r.face_code;if(c&&!seen[c]){seen[c]=1;arr.push(c);}});
+  (records||[]).forEach(function(r){var c=recCode(r);if(c&&!seen[c]){seen[c]=1;arr.push(c);}});
   arr.sort();
   dl.innerHTML=arr.map(function(c){return '<option value="'+c+'">';}).join('');
 }
@@ -1976,7 +1977,7 @@ function renderRecList(){
   fillCodeList();
   const list=sortList(filtered()),box=document.getElementById('recList');
   if(list.length===0){box.innerHTML=`<div class="empty-note" style="grid-column:1/-1"><b>아직 기록이 없습니다.</b><br>‘기록 입력’ 탭에서 첫 데이터를 저장해 보세요.</div>`;return;}
-  box.innerHTML=list.map(r=>{const p=recPhoto(r);const thumb=p?`<img src="${p}" loading="lazy" decoding="async">`:`<span>사진 없음</span>`;const sub=[r.date,r.therapist,r.signup].filter(Boolean).join(' · ');const chips=CHIP_KEYS.map(k=>chipFor(r,k)).filter(Boolean).join('');return `<div class="rec" onclick="editRecord('${r.id}')"><div class="thumb ${p?'':'empty'}">${thumb}</div><div class="meta"><div class="code">${r.code||'무제'}</div>${r.face_code?`<div class="fcode-tag">${r.face_code}</div>`:''}<div class="sub">${sub||'&nbsp;'}</div>${(r.savedBy&&r.savedBy!==authEmail())?'<div class="sub" style="color:#C81D74">👤 '+r.savedBy+'</div>':''}<div class="chips">${chips||'<span class="chip k">미입력</span>'}</div></div></div>`;}).join('');
+  box.innerHTML=list.map(r=>{const p=recPhoto(r);const thumb=p?`<img src="${p}" loading="lazy" decoding="async">`:`<span>사진 없음</span>`;const sub=[r.date,r.therapist,r.signup].filter(Boolean).join(' · ');const chips=CHIP_KEYS.map(k=>chipFor(r,k)).filter(Boolean).join('');const fcd=recCode(r);return `<div class="rec" onclick="editRecord('${r.id}')"><div class="thumb ${p?'':'empty'}">${thumb}</div><div class="meta"><div class="code">${r.code||'무제'}</div>${fcd?`<div class="fcode-tag">${fcd}</div>`:''}<div class="sub">${sub||'&nbsp;'}</div>${(r.savedBy&&r.savedBy!==authEmail())?'<div class="sub" style="color:#C81D74">👤 '+r.savedBy+'</div>':''}<div class="chips">${chips||'<span class="chip k">미입력</span>'}</div></div></div>`;}).join('');
 }
 function fillXtSelects(){const opts='<option value="">(선택)</option>'+FILTERABLE.map(f=>`<option value="${f.k}">${f.label}</option>`).join('');const row=document.getElementById('xtRow'),col=document.getElementById('xtCol');row.innerHTML=opts;col.innerHTML=opts;row.value='zyg_maxilla';col.value='nasolabial';}
 function renderCrosstab(){
