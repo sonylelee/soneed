@@ -256,7 +256,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v103 (2026-07-29)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v105 (2026-07-29)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트</button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">🎓 아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -272,7 +272,7 @@
       <input type="file" id="chartInput" accept="image/*,.heic,.heif" style="display:none" onchange="onChartPhoto(event)">
       <button class="btn auto" id="faceBtn" onclick="onFaceAnalyze()">🙂 심화차트 AI 분석</button>
       <button class="btn auto" id="codeBtn" onclick="onCodeAnalyze()">🔑 AI 코드분석</button>
-      <button class="btn ghost" onclick="clearForm()">새로 작성</button>
+      <button class="btn ghost" onclick="clearFormConfirm()">새로 작성</button>
     </div>
     <div id="autoMsg"></div>
     <div id="faceResult"></div>
@@ -1257,14 +1257,17 @@ function resizeToDataURL(file,max,q,cb){
 }
 function todayStr(){return new Date().toISOString().slice(0,10);}
 function readExifDate(file,cb){const r=new FileReader();r.onerror=()=>cb(null);r.onload=()=>{try{cb(parseExifDate(new DataView(r.result)));}catch(e){cb(null);}};r.readAsArrayBuffer(file.slice(0,256*1024));}
+function _localYMD(ms){var d=new Date(ms),p=function(n){return String(n).padStart(2,'0');};return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());}
+/* 사진 날짜: EXIF 촬영시각 우선 → 없으면(HEIC 등) 파일 수정시각으로 폴백 */
+function photoDate(file,cb){readExifDate(file,function(d){if(d){cb(d);return;}try{if(file&&file.lastModified){cb(_localYMD(file.lastModified));return;}}catch(e){}cb(null);});}
 function parseExifDate(dv){if(dv.byteLength<4||dv.getUint16(0)!==0xFFD8)return null;let off=2;const len=dv.byteLength;while(off+4<len){if(dv.getUint8(off)!==0xFF){off++;continue;}const marker=dv.getUint8(off+1);if(marker===0xE1){const size=dv.getUint16(off+2);const s=off+4;if(s+6<len&&dv.getUint32(s)===0x45786966)return parseExifIFD(dv,s+6);off+=2+size;}else if(marker===0xD8||marker===0xD9||(marker>=0xD0&&marker<=0xD7)){off+=2;}else{const size=dv.getUint16(off+2);off+=2+size;}}return null;}
 function parseExifIFD(dv,base){const little=dv.getUint16(base)===0x4949;const g16=o=>dv.getUint16(base+o,little),g32=o=>dv.getUint32(base+o,little);const getStr=(o,c)=>{let s='';for(let i=0;i<c;i++){const ch=dv.getUint8(base+o+i);if(ch===0)break;s+=String.fromCharCode(ch);}return s;};function scan(ifd,want){const n=g16(ifd);let ptr=null,val=null;for(let i=0;i<n;i++){const e=ifd+2+i*12;const tag=g16(e);if(tag===want)val=getStr(g32(e+8),g32(e+4));if(tag===0x8769)ptr=g32(e+8);}return{ptr,val};}const r0=scan(g32(4),0x0132);let dt=null;if(r0.ptr)dt=scan(r0.ptr,0x9003).val;if(!dt)dt=r0.val;const m=dt&&dt.match(/^(\d{4}):(\d{2}):(\d{2})/);return m?(m[1]+'-'+m[2]+'-'+m[3]):null;}
-function applyExifDate(file){readExifDate(file,d=>{if(d&&!form.date){form.date=d;const el=document.getElementById('f_date');if(el)el.value=d;}});}
+function applyExifDate(file){photoDate(file,d=>{if(d&&!form.date){form.date=d;const el=document.getElementById('f_date');if(el)el.value=d;}});}
 function onMulti(e,kind){const files=Array.from(e.target.files||[]).slice(0,3);e.target.value='';if(!files.length)return;
   if(kind==='main'){PHOTO_SLOTS.forEach(([s],i)=>{if(files[i])resizeToDataURL(files[i],1280,0.85,d=>{form['photo_'+s]=d;setPhotoPreview(s);});});applyExifDate(files[0]);}
   else{const after={id:newId(),session:'',date:todayStr()};if(!Array.isArray(form.afters))form.afters=[];form.afters.push(after);
     PHOTO_SLOTS.forEach(([s],i)=>{if(files[i])resizeToDataURL(files[i],1280,0.85,d=>{after['photo_'+s]=d;renderAfters();});});
-    readExifDate(files[0],d=>{if(d)after.date=d;renderAfters();});renderAfters();}}
+    photoDate(files[0],d=>{if(d)after.date=d;renderAfters();});renderAfters();}}
 const AFTER_READS=[['type','타입'],['occiput_clock','후두골 시간'],['nose_diag','코 방향'],['eye_lip','눈>입술 먼쪽'],['waterslide','워터슬라이드'],['d_forehead_parietal','마루 두께']];
 function afterField(i,a){const opts='<option value="">회차</option>'+Array.from({length:40},(_,n)=>'<option '+(a.session===(n+1)+'회'?'selected':'')+'>'+(n+1)+'회</option>').join('');
   const thumbs=PHOTO_SLOTS.map(([s,ko])=>{const src=a['photo_'+s];return '<div class="pslot"><div class="photo-drop" style="aspect-ratio:3/4">'+(src?'<img src="'+src+'">':'<div class="ph">'+ko+'</div>')+'</div><label>'+ko+'</label></div>';}).join('');
@@ -1272,7 +1275,7 @@ function afterField(i,a){const opts='<option value="">회차</option>'+Array.fro
   return '<div class="card pad" style="margin-bottom:10px"><div class="rowline" style="margin-bottom:10px">'
     +'<div class="field" style="max-width:130px"><label>회차</label><select onchange="form.afters['+i+'].session=this.value||null;renderAfterCompare()">'+opts+'</select></div>'
     +'<div class="field" style="max-width:190px"><label>날짜</label><input type="date" value="'+(a.date||'')+'" onchange="form.afters['+i+'].date=this.value||null;renderAfters()"></div>'
-    +'<div style="margin-left:auto;display:flex;gap:6px;align-items:flex-end;flex-wrap:wrap;justify-content:flex-end"><button class="btn" style="padding:8px 12px;font-size:12px;white-space:nowrap;background:#eef6ff;color:#26307a;border:1px solid #cfe0f5" onclick="showBAImprove('+i+')">📊 전/후 개선률</button><button class="btn auto" style="padding:8px 12px;font-size:12px;white-space:nowrap" onclick="onAfterFaceAnalyze('+i+')">AI 판독</button><button class="btn danger" style="padding:8px 12px;font-size:12px" onclick="form.afters.splice('+i+',1);renderAfters()">삭제</button></div>'
+    +'<div style="margin-left:auto;display:flex;gap:6px;align-items:flex-end;flex-wrap:wrap;justify-content:flex-end"><button class="btn" style="padding:8px 12px;font-size:12px;white-space:nowrap;background:#eef6ff;color:#26307a;border:1px solid #cfe0f5" onclick="showBAImprove('+i+')">📊 전/후 개선률</button><button class="btn auto" style="padding:8px 12px;font-size:12px;white-space:nowrap" onclick="onAfterFaceAnalyze('+i+')">AI 판독</button><button class="btn danger" style="padding:8px 12px;font-size:12px" onclick="delAfter(\''+a.id+'\')">삭제</button></div>'
     +'</div>'
     +'<div class="rowline" style="margin-bottom:10px;flex-wrap:wrap;gap:8px"><div style="width:100%;font-size:12px;color:var(--muted);font-weight:700;margin-bottom:-2px">판독값 (이 회차 · 촉진 후 기록)</div>'+reads+'</div>'
     +'<div class="photos">'+thumbs+'</div></div>';}
@@ -1365,7 +1368,8 @@ function baSave(){
   var a=document.createElement('a');a.href=url;a.download='soneed_전후_'+(meta.code||'')+'.jpg';document.body.appendChild(a);a.click();a.remove();
   toast('전/후 이미지 저장 완료');
 }
-function renderAfters(){const box=document.getElementById('afters');if(!box)return;if(Array.isArray(form.afters))form.afters.sort((a,b)=>(a.date||'9999-99').localeCompare(b.date||'9999-99'));const arr=Array.isArray(form.afters)?form.afters:[];box.innerHTML=arr.map((a,i)=>afterField(i,a)).join('');renderAfterCompare();}
+function renderAfters(){const box=document.getElementById('afters');if(!box)return;if(Array.isArray(form.afters)){form.afters.forEach(function(a){if(a&&!a.id)a.id=newId();});form.afters.sort((a,b)=>(a.date||'9999-99').localeCompare(b.date||'9999-99'));}const arr=Array.isArray(form.afters)?form.afters:[];box.innerHTML=arr.map((a,i)=>afterField(i,a)).join('');renderAfterCompare();}
+function delAfter(id){if(!confirm('이 회차 애프터를 정말 삭제할까요?\n되돌릴 수 없어요.'))return;if(Array.isArray(form.afters))form.afters=form.afters.filter(function(x){return String(x&&x.id)!==String(id);});renderAfters();toast('회차 삭제됨 · 저장하면 반영됩니다');}
 function renderAfterCompare(){
   var box=document.getElementById('afterCompare'); if(!box) return;
   var afters=Array.isArray(form.afters)?form.afters:[];
@@ -1577,7 +1581,7 @@ async function showBAImprove(i){
   });
   html+='<tr><td>얼굴 가로세로비 <span style="color:#aaa">(작아지면 갸름)</span></td><td class="n">'+bF.wh.toFixed(1)+'</td><td class="n">'+aF.wh.toFixed(1)+'</td><td class="n" style="color:#8a8592">참고</td></tr>';
   html+='</table>';
-  html+='<div class="ba-note">숫자 = 비대칭 크기(0에 가까울수록 대칭). <b>초회차 겹치기로 각도를 맞춰 촬영했을 때 신뢰</b>할 수 있어요. 타입·팔자·CA·회전진단 등 나머지 항목은 사진으로 측정 불가 → <b>촉진 판단</b>.</div>';
+  html+='<div class="ba-note">숫자 = 비대칭 크기(0에 가까울수록 대칭). 코·회전 변화는 <b>고개 각도(자세) 차이일 수도, 실제 회전 교정(관리 결과)일 수도</b> 있어요 — 사진 한 장으론 구분 못 하니 <b>고개 든 사진(후두골)과 촉진으로 판단</b>하세요. <b>눈 기울기</b>는 자세에 덜 흔들려 신뢰도 높음. 겹쳐 촬영하면 자세 변수를 줄여줘요. 타입·팔자 등은 측정 불가 → 촉진.</div>';
   html+='<button class="btn primary" style="width:100%;margin-top:12px" onclick="document.getElementById(\'baOv\').style.display=\'none\'">닫기</button></div>';
   var o=document.getElementById('baOv');
   if(!o){o=document.createElement('div');o.id='baOv';o.onclick=function(e){if(e.target===o)o.style.display='none';};document.body.appendChild(o);}
@@ -2156,6 +2160,7 @@ async function editRecord(id){var r=records.find(x=>String(x.id)===String(id));i
   if(r._light && mode==='cloud'){ try{ toast('불러오는 중…'); var full=await fetchFull(id); var i=records.findIndex(x=>String(x.id)===String(id)); if(i>=0)records[i]=full; r=full; }catch(e){ toast('기록 불러오기 실패: '+(e.message||e)); return; } }
   form=Object.assign({},r);currentId=r.id;autoFilled={};renderForm();applyFormToUI();document.getElementById('editState').textContent=(r.code||'무제')+' · 편집 중';document.getElementById('delBtn').style.display='';document.getElementById('autoMsg').innerHTML='';const _fr2=document.getElementById('faceResult');if(_fr2)_fr2.innerHTML='';showView('entry');}
 async function deleteCurrent(){if(!currentId)return;if(!confirm('이 기록을 삭제할까요?'))return;try{await removeRecord(currentId);}catch(e){toast('삭제 실패: '+e.message);return;}records=records.filter(r=>String(r.id)!==String(currentId));clearForm();toast('삭제되었습니다');refreshAll();}
+function clearFormConfirm(){var has=form&&Object.keys(form).some(function(k){var v=form[k];return v!=null&&v!==''&&!(Array.isArray(v)&&!v.length);});if(has&&!confirm('현재 화면에 입력한 내용이 지워지고 새 기록을 작성합니다.\n(이미 저장한 기록은 목록에 그대로 남아요)\n계속할까요?'))return;clearForm();}
 function clearForm(){form={};currentId=null;autoFilled={};_pendingLeadId=null;renderForm();renderStickyThumbs();document.getElementById('f_notes').value='';document.getElementById('autoMsg').innerHTML='';const _fr=document.getElementById('faceResult');if(_fr)_fr.innerHTML='';document.getElementById('editState').textContent='새 기록을 작성합니다.';document.getElementById('delBtn').style.display='none';updateValidation();}
 var _reportScroll=0,_restoreReport=false;
 function showView(v){
