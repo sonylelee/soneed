@@ -259,7 +259,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v109 (2026-07-29)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v110 (2026-07-29)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트</button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">🎓 아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -946,20 +946,35 @@ async function cloudDelete(id){const r=await fetch(sbBase()+'records?id=eq.'+enc
 
 async function persistRecord(rec){if(mode==='cloud')await cloudSaveRecord(rec);else await storeSet('rec:'+rec.id,JSON.stringify(rec));}
 async function removeRecord(id){if(mode==='cloud')await cloudDelete(id);else await storeDel('rec:'+id);}
+/* ★ 목록 캐시(사진 제외 가벼운 버전) — 공용 DB가 느려도 즉시 표시. 편집 시엔 _light라 전체를 다시 불러옴(editRecord) */
+function _lightForCache(r){var c=Object.assign({},r);delete c.photo_front;delete c.photo_up;delete c.photo_down;delete c._ai;if(Array.isArray(c.afters))c.afters=c.afters.map(function(a){var b=Object.assign({},a);delete b.photo_front;delete b.photo_up;delete b.photo_down;return b;});c._light=true;return c;}
+function _saveRecCache(recs){try{localStorage.setItem('soneed_reccache',JSON.stringify((recs||[]).map(_lightForCache)));}catch(e){try{localStorage.setItem('soneed_reccache',JSON.stringify((recs||[]).map(function(r){var c=_lightForCache(r);delete c.thumb;return c;})));}catch(e2){try{localStorage.removeItem('soneed_reccache');}catch(e3){}}}}
+function _loadRecCache(){try{var s=localStorage.getItem('soneed_reccache');var a=s?JSON.parse(s):null;if(Array.isArray(a)){a.forEach(function(r){r._light=true;});return a;}}catch(e){}return null;}
 async function loadAll(){
-  records=[];
-  progShow(mode==='cloud'?'공용 DB에서 불러오는 중':'이 기기에서 불러오는 중');
-  try{
-    if(mode==='cloud'){records=await cloudLoad();}
-    else{const keys=await storeList();const vals=await Promise.all(keys.map(k=>storeGet(k)));for(const v of vals){if(!v)continue;try{records.push(JSON.parse(v));}catch(e){}}}
-    const b=document.getElementById('storeBanner');if(b)b.style.display='none';
-    progDone(records.length+'건 불러옴 · '+(mode==='cloud'?'공용 클라우드 DB':'이 기기'));
-  }catch(e){
-    if(String(e&&e.message)==='auth'){ progHide(); }   /* 로그인 모달이 이미 뜸 */
-    else{ const b=document.getElementById('storeBanner');b.style.display='block';b.textContent='공용 DB에서 불러오지 못했습니다: '+e.message+' — 설정에서 연결을 확인하세요.'; progDone('불러오기 실패: '+(e.message||e),true); }
+  if(mode==='cloud'){
+    var cached=_loadRecCache();
+    if(cached&&cached.length){records=cached;sortRecs();refreshAll();}          // 캐시로 즉시 표시
+    progShow(cached&&cached.length?'최신 데이터 확인 중':'공용 DB에서 불러오는 중');
+    try{
+      var fresh=await cloudLoad();
+      records=fresh;_saveRecCache(fresh);
+      const b=document.getElementById('storeBanner');if(b)b.style.display='none';
+      progDone(records.length+'건 · 공용 클라우드 DB');
+    }catch(e){
+      if(String(e&&e.message)==='auth'){progHide();}
+      else{
+        const b=document.getElementById('storeBanner');b.style.display='block';
+        b.textContent=(cached&&cached.length)?'공용 DB 응답이 느려요 — 저장해둔 목록을 보여드려요(새로고침 시 재시도). '+(e.message||''):'공용 DB에서 불러오지 못했습니다: '+(e.message||e);
+        progDone((cached&&cached.length)?'DB 지연 · 저장된 목록 표시 중':'불러오기 실패: '+(e.message||e),true);
+      }
+    }
+    sortRecs();refreshAll();loadSolutions();
+  }else{
+    records=[];progShow('이 기기에서 불러오는 중');
+    try{const keys=await storeList();const vals=await Promise.all(keys.map(k=>storeGet(k)));for(const v of vals){if(!v)continue;try{records.push(JSON.parse(v));}catch(e){}}progDone(records.length+'건 · 이 기기');}
+    catch(e){progDone('불러오기 실패: '+(e.message||e),true);}
+    sortRecs();refreshAll();loadSolutions();
   }
-  sortRecs();refreshAll();
-  loadSolutions();   // 코드별 솔루션 공용 로드
 }
 
 /* 설정 화면 */
@@ -2170,13 +2185,13 @@ async function saveRecord(){
   if(_pendingLeadId){ markLeadDone(_pendingLeadId,true); _pendingLeadId=null; }   // 유입 고객: 저장 완료 시 목록에서 처리
   progDone(photoFail?'기본정보 저장됨 · 사진은 용량초과로 실패':'저장됨 · 공용 클라우드 DB', false, photoFail);
   toast(photoFail?'기본정보는 저장됨 · 사진은 용량이 커서 저장 실패':(updateValidation()?'저장되었습니다':'저장됨 · 회전 오류가 남아있어요'));
-  document.getElementById('editState').textContent=(form.code||'무제')+' · 저장됨 (편집 중)';document.getElementById('delBtn').style.display='';refreshAll();
+  document.getElementById('editState').textContent=(form.code||'무제')+' · 저장됨 (편집 중)';document.getElementById('delBtn').style.display='';refreshAll();try{if(mode==='cloud')_saveRecCache(records);}catch(e){}
 }
 async function editRecord(id){var r=records.find(x=>String(x.id)===String(id));if(!r)return;
   _reportScroll=window.scrollY||document.documentElement.scrollTop||0;_restoreReport=true;
   if(r._light && mode==='cloud'){ try{ toast('불러오는 중…'); var full=await fetchFull(id); var i=records.findIndex(x=>String(x.id)===String(id)); if(i>=0)records[i]=full; r=full; }catch(e){ toast('기록 불러오기 실패: '+(e.message||e)); return; } }
   form=Object.assign({},r);currentId=r.id;autoFilled={};renderForm();applyFormToUI();document.getElementById('editState').textContent=(r.code||'무제')+' · 편집 중';document.getElementById('delBtn').style.display='';document.getElementById('autoMsg').innerHTML='';const _fr2=document.getElementById('faceResult');if(_fr2)_fr2.innerHTML='';showView('entry');}
-async function deleteCurrent(){if(!currentId)return;if(!confirm('이 기록을 삭제할까요?'))return;try{await removeRecord(currentId);}catch(e){toast('삭제 실패: '+e.message);return;}records=records.filter(r=>String(r.id)!==String(currentId));clearForm();toast('삭제되었습니다');refreshAll();}
+async function deleteCurrent(){if(!currentId)return;if(!confirm('이 기록을 삭제할까요?'))return;try{await removeRecord(currentId);}catch(e){toast('삭제 실패: '+e.message);return;}records=records.filter(r=>String(r.id)!==String(currentId));clearForm();toast('삭제되었습니다');refreshAll();try{if(mode==='cloud')_saveRecCache(records);}catch(e){}}
 function clearFormConfirm(){var has=form&&Object.keys(form).some(function(k){var v=form[k];return v!=null&&v!==''&&!(Array.isArray(v)&&!v.length);});if(has&&!confirm('현재 화면에 입력한 내용이 지워지고 새 기록을 작성합니다.\n(이미 저장한 기록은 목록에 그대로 남아요)\n계속할까요?'))return;clearForm();}
 function clearForm(){form={};currentId=null;autoFilled={};_pendingLeadId=null;renderForm();renderStickyThumbs();document.getElementById('f_notes').value='';document.getElementById('autoMsg').innerHTML='';const _fr=document.getElementById('faceResult');if(_fr)_fr.innerHTML='';document.getElementById('editState').textContent='새 기록을 작성합니다.';document.getElementById('delBtn').style.display='none';updateValidation();}
 var _reportScroll=0,_restoreReport=false;
