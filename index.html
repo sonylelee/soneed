@@ -176,7 +176,12 @@
   #camModal #camStill{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;display:none}
   #camModal .cam-strip{display:flex;gap:7px;overflow-x:auto;padding:9px 4px 3px;min-height:0}
   #camModal .cam-strip:empty{display:none}
-  #camModal .cam-strip img{height:58px;width:44px;object-fit:cover;border-radius:7px;border:2px solid transparent;flex:0 0 auto;cursor:pointer}
+  #camModal .cam-strip img{height:76px;width:58px;object-fit:cover;border-radius:7px;border:2px solid transparent;flex:0 0 auto;cursor:pointer}
+  #camPreviewBar{position:absolute;left:0;right:0;bottom:0;display:none;flex-direction:column;align-items:center;gap:10px;padding:14px 16px calc(18px + env(safe-area-inset-bottom));background:linear-gradient(to top,rgba(0,0,0,.72),rgba(0,0,0,0))}
+  #camPreviewBar .cam-pv-hint{color:#ffe27a;font-size:13.5px;font-weight:800;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+  #camPreviewBar .cam-pv-btns{display:flex;gap:12px}
+  #camPreviewBar .cam-pv-use{background:#00c48c;color:#053;border:none;font-weight:800;padding:12px 20px;border-radius:12px;font-size:15px;cursor:pointer}
+  #camPreviewBar .cam-pv-back{background:rgba(255,255,255,.22);color:#fff;border:none;font-weight:700;padding:12px 18px;border-radius:12px;font-size:14px;cursor:pointer}
   #camModal .cam-strip img.sel{border-color:#00e6a0;box-shadow:0 0 0 2px rgba(0,230,160,.4)}
   #camModal .cam-use{background:#00c48c;color:#062;border:none;font-weight:800;padding:11px 16px;border-radius:12px;font-size:13.5px;cursor:pointer;display:none}
   #camModal .cam-count{color:#9fe;font-size:11.5px;text-align:center;margin-bottom:7px;min-height:14px}
@@ -259,7 +264,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v110 (2026-07-29)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v111 (2026-07-29)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트</button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">🎓 아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -455,7 +460,8 @@ create policy "sol write" on solutions
     <video id="camVideo" playsinline autoplay muted></video>
     <img id="camOverlay" alt="">
     <div class="cam-guide"></div>
-    <img id="camStill" alt="" onclick="this.style.display='none'">
+    <img id="camStill" alt="" onclick="_backToLive()">
+    <div id="camPreviewBar"><span class="cam-pv-hint">👀 눈 잘 떴는지 확인하세요</span><div class="cam-pv-btns"><button class="cam-pv-use" onclick="camUse()">✓ 이 사진 사용</button><button class="cam-pv-back" onclick="_backToLive()">✕ 다시 찍기</button></div></div>
   </div>
   <div class="cam-ctrls">
     <div id="camOpWrap" class="cam-op">비포 연하게 <input type="range" id="camOp" min="0" max="90" value="45" oninput="camOpacity(this.value)"> 진하게</div>
@@ -1532,7 +1538,7 @@ function _applyZoom(){
 }
 function setZoom(z){_camZoom=z;_applyZoom();var row=document.getElementById('camZoomRow');if(row)Array.prototype.forEach.call(row.querySelectorAll('button'),function(b){b.classList.toggle('on',parseFloat(b.getAttribute('data-z'))===z);});}
 function camOpacity(v){const ov=document.getElementById('camOverlay');if(ov)ov.style.opacity=(v/100);}
-function _backToLive(){document.getElementById('camStill').style.display='none';}   /* 라이브 비디오는 절대 끄지 않음(끄면 프레임 멈춰 다음 촬영 안 됨) */
+function _backToLive(){document.getElementById('camStill').style.display='none';var bar=document.getElementById('camPreviewBar');if(bar)bar.style.display='none';}   /* 라이브 비디오는 절대 끄지 않음(끄면 프레임 멈춰 다음 촬영 안 됨) */
 function snapCam(){
   document.getElementById('camStill').style.display='none';   /* 리뷰 닫고 라이브에서 촬영 */
   const v=document.getElementById('camVideo');
@@ -1545,8 +1551,7 @@ function snapCam(){
   if(_camFacing==='user'){ctx.translate(cv.width,0);ctx.scale(-1,1);}   /* 셀피 미러 보정 — 저장은 정상 방향 */
   ctx.drawImage(v, sx,sy,sw,sh, 0,0,cv.width,cv.height);
   _camShots.push(cv.toDataURL('image/jpeg',0.85));
-  _camSel=_camShots.length-1;
-  _camRenderStrip();
+  camPick(_camShots.length-1);   /* 찍으면 바로 크게 미리보기 → 눈 확인 후 [이 사진 사용]/[다시 찍기] */
 }
 function _camRenderStrip(){
   const strip=document.getElementById('camStrip');
@@ -1555,7 +1560,7 @@ function _camRenderStrip(){
   document.getElementById('camUse').style.display=_camShots.length?'inline-block':'none';   /* ★ inline-block 명시(CSS 기본 none을 이겨야 보임) */
   /* 라이브 화면은 계속 유지 — 미리보기는 썸네일을 탭했을 때만(camPick) 겹쳐 보여줌 */
 }
-function camPick(i){_camSel=i;_camRenderStrip();var still=document.getElementById('camStill');still.src=_camShots[i];still.style.display='';}   /* 탭=크게 보기, 다시 탭하면 라이브로 */
+function camPick(i){_camSel=i;_camRenderStrip();var still=document.getElementById('camStill');still.src=_camShots[i];still.style.display='';var bar=document.getElementById('camPreviewBar');if(bar)bar.style.display='flex';}   /* 크게 미리보기 + 눈 확인 바 */
 function camUse(){
   if(_camSel<0||!_camShots[_camSel]){toast('사용할 사진을 먼저 탭해서 선택하세요');return;}
   _camSteps[_camStep].assign(_camShots[_camSel]);
