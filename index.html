@@ -204,7 +204,7 @@
     .wrap{padding:0 12px}
     .top .wrap{flex-wrap:wrap;height:auto;min-height:0;padding:9px 12px;gap:9px;align-items:center}
     .logo{font-size:15px;flex-basis:100%;line-height:1.25}
-    .logo span{display:none}
+    .logo span{display:block;font-size:10px;margin-left:0;margin-top:1px}
     .tabs{order:2;flex-basis:100%;margin-left:0;justify-content:center}
     .tabs button{flex:1;text-align:center}
     .modebtn{order:3}
@@ -259,7 +259,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v107 (2026-07-29)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v109 (2026-07-29)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트</button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">🎓 아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -283,7 +283,7 @@
       <h2 class="section" style="margin-top:0">🔑 안면 코드 <span class="tag all">빠른 판독 · 첫 촉진용</span></h2>
       <div class="subtle" style="margin:-4px 0 8px;font-size:12px">AI가 타입~콧볼 예측 · <b>오른마루</b>는 촉진 후 직접 선택</div>
       <div id="fcodeSel" class="fcode-grid"></div>
-      <div id="fcodeOut" class="fcode-out">— 항목을 채우면 코드가 나옵니다</div>
+      <div id="fcodeOut" class="fcode-out" style="font-size:13px;color:var(--faint)">항목을 채우면 코드가 나옵니다</div>
       <div id="fcodeWarn"></div>
       <button class="btn primary" id="fcodeGuideBtn" style="width:100%;margin-top:12px" onclick="saveAndGuide()">💾 저장 및 리세팅 가이드</button>
       <div id="fcodeSol" class="fcode-sol"></div>
@@ -1124,7 +1124,7 @@ function fcodeConflict(fc){
 }
 function renderFcodeOut(){
   var code=fcodeStr(form.fcode);
-  var out=document.getElementById('fcodeOut');if(out)out.textContent=code||'— 항목을 채우면 코드가 나옵니다';
+  var out=document.getElementById('fcodeOut');if(out){if(code){out.textContent=code;out.style.fontSize='';out.style.color='';}else{out.textContent='항목을 채우면 코드가 나옵니다';out.style.fontSize='13px';out.style.color='var(--faint)';}}
   var w=document.getElementById('fcodeWarn');if(w){var m=fcodeConflict(form.fcode);w.innerHTML=m?'<div class="fc-warn">'+m+'</div>':'';}
   renderFcodeSol(code);
 }
