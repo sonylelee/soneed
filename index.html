@@ -216,7 +216,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v93 (2026-07-29)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v94 (2026-07-29)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트</button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">🎓 아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -985,6 +985,21 @@ function applyFcodeFromAI(parsed){
   if(got)form.face_code=fcodeStr(form.fcode)||null;
   return got;
 }
+/* ★ MediaPipe 측정값 → 코드 자리에 결정적 반영 (AI보다 우선). 측정 가능한 자리: 후두골·코·눈·콧볼. 타입·광대전면은 측정 불가 → AI 유지. */
+function applyFcodeFromMeasure(meas,earsU){
+  if(!form.fcode)form.fcode={};var f=form.fcode;var op=function(v){return v==='왼'?'오':(v==='오'?'왼':'중립');};
+  if(earsU&&earsU.low_own){f.clock = earsU.low_own==='본인오른쪽'?'7시':(earsU.low_own==='본인왼쪽'?'5시':'6시');}
+  if(meas){
+    if(meas.nose_own){                                    /* 코 방향(예각) */
+      f.nose = meas.nose_own==='거의수직'?'중립':(meas.nose_own==='본인오른쪽'?'오':'왼');
+      f.eye = op(f.nose);                                 /* 눈(둔각) = 코의 반대 */
+    }
+    if(meas.ala_own){                                     /* 콧볼 높은 쪽 */
+      f.ala = meas.ala_own==='거의같음'?'중립':(meas.ala_own==='본인오른쪽'?'오':'왼');
+    }
+  }
+  form.face_code=fcodeStr(form.fcode)||null;
+}
 function renderFcode(){
   var box=document.getElementById('fcodeSel');if(!box)return;
   var o=form.fcode||(form.fcode={});
@@ -1001,8 +1016,8 @@ function composeSolution(fc){
   if(!fc)return[];var out=[];
   if(fc.t==='A')out.push({h:'타입 A',lines:['Rt 이마 리프팅','Rt 광대 사선내리기','왼쪽으로 문어']});
   else if(fc.t==='B')out.push({h:'타입 B',lines:['Lt 이마 리프팅','Lt 광대 사선내리기','오른쪽으로 문어']});
-  if(fc.clock==='7시')out.push({h:'후두골 7시',lines:['Rt 유양돌기 위·앞으로 풀링','Lt 귀 뒤에서 오른쪽으로 필러링','Lt C0 바운스 (촉진 후 진행)']});
-  else if(fc.clock==='5시')out.push({h:'후두골 5시',lines:['Lt 유양돌기 위·앞으로 풀링','Rt 귀 뒤에서 왼쪽으로 필러링','Rt C0 바운스 (촉진 후 진행)']});
+  if(fc.clock==='7시')out.push({h:'후두골 7시',lines:['Rt 유양돌기 위·앞으로 풀링','Lt 귀 뒤에서 오른쪽으로 필러링','(촉진 후 진행) Lt C0 바운스']});
+  else if(fc.clock==='5시')out.push({h:'후두골 5시',lines:['Lt 유양돌기 위·앞으로 풀링','Rt 귀 뒤에서 왼쪽으로 필러링','(촉진 후 진행) Rt C0 바운스']});
   else if(fc.clock==='6시')out.push({h:'후두골 6시',lines:['없음']});
   var rot=(fc.cheek==='오'?' (오른회전 추가)':fc.cheek==='왼'?' (왼회전 추가)':'');   // ②광대 전면레벨 = 안면 국소 회전을 시프트 줄에 병기(두개골 스파이럴 회전과 별개)
   if(fc.nose==='오'){var boO=(fc.t==='A')?'(보류) ':'';var ln=[boO+'Rt 광대 왼쪽으로 햄버거시프트'+rot,boO+'양쪽 광대 왼쪽으로 밀기',boO+'Rt 광대 왼쪽으로 푸싱'];if(fc.ala!=='오')ln.push('오른 턱 위로 들어올려 왼쪽으로 드로잉');out.push({h:'① 코 방향 · 오',lines:ln});}
@@ -1651,6 +1666,17 @@ async function measureFront(dataUrl){
     const rotScreen = Math.abs(noseOff)<faceW*0.005 ? '중립'
       : (noseOff>0 ? '본인오른쪽' : '본인왼쪽');   /* 이미 '보이는 귀' 기준(본인) */
 
+    /* 6) ★ 콧볼 높낮이 (대표 정의: 코 가장 아래+좌우끝 = 콧방울 바깥아래점 = 바깥알라 64/294 + 아래콧구멍 98/327 평균).
+       콧대 축(양 홍채 중점→코끝) 기준으로 좌우 콧볼의 '축 위쪽 정도'를 비교 → 더 위(축 top쪽)면 올라간 콧볼. */
+    const _amid=(a,b)=>({x:(P[a].x+P[b].x)/2, y:(P[a].y+P[b].y)/2});
+    const _alaA=_amid(64,98), _alaB=_amid(294,327);
+    const _alaSL=_alaA.x<_alaB.x?_alaA:_alaB, _alaSR=_alaA.x<_alaB.x?_alaB:_alaA;   /* 화면 좌/우 콧볼점 */
+    const _axT={x:eyeMidX,y:eyeMidY}, _axB=P[NOSE_TIP];
+    const _adx=_axB.x-_axT.x, _ady=_axB.y-_axT.y, _add=(_adx*_adx+_ady*_ady)||1;
+    const _along=p=>((p.x-_axT.x)*_adx+(p.y-_axT.y)*_ady)/_add;    /* 작을수록 축 위(높음) */
+    const alaDiff=_along(_alaSR)-_along(_alaSL);                   /* <0 : 화면오른쪽 콧볼이 더 위(높음) */
+    const alaScreen = Math.abs(alaDiff)<0.05 ? '거의같음' : (alaDiff<0 ? '화면오른쪽' : '화면왼쪽');
+
     return {
       eye_low_own: own(eyeScreen),
       eye_dy_norm: norm(Math.abs(eyeDy)),
@@ -1662,7 +1688,9 @@ async function measureFront(dataUrl){
       side_ownL: norm(sSR),
       wh: r(faceW/faceH*100),
       rot_ear_own: rotScreen,
-      nose_off: r(noseOff/faceW*100)
+      nose_off: r(noseOff/faceW*100),
+      ala_own: own(alaScreen),
+      ala_diff: r(alaDiff*100)
     };
   }catch(e){return null;}
 }
@@ -1824,9 +1852,10 @@ async function onCodeAnalyze(){
   const slots=[['front','정면'],['up','고개 든']].filter(([s])=>form['photo_'+s]);
   const btn=document.getElementById('codeBtn');btn.disabled=true;const orig=btn.innerHTML;btn.innerHTML='<span class="spinner"></span>코드분석 중…';
   const box=document.getElementById('faceResult');box.innerHTML='<div class="banner info">안면 코드를 분석하는 중입니다… (10~25초)</div>';
+  let meas=null, earsU=null;
   try{
-    const meas=await measureFront(form['photo_front']);
-    const earsU=form['photo_up']?await measureEarsUp(form['photo_up']):null;
+    meas=await measureFront(form['photo_front']);
+    earsU=form['photo_up']?await measureEarsUp(form['photo_up']):null;
     const content=[];
     for(const [s,ko] of slots){const b64=await shrinkForAI(form['photo_'+s],560,0.55);content.push({type:'text',text:'['+ko+' 사진]'});content.push({type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}});}
     content.push({type:'text',text:'당신은 소니드 얼굴 분석 보조입니다. 아래 지침대로 "안면 코드"만 판정해 JSON 하나만 출력하세요(다른 설명 금지).\n\n'+measureText(meas,null,earsU)+'\n\n'+FCODE_PROMPT});
@@ -1839,12 +1868,14 @@ async function onCodeAnalyze(){
     if(j0<0||j1<0)throw new Error('JSON 형식이 아닙니다 · '+clean.slice(0,160));
     const parsed=JSON.parse(clean.slice(j0,j1+1));
     const ok=applyFcodeFromAI(parsed);
+    applyFcodeFromMeasure(meas,earsU);   /* ★ 측정값(후두골·코·눈·콧볼)으로 덮어쓰기 — MediaPipe 우선 */
     renderForm();applyFormToUI();
     box.innerHTML=ok?('<div class="banner info">🔑 안면 코드 예측 완료 — <b>'+(form.face_code||'(오른마루 선택 시 코드 완성)')+'</b><br><span style="font-size:12px">타입~콧볼은 채워졌어요. <b>오른마루(두께)</b>는 촉진 후 직접 선택하면 코드가 완성됩니다.</span></div>')
       :'<div class="banner err">코드를 읽지 못했어요. 정면 사진이 선명한지 확인해주세요.</div>';
   }catch(err){
+    try{ if(meas||earsU){ applyFcodeFromMeasure(meas,earsU); renderForm();applyFormToUI(); } }catch(e){}   /* AI 실패해도 측정 자리는 반영 */
     const m=String((err&&err.message)||err);
-    box.innerHTML='<div class="banner err"><b>코드분석 오류</b><br><span style="font-size:12px;white-space:pre-wrap;word-break:break-all">'+m.replace(/</g,'&lt;')+'</span></div>';
+    box.innerHTML='<div class="banner err"><b>코드분석 오류 (측정값은 반영됨)</b><br><span style="font-size:12px;white-space:pre-wrap;word-break:break-all">'+m.replace(/</g,'&lt;')+'</span></div>';
   }
   btn.disabled=false;btn.innerHTML=orig;
 }
