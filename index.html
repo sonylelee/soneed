@@ -248,7 +248,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v98 (2026-07-29)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v99 (2026-07-29)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트</button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">🎓 아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -982,7 +982,7 @@ function markOk(k,el){if(!form._src)form._src={};if(!form._ai)form._ai={};form._
 function renderForm(){
   const groups={meta:'grid-meta','2d':'grid-2d',lr:'grid-lr',rot:'grid-rot'};
   for(const g in groups)document.getElementById(groups[g]).innerHTML=FIELDS.filter(f=>f.g===g).map(fieldHTML).join('');
-  document.getElementById('photos').innerHTML=PHOTO_SLOTS.map(([s,ko])=>`<div class="pslot"><div class="photo-drop" id="drop_${s}" onclick="pickPhoto('${s}')"><div class="ph">${ko}<br><small>클릭</small></div></div><input type="file" accept="image/*,.heic,.heif" id="pin_${s}" style="display:none" onchange="onPhoto('${s}',event)"><button type="button" class="mini-cam" onclick="camMain('${s}')">📷 앱에서 촬영</button><label>${ko}</label></div>`).join('');
+  document.getElementById('photos').innerHTML=PHOTO_SLOTS.map(([s,ko])=>`<div class="pslot"><div class="photo-drop" id="drop_${s}" onclick="pickPhoto('${s}')"><div class="ph">${ko}<br><small>클릭</small></div></div><input type="file" accept="image/*,.heic,.heif" id="pin_${s}" style="display:none" onchange="onPhoto('${s}',event)"><button type="button" class="mini-cam" onclick="camMain('${s}')">📷 초회차(원본) 촬영</button><label>${ko}</label></div>`).join('');
   renderAfters();
   renderFcode();
 }
@@ -1520,7 +1520,8 @@ function camUse(){
 function closeCam(){stopCam();document.getElementById('camModal').style.display='none';document.getElementById('camStill').style.display='none';document.getElementById('camVideo').style.display='';_camSteps=[];_camStep=0;_camShots=[];_camSel=-1;}
 /* 시작 슬롯부터 끝(고개 숙임)까지 이어 촬영. 애프터는 각 슬롯의 비포를 오버레이 */
 function _buildSteps(startSlot,mk){var started=false,st=[];PHOTO_SLOTS.forEach(function(p){var s=p[0],ko=p[1];if(s===startSlot)started=true;if(started)st.push(mk(s,ko));});return st;}
-function camMain(s){openCamSeq(_buildSteps(s,function(s,ko){return {ko:ko,ref:function(){return form['photo_'+s]||null;},assign:function(d){form['photo_'+s]=d;setPhotoPreview(s);}};}));}
+function _confirmOverwrite(s){if(!form['photo_'+s])return true;return confirm('⚠️ 초회차(원본) 사진을 새로 촬영하면 기존 사진이 바뀝니다.\n회차(애프터) 사진은 아래 "회차별 애프터"에서 촬영/추가하세요.\n그래도 초회차를 다시 찍을까요?');}
+function camMain(s){if(!_confirmOverwrite(s))return;openCamSeq(_buildSteps(s,function(s,ko){return {ko:ko,ref:function(){return form['photo_'+s]||null;},assign:function(d){form['photo_'+s]=d;setPhotoPreview(s);}};}));}
 function camAfter(i,s){openCamSeq(_buildSteps(s,function(s,ko){return {ko:ko+'(애프터)',ref:function(){return form['photo_'+s]||null;},assign:function(d){if(form.afters&&form.afters[i]){form.afters[i]['photo_'+s]=d;renderAfters();}}};}));}
 window.addEventListener('resize',positionStickyThumbs);
 /* 3D 시뮬레이션(맨 아래) 영역이 화면에 들어오면 따라오는 사진 숨김 — 폰에서 방해 안 되게 */
