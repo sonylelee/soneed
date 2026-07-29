@@ -248,7 +248,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v97 (2026-07-29)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v98 (2026-07-29)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트</button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">🎓 아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -449,6 +449,7 @@ create policy "sol write" on solutions
     <div id="camOpWrap" class="cam-op">비포 연하게 <input type="range" id="camOp" min="0" max="90" value="45" oninput="camOpacity(this.value)"> 진하게</div>
     <div class="cam-count" id="camCount"></div>
     <div class="cam-strip" id="camStrip"></div>
+    <div style="text-align:right;margin-bottom:8px"><button class="cam-flip" id="camSkip" onclick="camSkip()" style="display:none;padding:7px 12px;font-size:12px">건너뛰기 ▶</button></div>
     <div class="cam-btns">
       <button class="cam-flip" onclick="flipCam()">🔄 전/후면</button>
       <button class="cam-shot" onclick="snapCam()" aria-label="촬영"></button>
@@ -1451,19 +1452,32 @@ function positionStickyThumbs(){const h=document.querySelector('header.top'),st=
 function zoomPhoto(s){const src=form['photo_'+s];if(!src)return;let o=document.getElementById('photoZoom');if(!o){o=document.createElement('div');o.id='photoZoom';o.onclick=function(){o.style.display='none';};document.body.appendChild(o);}o.innerHTML='<img src="'+src+'">';o.style.display='flex';}
 
 /* ===== 인앱 카메라 (비포 반투명 오버레이 + 여러 장 촬영 후 best 선택) ===== */
-let _camStream=null,_camAssign=null,_camFacing='environment',_camShots=[],_camSel=-1;
+let _camStream=null,_camFacing='environment',_camShots=[],_camSel=-1,_camSteps=[],_camStep=0;
 function camSupported(){return !!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia);}
-function openCam(assign,refSrc,label){
+function openCamSeq(steps){   /* steps=[{ko, ref():dataURL|null, assign(dataURL)}] · 정면→고개든→고개숙임 순으로 이어 촬영 */
   if(!camSupported()){toast('이 브라우저는 인앱 카메라를 지원하지 않아요 — [클릭]으로 사진을 올려주세요');return;}
-  _camAssign=assign;_camShots=[];_camSel=-1;
+  if(!steps||!steps.length)return;
+  _camSteps=steps;_camStep=0;
   document.getElementById('camModal').style.display='flex';
-  document.getElementById('camLabel').textContent=label||'촬영';
-  const ov=document.getElementById('camOverlay');
-  if(refSrc){ov.src=refSrc;ov.style.display='';ov.style.opacity=0.45;document.getElementById('camOpWrap').style.display='';document.getElementById('camOp').value=45;}
-  else{ov.removeAttribute('src');ov.style.display='none';document.getElementById('camOpWrap').style.display='none';}
-  _camRenderStrip();
+  _loadStep();
   startCam();
 }
+function _loadStep(){
+  _camShots=[];_camSel=-1;
+  const st=_camSteps[_camStep],multi=_camSteps.length>1;
+  document.getElementById('camLabel').textContent=(multi?((_camStep+1)+'/'+_camSteps.length+' · '):'')+st.ko+' 촬영';
+  const ov=document.getElementById('camOverlay'),ref=st.ref&&st.ref();
+  if(ref){ov.src=ref;ov.style.display='';ov.style.opacity=(document.getElementById('camOp').value/100);document.getElementById('camOpWrap').style.display='';}
+  else{ov.removeAttribute('src');ov.style.display='none';document.getElementById('camOpWrap').style.display='none';}
+  _backToLive();_camRenderStrip();_updUseBtn();
+}
+function _updUseBtn(){
+  const last=_camStep>=_camSteps.length-1;
+  document.getElementById('camUse').textContent='✓ 이 사진 사용'+(last?' · 완료':' → 다음('+_camSteps[_camStep+1].ko+')');
+  document.getElementById('camSkip').style.display=last?'none':'inline-block';
+  document.getElementById('camSkip').textContent='건너뛰기 ▶ '+(last?'':_camSteps[_camStep+1].ko);
+}
+function camSkip(){ if(_camStep<_camSteps.length-1){_camStep++;_loadStep();} else closeCam(); }
 async function startCam(){
   stopCam();
   try{
@@ -1492,20 +1506,22 @@ function snapCam(){
 function _camRenderStrip(){
   const strip=document.getElementById('camStrip');
   strip.innerHTML=_camShots.map((d,i)=>'<img src="'+d+'" class="'+(i===_camSel?'sel':'')+'" onclick="camPick('+i+')">').join('');
-  document.getElementById('camCount').textContent=_camShots.length?(_camShots.length+'장 · 잘 나온 걸 탭해서 크게 확인·선택 → [이 사진 사용]'):'';
-  document.getElementById('camUse').style.display=_camShots.length?'':'none';
+  document.getElementById('camCount').textContent=_camShots.length?(_camShots.length+'장 · 잘 나온 걸 탭해서 크게 확인·선택 → 아래 [이 사진 사용]'):'여러 장 찍어도 돼요';
+  document.getElementById('camUse').style.display=_camShots.length?'inline-block':'none';   /* ★ inline-block 명시(CSS 기본 none을 이겨야 보임) */
   /* 라이브 화면은 계속 유지 — 미리보기는 썸네일을 탭했을 때만(camPick) 겹쳐 보여줌 */
 }
 function camPick(i){_camSel=i;_camRenderStrip();var still=document.getElementById('camStill');still.src=_camShots[i];still.style.display='';}   /* 탭=크게 보기, 다시 탭하면 라이브로 */
 function camUse(){
-  if(_camSel<0||!_camShots[_camSel]){toast('사용할 사진을 먼저 선택하세요');return;}
-  const d=_camShots[_camSel],fn=_camAssign;
-  closeCam();
-  if(fn)fn(d);
+  if(_camSel<0||!_camShots[_camSel]){toast('사용할 사진을 먼저 탭해서 선택하세요');return;}
+  _camSteps[_camStep].assign(_camShots[_camSel]);
+  if(_camStep<_camSteps.length-1){_camStep++;_loadStep();toast('저장됨 · 다음: '+_camSteps[_camStep].ko);}
+  else{closeCam();toast('촬영 완료');}
 }
-function closeCam(){stopCam();document.getElementById('camModal').style.display='none';document.getElementById('camStill').style.display='none';document.getElementById('camVideo').style.display='';_camAssign=null;_camShots=[];_camSel=-1;}
-function camMain(s){const ko=(PHOTO_SLOTS.find(x=>x[0]===s)||[null,'촬영'])[1];openCam(function(d){form['photo_'+s]=d;setPhotoPreview(s);},form['photo_'+s]||null,ko+' 촬영'+(form['photo_'+s]?' (직전 사진 겹침)':''));}
-function camAfter(i,s){const ko=(PHOTO_SLOTS.find(x=>x[0]===s)||[null,'촬영'])[1];const ref=form['photo_'+s]||null;openCam(function(d){if(form.afters&&form.afters[i]){form.afters[i]['photo_'+s]=d;renderAfters();}},ref,'애프터 '+ko+(ref?' · 비포 겹쳐 촬영':''));}
+function closeCam(){stopCam();document.getElementById('camModal').style.display='none';document.getElementById('camStill').style.display='none';document.getElementById('camVideo').style.display='';_camSteps=[];_camStep=0;_camShots=[];_camSel=-1;}
+/* 시작 슬롯부터 끝(고개 숙임)까지 이어 촬영. 애프터는 각 슬롯의 비포를 오버레이 */
+function _buildSteps(startSlot,mk){var started=false,st=[];PHOTO_SLOTS.forEach(function(p){var s=p[0],ko=p[1];if(s===startSlot)started=true;if(started)st.push(mk(s,ko));});return st;}
+function camMain(s){openCamSeq(_buildSteps(s,function(s,ko){return {ko:ko,ref:function(){return form['photo_'+s]||null;},assign:function(d){form['photo_'+s]=d;setPhotoPreview(s);}};}));}
+function camAfter(i,s){openCamSeq(_buildSteps(s,function(s,ko){return {ko:ko+'(애프터)',ref:function(){return form['photo_'+s]||null;},assign:function(d){if(form.afters&&form.afters[i]){form.afters[i]['photo_'+s]=d;renderAfters();}}};}));}
 window.addEventListener('resize',positionStickyThumbs);
 /* 3D 시뮬레이션(맨 아래) 영역이 화면에 들어오면 따라오는 사진 숨김 — 폰에서 방해 안 되게 */
 (function(){var fp=document.getElementById('fp_panel'),st=document.getElementById('stickyThumbs');if(fp&&st&&window.IntersectionObserver){new IntersectionObserver(function(es){var vis=es[0]&&es[0].isIntersecting;st.style.display=vis?'none':'';}).observe(fp);}})();
