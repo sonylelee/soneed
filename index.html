@@ -273,7 +273,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v114 (2026-07-29)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v115 (2026-07-29)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트</button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">🎓 아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -859,6 +859,7 @@ async function authLogin(email,pw){
   const r=await fetch(authGw()+'/token?grant_type=password',{method:'POST',headers:{apikey:cfg.key,'Content-Type':'application/json'},body:JSON.stringify({email:email,password:pw})});
   const j=await r.json().catch(()=>({}));
   if(!r.ok)throw new Error(j.msg||j.error_description||j.error||('로그인 실패 HTTP '+r.status));
+  records=[];currentId=null;try{localStorage.removeItem('soneed_reccache');}catch(e){}   /* 로그인 시 이전 사용자 데이터/캐시 제거(관리사 전환 누수 방지) */
   authTok=j.access_token;authSave({email:email,refresh_token:j.refresh_token});authSchedule();updateAuthUI();loadTier();return j;
 }
 async function authRefresh(){
@@ -870,7 +871,15 @@ async function authRefresh(){
   }catch(e){authTok=null;return false;}
 }
 function authSchedule(){if(_authTimer)clearTimeout(_authTimer);_authTimer=setTimeout(function(){authRefresh();},45*60*1000);}
-function authLogout(){authTok=null;authSave(null);if(_authTimer)clearTimeout(_authTimer);updateAuthUI();toast('로그아웃되었습니다');}
+function authLogout(){
+  authTok=null;authSave(null);if(_authTimer)clearTimeout(_authTimer);
+  records=[];currentId=null;form={};                                  /* ★ 데이터 메모리에서 제거 */
+  try{localStorage.removeItem('soneed_reccache');}catch(e){}          /* ★ 로컬 캐시 제거 */
+  try{updMap={};}catch(e){}
+  try{clearForm();}catch(e){}
+  try{refreshAll();}catch(e){}                                        /* ★ 화면 목록 비우기 */
+  updateAuthUI();gateShow();toast('로그아웃되었습니다');               /* ★ 잠금화면 표시 */
+}
 function updateAuthUI(){const b=document.getElementById('authBtn');if(!b)return;const em=authEmail();b.textContent=(authTok&&em)?('👤 '+em):'🔒 로그인';b.className='modebtn'+((authTok&&em)?' on':'');applyAdminUI();applyTierUI();}
 async function authBoot(){
   updateAuthUI();
