@@ -264,7 +264,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v111 (2026-07-29)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v112 (2026-07-29)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트</button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">🎓 아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -1307,8 +1307,11 @@ function afterField(i,a){const opts='<option value="">회차</option>'+Array.fro
 /* 고객에게 보낼 전/후 비교 이미지 — BEFORE(첫 정면) | AFTER(최신 애프터). 얼굴크롭으로 프레이밍 일관 */
 function fpDrawCover(c,img,x,y,w,h){var ir=img.width/img.height,rr=w/h,sw,sh,sx,sy;if(ir>rr){sh=img.height;sw=sh*rr;sx=(img.width-sw)/2;sy=0;}else{sw=img.width;sh=sw/rr;sx=0;sy=(img.height-sh)/2;}c.drawImage(img,sx,sy,sw,sh,x,y,w,h);}
 /* 전/후 이미지 — 편집(드래그 이동·슬라이더 확대) 후 💾 저장 */
-var _baState={before:null,after:null,meta:null};
+var _baState={before:null,after:null,meta:null},_baEdits={};
 var BA_FW=210,BA_FH=280;
+function baSizes(){var vw=Math.min(window.innerWidth||390,560);BA_FW=Math.max(128,Math.min(210,Math.floor((vw-34-12)/2)));BA_FH=Math.round(BA_FW*4/3);}
+function _saveEdit(w){var st=_baState[w];if(st&&st.src)_baEdits[st.src]={zoom:st.zoom,tx:st.tx,ty:st.ty};}
+function baReopen(){var o=document.getElementById('photoZoom');if(o)o.style.display='none';if(_baState.shots)openBAEditor(_baState.shots,_baState.meta||{});}
 function makeAfterImage(){
   var shots=[];
   if(form.photo_front) shots.push({label:'초기 · '+(form.date||'첫 방문'), src:form.photo_front, dt:form.date||'첫 방문'});
@@ -1329,21 +1332,24 @@ function baTileHTML(which,label){
   +'</div>';
 }
 function baModal(){
-  var m=document.getElementById('baEditor'); if(m) return m;
-  m=document.createElement('div'); m.id='baEditor';
-  m.style.cssText='position:fixed;inset:0;background:rgba(15,17,25,.93);z-index:9999;display:none;flex-direction:column;align-items:center;justify-content:center;padding:16px';
+  var m=document.getElementById('baEditor');
+  if(!m){ m=document.createElement('div'); m.id='baEditor';
+    m.style.cssText='position:fixed;inset:0;background:rgba(15,17,25,.93);z-index:9999;display:none;flex-direction:column;align-items:center;justify-content:center;padding:14px';
+    document.body.appendChild(m); }
+  return m;
+}
+function baBuild(m){
   m.innerHTML='<div style="color:#fff;font-weight:800;font-size:16px;margin-bottom:2px">전/후 이미지 편집</div>'
-    +'<div style="color:#9aa2b1;font-size:12px;margin-bottom:12px">사진을 <b style="color:#fff">드래그</b>해 위치 이동 · <b style="color:#fff">슬라이더</b>로 확대/축소</div>'
-    +'<div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center">'+baTileHTML('before','BEFORE')+baTileHTML('after','AFTER')+'</div>'
-    +'<div style="display:flex;gap:10px;margin-top:16px">'
-      +'<button class="btn ghost" onclick="baModal().style.display=\'none\'" style="min-width:84px">취소</button>'
-      +'<button class="btn ghost" onclick="baReset()" style="min-width:84px">초기화</button>'
-      +'<button class="btn primary" onclick="baSave()" style="min-width:150px">💾 저장하기</button>'
+    +'<div style="color:#9aa2b1;font-size:12px;margin-bottom:12px;text-align:center">사진을 <b style="color:#fff">드래그</b>해 위치 이동 · <b style="color:#fff">슬라이더</b>로 확대/축소</div>'
+    +'<div style="display:flex;gap:10px;flex-wrap:nowrap;justify-content:center">'+baTileHTML('before','BEFORE')+baTileHTML('after','AFTER')+'</div>'
+    +'<div style="display:flex;gap:8px;margin-top:16px">'
+      +'<button class="btn ghost" onclick="baModal().style.display=\'none\'" style="min-width:74px">취소</button>'
+      +'<button class="btn ghost" onclick="baReset()" style="min-width:74px">초기화</button>'
+      +'<button class="btn primary" onclick="baSave()" style="min-width:130px">💾 저장하기</button>'
     +'</div>';
-  document.body.appendChild(m); return m;
 }
 function openBAEditor(shots, meta){
-  var m=baModal(); m.style.display='flex'; _baState.meta=meta; _baState.shots=shots;
+  baSizes(); var m=baModal(); baBuild(m); m.style.display='flex'; _baState.meta=meta; _baState.shots=shots;
   ['before','after'].forEach(function(w){
     var sel=document.getElementById('basel_'+w);
     sel.innerHTML=shots.map(function(sh,i){return '<option value="'+i+'">'+_esc(sh.label)+'</option>';}).join('');
@@ -1357,17 +1363,21 @@ function baPick(w){
   im.onload=function(){ _baState[w]={iw:im.naturalWidth,ih:im.naturalHeight,zoom:1,tx:0,ty:0,el:img,src:sh.src,dt:sh.dt}; img.src=sh.src; baInit(w); baWire(w); };
   im.src=sh.src;
 }
-function baInit(w){ var st=_baState[w]; if(!st)return; st.base=Math.max(BA_FW/st.iw,BA_FH/st.ih); st.zoom=1; baApply(w,true); var fr=document.querySelector('.ba-frame[data-w="'+w+'"]'); var sl=fr&&fr.parentNode.querySelector('input[type=range]'); if(sl)sl.value=1; }
+function baInit(w){ var st=_baState[w]; if(!st)return; st.base=Math.max(BA_FW/st.iw,BA_FH/st.ih);
+  var sv=_baEdits[st.src], fr=document.querySelector('.ba-frame[data-w="'+w+'"]'), sl=fr&&fr.parentNode.querySelector('input[type=range]');
+  if(sv){ st.zoom=sv.zoom; st.tx=sv.tx; st.ty=sv.ty; baClamp(w); var S=st.base*st.zoom; st.el.style.transform='translate('+st.tx+'px,'+st.ty+'px) scale('+S+')'; if(sl)sl.value=st.zoom; }
+  else { st.zoom=1; baApply(w,true); if(sl)sl.value=1; }
+}
 function baClamp(w){ var st=_baState[w]; var S=st.base*st.zoom; st.tx=Math.min(0,Math.max(BA_FW-st.iw*S,st.tx)); st.ty=Math.min(0,Math.max(BA_FH-st.ih*S,st.ty)); }
 function baApply(w,center){ var st=_baState[w]; if(!st)return; var S=st.base*st.zoom; if(center){st.tx=(BA_FW-st.iw*S)/2;st.ty=(BA_FH-st.ih*S)/2;} baClamp(w); st.el.style.transform='translate('+st.tx+'px,'+st.ty+'px) scale('+S+')'; }
-function baZoom(w,val){ var st=_baState[w]; if(!st)return; var oldS=st.base*st.zoom, cx=(BA_FW/2-st.tx)/oldS, cy=(BA_FH/2-st.ty)/oldS; st.zoom=parseFloat(val); var S=st.base*st.zoom; st.tx=BA_FW/2-cx*S; st.ty=BA_FH/2-cy*S; baClamp(w); st.el.style.transform='translate('+st.tx+'px,'+st.ty+'px) scale('+S+')'; }
+function baZoom(w,val){ var st=_baState[w]; if(!st)return; var oldS=st.base*st.zoom, cx=(BA_FW/2-st.tx)/oldS, cy=(BA_FH/2-st.ty)/oldS; st.zoom=parseFloat(val); var S=st.base*st.zoom; st.tx=BA_FW/2-cx*S; st.ty=BA_FH/2-cy*S; baClamp(w); st.el.style.transform='translate('+st.tx+'px,'+st.ty+'px) scale('+S+')'; _saveEdit(w); }
 function baWire(w){ var fr=document.querySelector('.ba-frame[data-w="'+w+'"]'); if(!fr||fr._wired)return; fr._wired=true; var drag=false,lx=0,ly=0;
   fr.addEventListener('pointerdown',function(e){drag=true;lx=e.clientX;ly=e.clientY;try{fr.setPointerCapture(e.pointerId);}catch(_){}fr.style.cursor='grabbing';});
   fr.addEventListener('pointermove',function(e){if(!drag)return;var st=_baState[w];st.tx+=(e.clientX-lx);st.ty+=(e.clientY-ly);lx=e.clientX;ly=e.clientY;baClamp(w);var S=st.base*st.zoom;st.el.style.transform='translate('+st.tx+'px,'+st.ty+'px) scale('+S+')';});
-  var end=function(){drag=false;fr.style.cursor='grab';};
+  var end=function(){drag=false;fr.style.cursor='grab';_saveEdit(w);};
   fr.addEventListener('pointerup',end);fr.addEventListener('pointercancel',end);fr.addEventListener('pointerleave',end);
 }
-function baReset(){ baInit('before'); baInit('after'); }
+function baReset(){ ['before','after'].forEach(function(w){var st=_baState[w];if(st&&st.src)delete _baEdits[st.src];}); baInit('before'); baInit('after'); }
 function baSave(){
   var meta=_baState.meta||{}; if(!_baState.before||!_baState.after){toast('사진을 불러오는 중이에요');return;}
   var TW=460,TH=613,PAD=30,GAP=20,TOP=96,W=PAD*2+TW*2+GAP,H=TOP+TH+64,SS=2,ratio=TW/BA_FW;
@@ -1389,7 +1399,7 @@ function baSave(){
   var url=cv.toDataURL('image/jpeg',0.92);
   baModal().style.display='none';
   var o=document.getElementById('photoZoom');if(!o){o=document.createElement('div');o.id='photoZoom';o.onclick=function(){o.style.display='none';};document.body.appendChild(o);}
-  o.innerHTML='<img src="'+url+'"><div style="position:fixed;bottom:14px;left:0;right:0;text-align:center;color:#fff;font-size:13px">사진을 길게 눌러 저장 · 화면 탭하면 닫기</div>';o.style.display='flex';
+  o.innerHTML='<img src="'+url+'"><div style="position:fixed;bottom:14px;left:0;right:0;display:flex;flex-direction:column;gap:9px;align-items:center;color:#fff;font-size:13px"><button onclick="event.stopPropagation();baReopen()" style="padding:9px 20px;border-radius:20px;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.16);color:#fff;font-weight:800;font-size:13px">✏️ 다시 편집</button><span>사진을 길게 눌러 저장 · 화면 탭하면 닫기</span></div>';o.style.display='flex';
   var a=document.createElement('a');a.href=url;a.download='soneed_전후_'+(meta.code||'')+'.jpg';document.body.appendChild(a);a.click();a.remove();
   toast('전/후 이미지 저장 완료');
 }
