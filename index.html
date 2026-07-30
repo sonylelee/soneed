@@ -172,8 +172,10 @@
   #camModal #camLevel .lv-line::before{left:-3px}
   #camModal #camLevel .lv-line::after{right:-3px}
   #camModal #camLevel.level .lv-line{background:#37e0a3;box-shadow:0 0 10px rgba(55,224,163,.7)}
-  #camModal #camLevel .lv-txt{position:absolute;left:50%;top:-13px;transform:translateX(-50%);font-size:9px;font-weight:800;color:#ffcf5a;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+  #camModal #camLevel .lv-txt{position:absolute;left:50%;top:-20px;transform:translateX(-50%);font-size:12px;font-weight:800;color:#ffcf5a;text-shadow:0 1px 3px rgba(0,0,0,.6);white-space:nowrap}
   #camModal #camLevel.level .lv-txt{color:#37e0a3}
+  #camModal #camPose{position:absolute;left:50%;top:16px;transform:translateX(-50%);z-index:7;background:rgba(200,29,116,.92);color:#fff;font-weight:800;font-size:16px;padding:8px 20px;border-radius:22px;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.45)}
+  #camModal #camLevelEnable{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);z-index:7;display:none;background:rgba(10,12,18,.72);color:#ffcf5a;border:1px solid rgba(255,207,90,.5);border-radius:20px;padding:8px 16px;font-size:12.5px;font-weight:800;backdrop-filter:blur(6px)}
   #camModal .cam-guide::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(0,255,180,.45)}
   #camModal .cam-guide::after{content:"";position:absolute;top:50%;left:0;right:0;height:1px;background:rgba(0,255,180,.30)}
   #camModal .cam-ctrls{padding:14px 16px calc(16px + env(safe-area-inset-bottom));background:#000}
@@ -273,7 +275,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v117 (2026-07-29)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v118 (2026-07-29)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트</button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">🎓 아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -469,7 +471,9 @@ create policy "sol write" on solutions
     <video id="camVideo" playsinline autoplay muted></video>
     <img id="camOverlay" alt="">
     <div class="cam-guide"></div>
+    <div id="camPose"></div>
     <div id="camLevel"><div class="lv-fix"></div><div id="camLevelLine" class="lv-line"></div><span class="lv-txt" id="camLevelDeg">수평</span></div>
+    <button id="camLevelEnable" onclick="_askLevel()">📐 수평계 켜기</button>
     <img id="camStill" alt="" onclick="_backToLive()">
     <div id="camPreviewBar"><span class="cam-pv-hint">👀 눈 잘 떴는지 확인하세요</span><div class="cam-pv-btns"><button class="cam-pv-use" onclick="camUse()">✓ 이 사진 사용</button><button class="cam-pv-back" onclick="_backToLive()">✕ 다시 찍기</button></div></div>
   </div>
@@ -1539,6 +1543,7 @@ function _loadStep(){
   const st=_camSteps[_camStep];
   var slot=st.slot||('_'+_camStep); if(!_camBuckets[slot])_camBuckets[slot]=[]; _camShots=_camBuckets[slot]; _camSel=_camShots.length-1;
   document.getElementById('camLabel').textContent=st.ko+' 촬영';
+  var _pose=document.getElementById('camPose');if(_pose)_pose.textContent=st.ko+' 촬영';
   const ov=document.getElementById('camOverlay'),ref=st.ref&&st.ref();
   if(ref){ov.src=ref;ov.style.display='';ov.style.opacity=(document.getElementById('camOp').value/100);document.getElementById('camOpWrap').style.display='';}
   else{ov.removeAttribute('src');ov.style.display='none';document.getElementById('camOpWrap').style.display='none';}
@@ -1604,13 +1609,24 @@ function camUse(){
 }
 function closeCam(){stopCam();document.getElementById('camModal').style.display='none';document.getElementById('camStill').style.display='none';document.getElementById('camVideo').style.display='';_camSteps=[];_camStep=0;_camShots=[];_camSel=-1;_camBuckets={};}
 /* 수평계: 기기 기울기(gamma)로 수평선 표시 · 수평이면 초록 */
+var _lvlGot=false;
+function _lvlHnd(e){var g=e.gamma;if(g==null)return;_lvlGot=true;var el=document.getElementById('camLevel'),enb=document.getElementById('camLevelEnable');if(enb)enb.style.display='none';var ln=document.getElementById('camLevelLine');if(ln)ln.style.transform='translate(-50%,-50%) rotate('+(-g).toFixed(1)+'deg)';var lvl=Math.abs(g)<2.2;if(el)el.classList.toggle('level',lvl);var t=document.getElementById('camLevelDeg');if(t)t.textContent=lvl?'✓ 수평':(g>0?'+':'')+Math.round(g)+'°';}
+function _lvlStart(){if(window._lvlOn)return;window._lvlOn=true;window.addEventListener('deviceorientation',_lvlHnd);}
+function _showLvlBtn(){var b=document.getElementById('camLevelEnable');if(b&&!_lvlGot)b.style.display='inline-block';}
 function _initLevel(){
-  var el=document.getElementById('camLevel'); if(!el)return;
-  function hnd(e){var g=e.gamma;if(g==null)return;var ln=document.getElementById('camLevelLine');if(ln)ln.style.transform='translate(-50%,-50%) rotate('+(-g).toFixed(1)+'deg)';var lvl=Math.abs(g)<2.2;el.classList.toggle('level',lvl);var t=document.getElementById('camLevelDeg');if(t)t.textContent=lvl?'✓ 수평':(g>0?'+':'')+Math.round(g)+'°';}
-  function go(){if(el._on)return;el._on=true;window.addEventListener('deviceorientation',hnd);}
+  _lvlGot=false;
   try{
-    if(window.DeviceOrientationEvent&&typeof DeviceOrientationEvent.requestPermission==='function'){DeviceOrientationEvent.requestPermission().then(function(s){if(s==='granted')go();}).catch(function(){});}
-    else if(window.DeviceOrientationEvent){go();}
+    if(window.DeviceOrientationEvent&&typeof DeviceOrientationEvent.requestPermission==='function'){
+      DeviceOrientationEvent.requestPermission().then(function(s){if(s==='granted'){_lvlStart();setTimeout(_showLvlBtn,1500);}else{_showLvlBtn();}}).catch(function(){_showLvlBtn();});
+    } else if(window.DeviceOrientationEvent){ _lvlStart(); setTimeout(_showLvlBtn,1500); }
+    else { _showLvlBtn(); }
+  }catch(e){ _showLvlBtn(); }
+}
+function _askLevel(){   /* 버튼 탭 = 확실한 사용자 제스처로 권한 재요청 */
+  try{
+    if(typeof DeviceOrientationEvent!=='undefined'&&DeviceOrientationEvent.requestPermission){
+      DeviceOrientationEvent.requestPermission().then(function(s){if(s==='granted'){_lvlStart();var b=document.getElementById('camLevelEnable');if(b)b.style.display='none';}else{toast('설정 > Safari > 동작 및 방향 접근을 허용해주세요');}}).catch(function(){});
+    } else { _lvlStart(); var b=document.getElementById('camLevelEnable');if(b)b.style.display='none'; }
   }catch(e){}
 }
 /* 시작 슬롯부터 끝(고개 숙임)까지 이어 촬영. 애프터는 각 슬롯의 비포를 오버레이 */
