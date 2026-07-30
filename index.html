@@ -158,16 +158,16 @@
   #prog .prog-sub{font-size:12px;color:#8a8592;margin-top:7px;word-break:break-all}
   #prog .prog-x{margin-top:10px;font-size:12.5px;font-weight:700;padding:6px 14px;border:1px solid #ddd;border-radius:9px;background:#fafafa;cursor:pointer}
   .mini-cam{margin-top:5px;width:100%;font-size:11.5px;font-weight:700;padding:5px 6px;border:1px solid #d9cfe6;border-radius:8px;background:#f6f1fb;color:#7c3aed;cursor:pointer;line-height:1.2}
-  #camModal{position:fixed;inset:0;z-index:10000;display:none;flex-direction:column;background:#000}
+  #camModal{position:fixed;inset:0;z-index:10000;display:none;flex-direction:column;background:#000;touch-action:manipulation}
   #camModal .cam-top{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;color:#fff;font-weight:800;font-size:14px}
   #camModal .cam-x{background:rgba(255,255,255,.16);color:#fff;border:none;width:38px;height:38px;border-radius:50%;font-size:17px;cursor:pointer}
   #camModal .cam-stage{position:relative;flex:1;overflow:hidden;background:#000}
-  #camModal #camVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000}
-  #camModal #camOverlay{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:.45;pointer-events:none}
+  #camModal #camVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000}
+  #camModal #camOverlay{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.45;pointer-events:none}
   #camModal .cam-guide{position:absolute;inset:0;pointer-events:none}
   #camModal #camLevel{position:absolute;left:50%;top:46%;transform:translateX(-50%);width:150px;height:24px;pointer-events:none;z-index:6}
   #camModal #camLevel .lv-fix{position:absolute;left:50%;top:50%;width:38px;height:2px;transform:translate(-50%,-50%);background:rgba(255,255,255,.5);border-radius:2px}
-  #camModal #camLevel .lv-line{position:absolute;left:50%;top:50%;width:132px;height:2px;transform:translate(-50%,-50%);background:#ffcf5a;border-radius:2px;transition:transform .05s linear}
+  #camModal #camLevel .lv-line{position:absolute;left:50%;top:50%;width:230px;height:3px;transform:translate(-50%,-50%);background:#ffcf5a;border-radius:2px;transition:transform .05s linear}
   #camModal #camLevel .lv-line::before,#camModal #camLevel .lv-line::after{content:"";position:absolute;top:50%;width:6px;height:6px;border-radius:50%;background:inherit;transform:translateY(-50%)}
   #camModal #camLevel .lv-line::before{left:-3px}
   #camModal #camLevel .lv-line::after{right:-3px}
@@ -182,7 +182,7 @@
   #camModal .cam-btns{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px}
   #camModal .cam-flip{background:rgba(255,255,255,.16);color:#fff;border:none;padding:11px 15px;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;justify-self:start}
   #camModal .cam-shot{width:76px;height:76px;border-radius:50%;background:#fff;border:5px solid rgba(255,255,255,.45);cursor:pointer;justify-self:center}
-  #camModal #camStill{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;display:none}
+  #camModal #camStill{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000;display:none}
   #camModal .cam-strip{display:flex;gap:7px;overflow-x:auto;padding:9px 4px 3px;min-height:0}
   #camModal .cam-strip:empty{display:none}
   #camModal .cam-strip img{height:76px;width:58px;object-fit:cover;border-radius:7px;border:2px solid transparent;flex:0 0 auto;cursor:pointer}
@@ -273,7 +273,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v115 (2026-07-29)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v117 (2026-07-29)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트</button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">🎓 아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -469,7 +469,7 @@ create policy "sol write" on solutions
     <video id="camVideo" playsinline autoplay muted></video>
     <img id="camOverlay" alt="">
     <div class="cam-guide"></div>
-    <div id="camLevel"><div class="lv-fix"></div><div id="camLevelLine" class="lv-line"></div><span class="lv-txt">수평</span></div>
+    <div id="camLevel"><div class="lv-fix"></div><div id="camLevelLine" class="lv-line"></div><span class="lv-txt" id="camLevelDeg">수평</span></div>
     <img id="camStill" alt="" onclick="_backToLive()">
     <div id="camPreviewBar"><span class="cam-pv-hint">👀 눈 잘 떴는지 확인하세요</span><div class="cam-pv-btns"><button class="cam-pv-use" onclick="camUse()">✓ 이 사진 사용</button><button class="cam-pv-back" onclick="_backToLive()">✕ 다시 찍기</button></div></div>
   </div>
@@ -1123,7 +1123,12 @@ function renderFcode(){
   }).join('');
   renderFcodeOut();
 }
-function setFcode(k,v){if(!form.fcode)form.fcode={};form.fcode[k]=v||null;form.face_code=fcodeStr(form.fcode)||null;syncCodeToChart(k);renderFcodeOut();}
+function setFcode(k,v){if(!form.fcode)form.fcode={};form.fcode[k]=v||null;
+  /* ★ 예각(코)과 둔각(눈)은 항상 반대 → 하나 고르면 나머지 자동 반대 (중립은 중립) */
+  var _op=function(x){return x==='왼'?'오':(x==='오'?'왼':(x==='중립'?'중립':null));};
+  if(k==='nose'){form.fcode.eye=_op(form.fcode.nose);}
+  else if(k==='eye'){form.fcode.nose=_op(form.fcode.eye);}
+  form.face_code=fcodeStr(form.fcode)||null;syncCodeToChart(k);renderFcode();}
 /* ★ 코드 → 솔루션 자동 조립 (대표 확정 규칙 · CLAUDE.md §17-2). 자리별 동작을 쌓는다. */
 function composeSolution(fc){
   if(!fc)return[];var out=[];
@@ -1590,7 +1595,7 @@ function _camRenderStrip(){
   document.getElementById('camUse').style.display=_camShots.length?'inline-block':'none';   /* ★ inline-block 명시(CSS 기본 none을 이겨야 보임) */
   /* 라이브 화면은 계속 유지 — 미리보기는 썸네일을 탭했을 때만(camPick) 겹쳐 보여줌 */
 }
-function camPick(i){_camSel=i;_camRenderStrip();var still=document.getElementById('camStill');still.src=_camShots[i];still.style.display='';var bar=document.getElementById('camPreviewBar');if(bar)bar.style.display='flex';}   /* 크게 미리보기 + 눈 확인 바 */
+function camPick(i){_camSel=i;_camRenderStrip();var still=document.getElementById('camStill');still.src=_camShots[i];still.style.display='block';var bar=document.getElementById('camPreviewBar');if(bar)bar.style.display='flex';}   /* 크게 미리보기 + 눈 확인 바 (display:block 명시 — CSS none 이겨야 보임) */
 function camUse(){
   if(_camSel<0||!_camShots[_camSel]){toast('사용할 사진을 먼저 탭해서 선택하세요');return;}
   _camSteps[_camStep].assign(_camShots[_camSel]);
@@ -1601,7 +1606,7 @@ function closeCam(){stopCam();document.getElementById('camModal').style.display=
 /* 수평계: 기기 기울기(gamma)로 수평선 표시 · 수평이면 초록 */
 function _initLevel(){
   var el=document.getElementById('camLevel'); if(!el)return;
-  function hnd(e){var g=e.gamma;if(g==null)return;var ln=document.getElementById('camLevelLine');if(ln)ln.style.transform='translate(-50%,-50%) rotate('+(-g).toFixed(1)+'deg)';el.classList.toggle('level',Math.abs(g)<2.2);}
+  function hnd(e){var g=e.gamma;if(g==null)return;var ln=document.getElementById('camLevelLine');if(ln)ln.style.transform='translate(-50%,-50%) rotate('+(-g).toFixed(1)+'deg)';var lvl=Math.abs(g)<2.2;el.classList.toggle('level',lvl);var t=document.getElementById('camLevelDeg');if(t)t.textContent=lvl?'✓ 수평':(g>0?'+':'')+Math.round(g)+'°';}
   function go(){if(el._on)return;el._on=true;window.addEventListener('deviceorientation',hnd);}
   try{
     if(window.DeviceOrientationEvent&&typeof DeviceOrientationEvent.requestPermission==='function'){DeviceOrientationEvent.requestPermission().then(function(s){if(s==='granted')go();}).catch(function(){});}
