@@ -278,7 +278,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v126 (2026-07-29)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v127 (2026-07-29)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트</button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">🎓 아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -1410,6 +1410,23 @@ function baWire(w){ var fr=document.querySelector('.ba-frame[data-w="'+w+'"]'); 
   fr.addEventListener('pointerup',end);fr.addEventListener('pointercancel',end);fr.addEventListener('pointerleave',end);
 }
 function baReset(){ ['before','after'].forEach(function(w){var st=_baState[w];if(st&&st.src)delete _baEdits[st.src];}); baInit('before'); baInit('after'); }
+function _dataURLtoFile(url,name){var arr=url.split(','),m=(arr[0].match(/:(.*?);/)||[])[1]||'image/jpeg',bin=atob(arr[1]),n=bin.length,u8=new Uint8Array(n);while(n--)u8[n]=bin.charCodeAt(n);return new File([u8],name,{type:m});}
+function baShare(){
+  try{
+    var url=window._baLastURL; if(!url){toast('이미지를 먼저 만들어주세요');return;}
+    var name='soneed_전후_'+((_baState.meta&&_baState.meta.code)||todayStr())+'.jpg';
+    var file=_dataURLtoFile(url,name);
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      navigator.share({files:[file],title:'SONEED 전/후'}).catch(function(){});
+    }else if(navigator.share){
+      navigator.share({title:'SONEED 전/후',text:'전/후 이미지'}).catch(function(){});
+      var a0=document.createElement('a');a0.href=url;a0.download=name;document.body.appendChild(a0);a0.click();a0.remove();
+    }else{
+      var a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
+      toast('앨범 저장은 사진을 길게 눌러 “이미지 저장”을 눌러주세요');
+    }
+  }catch(e){toast('저장 실패 · 사진을 길게 눌러 저장해주세요');}
+}
 function baSave(){
   var meta=_baState.meta||{}; if(!_baState.before||!_baState.after){toast('사진을 불러오는 중이에요');return;}
   var TW=460,TH=613,PAD=30,GAP=20,TOP=96,W=PAD*2+TW*2+GAP,H=TOP+TH+64,SS=2,ratio=TW/BA_FW;
@@ -1428,12 +1445,11 @@ function baSave(){
   tile('before','BEFORE',(_baState.before&&_baState.before.dt)||'',PAD);
   tile('after','AFTER',(_baState.after&&_baState.after.dt)||'',PAD+TW+GAP);
   c.fillStyle='#bbb';c.font='13px sans-serif';c.textAlign='center';c.fillText('SONEED 얼굴윤곽 교정',W/2,H-20);
-  var url=cv.toDataURL('image/jpeg',0.92);
+  var url=cv.toDataURL('image/jpeg',0.92); window._baLastURL=url;
   baModal().style.display='none';
   var o=document.getElementById('photoZoom');if(!o){o=document.createElement('div');o.id='photoZoom';o.onclick=function(){o.style.display='none';};document.body.appendChild(o);}
-  o.innerHTML='<img src="'+url+'"><div style="position:fixed;bottom:14px;left:0;right:0;display:flex;flex-direction:column;gap:9px;align-items:center;color:#fff;font-size:13px"><button onclick="event.stopPropagation();baReopen()" style="padding:9px 20px;border-radius:20px;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.16);color:#fff;font-weight:800;font-size:13px">✏️ 다시 편집</button><span>사진을 길게 눌러 저장 · 화면 탭하면 닫기</span></div>';o.style.display='flex';
-  var a=document.createElement('a');a.href=url;a.download='soneed_전후_'+(meta.code||'')+'.jpg';document.body.appendChild(a);a.click();a.remove();
-  toast('전/후 이미지 저장 완료');
+  o.innerHTML='<img src="'+url+'"><div style="position:fixed;bottom:14px;left:0;right:0;display:flex;flex-direction:column;gap:10px;align-items:center;color:#fff;font-size:12.5px;padding:0 16px"><div style="display:flex;gap:9px;flex-wrap:wrap;justify-content:center"><button onclick="event.stopPropagation();baShare()" style="padding:11px 22px;border-radius:22px;border:none;background:#C81D74;color:#fff;font-weight:800;font-size:14px">📥 앨범에 저장</button><button onclick="event.stopPropagation();baReopen()" style="padding:11px 18px;border-radius:22px;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.16);color:#fff;font-weight:800;font-size:13px">✏️ 다시 편집</button></div><span>저장이 안 되면 사진을 길게 눌러 “이미지 저장” · 화면 탭하면 닫기</span></div>';o.style.display='flex';
+  toast('전/후 이미지 생성 완료 · 📥 앨범에 저장을 누르세요');
 }
 function renderAfters(){const box=document.getElementById('afters');if(!box)return;if(Array.isArray(form.afters)){form.afters.forEach(function(a){if(a&&!a.id)a.id=newId();});form.afters.sort((a,b)=>(a.date||'9999-99').localeCompare(b.date||'9999-99'));}const arr=Array.isArray(form.afters)?form.afters:[];box.innerHTML=arr.map((a,i)=>afterField(i,a)).join('');renderAfterCompare();}
 function delAfter(id){if(!confirm('이 회차 애프터를 정말 삭제할까요?\n되돌릴 수 없어요.'))return;if(Array.isArray(form.afters))form.afters=form.afters.filter(function(x){return String(x&&x.id)!==String(id);});renderAfters();toast('회차 삭제됨 · 저장하면 반영됩니다');}
