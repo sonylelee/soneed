@@ -278,7 +278,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v120 (2026-07-29)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v122 (2026-07-29)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트</button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">🎓 아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -1613,13 +1613,15 @@ function camUse(){
 function closeCam(){stopCam();document.getElementById('camModal').style.display='none';document.getElementById('camStill').style.display='none';document.getElementById('camVideo').style.display='';_camSteps=[];_camStep=0;_camShots=[];_camSel=-1;_camBuckets={};}
 /* 수평계: 기기 기울기(gamma)로 수평선 표시 · 수평이면 초록 */
 var _lvlGot=false;
-function _lvlHnd(e){var g=e.gamma,b=e.beta;if(g==null&&b==null)return;_lvlGot=true;var enb=document.getElementById('camLevelEnable');if(enb)enb.style.display='none';
-  var roll=g||0, pitch=((b==null?90:b)-90);
+function _lvlHnd(e){var b=e.beta,g=e.gamma;if(g==null&&b==null)return;_lvlGot=true;var enb=document.getElementById('camLevelEnable');if(enb)enb.style.display='none';
+  var d=Math.PI/180,cb=Math.cos((b||0)*d),sb=Math.sin((b||0)*d),cg=Math.cos((g||0)*d),sg=Math.sin((g||0)*d);
+  var gx=cb*sg,gy=-sb,gz=-cb*cg;
+  var roll=Math.atan2(gx,-gy)*180/Math.PI, pitch=Math.atan2(gz,Math.sqrt(gx*gx+gy*gy))*180/Math.PI;
   var ln=document.getElementById('camLevelLine');if(ln)ln.style.transform='translate(-50%,-50%) rotate('+(roll).toFixed(1)+'deg)';
   var rEl=document.getElementById('lvRoll'),pEl=document.getElementById('lvPitch');
-  if(rEl)rEl.textContent='↔ '+(Math.abs(roll)<2?'수평':(roll>0?'우 ':'좌 ')+Math.abs(Math.round(roll))+'°');
-  if(pEl)pEl.textContent='↕ '+(Math.abs(pitch)<3?'정면':(pitch>0?'위 ':'아래 ')+Math.abs(Math.round(pitch))+'°');
-  var lvl=Math.abs(roll)<2&&Math.abs(pitch)<3;var el=document.getElementById('camLevel');if(el)el.classList.toggle('level',lvl);}
+  if(rEl)rEl.textContent='↔ '+(Math.abs(roll)<1?'수평':(roll>0?'우 ':'좌 ')+Math.abs(Math.round(roll))+'°');
+  if(pEl)pEl.textContent='↕ '+(Math.abs(pitch)<1?'정면':(pitch>0?'위 ':'아래 ')+Math.abs(Math.round(pitch))+'°');
+  var lvl=Math.abs(roll)<2&&Math.abs(pitch)<2;var el=document.getElementById('camLevel');if(el)el.classList.toggle('level',lvl);}
 function _lvlStart(){if(window._lvlOn)return;window._lvlOn=true;window.addEventListener('deviceorientation',_lvlHnd);}
 function _showLvlBtn(){var b=document.getElementById('camLevelEnable');if(b&&!_lvlGot)b.style.display='inline-block';}
 function _initLevel(){
