@@ -76,7 +76,7 @@ canvas.pose{width:100%;border-radius:10px;margin-top:8px;display:none}
 <body>
 <header>
   <div class="logo">SONEED 바디</div>
-  <div class="sub">키머슬(짧아진 근육) 분석 · v3.7 · 촉진 전 초안</div>
+  <div class="sub">키머슬(짧아진 근육) 분석 · v3.8 · 촉진 전 초안</div>
 </header>
 <div class="wrap">
 
@@ -122,6 +122,16 @@ canvas.pose{width:100%;border-radius:10px;margin-top:8px;display:none}
     <h2 class="sec">4 · 관리 가이드</h2>
     <div class="hint">분석 결과를 <b>이완/강화 · 부위별 · 순위(짧은 %)</b>로 정리해줘요. <b>근육을 누르면 왜 그런지(선택한 자세)</b>가 떠요. ※최종은 촉진 확인.</div>
     <div id="guideBox" class="muted">위에서 <b>분석하기</b>를 누르면 여기에 정리됩니다.</div>
+  </div>
+
+  <div class="card">
+    <h2 class="sec">5 · 차트 기록</h2>
+    <div class="hint">이 분석(자세·정도)을 <b>고객 이름으로 저장</b>하고 나중에 불러올 수 있어요. (이 기기에 저장 · 사진은 저장 안 됨)</div>
+    <div style="display:flex;gap:6px;margin-bottom:8px">
+      <input id="recName" placeholder="고객 이름" style="flex:1;padding:9px 11px;border:1px solid var(--line);border-radius:10px;font-size:14px">
+      <button class="btn primary" onclick="saveRecord()">저장</button>
+    </div>
+    <div id="recList"></div>
   </div>
 
   <div class="muted" style="text-align:center;padding:6px 0 20px">SONEED Body OS · 사진 분석은 가설, 촉진은 검증<br><span style="font-size:10px;opacity:.7">3D 해부 모델: Z-Anatomy / BodyParts3D · CC BY-SA</span></div>
@@ -309,7 +319,7 @@ function drawPose(lm,img){
 
 /* ---------- 3D/평면 전환 ---------- */
 var _hideNeut=false;
-function toggleNeutral3D(){_hideNeut=!_hideNeut; if(window.BODY_hideNeutral3D)window.BODY_hideNeutral3D(_hideNeut); var b=document.getElementById('peelBtn'); if(b)b.textContent=_hideNeut?'전체 근육 보기':'겉근육 벗기기(속근육 보기)';}
+function toggleNeutral3D(){_hideNeut=!_hideNeut; if(window.BODY_hideNeutral3D)window.BODY_hideNeutral3D(_hideNeut); var b=document.getElementById('peelBtn'); if(b){b.textContent=_hideNeut?'✕ 전체 근육 보기':'겉근육 벗기기(속근육 보기)'; b.style.background=_hideNeut?'#e0396f':'rgba(255,255,255,.9)'; b.style.color=_hideNeut?'#fff':'#333';}}
 function bodyTab(v){
   var is3=v==='3d';
   document.getElementById('body3d').style.display=is3?'block':'none';
@@ -460,7 +470,35 @@ function editGuide(n){
   setView(view);toast('저장됨(이 기기)');
 }
 
-renderPhotos();renderChecklist();
+function _recAll(){try{return JSON.parse(localStorage.getItem('sbody_records')||'[]');}catch(e){return [];}}
+function _recSave(a){localStorage.setItem('sbody_records',JSON.stringify(a));}
+function saveRecord(){
+  var nm=(document.getElementById('recName').value||'').trim();
+  if(!nm){toast('고객 이름을 입력하세요');return;}
+  if(sel.size===0){toast('자세를 선택한 뒤 저장하세요');return;}
+  var st={}; sel.forEach(function(fx){st[fx]=lvl[fx]||1;});
+  var d=new Date(), ds=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
+  var arr=_recAll(); arr.unshift({id:'r'+Date.now(),name:nm,date:ds,state:st}); _recSave(arr);
+  document.getElementById('recName').value=''; renderRecords(); toast('저장됨: '+nm);
+}
+function renderRecords(){
+  var box=document.getElementById('recList'); if(!box)return;
+  var arr=_recAll();
+  if(!arr.length){box.innerHTML='<div class="muted">저장된 기록이 없어요.</div>';return;}
+  box.innerHTML=arr.map(function(r){var cnt=Object.keys(r.state||{}).length;
+    return '<div style="display:flex;align-items:center;gap:6px;padding:8px 0;border-bottom:1px solid #f0f1f5"><div style="flex:1;min-width:0"><b>'+(r.name||'').replace(/</g,'&lt;')+'</b> <span class="muted" style="font-size:12px">· '+r.date+' · '+cnt+'항목</span></div><button class="btn" style="padding:6px 10px;font-size:12px" onclick="loadRecord(\''+r.id+'\')">불러오기</button><button class="btn" style="padding:6px 10px;font-size:12px;color:#c02" onclick="delRecord(\''+r.id+'\')">삭제</button></div>';
+  }).join('');
+}
+function loadRecord(id){
+  var r=_recAll().filter(function(x){return x.id===id;})[0]; if(!r)return;
+  sel.clear(); autoSet.clear(); lvl={};
+  Object.keys(r.state||{}).forEach(function(fx){sel.add(fx);lvl[fx]=r.state[fx]||1;});
+  renderChecklist();
+  var e=document.getElementById('recName'); if(e)e.value=r.name||'';
+  toast('불러옴: '+(r.name||'')+' · [분석하기]를 눌러 결과 보기'); window.scrollTo(0,0);
+}
+function delRecord(id){ if(!confirm('이 기록을 삭제할까요?'))return; _recSave(_recAll().filter(function(x){return x.id!==id;})); renderRecords(); toast('삭제됨'); }
+renderPhotos();renderChecklist();renderRecords();
 </script>
 
 <script type="module">
@@ -519,7 +557,7 @@ init().catch(function(e){console.warn('pose init',e);});
       function resize(){var b=document.getElementById('body3d');var w=b.clientWidth||320,hh=340;renderer.setSize(w,hh,false);cam.aspect=w/hh;cam.updateProjectionMatrix();}
       window.BODY_resize3D=resize;
       window.addEventListener('resize',function(){if(ready)resize();});
-      function resetMus(){allMus.forEach(function(o){var m=o.material;m.color.setHex(NEUTRAL);if(m.emissive){m.emissive.setHex(0x000000);m.emissiveIntensity=1;}m.opacity=0.3;m.depthWrite=false;});}
+      function resetMus(){allMus.forEach(function(o){var m=o.material;m.color.setHex(NEUTRAL);if(m.emissive){m.emissive.setHex(0x000000);m.emissiveIntensity=1;}m.opacity=0.55;m.depthWrite=true;});}
       function applyVis(){allMus.forEach(function(o){o.visible=hideNeutral?!(o.userData&&o.userData.sup):true;});}
       window.BODY_hideNeutral3D=function(b){hideNeutral=!!b;applyVis();};
       window.BODY_flat3D=function(){
@@ -553,7 +591,7 @@ init().catch(function(e){console.warn('pose init',e);});
       loader.load('muscles.glb',function(g){
         musRoot=g.scene;
         g.scene.traverse(function(o){ if(o.isMesh){
-          o.material=new THREE.MeshStandardMaterial({color:NEUTRAL,transparent:true,opacity:0.3,roughness:0.6,metalness:0,depthWrite:false});
+          o.material=new THREE.MeshStandardMaterial({color:NEUTRAL,transparent:true,opacity:0.55,roughness:0.6,metalness:0,depthWrite:true});
           allMus.push(o);
           var nm=rawName(o); o.userData.sup=isSup(nm); if(nm){(nodes[nm]||(nodes[nm]=[])).push(o);}
           var pn=o.parent?rawName(o.parent):''; if(pn){(nodes[pn]||(nodes[pn]=[])).push(o);}
