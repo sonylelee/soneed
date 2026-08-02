@@ -291,7 +291,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v130 (2026-07-29)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v131 (2026-07-29)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트</button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">🎓 아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -761,15 +761,15 @@ async function renderAppCustomers(){
       if(rp.ok){ var jr=await rp.json(); if(Array.isArray(jr)){ jr.forEach(function(a){acc[(a.email||'').toLowerCase()]={name:a.name||'',tier:a.tier||''};}); got=true; } } }catch(e){}
     if(!got){ try{ var r=await fetch(sbBase()+'accounts?select=email,name,tier',{headers:sbHeaders()});
       if(r.ok){ (await r.json()).forEach(function(a){acc[(a.email||'').toLowerCase()]={name:a.name||'',tier:a.tier||''};}); } }catch(e){} }
-    var cnt={};
-    (records||[]).forEach(function(rec){ var e=(rec.savedBy||'').toLowerCase(); if(e)cnt[e]=(cnt[e]||0)+1; });
+    var cnt={},last={};
+    (records||[]).forEach(function(rec){ var e=(rec.savedBy||'').toLowerCase(); if(!e)return; cnt[e]=(cnt[e]||0)+1; var u=String(updMap[rec.id]||''); if(u>(last[e]||''))last[e]=u; });
     var set={}; Object.keys(acc).forEach(function(e){set[e]=1;}); Object.keys(cnt).forEach(function(e){set[e]=1;});
-    var list=Object.keys(set).sort();
+    var list=Object.keys(set).sort(function(a,b){return String(last[b]||'').localeCompare(String(last[a]||''));});
     if(!list.length){ box.innerHTML='<div class="subtle">아직 앱 고객(관리사)이 없습니다. 관리사가 로그인해 기록을 저장하면 여기에 나타납니다.</div>'; return; }
-    box.innerHTML='<table class="acct-tbl"><thead><tr><th>이름</th><th>이메일</th><th>등급</th><th>기록</th></tr></thead><tbody>'
+    box.innerHTML='<table class="acct-tbl"><thead><tr><th>이름</th><th>이메일</th><th>등급</th><th>기록</th><th>마지막 사용</th></tr></thead><tbody>'
       +list.map(function(e){ var a=acc[e]||{}; var tier=a.tier||'프리미엄'; var nm=(a.name||'').replace(/</g,'&lt;')||'—'; var isDefault=!a.tier;
         return '<tr onclick="pickCust(\''+e+'\',\''+(a.name||'').replace(/\'/g,"")+'\',\''+tier+'\')">'
-          +'<td>'+nm+'</td><td class="em">'+e+'</td><td>'+_tierBadge(tier)+(isDefault?' <span class="subtle" style="font-size:11px">기본</span>':'')+'</td><td>'+(cnt[e]||0)+'</td></tr>';
+          +'<td>'+nm+'</td><td class="em">'+e+'</td><td>'+_tierBadge(tier)+(isDefault?' <span class="subtle" style="font-size:11px">기본</span>':'')+'</td><td>'+(cnt[e]||0)+'</td><td class="subtle">'+((last[e]||'').slice(0,10)||'—')+'</td></tr>';
       }).join('')+'</tbody></table>';
   }catch(e){ box.textContent='조회 실패: '+(e&&e.message||e); }
   finally{ _appCustBusy=false; }
