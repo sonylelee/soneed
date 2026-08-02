@@ -75,7 +75,7 @@ canvas.pose{width:100%;border-radius:10px;margin-top:8px;display:none}
 <body>
 <header>
   <div class="logo">SONEED 바디</div>
-  <div class="sub">키머슬(짧아진 근육) 분석 · v3.1 · 촉진 전 초안</div>
+  <div class="sub">키머슬(짧아진 근육) 분석 · v3.4 · 촉진 전 초안</div>
 </header>
 <div class="wrap">
 
@@ -103,7 +103,7 @@ canvas.pose{width:100%;border-radius:10px;margin-top:8px;display:none}
         <button id="tab2d" onclick="bodyTab('2d')">🗺 평면도</button>
       </div>
       <div id="body3d"><canvas id="cv3d"></canvas>
-        <div class="muted" style="text-align:center;margin-top:4px">손가락으로 돌리기 · 벌려서 확대 · 진짜 해부 모델 · <span style="color:#e0396f;font-weight:800">🔴짧아짐</span> <span style="color:#2f8fd6;font-weight:800">🔵늘어남</span></div>
+        <div class="muted" style="text-align:center;margin-top:4px">손가락으로 돌리기 · 벌려서 확대 · <b>두 손가락으로 이동</b>(머리 등으로) · <span style="color:#e0396f;font-weight:800">🔴짧아짐</span> <span style="color:#2f8fd6;font-weight:800">🔵늘어남</span></div>
         <div id="no3d" class="muted" style="display:none;text-align:center;padding:20px">이 기기는 3D를 지원하지 않아요 — 평면도를 봐주세요.</div>
       </div>
       <div id="bodymap" style="display:none"></div>
@@ -473,10 +473,12 @@ init().catch(function(e){console.warn('pose init',e);});
 <script>
 (function(){
   var ready=false,pending=null;
-  function fail(msg){var n=document.getElementById('no3d');if(n){n.style.display='block';var hint=/webgl|context/i.test(msg)?' → 크롬 탭을 여러 개 닫아보세요(탭이 많으면 3D가 안 열려요). 안 되면 설정→시스템→"하드웨어 가속 사용" 켜기.':' → 인터넷/브라우저 확인';n.textContent='3D를 불러오지 못했어요: '+msg+hint;}var c=document.getElementById('cv3d');if(c)c.style.display='none';}
+  function fail(msg){var n=document.getElementById('no3d');if(n){n.style.display='block';var hint=/webgl|context/i.test(msg)?' → 크롬 탭을 여러 개 닫고 아래 [다시 시도]를 누르세요. 안 되면 크롬 완전 종료(⌘Q) 후 재실행, 또는 설정→시스템→"하드웨어 가속 사용" 켜기.':' → 인터넷/브라우저 확인';n.innerHTML='<div>3D를 불러오지 못했어요: '+msg+hint+'</div><button onclick="BODY_retry3D()" style="margin-top:10px;padding:9px 18px;border:none;border-radius:10px;background:#232733;color:#fff;font-weight:800;cursor:pointer">🔄 다시 시도</button>';}var c=document.getElementById('cv3d');if(c)c.style.display='none';}
   window.BODY_update3D=function(res){pending=res;};
   window.BODY_resize3D=function(){};
+  window.BODY_retry3D=function(){var old=document.getElementById('cv3d');if(old){var nc=document.createElement('canvas');nc.id='cv3d';old.parentNode.replaceChild(nc,old);}var n=document.getElementById('no3d');if(n)n.style.display='none';ready=false;start();};
   function start(){
+    if(ready)return;
     try{
       if(typeof THREE==='undefined'||!THREE.OrbitControls||!THREE.GLTFLoader||!THREE.DRACOLoader){ fail('그래픽 라이브러리 로딩 실패 — 인터넷 또는 브라우저 확인(카톡/인스타 인앱이면 Safari·Chrome으로 열기)'); return; }
       var MAP=JSON.parse(document.getElementById('musclemap').textContent);
@@ -487,7 +489,7 @@ init().catch(function(e){console.warn('pose init',e);});
       var scene=new THREE.Scene();
       var cam=new THREE.PerspectiveCamera(35,1,0.01,1000);
       var controls=new THREE.OrbitControls(cam,cv);
-      controls.enableDamping=true;controls.dampingFactor=0.08;controls.enablePan=false;controls.rotateSpeed=0.9;
+      controls.enableDamping=true;controls.dampingFactor=0.08;controls.enablePan=true;controls.screenSpacePanning=true;controls.rotateSpeed=0.9;
       scene.add(new THREE.AmbientLight(0xffffff,0.95));
       var dl=new THREE.DirectionalLight(0xffffff,0.7);dl.position.set(4,6,8);scene.add(dl);
       var dl2=new THREE.DirectionalLight(0xffffff,0.4);dl2.position.set(-5,3,-7);scene.add(dl2);
@@ -500,20 +502,20 @@ init().catch(function(e){console.warn('pose init',e);});
       function resize(){var b=document.getElementById('body3d');var w=b.clientWidth||320,hh=340;renderer.setSize(w,hh,false);cam.aspect=w/hh;cam.updateProjectionMatrix();}
       window.BODY_resize3D=resize;
       window.addEventListener('resize',function(){if(ready)resize();});
-      function resetMus(){allMus.forEach(function(o){var m=o.material;m.color.setHex(NEUTRAL);if(m.emissive)m.emissive.setHex(0x000000);m.opacity=0.38;});}
+      function resetMus(){allMus.forEach(function(o){var m=o.material;m.color.setHex(NEUTRAL);if(m.emissive){m.emissive.setHex(0x000000);m.emissiveIntensity=1;}m.opacity=0.22;m.depthWrite=false;});}
       window.BODY_update3D=function(res){
         if(!ready){pending=res;return;}
         resetMus();
         (res||[]).forEach(function(x){
           if(x.score===0)return; var tg=MAP[x.name]; if(!tg)return;
-          var short=x.score>0, a=Math.abs(x.pct), op=Math.min(1,0.92+a/140);
-          tg.forEach(function(nn){ var arr=nodes[nn]; if(!arr)return; arr.forEach(function(o){ var m=o.material; m.color.setHex(short?0xE0396F:0x2F8FD6); if(m.emissive)m.emissive.setHex(short?0x9a1c3c:0x15466e); m.opacity=op; }); });
+          var short=x.score>0, a=Math.abs(x.pct);
+          tg.forEach(function(nn){ var arr=nodes[nn]; if(!arr)return; arr.forEach(function(o){ var m=o.material; var col=short?0xF0245F:0x1E7FE0; m.color.setHex(col); if(m.emissive){m.emissive.setHex(col);m.emissiveIntensity=0.6;} m.opacity=1; m.depthWrite=true; }); });
         });
       };
       loader.load('skeleton.glb',function(g){ g.scene.traverse(function(o){if(o.isMesh)o.material=skelMat;}); scene.add(g.scene); },undefined,function(e){console.warn('skel',e);});
       loader.load('muscles.glb',function(g){
         g.scene.traverse(function(o){ if(o.isMesh){
-          o.material=new THREE.MeshStandardMaterial({color:NEUTRAL,transparent:true,opacity:0.38,roughness:0.72,depthWrite:true});
+          o.material=new THREE.MeshStandardMaterial({color:NEUTRAL,transparent:true,opacity:0.22,roughness:0.6,metalness:0,depthWrite:false});
           allMus.push(o);
           var nm=rawName(o); if(nm){(nodes[nm]||(nodes[nm]=[])).push(o);}
           var pn=o.parent?rawName(o.parent):''; if(pn){(nodes[pn]||(nodes[pn]=[])).push(o);}
