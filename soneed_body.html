@@ -79,7 +79,7 @@ canvas.pose{width:100%;border-radius:10px;margin-top:8px;display:none}
 <body>
 <header>
   <div class="logo">SONEED 바디</div>
-  <div class="sub">키머슬(짧아진 근육) 분석 · v4.8 · 촉진 전 초안</div>
+  <div class="sub">키머슬(짧아진 근육) 분석 · v4.9 · 촉진 전 초안</div>
 </header>
 <div class="wrap">
   <div class="topnav"><button id="navAnalyze" class="on" onclick="showView('analyze')">🔍 분석</button><button id="navRecords" onclick="showView('records')">📋 고객 기록</button></div>
@@ -608,7 +608,7 @@ init().catch(function(e){console.warn('pose init',e);});
       function resize(){var b=document.getElementById('body3d');var w=b.clientWidth||320,hh=340;renderer.setSize(w,hh,false);cam.aspect=w/hh;cam.updateProjectionMatrix();}
       window.BODY_resize3D=resize;
       window.addEventListener('resize',function(){if(ready)resize();});
-      function resetMus(){allMus.forEach(function(o){var m=o.material;if(o.userData&&o.userData.base)m.color.copy(o.userData.base);else m.color.setHex(NEUTRAL);if(m.emissive){m.emissive.setHex(0x000000);m.emissiveIntensity=1;}m.transparent=false;m.opacity=1;m.depthWrite=true;});}
+      function resetMus(){allMus.forEach(function(o){var m=o.material;if(o.userData&&o.userData.base)m.color.copy(o.userData.base);else m.color.setHex(NEUTRAL);if(m.emissive){if(o.userData&&o.userData.base)m.emissive.copy(o.userData.base);else m.emissive.setHex(0);m.emissiveIntensity=0.14;}m.transparent=true;m.opacity=0.5;m.depthWrite=false;});}
       function applyVis(){allMus.forEach(function(o){o.visible=hideNeutral?!(o.userData&&o.userData.sup):true;});}
       window.BODY_hideNeutral3D=function(b){hideNeutral=!!b;applyVis();};
       window.BODY_flat3D=function(){
@@ -634,7 +634,7 @@ init().catch(function(e){console.warn('pose init',e);});
         (res||[]).forEach(function(x){
           if(x.score===0)return; var tg=MAP[x.name]; if(!tg)return;
           var short=x.score>0;
-          tg.forEach(function(nn){ var arr=nodes[nn]; if(!arr)return; arr.forEach(function(o){ var m=o.material; var t=Math.min(1,Math.abs(x.pct)/100), hue=short?0.0:0.61; m.color.setHSL(hue,1,0.55-0.13*t); if(m.emissive){m.emissive.setHSL(hue,1,0.5);m.emissiveIntensity=0.6+0.7*t;} m.roughness=0.35; m.opacity=1; m.depthWrite=true; colored[o.id]=1; }); });
+          tg.forEach(function(nn){ var arr=nodes[nn]; if(!arr)return; arr.forEach(function(o){ var m=o.material; var t=Math.min(1,Math.abs(x.pct)/100), hue=short?0.0:0.61; m.color.setHSL(hue,1,0.55-0.13*t); if(m.emissive){m.emissive.setHSL(hue,1,0.5);m.emissiveIntensity=0.6+0.7*t;} m.roughness=0.35; m.transparent=false; m.opacity=1; m.depthWrite=true; colored[o.id]=1; }); });
         });
         applyVis();
       };
@@ -642,7 +642,7 @@ init().catch(function(e){console.warn('pose init',e);});
       loader.load('muscles.glb',function(g){
         musRoot=g.scene;
         g.scene.traverse(function(o){ if(o.isMesh){
-          var _mi=allMus.length, h1=((_mi*2654435761)>>>0)%1000/1000, h2=((_mi*40503+9127)>>>0)%1000/1000, h3=((_mi*2246822519)>>>0)%1000/1000; var _bc=new THREE.Color().setHSL(0.035+h1*0.05, 0.34+h2*0.24, 0.44+h3*0.22); o.userData.base=_bc; o.material=new THREE.MeshStandardMaterial({color:_bc.clone(),roughness:0.8,metalness:0.0});
+          var _mi=allMus.length, h1=((_mi*2654435761)>>>0)%1000/1000, h2=((_mi*40503+9127)>>>0)%1000/1000, h3=((_mi*2246822519)>>>0)%1000/1000; var _bc=new THREE.Color().setHSL(0.035+h1*0.05, 0.34+h2*0.24, 0.44+h3*0.22); o.userData.base=_bc; o.material=new THREE.MeshStandardMaterial({color:_bc.clone(),emissive:_bc.clone(),emissiveIntensity:0.14,roughness:0.7,metalness:0.0,transparent:true,opacity:0.5,depthWrite:false});
           allMus.push(o);
           var nm=rawName(o); o.userData.sup=isSup(nm); if(nm){(nodes[nm]||(nodes[nm]=[])).push(o);}
           var pn=o.parent?rawName(o.parent):''; if(pn){(nodes[pn]||(nodes[pn]=[])).push(o);}
