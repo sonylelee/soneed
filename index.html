@@ -291,7 +291,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v131 (2026-07-29)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v132 (2026-07-29)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트</button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">🎓 아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -680,6 +680,14 @@ function authLoad(){try{return JSON.parse(localStorage.getItem('soneed_auth')||'
 function authSave(o){try{o?localStorage.setItem('soneed_auth',JSON.stringify(o)):localStorage.removeItem('soneed_auth');}catch(e){}}
 function authGw(){return cfg?cfg.url.replace(/\/+$/,'')+'/auth/v1':'';}
 function authEmail(){const a=authLoad();return(a&&a.email)||null;}
+function logAccess(){   /* 접속 로그: 하루 1회(기기별) events에 기록. visitor=관리사 이메일 */
+  try{ var em=authEmail(); if(!em||!authTok)return;
+    var today=new Date().toISOString().slice(0,10), key='soneed_accessDay';
+    if(localStorage.getItem(key)===em+'|'+today)return;
+    localStorage.setItem(key,em+'|'+today);
+    fetch(sbBase()+'events',{method:'POST',headers:sbHeaders({Prefer:'return=minimal'}),body:JSON.stringify({type:'access',visitor:em})}).catch(function(){});
+  }catch(e){}
+}
 const ADMIN_EMAIL='soni0025@naver.com';
 function isAdmin(){return !!(authTok&&authEmail()===ADMIN_EMAIL);}
 /* 주인장(대표)만 보이는 UI 토글. 지금은 데이터 탭의 조건필터 카드. */
@@ -763,14 +771,17 @@ async function renderAppCustomers(){
       if(r.ok){ (await r.json()).forEach(function(a){acc[(a.email||'').toLowerCase()]={name:a.name||'',tier:a.tier||''};}); } }catch(e){} }
     var cnt={},last={};
     (records||[]).forEach(function(rec){ var e=(rec.savedBy||'').toLowerCase(); if(!e)return; cnt[e]=(cnt[e]||0)+1; var u=String(updMap[rec.id]||''); if(u>(last[e]||''))last[e]=u; });
+    var accCnt={},accLast={};
+    try{ var ra=await fetch(sbBase()+'events?type=eq.access&select=visitor,created_at&order=created_at.desc&limit=5000',{headers:sbHeaders()});
+      if(ra.ok){ (await ra.json()).forEach(function(ev){ var e=(ev.visitor||'').toLowerCase(); if(!e)return; accCnt[e]=(accCnt[e]||0)+1; if(!accLast[e])accLast[e]=ev.created_at; }); } }catch(e){}
     var set={}; Object.keys(acc).forEach(function(e){set[e]=1;}); Object.keys(cnt).forEach(function(e){set[e]=1;});
     var list=Object.keys(set).sort(function(a,b){return String(last[b]||'').localeCompare(String(last[a]||''));});
     if(!list.length){ box.innerHTML='<div class="subtle">아직 앱 고객(관리사)이 없습니다. 관리사가 로그인해 기록을 저장하면 여기에 나타납니다.</div>'; return; }
-    box.innerHTML='<table class="acct-tbl"><thead><tr><th>이름</th><th>이메일</th><th>등급</th><th>기록</th><th>마지막 사용</th></tr></thead><tbody>'
+    box.innerHTML='<div style="overflow-x:auto"><table class="acct-tbl"><thead><tr><th>이름</th><th>이메일</th><th>등급</th><th>기록</th><th>마지막 사용</th><th>접속(일)</th><th>마지막 접속</th></tr></thead><tbody>'
       +list.map(function(e){ var a=acc[e]||{}; var tier=a.tier||'프리미엄'; var nm=(a.name||'').replace(/</g,'&lt;')||'—'; var isDefault=!a.tier;
         return '<tr onclick="pickCust(\''+e+'\',\''+(a.name||'').replace(/\'/g,"")+'\',\''+tier+'\')">'
-          +'<td>'+nm+'</td><td class="em">'+e+'</td><td>'+_tierBadge(tier)+(isDefault?' <span class="subtle" style="font-size:11px">기본</span>':'')+'</td><td>'+(cnt[e]||0)+'</td><td class="subtle">'+((last[e]||'').slice(0,10)||'—')+'</td></tr>';
-      }).join('')+'</tbody></table>';
+          +'<td>'+nm+'</td><td class="em">'+e+'</td><td>'+_tierBadge(tier)+(isDefault?' <span class="subtle" style="font-size:11px">기본</span>':'')+'</td><td>'+(cnt[e]||0)+'</td><td class="subtle">'+((last[e]||'').slice(0,10)||'—')+'</td><td>'+(accCnt[e]||0)+'</td><td class="subtle">'+((accLast[e]||'').slice(0,10)||'—')+'</td></tr>';
+      }).join('')+'</tbody></table></div>';
   }catch(e){ box.textContent='조회 실패: '+(e&&e.message||e); }
   finally{ _appCustBusy=false; }
 }
@@ -896,7 +907,7 @@ async function authLogin(email,pw){
   const j=await r.json().catch(()=>({}));
   if(!r.ok)throw new Error(j.msg||j.error_description||j.error||('로그인 실패 HTTP '+r.status));
   records=[];currentId=null;try{localStorage.removeItem('soneed_reccache');}catch(e){}   /* 로그인 시 이전 사용자 데이터/캐시 제거(관리사 전환 누수 방지) */
-  authTok=j.access_token;authSave({email:email,refresh_token:j.refresh_token});authSchedule();updateAuthUI();loadTier();return j;
+  authTok=j.access_token;authSave({email:email,refresh_token:j.refresh_token});authSchedule();updateAuthUI();loadTier();logAccess();return j;
 }
 async function authRefresh(){
   const a=authLoad();if(!a||!a.refresh_token||!cfg)return false;
@@ -924,7 +935,7 @@ async function authBoot(){
     gateHide();                                   // 저장된 세션 있으면 앱을 먼저 보여주고(낙관적)
     const ok=await authRefresh();                 // 토큰 갱신은 백그라운드로
     updateAuthUI();
-    if(ok){ loadAll(); loadTier(); }
+    if(ok){ loadAll(); loadTier(); logAccess(); }
     else { gateShow(); }                          // 갱신 실패(세션 만료) 시에만 로그인 화면
   } else {
     gateShow();
