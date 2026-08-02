@@ -291,7 +291,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v129 (2026-07-29)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v130 (2026-07-29)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트</button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">🎓 아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -1600,6 +1600,8 @@ function zoomPhoto(s){const src=form['photo_'+s];if(!src)return;let o=document.g
 
 /* ===== 인앱 카메라 (비포 반투명 오버레이 + 여러 장 촬영 후 best 선택) ===== */
 let _camStream=null,_camFacing='environment',_camShots=[],_camSel=-1,_camSteps=[],_camStep=0,_camZoom=3,_camDigital=false,_camBuckets={};
+var ZOOM_CAL=0.6;   /* iOS getUserMedia 화각이 좁아 디지털 3배가 과함 → 보정(작을수록 덜 확대). 값 튜닝 대상 */
+function _effZoom(){return _camDigital?(1+(_camZoom-1)*ZOOM_CAL):_camZoom;}
 function camSupported(){return !!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia);}
 function openCamSeq(steps){   /* steps=[{ko, ref():dataURL|null, assign(dataURL)}] · 정면→고개든→고개숙임 순으로 이어 촬영 */
   if(!camSupported()){toast('이 브라우저는 인앱 카메라를 지원하지 않아요 — [클릭]으로 사진을 올려주세요');return;}
@@ -1646,7 +1648,7 @@ function _applyZoom(){
   if(track&&track.getCapabilities){try{var caps=track.getCapabilities();if(caps&&caps.zoom){var z=Math.max(caps.zoom.min||1,Math.min(_camZoom,caps.zoom.max||_camZoom));track.applyConstraints({advanced:[{zoom:z}]});hw=true;}}catch(e){}}
   _camDigital=(!hw && _camZoom>1);
   v.style.transformOrigin='center center';
-  v.style.transform=(_camFacing==='user'?'scaleX(-1) ':'')+(_camDigital?('scale('+_camZoom+')'):'');
+  v.style.transform=(_camFacing==='user'?'scaleX(-1) ':'')+(_camDigital?('scale('+_effZoom()+')'):'');
 }
 function setZoom(z){_camZoom=z;_applyZoom();var row=document.getElementById('camZoomRow');if(row)Array.prototype.forEach.call(row.querySelectorAll('button'),function(b){b.classList.toggle('on',parseFloat(b.getAttribute('data-z'))===z);});}
 function camOpacity(v){const ov=document.getElementById('camOverlay');if(ov)ov.style.opacity=(v/100);}
@@ -1663,7 +1665,7 @@ function snapCam(){
   const v=document.getElementById('camVideo');
   if(!v.videoWidth){toast('카메라가 아직 준비 중이에요');return;}
   _shutterSound();
-  var zoom=_camDigital?_camZoom:1;   /* 디지털 줌이면 중앙만 크롭해서 저장 */
+  var zoom=_effZoom();   /* 디지털 줌이면 중앙만 크롭(보정 적용) · 하드웨어 줌이면 1 */
   var sw=v.videoWidth/zoom, sh=v.videoHeight/zoom, sx=(v.videoWidth-sw)/2, sy=(v.videoHeight-sh)/2;
   const max=1280,sc=Math.min(1,max/Math.max(sw,sh));
   const cv=document.createElement('canvas');cv.width=Math.round(sw*sc);cv.height=Math.round(sh*sc);

@@ -33,6 +33,13 @@ h2.sec{font-size:14px;font-weight:800;margin:2px 0 10px;color:var(--brand)}
 .chip{font-size:12px;font-weight:700;padding:6px 10px;border-radius:16px;border:1px solid var(--line);background:#fff;color:#556;cursor:pointer;user-select:none;transition:.08s}
 .chip.on{background:var(--brand);color:#fff;border-color:var(--brand)}
 .chip.auto{border-color:#37b0a3;color:#1c8378}
+.grp .exg{display:flex;align-items:center;gap:8px;margin:6px 0;flex-wrap:wrap}
+.grp .exg-l{font-size:12.5px;font-weight:800;color:#3a414e;min-width:92px}
+.grp .exg-o{display:flex;gap:5px;flex-wrap:wrap}
+.exo{font-size:12px;font-weight:800;padding:5px 12px;border-radius:14px;border:1px solid var(--line);background:#fff;color:#556;cursor:pointer}
+.exo.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+.exo.auto{border-color:#37b0a3;color:#1c8378}
+.exo.on.auto{background:#20a08f;border-color:#20a08f;color:#fff}
 .chip.on.auto{background:#20a08f;border-color:#20a08f;color:#fff}
 .chip .a{font-size:10px;opacity:.9}
 .rank{list-style:none;margin:0;padding:0}
@@ -65,7 +72,7 @@ canvas.pose{width:100%;border-radius:10px;margin-top:8px;display:none}
 <body>
 <header>
   <div class="logo">SONEED 바디</div>
-  <div class="sub">키머슬(짧아진 근육) 분석 · v0.6 · 촉진 전 초안</div>
+  <div class="sub">키머슬(짧아진 근육) 분석 · v0.7 · 촉진 전 초안</div>
 </header>
 <div class="wrap">
 
@@ -152,16 +159,44 @@ function resizeImg(file,max,q,cb){
 
 /* ---------- 자세 체크리스트 ---------- */
 function sideLabel(f){return f;}
+var EXMEMBERS={};
+var SP_POSE=['과하게펴진어깨1','과하게펴진어깨2','둥근어깨1','둥근어깨2'];
+function _classify(f){
+  if(f.indexOf('+')>=0||f.indexOf('=')>=0||f.indexOf('\n')>=0)return null;
+  var i,side;
+  for(i=0;i<SP_POSE.length;i++){ if(f.indexOf(SP_POSE[i])===0){ side=f.slice(SP_POSE[i].length); if(side==='오른쪽'||side==='왼쪽')return {gid:'shpose_'+side,glabel:(side==='오른쪽'?'오른':'왼')+' 어깨(자세)',olabel:SP_POSE[i].replace('어깨','')}; } }
+  if(f.indexOf('어깨뼈상각모음')===0||f.indexOf('어깨뼈상각벌림')===0){ side=(f.slice(-3)==='오른쪽')?'오른쪽':'왼쪽'; return {gid:'scap_'+side,glabel:(side==='오른쪽'?'오른':'왼')+' 어깨뼈상각',olabel:(f.indexOf('모음')>=0?'모음':'벌림')}; }
+  if(f.slice(-3)==='오른쪽')return {gid:'lr_'+f.slice(0,-3),glabel:f.slice(0,-3),olabel:'오른'};
+  if(f.slice(-2)==='왼쪽')return {gid:'lr_'+f.slice(0,-2),glabel:f.slice(0,-2),olabel:'왼'};
+  return null;
+}
+function _buildItems(findings){
+  var items=[],groups={};
+  findings.forEach(function(f){
+    var c=_classify(f);
+    if(!c){items.push({t:'chip',f:f});return;}
+    if(!groups[c.gid]){groups[c.gid]={glabel:c.glabel,opts:[]};items.push({t:'grp',gid:c.gid});}
+    groups[c.gid].opts.push({f:f,o:c.olabel});
+  });
+  return {items:items,groups:groups};
+}
 function renderChecklist(){
+  EXMEMBERS={};
   document.getElementById('checklist').innerHTML=GROUPS.map(function(g){
-    var chips=g.findings.map(function(f){
-      var on=sel.has(f), au=autoSet.has(f);
-      return '<span class="chip'+(on?' on':'')+(au?' auto':'')+'" onclick="toggle(\''+esc(f)+'\')">'+f+(au?' <span class="a">🤖</span>':'')+'</span>';
+    var bi=_buildItems(g.findings);
+    var inner=bi.items.map(function(it){
+      if(it.t==='chip'){var f=it.f,on=sel.has(f),au=autoSet.has(f);
+        return '<span class="chip'+(on?' on':'')+(au?' auto':'')+'" onclick="toggle(\''+esc(f)+'\')">'+f+(au?' <span class="a">🤖</span>':'')+'</span>';}
+      var grp=bi.groups[it.gid]; EXMEMBERS[it.gid]=grp.opts.map(function(o){return o.f;});
+      var btns=grp.opts.map(function(o){var on=sel.has(o.f),au=autoSet.has(o.f);
+        return '<button class="exo'+(on?' on':'')+(au?' auto':'')+'" onclick="pickEx(\''+esc(it.gid)+'\',\''+esc(o.f)+'\')">'+o.o+(au?' 🤖':'')+'</button>';}).join('');
+      return '<div class="exg"><span class="exg-l">'+grp.glabel+'</span><span class="exg-o">'+btns+'</span></div>';
     }).join('');
-    return '<div class="grp"><div class="gh">'+g.label+' <span class="cnt">'+g.findings.length+'</span></div><div class="chips">'+chips+'</div></div>';
+    return '<div class="grp"><div class="gh">'+g.label+' <span class="cnt">'+g.findings.length+'</span></div>'+inner+'</div>';
   }).join('');
   document.getElementById('selCnt').textContent=sel.size?('· '+sel.size+'개 선택'):'';
 }
+function pickEx(gid,f){var mem=EXMEMBERS[gid]||[];var was=sel.has(f);mem.forEach(function(m){sel.delete(m);autoSet.delete(m);});if(!was)sel.add(f);renderChecklist();}
 function esc(s){return s.replace(/'/g,"\\'");}
 function toggle(f){if(sel.has(f)){sel.delete(f);autoSet.delete(f);}else sel.add(f);renderChecklist();}
 function clearAll(){sel.clear();autoSet.clear();renderChecklist();toast('전체 해제됨');}
@@ -201,7 +236,7 @@ function applyPose(lm,img){
   var shY=(y(11)+y(12))/2, hipY=(y(23)+y(24))/2;
   var torso=Math.abs(shY-hipY)||0.3, T=torso*0.02;
   var added=[];
-  function setF(f){sel.add(f);autoSet.add(f);added.push(f);}
+  function setF(f){var opp=f.slice(-3)==='오른쪽'?(f.slice(0,-3)+'왼쪽'):(f.slice(-2)==='왼쪽'?(f.slice(0,-2)+'오른쪽'):null);if(opp){sel.delete(opp);autoSet.delete(opp);}sel.add(f);autoSet.add(f);added.push(f);}
   function pair(rY,lY,Rname,Lname,RoppLow,LoppLow){
     // 본인 오른쪽 landmark = 홀수? MediaPipe: 11=왼어깨(본인), 12=오른어깨(본인)
     if(rY==null||lY==null)return;
@@ -256,20 +291,25 @@ function silhouette(inner){
     +'</g>'+inner+'</svg>';
 }
 function drawBodyMap(){
-  var res=(window._res||[]).filter(function(x){return x.score!==0;});
-  var mk={front:'',back:''};
-  res.forEach(function(x){
-    var p=POS[x.name]; if(!p)return;
-    var isShort=x.score>0, col=isShort?'#e0396f':'#2f8fd6';
-    var a=Math.abs(x.pct), r=(2.6+Math.min(8,a/10)).toFixed(1), op=(0.42+Math.min(0.5,a/120)).toFixed(2);
-    mk[p.v]+='<circle cx="'+p.x+'" cy="'+p.y+'" r="'+r+'" fill="'+col+'" opacity="'+op+'"><title>'+x.name+' ('+(isShort?'짧아짐':'늘어남')+' '+a+'%)</title></circle>';
+  var res=(window._res||[]); var sm={}; res.forEach(function(x){sm[x.name]=x;});
+  var base={front:'',back:''}, col={front:'',back:''};
+  Object.keys(POS).forEach(function(name){
+    var p=POS[name], x=sm[name];
+    if(x&&x.score!==0){
+      var short=x.score>0, a=Math.abs(x.pct);
+      var rx=(3.4+Math.min(3,a/22)).toFixed(1), ry=(8+Math.min(5,a/12)).toFixed(1);
+      var op=Math.min(1,0.62+a/110).toFixed(2), c=short?'#e0396f':'#2f8fd6';
+      col[p.v]+='<ellipse cx="'+p.x+'" cy="'+p.y+'" rx="'+rx+'" ry="'+ry+'" fill="'+c+'" opacity="'+op+'"><title>'+name+' ('+(short?'짧아짐':'늘어남')+' '+a+'%)</title></ellipse>';
+    }else{
+      base[p.v]+='<ellipse cx="'+p.x+'" cy="'+p.y+'" rx="3.1" ry="6.8" fill="#cdbfb4" opacity="0.5"></ellipse>';
+    }
   });
   document.getElementById('bodymap').innerHTML=
     '<div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap">'
-    +'<div style="flex:1;min-width:130px;max-width:230px;text-align:center"><div class="muted" style="font-weight:800;margin-bottom:2px">앞모습</div>'+silhouette(mk.front)+'</div>'
-    +'<div style="flex:1;min-width:130px;max-width:230px;text-align:center"><div class="muted" style="font-weight:800;margin-bottom:2px">뒷모습</div>'+silhouette(mk.back)+'</div>'
+    +'<div style="flex:1;min-width:130px;max-width:230px;text-align:center"><div class="muted" style="font-weight:800;margin-bottom:2px">앞모습</div>'+silhouette(base.front+col.front)+'</div>'
+    +'<div style="flex:1;min-width:130px;max-width:230px;text-align:center"><div class="muted" style="font-weight:800;margin-bottom:2px">뒷모습</div>'+silhouette(base.back+col.back)+'</div>'
     +'</div>'
-    +'<div class="muted" style="text-align:center;margin-top:6px"><span style="color:#e0396f;font-weight:800">● 짧아짐(풀 곳)</span> &nbsp; <span style="color:#2f8fd6;font-weight:800">● 늘어남</span> · 진할수록/클수록 심함 · 점을 누르면 이름</div>';
+    +'<div class="muted" style="text-align:center;margin-top:6px"><span style="color:#e0396f;font-weight:800">● 짧아짐(풀 곳)</span> &nbsp; <span style="color:#2f8fd6;font-weight:800">● 늘어남</span> · 근육 모양으로 표시 · 탭하면 이름</div>';
   document.getElementById('bodymap').style.display='block';
 }
 
@@ -370,14 +410,14 @@ try{
   const nodes={}; // 원본 이름 -> [mesh]
   const allMus=[];
   const NEUTRAL=0xE3D2C6;
-  const skelMat=new THREE.MeshStandardMaterial({color:0xEAE7DE,transparent:true,opacity:0.30,roughness:0.9,depthWrite:false});
+  const skelMat=new THREE.MeshStandardMaterial({color:0xEAE7DE,transparent:true,opacity:0.16,roughness:0.9,depthWrite:false});
   // 골격
   try{const gs=await load('skeleton.glb');gs.scene.traverse(o=>{if(o.isMesh)o.material=skelMat;});scene.add(gs.scene);}catch(e){console.warn('skeleton',e);}
   // 근육 (각 메시 개별 재질 → 개별 색칠)
   const gm=await load('muscles.glb');
   function rawName(o){return (o.userData&&o.userData.name)||o.name||'';}
   gm.scene.traverse(o=>{ if(o.isMesh){
-    o.material=new THREE.MeshStandardMaterial({color:NEUTRAL,transparent:true,opacity:0.82,roughness:0.72,depthWrite:true});
+    o.material=new THREE.MeshStandardMaterial({color:NEUTRAL,transparent:true,opacity:0.38,roughness:0.72,depthWrite:true});
     allMus.push(o);
     const nm=rawName(o); if(nm)(nodes[nm]||(nodes[nm]=[])).push(o);
     const pn=o.parent?rawName(o.parent):''; if(pn)(nodes[pn]||(nodes[pn]=[])).push(o);
@@ -391,16 +431,16 @@ try{
   controls.target.copy(ctr);
   cam.position.set(ctr.x, ctr.y+sz.y*0.05, ctr.z+maxd*1.5);
   controls.minDistance=maxd*0.5; controls.maxDistance=maxd*4;
-  function resetMus(){allMus.forEach(o=>{const m=o.material;m.color.setHex(NEUTRAL);if(m.emissive)m.emissive.setHex(0x000000);m.opacity=0.82;});}
+  function resetMus(){allMus.forEach(o=>{const m=o.material;m.color.setHex(NEUTRAL);if(m.emissive)m.emissive.setHex(0x000000);m.opacity=0.38;});}
   window.BODY_update3D=function(res){
     if(!ready){pending=res;return;}
     resetMus();
     (res||[]).forEach(function(x){
       if(x.score===0)return; const tg=MAP[x.name]; if(!tg)return;
-      const short=x.score>0, a=Math.abs(x.pct), op=Math.min(1,0.7+a/160);
+      const short=x.score>0, a=Math.abs(x.pct), op=Math.min(1,0.92+a/140);
       tg.forEach(function(nn){ const arr=nodes[nn]; if(!arr)return; arr.forEach(function(o){ const m=o.material;
         m.color.setHex(short?0xE0396F:0x2F8FD6);
-        if(m.emissive)m.emissive.setHex(short?0x5a1226:0x0f2c46);
+        if(m.emissive)m.emissive.setHex(short?0x9a1c3c:0x15466e);
         m.opacity=op;
       }); });
     });
