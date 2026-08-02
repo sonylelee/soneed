@@ -79,7 +79,7 @@ canvas.pose{width:100%;border-radius:10px;margin-top:8px;display:none}
 <body>
 <header>
   <div class="logo">SONEED 바디</div>
-  <div class="sub">키머슬(짧아진 근육) 분석 · v3.9 · 촉진 전 초안</div>
+  <div class="sub">키머슬(짧아진 근육) 분석 · v4.0 · 촉진 전 초안</div>
 </header>
 <div class="wrap">
   <div class="topnav"><button id="navAnalyze" class="on" onclick="showView('analyze')">🔍 분석</button><button id="navRecords" onclick="showView('records')">📋 고객 기록</button></div>
@@ -139,7 +139,7 @@ canvas.pose{width:100%;border-radius:10px;margin-top:8px;display:none}
   </div>
 
   </div>
-  <div id="view-records" style="display:none"><div class="card"><h2 class="sec">📋 고객 기록</h2><div class="hint">저장된 분석 · [불러오기]로 복원 후 [분석하기].</div><div id="recList"></div></div></div>
+  <div id="view-records" style="display:none"><div class="card"><h2 class="sec">📋 고객 기록</h2><div class="hint">☁️ 클라우드 저장 — <b>어느 브라우저·폰·기기에서든</b> 보여요. [불러오기]로 복원 후 [분석하기].</div><div id="recList"></div></div></div>
   <div class="muted" style="text-align:center;padding:6px 0 20px">SONEED Body OS · 사진 분석은 가설, 촉진은 검증<br><span style="font-size:10px;opacity:.7">3D 해부 모델: Z-Anatomy / BodyParts3D · CC BY-SA</span></div>
 </div>
 
@@ -478,35 +478,57 @@ function editGuide(n){
 }
 
 function showView(v){var a=document.getElementById('view-analyze'),r=document.getElementById('view-records');if(a)a.style.display=v==='analyze'?'block':'none';if(r)r.style.display=v==='records'?'block':'none';var na=document.getElementById('navAnalyze'),nr=document.getElementById('navRecords');if(na)na.classList.toggle('on',v==='analyze');if(nr)nr.classList.toggle('on',v==='records');if(v==='records')renderRecords();window.scrollTo(0,0);}
+var SB_URL='https://xzclowgorxhcbsfrrbop.supabase.co', SB_KEY='sb_publishable_66Ts2AQrKrjfitjTi11uCQ_dGXiY_EZ';
+function _sbH(x){return Object.assign({apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json'},x||{});}
 function _recAll(){try{return JSON.parse(localStorage.getItem('sbody_records')||'[]');}catch(e){return [];}}
-function _recSave(a){localStorage.setItem('sbody_records',JSON.stringify(a));}
-function saveRecord(){
+function _recSave(a){try{localStorage.setItem('sbody_records',JSON.stringify(a));}catch(e){}}
+function _recState(r){return (r&&r.state)||(r&&r.data&&r.data.state)||{};}
+async function saveRecord(){
   var nm=(document.getElementById('recName').value||'').trim();
   if(!nm){toast('고객 이름을 입력하세요');return;}
   if(sel.size===0){toast('자세를 선택한 뒤 저장하세요');return;}
   var st={}; sel.forEach(function(fx){st[fx]=lvl[fx]||1;});
   var d=new Date(), ds=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
-  var arr=_recAll(); arr.unshift({id:'r'+Date.now(),name:nm,date:ds,state:st}); _recSave(arr);
-  document.getElementById('recName').value=''; renderRecords(); toast('저장됨: '+nm);
+  var rec={id:'b'+Date.now(),name:nm,date:ds,data:{state:st}};
+  var ok=false;
+  try{
+    var r=await fetch(SB_URL+'/rest/v1/body_records',{method:'POST',headers:_sbH({Prefer:'resolution=merge-duplicates,return=minimal'}),body:JSON.stringify(Object.assign({updated_at:new Date().toISOString()},rec))});
+    if(r.ok)ok=true; else throw new Error('HTTP '+r.status);
+  }catch(e){ var arr=_recAll(); arr.unshift(Object.assign({state:st},rec)); _recSave(arr); }
+  document.getElementById('recName').value='';
+  toast(ok?('☁️ 클라우드 저장됨: '+nm):('로컬 저장됨(클라우드 미설정): '+nm));
+  renderRecords();
 }
-function renderRecords(){
+async function renderRecords(){
   var box=document.getElementById('recList'); if(!box)return;
-  var arr=_recAll();
-  if(!arr.length){box.innerHTML='<div class="muted">저장된 기록이 없어요.</div>';return;}
-  box.innerHTML=arr.map(function(r){var cnt=Object.keys(r.state||{}).length;
-    return '<div style="display:flex;align-items:center;gap:6px;padding:8px 0;border-bottom:1px solid #f0f1f5"><div style="flex:1;min-width:0"><b>'+(r.name||'').replace(/</g,'&lt;')+'</b> <span class="muted" style="font-size:12px">· '+r.date+' · '+cnt+'항목</span></div><button class="btn" style="padding:6px 10px;font-size:12px" onclick="loadRecord(\''+r.id+'\')">불러오기</button><button class="btn" style="padding:6px 10px;font-size:12px;color:#c02" onclick="delRecord(\''+r.id+'\')">삭제</button></div>';
+  box.innerHTML='<div class="muted">불러오는 중…</div>';
+  var arr=null;
+  try{
+    var r=await fetch(SB_URL+'/rest/v1/body_records?select=id,name,date,data&order=updated_at.desc',{headers:_sbH()});
+    if(r.ok)arr=await r.json(); else throw new Error('HTTP '+r.status);
+  }catch(e){ arr=_recAll(); }
+  window._recCache=arr||[];
+  if(!window._recCache.length){box.innerHTML='<div class="muted">저장된 기록이 없어요. (분석 탭에서 저장하면 여기 나타나요)</div>';return;}
+  box.innerHTML=window._recCache.map(function(r){var cnt=Object.keys(_recState(r)).length;
+    return '<div style="display:flex;align-items:center;gap:6px;padding:8px 0;border-bottom:1px solid #f0f1f5"><div style="flex:1;min-width:0"><b>'+(r.name||'').replace(/</g,'&lt;')+'</b> <span class="muted" style="font-size:12px">· '+(r.date||'')+' · '+cnt+'항목</span></div><button class="btn" style="padding:6px 10px;font-size:12px" onclick="loadRecord(\''+r.id+'\')">불러오기</button><button class="btn" style="padding:6px 10px;font-size:12px;color:#c02" onclick="delRecord(\''+r.id+'\')">삭제</button></div>';
   }).join('');
 }
 function loadRecord(id){
-  var r=_recAll().filter(function(x){return x.id===id;})[0]; if(!r)return;
+  var r=(window._recCache||_recAll()).filter(function(x){return x.id===id;})[0]; if(!r)return;
+  var st=_recState(r);
   sel.clear(); autoSet.clear(); lvl={};
-  Object.keys(r.state||{}).forEach(function(fx){sel.add(fx);lvl[fx]=r.state[fx]||1;});
+  Object.keys(st).forEach(function(fx){sel.add(fx);lvl[fx]=st[fx]||1;});
   renderChecklist();
   var e=document.getElementById('recName'); if(e)e.value=r.name||'';
   showView('analyze');
   toast('불러옴: '+(r.name||'')+' · [분석하기]를 눌러 결과 보기'); window.scrollTo(0,0);
 }
-function delRecord(id){ if(!confirm('이 기록을 삭제할까요?'))return; _recSave(_recAll().filter(function(x){return x.id!==id;})); renderRecords(); toast('삭제됨'); }
+async function delRecord(id){
+  if(!confirm('이 기록을 삭제할까요?'))return;
+  try{ await fetch(SB_URL+'/rest/v1/body_records?id=eq.'+encodeURIComponent(id),{method:'DELETE',headers:_sbH({Prefer:'return=minimal'})}); }catch(e){}
+  _recSave(_recAll().filter(function(x){return x.id!==id;}));
+  renderRecords(); toast('삭제됨');
+}
 renderPhotos();renderChecklist();renderRecords();
 </script>
 
