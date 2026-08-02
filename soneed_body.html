@@ -79,7 +79,7 @@ canvas.pose{width:100%;border-radius:10px;margin-top:8px;display:none}
 <body>
 <header>
   <div class="logo">SONEED 바디</div>
-  <div class="sub">키머슬(짧아진 근육) 분석 · v4.5 · 촉진 전 초안</div>
+  <div class="sub">키머슬(짧아진 근육) 분석 · v4.6 · 촉진 전 초안</div>
 </header>
 <div class="wrap">
   <div class="topnav"><button id="navAnalyze" class="on" onclick="showView('analyze')">🔍 분석</button><button id="navRecords" onclick="showView('records')">📋 고객 기록</button></div>
@@ -592,13 +592,15 @@ init().catch(function(e){console.warn('pose init',e);});
       var cam=new THREE.PerspectiveCamera(35,1,0.01,1000);
       var controls=new THREE.OrbitControls(cam,cv);
       controls.enableDamping=true;controls.dampingFactor=0.08;controls.enablePan=true;controls.screenSpacePanning=true;controls.rotateSpeed=0.9;
-      scene.add(new THREE.AmbientLight(0xffffff,0.95));
+      scene.add(new THREE.AmbientLight(0xffffff,0.5));
+      scene.add(new THREE.HemisphereLight(0xffffff,0x28313f,0.7));
+      var dlx=new THREE.DirectionalLight(0xffffff,0.3);dlx.position.set(0,-5,-2);scene.add(dlx);
       var dl=new THREE.DirectionalLight(0xffffff,0.7);dl.position.set(4,6,8);scene.add(dl);
       var dl2=new THREE.DirectionalLight(0xffffff,0.4);dl2.position.set(-5,3,-7);scene.add(dl2);
       var draco=new THREE.DRACOLoader();
       draco.setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/draco/');
       var loader=new THREE.GLTFLoader();loader.setDRACOLoader(draco);
-      var nodes={},allMus=[],NEUTRAL=0xE3D2C6;
+      var nodes={},allMus=[],NEUTRAL=0xDBB6A2;
       var skelMat=new THREE.MeshStandardMaterial({color:0xEAE7DE,transparent:true,opacity:0.16,roughness:0.9,depthWrite:false});
       function rawName(o){return (o.userData&&o.userData.name)||o.name||'';}
       var SUPERF=['trapezius','latissimus dorsi','deltoid','pectoralis major','sternocleidomastoid','gluteus maximus','external abdominal oblique','rectus abdominis','biceps brachii','triceps brachii','brachioradialis','rectus femoris','sartorius','gracilis','tensor fasciae latae','gastrocnemius'];
@@ -606,7 +608,7 @@ init().catch(function(e){console.warn('pose init',e);});
       function resize(){var b=document.getElementById('body3d');var w=b.clientWidth||320,hh=340;renderer.setSize(w,hh,false);cam.aspect=w/hh;cam.updateProjectionMatrix();}
       window.BODY_resize3D=resize;
       window.addEventListener('resize',function(){if(ready)resize();});
-      function resetMus(){allMus.forEach(function(o){var m=o.material;m.color.setHex(NEUTRAL);if(m.emissive){m.emissive.setHex(0x000000);m.emissiveIntensity=1;}m.opacity=0.62;m.depthWrite=true;});}
+      function resetMus(){allMus.forEach(function(o){var m=o.material;m.color.setHex(NEUTRAL);if(m.emissive){m.emissive.setHex(0x000000);m.emissiveIntensity=1;}m.transparent=false;m.opacity=1;m.depthWrite=true;});}
       function applyVis(){allMus.forEach(function(o){o.visible=hideNeutral?!(o.userData&&o.userData.sup):true;});}
       window.BODY_hideNeutral3D=function(b){hideNeutral=!!b;applyVis();};
       window.BODY_flat3D=function(){
@@ -640,7 +642,7 @@ init().catch(function(e){console.warn('pose init',e);});
       loader.load('muscles.glb',function(g){
         musRoot=g.scene;
         g.scene.traverse(function(o){ if(o.isMesh){
-          o.material=new THREE.MeshStandardMaterial({color:NEUTRAL,transparent:true,opacity:0.62,roughness:0.6,metalness:0,depthWrite:true});
+          o.material=new THREE.MeshStandardMaterial({color:NEUTRAL,roughness:0.62,metalness:0.03});
           allMus.push(o);
           var nm=rawName(o); o.userData.sup=isSup(nm); if(nm){(nodes[nm]||(nodes[nm]=[])).push(o);}
           var pn=o.parent?rawName(o.parent):''; if(pn){(nodes[pn]||(nodes[pn]=[])).push(o);}
