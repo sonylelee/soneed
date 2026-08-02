@@ -68,14 +68,15 @@ h2.sec{font-size:14px;font-weight:800;margin:2px 0 10px;color:var(--brand)}
 #toast.on{opacity:1}
 .hint{font-size:12px;color:var(--muted);background:#f4f6fa;border-radius:8px;padding:8px 10px;margin-bottom:10px}
 canvas.pose{width:100%;border-radius:10px;margin-top:8px;display:none}
-#body3d{position:relative;width:100%;height:400px;background:linear-gradient(180deg,#f3f5fa,#e7eaf2);border-radius:12px;overflow:hidden;touch-action:none}
+#body3d{position:relative;width:100%;height:400px;background:radial-gradient(circle at 50% 38%,#161d2a,#05070b);border-radius:12px;overflow:hidden;touch-action:none}
+#body3d .muted{color:#c2cad6}
 #body3d canvas{display:block;width:100%;height:340px}
 </style>
 </head>
 <body>
 <header>
   <div class="logo">SONEED 바디</div>
-  <div class="sub">키머슬(짧아진 근육) 분석 · v3.4 · 촉진 전 초안</div>
+  <div class="sub">키머슬(짧아진 근육) 분석 · v3.5 · 촉진 전 초안</div>
 </header>
 <div class="wrap">
 
@@ -102,7 +103,7 @@ canvas.pose{width:100%;border-radius:10px;margin-top:8px;display:none}
         <button class="on" id="tab3d" onclick="bodyTab('3d')">🧍 3D 모형</button>
         <button id="tab2d" onclick="bodyTab('2d')">🗺 평면도</button>
       </div>
-      <div id="body3d"><canvas id="cv3d"></canvas>
+      <div id="body3d"><canvas id="cv3d"></canvas><button id="peelBtn" onclick="toggleNeutral3D()" style="position:absolute;top:8px;right:8px;z-index:6;background:rgba(255,255,255,.9);border:none;border-radius:14px;padding:6px 12px;font-size:12px;font-weight:800;color:#333;cursor:pointer">겉근육 숨기기</button>
         <div class="muted" style="text-align:center;margin-top:4px">손가락으로 돌리기 · 벌려서 확대 · <b>두 손가락으로 이동</b>(머리 등으로) · <span style="color:#e0396f;font-weight:800">🔴짧아짐</span> <span style="color:#2f8fd6;font-weight:800">🔵늘어남</span></div>
         <div id="no3d" class="muted" style="display:none;text-align:center;padding:20px">이 기기는 3D를 지원하지 않아요 — 평면도를 봐주세요.</div>
       </div>
@@ -307,6 +308,8 @@ function drawPose(lm,img){
 }
 
 /* ---------- 3D/평면 전환 ---------- */
+var _hideNeut=false;
+function toggleNeutral3D(){_hideNeut=!_hideNeut; if(window.BODY_hideNeutral3D)window.BODY_hideNeutral3D(_hideNeut); var b=document.getElementById('peelBtn'); if(b)b.textContent=_hideNeut?'겉근육 표시':'겉근육 숨기기';}
 function bodyTab(v){
   var is3=v==='3d';
   document.getElementById('body3d').style.display=is3?'block':'none';
@@ -472,7 +475,7 @@ init().catch(function(e){console.warn('pose init',e);});
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/DRACOLoader.js"></script>
 <script>
 (function(){
-  var ready=false,pending=null;
+  var ready=false,pending=null,colored={},hideNeutral=false;
   function fail(msg){var n=document.getElementById('no3d');if(n){n.style.display='block';var hint=/webgl|context/i.test(msg)?' → 크롬 탭을 여러 개 닫고 아래 [다시 시도]를 누르세요. 안 되면 크롬 완전 종료(⌘Q) 후 재실행, 또는 설정→시스템→"하드웨어 가속 사용" 켜기.':' → 인터넷/브라우저 확인';n.innerHTML='<div>3D를 불러오지 못했어요: '+msg+hint+'</div><button onclick="BODY_retry3D()" style="margin-top:10px;padding:9px 18px;border:none;border-radius:10px;background:#232733;color:#fff;font-weight:800;cursor:pointer">🔄 다시 시도</button>';}var c=document.getElementById('cv3d');if(c)c.style.display='none';}
   window.BODY_update3D=function(res){pending=res;};
   window.BODY_resize3D=function(){};
@@ -502,20 +505,23 @@ init().catch(function(e){console.warn('pose init',e);});
       function resize(){var b=document.getElementById('body3d');var w=b.clientWidth||320,hh=340;renderer.setSize(w,hh,false);cam.aspect=w/hh;cam.updateProjectionMatrix();}
       window.BODY_resize3D=resize;
       window.addEventListener('resize',function(){if(ready)resize();});
-      function resetMus(){allMus.forEach(function(o){var m=o.material;m.color.setHex(NEUTRAL);if(m.emissive){m.emissive.setHex(0x000000);m.emissiveIntensity=1;}m.opacity=0.22;m.depthWrite=false;});}
+      function resetMus(){allMus.forEach(function(o){var m=o.material;m.color.setHex(NEUTRAL);if(m.emissive){m.emissive.setHex(0x000000);m.emissiveIntensity=1;}m.opacity=0.3;m.depthWrite=false;});}
+      function applyVis(){allMus.forEach(function(o){o.visible=colored[o.id]?true:!hideNeutral;});}
+      window.BODY_hideNeutral3D=function(b){hideNeutral=!!b;applyVis();};
       window.BODY_update3D=function(res){
         if(!ready){pending=res;return;}
-        resetMus();
+        resetMus(); colored={};
         (res||[]).forEach(function(x){
           if(x.score===0)return; var tg=MAP[x.name]; if(!tg)return;
-          var short=x.score>0, a=Math.abs(x.pct);
-          tg.forEach(function(nn){ var arr=nodes[nn]; if(!arr)return; arr.forEach(function(o){ var m=o.material; var col=short?0xF0245F:0x1E7FE0; m.color.setHex(col); if(m.emissive){m.emissive.setHex(col);m.emissiveIntensity=0.6;} m.opacity=1; m.depthWrite=true; }); });
+          var short=x.score>0;
+          tg.forEach(function(nn){ var arr=nodes[nn]; if(!arr)return; arr.forEach(function(o){ var m=o.material; var col=short?0xF0245F:0x1E7FE0; m.color.setHex(col); if(m.emissive){m.emissive.setHex(col);m.emissiveIntensity=0.6;} m.opacity=1; m.depthWrite=true; colored[o.id]=1; }); });
         });
+        applyVis();
       };
       loader.load('skeleton.glb',function(g){ g.scene.traverse(function(o){if(o.isMesh)o.material=skelMat;}); scene.add(g.scene); },undefined,function(e){console.warn('skel',e);});
       loader.load('muscles.glb',function(g){
         g.scene.traverse(function(o){ if(o.isMesh){
-          o.material=new THREE.MeshStandardMaterial({color:NEUTRAL,transparent:true,opacity:0.22,roughness:0.6,metalness:0,depthWrite:false});
+          o.material=new THREE.MeshStandardMaterial({color:NEUTRAL,transparent:true,opacity:0.3,roughness:0.6,metalness:0,depthWrite:false});
           allMus.push(o);
           var nm=rawName(o); if(nm){(nodes[nm]||(nodes[nm]=[])).push(o);}
           var pn=o.parent?rawName(o.parent):''; if(pn){(nodes[pn]||(nodes[pn]=[])).push(o);}
