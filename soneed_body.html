@@ -65,7 +65,7 @@ canvas.pose{width:100%;border-radius:10px;margin-top:8px;display:none}
 <body>
 <header>
   <div class="logo">SONEED 바디</div>
-  <div class="sub">키머슬(짧아진 근육) 분석 · v0.5 · 촉진 전 초안</div>
+  <div class="sub">키머슬(짧아진 근육) 분석 · v0.6 · 촉진 전 초안</div>
 </header>
 <div class="wrap">
 
@@ -367,15 +367,23 @@ try{
   draco.setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/libs/draco/');
   const loader=new GLTFLoader();loader.setDRACOLoader(draco);
   function load(u){return new Promise((res,rej)=>loader.load(u,res,undefined,rej));}
-  const nodes={}; // 근육 노드 이름 -> mesh
+  const nodes={}; // 원본 이름 -> [mesh]
+  const allMus=[];
   const NEUTRAL=0xE3D2C6;
   const skelMat=new THREE.MeshStandardMaterial({color:0xEAE7DE,transparent:true,opacity:0.30,roughness:0.9,depthWrite:false});
   // 골격
   try{const gs=await load('skeleton.glb');gs.scene.traverse(o=>{if(o.isMesh)o.material=skelMat;});scene.add(gs.scene);}catch(e){console.warn('skeleton',e);}
   // 근육 (각 메시 개별 재질 → 개별 색칠)
   const gm=await load('muscles.glb');
-  gm.scene.traverse(o=>{ if(o.isMesh){ o.material=new THREE.MeshStandardMaterial({color:NEUTRAL,transparent:true,opacity:0.82,roughness:0.72,depthWrite:true}); if(o.name)nodes[o.name]=o; } });
+  function rawName(o){return (o.userData&&o.userData.name)||o.name||'';}
+  gm.scene.traverse(o=>{ if(o.isMesh){
+    o.material=new THREE.MeshStandardMaterial({color:NEUTRAL,transparent:true,opacity:0.82,roughness:0.72,depthWrite:true});
+    allMus.push(o);
+    const nm=rawName(o); if(nm)(nodes[nm]||(nodes[nm]=[])).push(o);
+    const pn=o.parent?rawName(o.parent):''; if(pn)(nodes[pn]||(nodes[pn]=[])).push(o);
+  }});
   scene.add(gm.scene);
+  console.log('[SONEED body] 근육 메시:',allMus.length,'· 이름키:',Object.keys(nodes).length);
   // 카메라 자동 맞춤
   const box=new THREE.Box3().setFromObject(gm.scene);
   const ctr=box.getCenter(new THREE.Vector3()), sz=box.getSize(new THREE.Vector3());
@@ -383,18 +391,18 @@ try{
   controls.target.copy(ctr);
   cam.position.set(ctr.x, ctr.y+sz.y*0.05, ctr.z+maxd*1.5);
   controls.minDistance=maxd*0.5; controls.maxDistance=maxd*4;
-  function resetMus(){for(const k in nodes){const m=nodes[k].material;m.color.setHex(NEUTRAL);if(m.emissive)m.emissive.setHex(0x000000);m.opacity=0.82;}}
+  function resetMus(){allMus.forEach(o=>{const m=o.material;m.color.setHex(NEUTRAL);if(m.emissive)m.emissive.setHex(0x000000);m.opacity=0.82;});}
   window.BODY_update3D=function(res){
     if(!ready){pending=res;return;}
     resetMus();
     (res||[]).forEach(function(x){
       if(x.score===0)return; const tg=MAP[x.name]; if(!tg)return;
       const short=x.score>0, a=Math.abs(x.pct), op=Math.min(1,0.7+a/160);
-      tg.forEach(function(nn){ const o=nodes[nn]; if(!o)return; const m=o.material;
+      tg.forEach(function(nn){ const arr=nodes[nn]; if(!arr)return; arr.forEach(function(o){ const m=o.material;
         m.color.setHex(short?0xE0396F:0x2F8FD6);
         if(m.emissive)m.emissive.setHex(short?0x5a1226:0x0f2c46);
         m.opacity=op;
-      });
+      }); });
     });
   };
   window.BODY_resize3D=function(){const b=document.getElementById('body3d');const w=b.clientWidth||320,h=340;renderer.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();};
