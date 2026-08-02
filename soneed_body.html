@@ -76,7 +76,7 @@ canvas.pose{width:100%;border-radius:10px;margin-top:8px;display:none}
 <body>
 <header>
   <div class="logo">SONEED 바디</div>
-  <div class="sub">키머슬(짧아진 근육) 분석 · v3.6 · 촉진 전 초안</div>
+  <div class="sub">키머슬(짧아진 근육) 분석 · v3.7 · 촉진 전 초안</div>
 </header>
 <div class="wrap">
 
@@ -103,7 +103,7 @@ canvas.pose{width:100%;border-radius:10px;margin-top:8px;display:none}
         <button class="on" id="tab3d" onclick="bodyTab('3d')">🧍 3D 모형</button>
         <button id="tab2d" onclick="bodyTab('2d')">🗺 평면도</button>
       </div>
-      <div id="body3d"><canvas id="cv3d"></canvas><button id="peelBtn" onclick="toggleNeutral3D()" style="position:absolute;top:8px;right:8px;z-index:6;background:rgba(255,255,255,.9);border:none;border-radius:14px;padding:6px 12px;font-size:12px;font-weight:800;color:#333;cursor:pointer">겉근육 숨기기</button>
+      <div id="body3d"><canvas id="cv3d"></canvas><button id="peelBtn" onclick="toggleNeutral3D()" style="position:absolute;top:8px;right:8px;z-index:6;background:rgba(255,255,255,.9);border:none;border-radius:14px;padding:6px 12px;font-size:12px;font-weight:800;color:#333;cursor:pointer">겉근육 벗기기(속근육 보기)</button>
         <div class="muted" style="text-align:center;margin-top:4px">손가락으로 돌리기 · 벌려서 확대 · <b>두 손가락으로 이동</b>(머리 등으로) · <span style="color:#e0396f;font-weight:800">🔴짧아짐</span> <span style="color:#2f8fd6;font-weight:800">🔵늘어남</span></div>
         <div id="no3d" class="muted" style="display:none;text-align:center;padding:20px">이 기기는 3D를 지원하지 않아요 — 평면도를 봐주세요.</div>
       </div>
@@ -309,7 +309,7 @@ function drawPose(lm,img){
 
 /* ---------- 3D/평면 전환 ---------- */
 var _hideNeut=false;
-function toggleNeutral3D(){_hideNeut=!_hideNeut; if(window.BODY_hideNeutral3D)window.BODY_hideNeutral3D(_hideNeut); var b=document.getElementById('peelBtn'); if(b)b.textContent=_hideNeut?'겉근육 표시':'겉근육 숨기기';}
+function toggleNeutral3D(){_hideNeut=!_hideNeut; if(window.BODY_hideNeutral3D)window.BODY_hideNeutral3D(_hideNeut); var b=document.getElementById('peelBtn'); if(b)b.textContent=_hideNeut?'전체 근육 보기':'겉근육 벗기기(속근육 보기)';}
 function bodyTab(v){
   var is3=v==='3d';
   document.getElementById('body3d').style.display=is3?'block':'none';
@@ -416,9 +416,9 @@ function analyze(){
   document.getElementById('seg').style.display='flex';
   document.getElementById('bodyview').style.display='block';
   window._res=computeAll();
+  if(window.BODY_update3D)window.BODY_update3D(window._res);
   drawBodyMap();
   renderGuide();
-  if(window.BODY_update3D)window.BODY_update3D(window._res);
   if(window.BODY_resize3D)setTimeout(window.BODY_resize3D,60);
   setView(view);
   document.getElementById('rank').scrollIntoView({behavior:'smooth',block:'nearest'});
@@ -514,11 +514,13 @@ init().catch(function(e){console.warn('pose init',e);});
       var nodes={},allMus=[],NEUTRAL=0xE3D2C6;
       var skelMat=new THREE.MeshStandardMaterial({color:0xEAE7DE,transparent:true,opacity:0.16,roughness:0.9,depthWrite:false});
       function rawName(o){return (o.userData&&o.userData.name)||o.name||'';}
+      var SUPERF=['trapezius','latissimus dorsi','deltoid','pectoralis major','sternocleidomastoid','gluteus maximus','external abdominal oblique','rectus abdominis','biceps brachii','triceps brachii','brachioradialis','rectus femoris','sartorius','gracilis','tensor fasciae latae','gastrocnemius'];
+      function isSup(nm){nm=(nm||'').toLowerCase();for(var i=0;i<SUPERF.length;i++)if(nm.indexOf(SUPERF[i])>=0)return true;return false;}
       function resize(){var b=document.getElementById('body3d');var w=b.clientWidth||320,hh=340;renderer.setSize(w,hh,false);cam.aspect=w/hh;cam.updateProjectionMatrix();}
       window.BODY_resize3D=resize;
       window.addEventListener('resize',function(){if(ready)resize();});
       function resetMus(){allMus.forEach(function(o){var m=o.material;m.color.setHex(NEUTRAL);if(m.emissive){m.emissive.setHex(0x000000);m.emissiveIntensity=1;}m.opacity=0.3;m.depthWrite=false;});}
-      function applyVis(){allMus.forEach(function(o){o.visible=colored[o.id]?true:!hideNeutral;});}
+      function applyVis(){allMus.forEach(function(o){o.visible=hideNeutral?!(o.userData&&o.userData.sup):true;});}
       window.BODY_hideNeutral3D=function(b){hideNeutral=!!b;applyVis();};
       window.BODY_flat3D=function(){
         try{
@@ -543,7 +545,7 @@ init().catch(function(e){console.warn('pose init',e);});
         (res||[]).forEach(function(x){
           if(x.score===0)return; var tg=MAP[x.name]; if(!tg)return;
           var short=x.score>0;
-          tg.forEach(function(nn){ var arr=nodes[nn]; if(!arr)return; arr.forEach(function(o){ var m=o.material; var col=short?0xF0245F:0x1E7FE0; m.color.setHex(col); if(m.emissive){m.emissive.setHex(col);m.emissiveIntensity=0.6;} m.opacity=1; m.depthWrite=true; colored[o.id]=1; }); });
+          tg.forEach(function(nn){ var arr=nodes[nn]; if(!arr)return; arr.forEach(function(o){ var m=o.material; var col=short?0xFF1F5A:0x0F86F2; m.color.setHex(col); if(m.emissive){m.emissive.setHex(col);m.emissiveIntensity=0.9;} m.roughness=0.35; m.opacity=1; m.depthWrite=true; colored[o.id]=1; }); });
         });
         applyVis();
       };
@@ -553,7 +555,7 @@ init().catch(function(e){console.warn('pose init',e);});
         g.scene.traverse(function(o){ if(o.isMesh){
           o.material=new THREE.MeshStandardMaterial({color:NEUTRAL,transparent:true,opacity:0.3,roughness:0.6,metalness:0,depthWrite:false});
           allMus.push(o);
-          var nm=rawName(o); if(nm){(nodes[nm]||(nodes[nm]=[])).push(o);}
+          var nm=rawName(o); o.userData.sup=isSup(nm); if(nm){(nodes[nm]||(nodes[nm]=[])).push(o);}
           var pn=o.parent?rawName(o.parent):''; if(pn){(nodes[pn]||(nodes[pn]=[])).push(o);}
         }});
         scene.add(g.scene);
