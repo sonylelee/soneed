@@ -6,9 +6,10 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="소니드 분석">
+<meta name="apple-mobile-web-app-title" content="뷰티OS">
 <link rel="apple-touch-icon" href="soneed-mark-180.png">
 <link rel="icon" type="image/png" href="soneed-mark.png">
+<link rel="manifest" href="manifest.json">
 <style>
   :root{
     --bg:#EEF0F3;--surface:#FFFFFF;--surface2:#F7F8FA;--ink:#191C22;--muted:#6A7280;--faint:#9AA1AB;
@@ -278,7 +279,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v127 (2026-07-29)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v128 (2026-07-29)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트</button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">🎓 아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -486,6 +487,7 @@ create policy "sol write" on solutions
     <div class="cam-count" id="camCount"></div>
     <div class="cam-zoom" id="camZoomRow"><button data-z="1" onclick="setZoom(1)">1×</button><button data-z="2" onclick="setZoom(2)">2×</button><button data-z="3" class="on" onclick="setZoom(3)">3×</button></div>
     <div class="cam-strip" id="camStrip"></div>
+    <div id="camSaveRow" style="text-align:center;margin-bottom:8px;display:none"><button class="cam-flip" onclick="camSaveAllShots()" style="padding:9px 15px;font-size:12.5px;background:rgba(255,255,255,.2);color:#fff">📥 찍은 사진 전부 폰 앨범에 저장</button></div>
     <div style="text-align:right;margin-bottom:8px"><button class="cam-flip" id="camSkip" onclick="camSkip()" style="display:none;padding:7px 12px;font-size:12px">건너뛰기 ▶</button></div>
     <div class="cam-btns">
       <button class="cam-flip" onclick="flipCam()">🔄 전/후면</button>
@@ -1411,6 +1413,24 @@ function baWire(w){ var fr=document.querySelector('.ba-frame[data-w="'+w+'"]'); 
 }
 function baReset(){ ['before','after'].forEach(function(w){var st=_baState[w];if(st&&st.src)delete _baEdits[st.src];}); baInit('before'); baInit('after'); }
 function _dataURLtoFile(url,name){var arr=url.split(','),m=(arr[0].match(/:(.*?);/)||[])[1]||'image/jpeg',bin=atob(arr[1]),n=bin.length,u8=new Uint8Array(n);while(n--)u8[n]=bin.charCodeAt(n);return new File([u8],name,{type:m});}
+function camSaveAllShots(){   /* 이번 촬영에서 찍은 모든 컷을 폰 앨범에 저장(앱엔 3장만 담음) */
+  var all=[];
+  try{ Object.keys(_camBuckets).forEach(function(k){ (_camBuckets[k]||[]).forEach(function(d){ if(d)all.push(d); }); }); }catch(e){}
+  if(!all.length) all=(_camShots||[]).slice();
+  if(!all.length){ toast('저장할 사진이 없어요'); return; }
+  var stamp=Date.now();
+  var files=all.map(function(d,i){ return _dataURLtoFile(d,'soneed_'+stamp+'_'+(i+1)+'.jpg'); });
+  try{
+    if(navigator.canShare && navigator.canShare({files:files})){
+      navigator.share({files:files,title:'SONEED 촬영본 '+files.length+'장'})
+        .then(function(){toast('공유 시트에서 "이미지 저장"을 누르면 '+files.length+'장 전부 앨범에 저장돼요');})
+        .catch(function(){});
+      return;
+    }
+  }catch(e){}
+  files.forEach(function(f){ var a=document.createElement('a'); a.href=URL.createObjectURL(f); a.download=f.name; document.body.appendChild(a); a.click(); a.remove(); });
+  toast(files.length+'장 저장 시도 · 앨범엔 사진을 길게 눌러 저장');
+}
 function baShare(){
   try{
     var url=window._baLastURL; if(!url){toast('이미지를 먼저 만들어주세요');return;}
@@ -1631,6 +1651,7 @@ function _camRenderStrip(){
   strip.innerHTML=_camShots.map((d,i)=>'<img src="'+d+'" class="'+(i===_camSel?'sel':'')+'" onclick="camPick('+i+')">').join('');
   document.getElementById('camCount').textContent=_camShots.length?(_camShots.length+'장 · 잘 나온 걸 탭해서 크게 확인·선택 → 아래 [이 사진 사용]'):'여러 장 찍어도 돼요';
   document.getElementById('camUse').style.display=_camShots.length?'inline-block':'none';   /* ★ inline-block 명시(CSS 기본 none을 이겨야 보임) */
+  var _sr=document.getElementById('camSaveRow'); if(_sr)_sr.style.display=_camShots.length?'block':'none';
   /* 라이브 화면은 계속 유지 — 미리보기는 썸네일을 탭했을 때만(camPick) 겹쳐 보여줌 */
 }
 function camPick(i){_camSel=i;_camRenderStrip();var still=document.getElementById('camStill');still.src=_camShots[i];still.style.display='block';var bar=document.getElementById('camPreviewBar');if(bar)bar.style.display='flex';}   /* 크게 미리보기 + 눈 확인 바 (display:block 명시 — CSS none 이겨야 보임) */

@@ -1,15 +1,13 @@
 {
-  "name": "소니드 3D 얼굴분석",
-  "short_name": "SONEED",
-  "start_url": "./soneed.html",
-  "scope": "./",
+  "name": "뷰티OS",
+  "short_name": "뷰티OS",
+  "description": "SONEED Beauty OS — 얼굴·체형 분석 관리",
+  "start_url": "./index.html",
   "display": "standalone",
-  "orientation": "portrait",
-  "background_color": "#1D4ED8",
-  "theme_color": "#1D4ED8",
+  "background_color": "#EEF0F3",
+  "theme_color": "#C81D74",
   "icons": [
-    { "src": "./icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    { "src": "soneed-mark-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "soneed-mark.png", "sizes": "512x512", "type": "image/png" }
   ]
 }
