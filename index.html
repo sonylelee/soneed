@@ -188,6 +188,18 @@
   #camModal .cam-btns{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px}
   #camModal .cam-flip{background:rgba(255,255,255,.16);color:#fff;border:none;padding:11px 15px;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;justify-self:start}
   #camModal .cam-shot{width:76px;height:76px;border-radius:50%;background:#fff;border:5px solid rgba(255,255,255,.45);cursor:pointer;justify-self:center}
+  #camModal .cam-mode{display:flex;gap:8px;justify-content:center;margin-bottom:12px}
+  #camModal .cam-mode button{background:rgba(255,255,255,.14);color:#fff;border:none;border-radius:16px;padding:7px 18px;font-weight:800;font-size:13px;cursor:pointer}
+  #camModal .cam-mode button.on{background:#fff;color:#111}
+  #camModal .cam-shot.rec{background:#ff3b30;border-color:rgba(255,59,48,.4)}
+  #camModal .cam-shot.rec.recording{border-radius:22px;animation:recpulse 1s infinite}
+  @keyframes recpulse{50%{opacity:.5}}
+  #camModal .rec-timer{color:#fff;font-weight:800;font-size:16px;margin-bottom:10px}
+  #camModal .rec-hint{color:#bbb;font-size:12px;margin-top:8px}
+  #camModal #camRecPreview{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;display:none;z-index:5}
+  #camModal #camRecBar{position:absolute;left:0;right:0;bottom:0;display:none;flex-direction:column;align-items:center;gap:10px;padding:14px 16px calc(18px + env(safe-area-inset-bottom));background:linear-gradient(to top,rgba(0,0,0,.72),rgba(0,0,0,0));z-index:6}
+  #camModal #camRecBar .rec-save{background:#00c48c;color:#053;border:none;font-weight:800;padding:12px 20px;border-radius:12px;font-size:15px}
+  #camModal #camRecBar .rec-retry{background:rgba(255,255,255,.22);color:#fff;border:none;font-weight:700;padding:12px 18px;border-radius:12px;font-size:14px}
   #camModal #camStill{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000;display:none}
   #camModal .cam-strip{display:flex;gap:7px;overflow-x:auto;padding:9px 4px 3px;min-height:0}
   #camModal .cam-strip:empty{display:none}
@@ -279,7 +291,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v128 (2026-07-29)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v129 (2026-07-29)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트</button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">🎓 아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -481,8 +493,12 @@ create policy "sol write" on solutions
     <button id="camLevelEnable" onclick="_askLevel()">📐 수평계 켜기</button>
     <img id="camStill" alt="" onclick="_backToLive()">
     <div id="camPreviewBar"><span class="cam-pv-hint">👀 눈 잘 떴는지 확인하세요</span><div class="cam-pv-btns"><button class="cam-pv-use" onclick="camUse()">✓ 이 사진 사용</button><button class="cam-pv-back" onclick="_backToLive()">✕ 다시 찍기</button></div></div>
+    <video id="camRecPreview" playsinline controls></video>
+    <div id="camRecBar"><button class="rec-save" onclick="saveRec()">📥 영상 폰 앨범에 저장</button><button class="rec-retry" onclick="retryRec()">✕ 다시 찍기</button></div>
   </div>
   <div class="cam-ctrls">
+    <div class="cam-mode" id="camModeRow"><button id="mPhoto" class="on" onclick="setCamMode('photo')">📷 사진</button><button id="mVideo" onclick="setCamMode('video')">🎥 영상</button></div>
+    <div id="camPhotoCtrls">
     <div id="camOpWrap" class="cam-op">비포 연하게 <input type="range" id="camOp" min="0" max="90" value="45" oninput="camOpacity(this.value)"> 진하게</div>
     <div class="cam-count" id="camCount"></div>
     <div class="cam-zoom" id="camZoomRow"><button data-z="1" onclick="setZoom(1)">1×</button><button data-z="2" onclick="setZoom(2)">2×</button><button data-z="3" class="on" onclick="setZoom(3)">3×</button></div>
@@ -491,8 +507,18 @@ create policy "sol write" on solutions
     <div style="text-align:right;margin-bottom:8px"><button class="cam-flip" id="camSkip" onclick="camSkip()" style="display:none;padding:7px 12px;font-size:12px">건너뛰기 ▶</button></div>
     <div class="cam-btns">
       <button class="cam-flip" onclick="flipCam()">🔄 전/후면</button>
-      <button class="cam-shot" onclick="snapCam()" aria-label="촬영"></button>
+      <button class="cam-shot" id="camShotBtn" onclick="snapCam()" aria-label="촬영"></button>
       <button class="cam-use" id="camUse" onclick="camUse()">✓ 이 사진 사용</button>
+    </div>
+    </div><!-- /camPhotoCtrls -->
+    <div id="camVideoCtrls" style="display:none;text-align:center">
+      <div id="recTimer" class="rec-timer">● 0:00</div>
+      <div class="cam-btns">
+        <button class="cam-flip" onclick="flipCam()">🔄 전/후면</button>
+        <button class="cam-shot rec" id="recBtn" onclick="toggleRec()" aria-label="녹화"></button>
+        <span></span>
+      </div>
+      <div class="rec-hint">얼굴을 천천히 좌우로 돌리며 촬영 · 버튼 다시 누르면 정지</div>
     </div>
   </div>
 </div>
@@ -1580,6 +1606,7 @@ function openCamSeq(steps){   /* steps=[{ko, ref():dataURL|null, assign(dataURL)
   if(!steps||!steps.length)return;
   _camSteps=steps;_camStep=0;_camBuckets={};
   document.getElementById('camModal').style.display='flex';
+  setCamMode('photo');
   _initLevel();
   _loadStep();
   startCam();
@@ -1659,9 +1686,57 @@ function camUse(){
   if(_camSel<0||!_camShots[_camSel]){toast('사용할 사진을 먼저 탭해서 선택하세요');return;}
   _camSteps[_camStep].assign(_camShots[_camSel]);
   if(_camStep<_camSteps.length-1){_camStep++;_loadStep();toast('저장됨 · 다음: '+_camSteps[_camStep].ko);}
-  else{closeCam();toast('촬영 완료');}
+  else{toast('사진 완료 · 🎥 이어서 얼굴 영상을 촬영하세요');setCamMode('video');}
 }
-function closeCam(){stopCam();document.getElementById('camModal').style.display='none';document.getElementById('camStill').style.display='none';document.getElementById('camVideo').style.display='';_camSteps=[];_camStep=0;_camShots=[];_camSel=-1;_camBuckets={};}
+function closeCam(){try{stopRec();}catch(e){}hideRecPreview();_camMode='photo';stopCam();document.getElementById('camModal').style.display='none';document.getElementById('camStill').style.display='none';document.getElementById('camVideo').style.display='';_camSteps=[];_camStep=0;_camShots=[];_camSel=-1;_camBuckets={};}
+/* ===== 영상 촬영(MediaRecorder) — 앱 저장 안 함, 폰 앨범으로 ===== */
+var _camMode='photo',_rec=null,_recChunks=[],_recBlob=null,_recTimer=null,_recT0=0;
+function _g(id){return document.getElementById(id);}
+function setCamMode(m){
+  _camMode=m; var photo=(m!=='video');
+  var pc=_g('camPhotoCtrls'); if(pc)pc.style.display=photo?'':'none';
+  var vc=_g('camVideoCtrls'); if(vc)vc.style.display=photo?'none':'block';
+  var mp=_g('mPhoto'),mv=_g('mVideo'); if(mp)mp.classList.toggle('on',photo); if(mv)mv.classList.toggle('on',!photo);
+  _backToLive(); hideRecPreview();
+  if(photo){ try{stopRec();}catch(e){} if(typeof _camRenderStrip==='function')_camRenderStrip(); }
+}
+function toggleRec(){ if(_rec&&_rec.state==='recording')stopRec(); else startRec(); }
+function startRec(){
+  if(!_camStream){toast('카메라가 준비 중이에요');return;}
+  if(typeof MediaRecorder==='undefined'){toast('이 브라우저는 영상 녹화를 지원하지 않아요');return;}
+  _recChunks=[]; var opts={};
+  ['video/mp4','video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'].some(function(t){ if(MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(t)){opts.mimeType=t;return true;} return false; });
+  try{ _rec=new MediaRecorder(_camStream,opts); }catch(e){ try{_rec=new MediaRecorder(_camStream);}catch(e2){toast('녹화 시작 실패');return;} }
+  _rec.ondataavailable=function(e){ if(e.data&&e.data.size)_recChunks.push(e.data); };
+  _rec.onstop=function(){ _recBlob=new Blob(_recChunks,{type:(_rec&&_rec.mimeType)||'video/mp4'}); _showRecPreview(); };
+  try{_rec.start();}catch(e){toast('녹화 시작 실패');return;}
+  _recT0=Date.now(); var b=_g('recBtn'); if(b)b.classList.add('recording');
+  _recTimer=setInterval(_recTick,250); _recTick();
+  toast('녹화 시작 · 버튼 다시 누르면 정지');
+}
+function stopRec(){ try{ if(_rec&&_rec.state!=='inactive')_rec.stop(); }catch(e){} if(_recTimer){clearInterval(_recTimer);_recTimer=null;} var b=_g('recBtn'); if(b)b.classList.remove('recording'); }
+function _recTick(){ var s=Math.floor((Date.now()-_recT0)/1000); var t=Math.floor(s/60)+':'+('0'+(s%60)).slice(-2); var e=_g('recTimer'); if(e)e.textContent='● '+t; }
+function _showRecPreview(){
+  if(!_recBlob||!_recBlob.size){toast('녹화된 영상이 없어요');return;}
+  var url=URL.createObjectURL(_recBlob); var v=_g('camRecPreview'); if(v){v.src=url;v.style.display='block';try{v.play();}catch(e){}}
+  var bar=_g('camRecBar'); if(bar)bar.style.display='flex';
+  var vc=_g('camVideoCtrls'); if(vc)vc.style.display='none';
+}
+function hideRecPreview(){ var v=_g('camRecPreview'); if(v){try{v.pause();}catch(e){}v.removeAttribute('src');v.style.display='none';} var b=_g('camRecBar'); if(b)b.style.display='none'; }
+function retryRec(){ hideRecPreview(); _recBlob=null; var vc=_g('camVideoCtrls'); if(vc&&_camMode==='video')vc.style.display='block'; var t=_g('recTimer'); if(t)t.textContent='● 0:00'; }
+function saveRec(){
+  if(!_recBlob){toast('저장할 영상이 없어요');return;}
+  var ext=(_recBlob.type.indexOf('mp4')>=0)?'mp4':'webm';
+  var file=new File([_recBlob],'soneed_face_'+Date.now()+'.'+ext,{type:_recBlob.type||'video/mp4'});
+  try{
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      navigator.share({files:[file],title:'SONEED 얼굴 영상'}).then(function(){toast('공유 시트에서 "비디오 저장"을 누르면 앨범에 저장돼요');}).catch(function(){});
+      return;
+    }
+  }catch(e){}
+  var a=document.createElement('a'); a.href=URL.createObjectURL(file); a.download=file.name; document.body.appendChild(a); a.click(); a.remove();
+  toast('영상 저장 시도 · 앨범 저장은 공유가 필요해요');
+}
 /* 수평계: 기기 기울기(gamma)로 수평선 표시 · 수평이면 초록 */
 var _lvlGot=false;
 function _lvlHnd(e){var b=e.beta,g=e.gamma;if(g==null&&b==null)return;_lvlGot=true;var enb=document.getElementById('camLevelEnable');if(enb)enb.style.display='none';
