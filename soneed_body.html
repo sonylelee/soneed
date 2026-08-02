@@ -79,7 +79,7 @@ canvas.pose{width:100%;border-radius:10px;margin-top:8px;display:none}
 <body>
 <header>
   <div class="logo">SONEED 바디</div>
-  <div class="sub">키머슬(짧아진 근육) 분석 · v4.7 · 촉진 전 초안</div>
+  <div class="sub">키머슬(짧아진 근육) 분석 · v4.8 · 촉진 전 초안</div>
 </header>
 <div class="wrap">
   <div class="topnav"><button id="navAnalyze" class="on" onclick="showView('analyze')">🔍 분석</button><button id="navRecords" onclick="showView('records')">📋 고객 기록</button></div>
@@ -592,11 +592,11 @@ init().catch(function(e){console.warn('pose init',e);});
       var cam=new THREE.PerspectiveCamera(35,1,0.01,1000);
       var controls=new THREE.OrbitControls(cam,cv);
       controls.enableDamping=true;controls.dampingFactor=0.08;controls.enablePan=true;controls.screenSpacePanning=true;controls.rotateSpeed=0.9;
-      scene.add(new THREE.AmbientLight(0xffffff,0.34));
-      scene.add(new THREE.HemisphereLight(0xffffff,0x222a36,0.28));
-      var dlx=new THREE.DirectionalLight(0xffffff,0.2);dlx.position.set(0,-5,-2);scene.add(dlx);
-      var dl=new THREE.DirectionalLight(0xffffff,0.85);dl.position.set(4,6,8);scene.add(dl);
-      var dl2=new THREE.DirectionalLight(0xffffff,0.38);dl2.position.set(-5,3,-7);scene.add(dl2);
+      scene.add(new THREE.AmbientLight(0xffffff,0.6));
+      scene.add(new THREE.HemisphereLight(0xffffff,0x222a36,0.3));
+      var dlx=new THREE.DirectionalLight(0xffffff,0.18);dlx.position.set(0,-5,-2);scene.add(dlx);
+      var dl=new THREE.DirectionalLight(0xffffff,0.55);dl.position.set(4,6,8);scene.add(dl);
+      var dl2=new THREE.DirectionalLight(0xffffff,0.3);dl2.position.set(-5,3,-7);scene.add(dl2);
       var draco=new THREE.DRACOLoader();
       draco.setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/draco/');
       var loader=new THREE.GLTFLoader();loader.setDRACOLoader(draco);
@@ -634,7 +634,7 @@ init().catch(function(e){console.warn('pose init',e);});
         (res||[]).forEach(function(x){
           if(x.score===0)return; var tg=MAP[x.name]; if(!tg)return;
           var short=x.score>0;
-          tg.forEach(function(nn){ var arr=nodes[nn]; if(!arr)return; arr.forEach(function(o){ var m=o.material; var t=Math.min(1,Math.abs(x.pct)/100), hue=short?0.0:0.61; m.color.setHSL(hue,1,0.58-0.24*t); if(m.emissive){m.emissive.setHSL(hue,1,0.5);m.emissiveIntensity=0.3+0.6*t;} m.roughness=0.4; m.opacity=1; m.depthWrite=true; colored[o.id]=1; }); });
+          tg.forEach(function(nn){ var arr=nodes[nn]; if(!arr)return; arr.forEach(function(o){ var m=o.material; var t=Math.min(1,Math.abs(x.pct)/100), hue=short?0.0:0.61; m.color.setHSL(hue,1,0.55-0.13*t); if(m.emissive){m.emissive.setHSL(hue,1,0.5);m.emissiveIntensity=0.6+0.7*t;} m.roughness=0.35; m.opacity=1; m.depthWrite=true; colored[o.id]=1; }); });
         });
         applyVis();
       };
@@ -642,7 +642,7 @@ init().catch(function(e){console.warn('pose init',e);});
       loader.load('muscles.glb',function(g){
         musRoot=g.scene;
         g.scene.traverse(function(o){ if(o.isMesh){
-          var _mi=allMus.length, jj=((_mi*2654435761)>>>0)%1000/1000; var _bc=new THREE.Color(NEUTRAL); _bc.offsetHSL((jj-0.5)*0.02,(jj-0.5)*0.12,(jj-0.5)*0.14); o.userData.base=_bc; o.material=new THREE.MeshStandardMaterial({color:_bc.clone(),roughness:0.82,metalness:0.0});
+          var _mi=allMus.length, h1=((_mi*2654435761)>>>0)%1000/1000, h2=((_mi*40503+9127)>>>0)%1000/1000, h3=((_mi*2246822519)>>>0)%1000/1000; var _bc=new THREE.Color().setHSL(0.035+h1*0.05, 0.34+h2*0.24, 0.44+h3*0.22); o.userData.base=_bc; o.material=new THREE.MeshStandardMaterial({color:_bc.clone(),roughness:0.8,metalness:0.0});
           allMus.push(o);
           var nm=rawName(o); o.userData.sup=isSup(nm); if(nm){(nodes[nm]||(nodes[nm]=[])).push(o);}
           var pn=o.parent?rawName(o.parent):''; if(pn){(nodes[pn]||(nodes[pn]=[])).push(o);}
