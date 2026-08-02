@@ -76,7 +76,7 @@ canvas.pose{width:100%;border-radius:10px;margin-top:8px;display:none}
 <body>
 <header>
   <div class="logo">SONEED 바디</div>
-  <div class="sub">키머슬(짧아진 근육) 분석 · v3.5 · 촉진 전 초안</div>
+  <div class="sub">키머슬(짧아진 근육) 분석 · v3.6 · 촉진 전 초안</div>
 </header>
 <div class="wrap">
 
@@ -317,6 +317,7 @@ function bodyTab(v){
   document.getElementById('tab3d').classList.toggle('on',is3);
   document.getElementById('tab2d').classList.toggle('on',!is3);
   if(is3&&window.BODY_resize3D)setTimeout(window.BODY_resize3D,50);
+  if(!is3&&window._res)drawBodyMap();
 }
 
 /* ---------- 관리 가이드: 이완/강화 · 부위별 · 순위+% ---------- */
@@ -381,6 +382,17 @@ function silhouette(inner){
     +'</g>'+inner+'</svg>';
 }
 function drawBodyMap(){
+  var flat=window.BODY_flat3D?window.BODY_flat3D():null;
+  if(flat&&flat.front){
+    document.getElementById('bodymap').innerHTML=
+      '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;background:#080b12;border-radius:12px;padding:10px 8px">'
+      +'<div style="flex:1;min-width:140px;max-width:280px;text-align:center"><div style="color:#c2cad6;font-weight:800;margin-bottom:2px">앞모습</div><img src="'+flat.front+'" style="width:100%;border-radius:8px"></div>'
+      +'<div style="flex:1;min-width:140px;max-width:280px;text-align:center"><div style="color:#c2cad6;font-weight:800;margin-bottom:2px">뒷모습</div><img src="'+flat.back+'" style="width:100%;border-radius:8px"></div>'
+      +'</div>'
+      +'<div class="muted" style="text-align:center;margin-top:6px"><span style="color:#e0396f;font-weight:800">● 짧아짐(풀 곳)</span> &nbsp; <span style="color:#2f8fd6;font-weight:800">● 늘어남</span> · 해부 모델 앞/뒤(3D와 동일)</div>';
+    document.getElementById('bodymap').style.display='block';
+    return;
+  }
   var res=(window._res||[]);
   var mk={front:'',back:''};
   res.forEach(function(x){
@@ -475,7 +487,7 @@ init().catch(function(e){console.warn('pose init',e);});
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/DRACOLoader.js"></script>
 <script>
 (function(){
-  var ready=false,pending=null,colored={},hideNeutral=false;
+  var ready=false,pending=null,colored={},hideNeutral=false,musRoot=null;
   function fail(msg){var n=document.getElementById('no3d');if(n){n.style.display='block';var hint=/webgl|context/i.test(msg)?' → 크롬 탭을 여러 개 닫고 아래 [다시 시도]를 누르세요. 안 되면 크롬 완전 종료(⌘Q) 후 재실행, 또는 설정→시스템→"하드웨어 가속 사용" 켜기.':' → 인터넷/브라우저 확인';n.innerHTML='<div>3D를 불러오지 못했어요: '+msg+hint+'</div><button onclick="BODY_retry3D()" style="margin-top:10px;padding:9px 18px;border:none;border-radius:10px;background:#232733;color:#fff;font-weight:800;cursor:pointer">🔄 다시 시도</button>';}var c=document.getElementById('cv3d');if(c)c.style.display='none';}
   window.BODY_update3D=function(res){pending=res;};
   window.BODY_resize3D=function(){};
@@ -486,10 +498,10 @@ init().catch(function(e){console.warn('pose init',e);});
       if(typeof THREE==='undefined'||!THREE.OrbitControls||!THREE.GLTFLoader||!THREE.DRACOLoader){ fail('그래픽 라이브러리 로딩 실패 — 인터넷 또는 브라우저 확인(카톡/인스타 인앱이면 Safari·Chrome으로 열기)'); return; }
       var MAP=JSON.parse(document.getElementById('musclemap').textContent);
       var cv=document.getElementById('cv3d');
-      var renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true,failIfMajorPerformanceCaveat:false,powerPreference:'default'});
+      var renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true,preserveDrawingBuffer:true,failIfMajorPerformanceCaveat:false,powerPreference:'default'});
       renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1));
       try{renderer.outputEncoding=THREE.sRGBEncoding;}catch(e){}
-      var scene=new THREE.Scene();
+      var scene=new THREE.Scene();scene.background=new THREE.Color(0x080b12);
       var cam=new THREE.PerspectiveCamera(35,1,0.01,1000);
       var controls=new THREE.OrbitControls(cam,cv);
       controls.enableDamping=true;controls.dampingFactor=0.08;controls.enablePan=true;controls.screenSpacePanning=true;controls.rotateSpeed=0.9;
@@ -508,6 +520,23 @@ init().catch(function(e){console.warn('pose init',e);});
       function resetMus(){allMus.forEach(function(o){var m=o.material;m.color.setHex(NEUTRAL);if(m.emissive){m.emissive.setHex(0x000000);m.emissiveIntensity=1;}m.opacity=0.3;m.depthWrite=false;});}
       function applyVis(){allMus.forEach(function(o){o.visible=colored[o.id]?true:!hideNeutral;});}
       window.BODY_hideNeutral3D=function(b){hideNeutral=!!b;applyVis();};
+      window.BODY_flat3D=function(){
+        try{
+          if(!ready||!musRoot)return null;
+          var el=renderer.domElement, W=360,H=560;
+          renderer.setSize(W,H,false);
+          var box=new THREE.Box3().setFromObject(musRoot);
+          var ctr=box.getCenter(new THREE.Vector3()), sz=box.getSize(new THREE.Vector3());
+          var sc=new THREE.PerspectiveCamera(30,W/H,0.01,1000);
+          var dist=(sz.y*0.5)/Math.tan(15*Math.PI/180)*1.12;
+          sc.position.set(ctr.x,ctr.y,ctr.z+dist); sc.lookAt(ctr); renderer.render(scene,sc);
+          var front=el.toDataURL('image/png');
+          sc.position.set(ctr.x,ctr.y,ctr.z-dist); sc.lookAt(ctr); renderer.render(scene,sc);
+          var back=el.toDataURL('image/png');
+          resize();
+          return {front:front,back:back};
+        }catch(e){ try{resize();}catch(_){} return null; }
+      };
       window.BODY_update3D=function(res){
         if(!ready){pending=res;return;}
         resetMus(); colored={};
@@ -520,6 +549,7 @@ init().catch(function(e){console.warn('pose init',e);});
       };
       loader.load('skeleton.glb',function(g){ g.scene.traverse(function(o){if(o.isMesh)o.material=skelMat;}); scene.add(g.scene); },undefined,function(e){console.warn('skel',e);});
       loader.load('muscles.glb',function(g){
+        musRoot=g.scene;
         g.scene.traverse(function(o){ if(o.isMesh){
           o.material=new THREE.MeshStandardMaterial({color:NEUTRAL,transparent:true,opacity:0.3,roughness:0.6,metalness:0,depthWrite:false});
           allMus.push(o);
