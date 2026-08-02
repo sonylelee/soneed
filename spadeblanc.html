@@ -1,0 +1,722 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>스파드블랑 · 커스텀스파 관리</title>
+<style>
+:root{--brand:#C81D74;--brand2:#7A5AE0;--ink:#1a1c22;--muted:#7a8090;--line:#e6e8ee;--bg:#eef0f5;--card:#fff;--short:#e0396f;--long:#2f8fd6}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo',sans-serif;background:var(--bg);color:var(--ink);font-size:15px;line-height:1.5}
+header{position:sticky;top:0;z-index:20;background:linear-gradient(135deg,#181b22,#12141a);color:#fff;padding:12px 16px;box-shadow:0 2px 14px rgba(0,0,0,.3)}
+header .logo{font-weight:800;font-size:18px;background:linear-gradient(90deg,#ff4f9e,#9a7bff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+header .sub{font-size:11px;color:#aab;margin-top:2px}
+.wrap{max-width:760px;margin:0 auto;padding:14px}
+.card{background:var(--card);border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 3px 14px rgba(20,22,30,.07)}
+.topnav{display:flex;gap:8px;margin-bottom:12px}
+.topnav button{flex:1;padding:11px;border-radius:12px;border:1px solid var(--line);background:#fff;font-weight:800;font-size:14px;color:#667;cursor:pointer}
+.topnav button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+h2.sec{font-size:14px;font-weight:800;margin:2px 0 10px;color:var(--brand)}
+.photos{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pslot{text-align:center}
+.drop{aspect-ratio:3/4;border:2px dashed #cdd2dc;border-radius:12px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#f7f8fb;cursor:pointer;position:relative}
+.drop img{width:100%;height:100%;object-fit:cover}
+.drop .ph{color:#aab;font-size:12px;font-weight:700}
+.pslot label{display:block;font-size:12px;color:var(--muted);margin-top:4px;font-weight:700}
+.btn{border:none;border-radius:12px;padding:11px 14px;font-size:14px;font-weight:800;cursor:pointer;background:#eef1f6;color:#333}
+.btn.primary{background:var(--brand);color:#fff}
+.btn.dark{background:#232733;color:#fff}
+.btn.ghost{background:#fff;border:1px solid var(--line);color:#444}
+.btn.block{width:100%}
+.btn:disabled{opacity:.5}
+.grp{margin-bottom:10px}
+.grp>.gh{font-size:13px;font-weight:800;color:#333;margin:8px 0 6px;display:flex;align-items:center;gap:6px}
+.gh .cnt{font-size:11px;color:var(--muted);font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:12px;font-weight:700;padding:6px 10px;border-radius:16px;border:1px solid var(--line);background:#fff;color:#556;cursor:pointer;user-select:none;transition:.08s}
+.chip.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+.chip.auto{border-color:#37b0a3;color:#1c8378}
+.grp .exg{display:flex;align-items:center;gap:8px;margin:6px 0;flex-wrap:wrap}
+.grp .exg-l{font-size:12.5px;font-weight:800;color:#3a414e;min-width:92px}
+.grp .exg-o{display:flex;gap:5px;flex-wrap:wrap}
+.exo{font-size:12px;font-weight:800;padding:5px 12px;border-radius:14px;border:1px solid var(--line);background:#fff;color:#556;cursor:pointer}
+.exo.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+.exo.auto{border-color:#37b0a3;color:#1c8378}
+.exo.on.auto{background:#20a08f;border-color:#20a08f;color:#fff}
+.lvb{display:inline-block;background:#fff;color:var(--brand);border-radius:8px;padding:0 5px;margin-left:3px;font-size:11px;font-weight:900;line-height:1.5}
+#whyOverlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+#whyOverlay .why-card{background:#fff;border-radius:14px;padding:18px;max-width:420px;width:100%;max-height:80vh;overflow:auto}
+.chip.on.auto{background:#20a08f;border-color:#20a08f;color:#fff}
+.chip .a{font-size:10px;opacity:.9}
+.rank{list-style:none;margin:0;padding:0}
+.rank li{padding:7px 0;border-bottom:1px solid #f0f1f5}
+.rank .top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.rank .nm{font-weight:800;font-size:14px}
+.rank .pc{font-weight:800;font-variant-numeric:tabular-nums}
+.rank .reg{font-size:11px;color:var(--muted);font-weight:700}
+.bar{height:8px;border-radius:6px;background:#eef0f5;margin-top:5px;overflow:hidden;position:relative}
+.bar>i{position:absolute;top:0;bottom:0;display:block;border-radius:6px}
+.short i{background:linear-gradient(90deg,#f0637f,#e0396f)}
+.long i{background:linear-gradient(90deg,#5fb0e6,#2f8fd6)}
+.gd{font-size:12px;color:#556;background:#f7f8fb;border-radius:8px;padding:7px 9px;margin-top:6px;white-space:pre-wrap;border:1px solid #eef0f5}
+.gd.empty{color:#aab;font-style:italic}
+.muted{color:var(--muted);font-size:12px}
+.pill{display:inline-block;font-size:11px;font-weight:800;padding:2px 8px;border-radius:10px}
+.pill.s{background:#fde7ee;color:#c02456}
+.pill.l{background:#e5f1fb;color:#1f72b0}
+.seg{display:flex;gap:6px;margin-bottom:10px}
+.seg button{flex:1;padding:8px;border-radius:10px;border:1px solid var(--line);background:#fff;font-weight:800;font-size:13px;color:#667;cursor:pointer}
+.seg button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+#toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#232733;color:#fff;padding:10px 16px;border-radius:20px;font-size:13px;font-weight:700;opacity:0;transition:.2s;pointer-events:none;z-index:60}
+#toast.on{opacity:1}
+.hint{font-size:12px;color:var(--muted);background:#f4f6fa;border-radius:8px;padding:8px 10px;margin-bottom:10px}
+canvas.pose{width:100%;border-radius:10px;margin-top:8px;display:none}
+#body3d{position:relative;width:100%;height:400px;background:radial-gradient(circle at 50% 38%,#161d2a,#05070b);border-radius:12px;overflow:hidden;touch-action:none}
+#body3d .muted{color:#c2cad6}
+#body3d canvas{display:block;width:100%;height:340px}
+</style>
+</head>
+<body>
+<div id="loginGate" style="position:fixed;inset:0;z-index:9999;background:linear-gradient(160deg,#12141a,#181b22);display:flex;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fff;border-radius:16px;padding:26px 22px;max-width:360px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.4)">
+    <div style="font-weight:900;font-size:20px;color:#e84c88;margin-bottom:2px">스파드블랑</div>
+    <div style="font-weight:800;font-size:14px;margin-bottom:14px">커스텀스파 관리 프로그램</div>
+    <div style="font-size:12.5px;color:#667;margin-bottom:14px;line-height:1.5">스파드블랑 공용 계정으로 로그인하세요.<br>모든 직원이 <b>같은 고객 정보</b>를 공유합니다.</div>
+    <input id="gateEmail" type="email" autocomplete="username" placeholder="이메일" style="width:100%;padding:11px 13px;border:1px solid #dfe2ea;border-radius:10px;font-size:15px;margin-bottom:8px;box-sizing:border-box">
+    <input id="gatePw" type="password" autocomplete="current-password" placeholder="비밀번호" onkeydown="if(event.key==='Enter')doLogin()" style="width:100%;padding:11px 13px;border:1px solid #dfe2ea;border-radius:10px;font-size:15px;margin-bottom:12px;box-sizing:border-box">
+    <button onclick="doLogin()" style="width:100%;padding:12px;border:0;border-radius:10px;background:#e84c88;color:#fff;font-weight:800;font-size:15px;cursor:pointer">로그인</button>
+    <div id="gateMsg" style="font-size:12.5px;color:#c02;margin-top:10px;min-height:16px"></div>
+  </div>
+</div>
+<header style="position:relative">
+  <div class="logo">스파드블랑</div>
+  <div class="sub">커스텀스파 관리 프로그램 · v1.0 · 촉진 전 초안</div>
+  <button id="logoutBtn" onclick="authLogout()" style="position:absolute;top:14px;right:16px;background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.28);border-radius:14px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer">🔓 로그아웃</button>
+</header>
+<div class="wrap">
+  <div class="topnav"><button id="navAnalyze" class="on" onclick="showView('analyze')">🔍 분석</button><button id="navRecords" onclick="showView('records')">📋 고객 기록</button></div>
+  <div id="view-analyze">
+
+  <div class="card" style="padding:12px 14px">
+    <label style="font-weight:800;font-size:13px;color:var(--brand);display:block;margin-bottom:5px">고객 성함</label>
+    <input id="recName" placeholder="고객 이름을 입력하세요" style="width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10px;font-size:15px">
+    <label style="font-weight:800;font-size:13px;color:var(--brand);display:block;margin:9px 0 5px">연락처</label>
+    <input id="recPhone" placeholder="연락처 (선택)" style="width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10px;font-size:15px">
+    <div style="display:flex;gap:8px">
+      <div style="flex:1"><label style="font-weight:800;font-size:13px;color:var(--brand);display:block;margin:9px 0 5px">성별</label><select id="recGender" style="width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10px;font-size:15px"><option value="">-</option><option>여</option><option>남</option></select></div>
+      <div style="flex:1"><label style="font-weight:800;font-size:13px;color:var(--brand);display:block;margin:9px 0 5px">나이</label><input id="recAge" type="number" inputmode="numeric" placeholder="나이" style="width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10px;font-size:15px"></div>
+    </div>
+    <label style="font-weight:800;font-size:13px;color:var(--brand);display:block;margin:9px 0 5px">방문 경로</label>
+    <input id="recRoute" placeholder="예: 소개 / 인스타 / 네이버예약" style="width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10px;font-size:15px">
+    <label style="font-weight:800;font-size:13px;color:var(--brand);display:block;margin:9px 0 5px">메모 · 특이사항</label>
+    <textarea id="recMemo" rows="3" placeholder="상담·시술·요청사항 등 자유 기입" style="width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10px;font-size:15px;resize:vertical"></textarea>
+  </div>
+
+  <div class="card">
+    <h2 class="sec">1 · 전신 사진</h2>
+    <div class="hint">정면 사진으로 자동 측정(어깨·골반·무릎 높이, 머리기울임)이 됩니다. 나머지(척추·회전·목 유형 등)는 아래에서 직접 체크·촉진하세요.</div>
+    <div class="photos" id="photos"></div>
+    <canvas class="pose" id="poseCv"></canvas>
+    <button class="btn dark block" id="btnAuto" style="margin-top:10px" onclick="runAuto()">🤖 정면 사진 자동 분석</button>
+  </div>
+
+  <div class="card">
+    <h2 class="sec">2 · 자세 체크 <span class="muted" id="selCnt"></span></h2>
+    <div class="hint">관찰·촉진한 자세 이상을 켜세요. <b>누를수록 정도가 세져요(약→중→강, 뱃지 2·3), 한 번 더 누르면 해제.</b> 손목·발목 같은 관절은 <b>좌우 각각</b> 선택돼요(양쪽 다 같은 방향 가능). 🤖=사진 자동판정.</div>
+    <div id="checklist"></div>
+    <button class="btn ghost block" style="margin-top:8px" onclick="clearAll()">전체 해제</button>
+  </div>
+
+  <div class="card">
+    <h2 class="sec">3 · 결과 — 키머슬 랭킹</h2>
+    <button class="btn primary block" onclick="analyze()">📊 분석하기</button>
+    <div id="bodyview" style="display:none;margin-top:12px">
+      <div class="seg" style="margin-bottom:8px">
+        <button class="on" id="tab3d" onclick="bodyTab('3d')">🧍 3D 모형</button>
+        <button id="tab2d" onclick="bodyTab('2d')">🗺 평면도</button>
+      </div>
+      <div id="body3d"><canvas id="cv3d"></canvas><button id="peelBtn" onclick="toggleNeutral3D()" style="position:absolute;top:8px;right:8px;z-index:6;background:rgba(255,255,255,.9);border:none;border-radius:14px;padding:6px 12px;font-size:12px;font-weight:800;color:#333;cursor:pointer">겉근육 벗기기(속근육 보기)</button>
+        <div class="muted" style="text-align:center;margin-top:4px">손가락으로 돌리기 · 벌려서 확대 · <b>두 손가락으로 이동</b>(머리 등으로) · <span style="color:#e0396f;font-weight:800">🔴짧아짐</span> <span style="color:#2f8fd6;font-weight:800">🔵늘어남</span></div>
+        <div id="no3d" class="muted" style="display:none;text-align:center;padding:20px">이 기기는 3D를 지원하지 않아요 — 평면도를 봐주세요.</div>
+      </div>
+      <div id="bodymap" style="display:none"></div>
+    </div>
+    <div class="seg" id="seg" style="margin-top:12px;display:none">
+      <button class="on" data-v="short" onclick="setView('short')">짧아진 근육 (풀 곳)</button>
+      <button data-v="long" onclick="setView('long')">늘어난 근육</button>
+      <button data-v="all" onclick="setView('all')">전체</button>
+    </div>
+    <ul class="rank" id="rank"></ul>
+    <div id="empty" class="muted" style="margin-top:10px;display:none">해당 방향의 근육이 없어요.</div>
+  </div>
+
+  <div class="card">
+    <h2 class="sec">4 · 관리 가이드</h2>
+    <div class="hint">분석 결과를 <b>이완/강화 · 부위별 · 순위(짧은 %)</b>로 정리해줘요. <b>근육을 누르면 왜 그런지(선택한 자세)</b>가 떠요. ※최종은 촉진 확인.</div>
+    <div id="guideBox" class="muted">위에서 <b>분석하기</b>를 누르면 여기에 정리됩니다.</div>
+  </div>
+
+  <div class="card">
+    <h2 class="sec">5 · 차트 저장</h2>
+    <div class="hint">맨 위 <b>고객 성함</b>으로 이 분석을 저장 → [📋 고객 기록] 탭에서 불러오기. (☁️ 클라우드 · 사진 제외)</div>
+    <button class="btn primary" style="width:100%" onclick="saveRecord()">☁️ 이 분석 저장</button>
+  </div>
+
+  </div>
+  <div id="view-records" style="display:none"><div class="card"><h2 class="sec">📋 고객 기록</h2><div class="hint">☁️ 클라우드 저장 — <b>어느 브라우저·폰·기기에서든</b> 보여요. [불러오기]로 복원 후 [분석하기].</div><input id="recSearch" oninput="_paintRecords()" placeholder="🔍 고객 이름 검색" style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;margin-bottom:10px"><div id="recList"></div></div></div>
+  <div class="muted" style="text-align:center;padding:6px 0 20px">SONEED Body OS · 사진 분석은 가설, 촉진은 검증<br><span style="font-size:10px;opacity:.7">3D 해부 모델: Z-Anatomy / BodyParts3D · CC BY-SA</span></div>
+</div>
+
+<script type="application/json" id="bodydata">{"muscles":{"Rt전사각근":{"region":"머리와 목","plus":["중하위목뼈볼록왼쪽","버섯목","중하위목뼈회전왼쪽","거북목","높은어깨오른쪽"],"minus":["중하위목뼈볼록오른쪽","일자목","중하위목뼈회전오른쪽","역c자목","낮은어깨오른쪽"],"total":"4.0"},"Lt전사각근":{"region":"머리와 목","plus":["중하위목뼈볼록오른쪽","버섯목","중하위목뼈회전오른쪽","거북목","높은어깨왼쪽"],"minus":["중하위목뼈볼록왼쪽","일자목","중하위목뼈회전왼쪽","역c자목","낮은어깨왼쪽"],"total":""},"Rt중사각근":{"region":"머리와 목","plus":["중하위목뼈볼록왼쪽","버섯목","높은어깨오른쪽","거북목"],"minus":["중하위목뼈볼록오른쪽","일자목","낮은어깨오른쪽","역c자목"],"total":"3.0"},"Lt중사각근":{"region":"머리와 목","plus":["중하위목뼈볼록오른쪽","버섯목","높은어깨왼쪽","거북목"],"minus":["중하위목뼈볼록왼쪽","일자목","낮은어깨왼쪽","역c자목"],"total":""},"Rt후사각근":{"region":"머리와 목","plus":["중하위목뼈볼록왼쪽","버섯목","중하위목뼈회전오른쪽","높은어깨오른쪽"],"minus":["중하위목뼈볼록오른쪽","중하위목뼈회전왼쪽","낮은어깨오른쪽"],"total":"4.0"},"Lt후사각근":{"region":"머리와 목","plus":["중하위목뼈볼록오른쪽","버섯목","중하위목뼈회전왼쪽","높은어깨왼쪽"],"minus":["중하위목뼈볼록왼쪽","중하위목뼈회전오른쪽","낮은어깨왼쪽"],"total":""},"Rt목빗근":{"region":"머리와 목","plus":["머리기울어짐오른쪽","버섯목","높은어깨오른쪽","거북목","상위경추회전왼쪽"],"minus":["머리기울어짐왼쪽","일자목","낮은어깨오른쪽","역c자목","상위경추회전오른쪽"],"total":"4.0"},"Lt목빗근":{"region":"머리와 목","plus":["머리기울어짐왼쪽","버섯목","높은어깨왼쪽","거북목","상위경추회전오른쪽"],"minus":["머리기울어짐오른쪽","일자목","낮은어깨왼쪽","역c자목","상위경추회전왼쪽"],"total":""},"롱거스콜리":{"region":"머리와 목","plus":["일자목","버섯목","역c자목"],"minus":["거북목"],"total":"1.0"},"Rt어깨올림근":{"region":"머리와 목","plus":["상위경추밴딩오른쪽","어깨뼈전방경사오른쪽","높은어깨오른쪽","상위경추회전오른쪽","상방회전오른쪽","최대어깨관절벌림방해오른쪽","어깨뼈상각모음오른쪽"],"minus":["상위경추밴딩왼쪽","어깨뼈후방경사오른쪽","낮은어깨오른쪽","상위경추회전왼쪽","하방회전오른쪽","어깨뼈상각벌림오른쪽"],"total":"5.0"},"Lt어깨올림근":{"region":"머리와 목","plus":["상위경추밴딩왼쪽","어깨뼈전방경사왼쪽","높은어깨왼쪽","상위경추회전왼쪽","상방회전왼쪽","최대어깨관절벌림방해왼쪽","어깨뼈상각모음왼쪽"],"minus":["상위경추밴딩오른쪽","어깨뼈후방경사왼쪽","낮은어깨왼쪽","상위경추회전오른쪽","하방회전왼쪽","어깨뼈상각벌림왼쪽"],"total":""},"Rt후두하근":{"region":"머리와 목","plus":["상위경추밴딩오른쪽","상위경추회전오른쪽"],"minus":["상위경추밴딩왼쪽","상위경추회전왼쪽"],"total":"2.0"},"Lt후두하근":{"region":"머리와 목","plus":["상위경추밴딩왼쪽","상위경추회전왼쪽"],"minus":["상위경추밴딩오른쪽","상위경추회전오른쪽"],"total":""},"목신전근":{"region":"머리와 목","plus":["버섯목","거북목"],"minus":["일자목","역c자목"],"total":"1.0"},"Rt위등세모근":{"region":"머리와 목","plus":["높은어깨오른쪽","버섯목","상방회전오른쪽","거북목"],"minus":["낮은어깨오른쪽","일자목","하방회전오른쪽","역c자목"],"total":"3.0"},"Lt위등세모근":{"region":"머리와 목","plus":["높은어깨왼쪽","버섯목","상방회전왼쪽","거북목"],"minus":["낮은어깨왼쪽","일자목","하방회전왼쪽","역c자목"],"total":""},"Rt 중간등세모근":{"region":"상체","plus":["과하게펴진어깨1오른쪽","과하게펴진어깨2오른쪽","흉추회전왼쪽","흉추전만오른쪽"],"minus":["둥근어깨1오른쪽","둥근어깨2오른쪽","흉추회전오른쪽","흉추후만오른쪽"],"total":"2.0"},"Lt 중간등세모근":{"region":"상체","plus":["과하게펴진어깨1왼쪽","과하게펴진어깨2왼쪽","흉추회전오른쪽","흉추전만왼쪽"],"minus":["둥근어깨1왼쪽","둥근어깨2왼쪽","흉추회전왼쪽","흉추후만왼쪽"],"total":""},"Rt아래등세모근":{"region":"상체","plus":["어깨뼈후방경사오른쪽","낮은어깨오른쪽","하부흉추볼록오른쪽","상방회전오른쪽","과하게펴진어깨1오른쪽","과하게펴진어깨2오른쪽"],"minus":["어깨뼈전방경사오른쪽","높은어깨오른쪽","하부흉추볼록왼쪽","하방회전오른쪽","둥근어깨1오른쪽","둥근어깨2오른쪽"],"total":"3.0"},"Lt아래등세모근":{"region":"상체","plus":["어깨뼈후방경사왼쪽","낮은어깨왼쪽","하부흉추볼록왼쪽","상방회전왼쪽","과하게펴진어깨1왼쪽","과하게펴진어깨2왼쪽"],"minus":["어깨뼈전방경사왼쪽","높은어깨왼쪽","하부흉추볼록오른쪽","하방회전왼쪽","둥근어깨1왼쪽","둥근어깨2왼쪽"],"total":""},"Rt 작은가슴근":{"region":"상체","plus":["어깨뼈전방경사오른쪽","낮은어깨오른쪽","둥근어깨1오른쪽","둥근어깨2오른쪽","흉추회전오른쪽","흉추후만오른쪽","하방회전오른쪽"],"minus":["어깨뼈후방경사오른쪽","높은어깨오른쪽","과하게펴진어깨1오른쪽","과하게펴진어깨2오른쪽","흉추회전왼쪽","흉추전만오른쪽","상방회전오른쪽"],"total":"5.0"},"Lt 작은가슴근":{"region":"상체","plus":["어깨뼈전방경사왼쪽","낮은어깨왼쪽","둥근어깨1왼쪽","둥근어깨2왼쪽","흉추회전왼쪽","흉추후만왼쪽","하방회전왼쪽"],"minus":["어깨뼈후방경사왼쪽","높은어깨왼쪽","과하게펴진어깨1왼쪽","과하게펴진어깨2왼쪽","흉추회전오른쪽","흉추전만왼쪽","상방회전왼쪽"],"total":""},"Rt 큰가슴근":{"region":"상체","plus":["흉추회전오른쪽","흉추후만오른쪽"],"minus":["흉추회전왼쪽","흉추전만오른쪽"],"total":"1.0"},"Lt 큰가슴근":{"region":"상체","plus":["흉추회전왼쪽","흉추후만왼쪽"],"minus":["흉추회전오른쪽","흉추전만왼쪽"],"total":""},"Rt 부리위팔근":{"region":"상체","plus":["어깨관절안쪽돌림오른쪽","어깨관절굽힘오른쪽","gh관절좁아짐오른쪽","어깨관절최대굴곡방해오른쪽"],"minus":["어깨관절바깥쪽돌림오른쪽","어깨관절폄오른쪽","gh관절벌어짐오른쪽"],"total":"2.0"},"Lt 부리위팔근":{"region":"상체","plus":["어깨관절안쪽돌림왼쪽","어깨관절굽힘왼쪽","gh관절좁아짐왼쪽","어깨관절최대굴곡방해왼쪽"],"minus":["어깨관절바깥쪽돌림왼쪽","어깨관절폄왼쪽","gh관절벌어짐왼쪽"],"total":""},"Rt 앞어깨세모근":{"region":"상체","plus":["어깨관절벌림오른쪽","어깨관절굽힘오른쪽","어깨관절안쪽돌림오른쪽"],"minus":["어깨관절모음왼쪽","어깨관절폄오른쪽","어깨관절바깥쪽돌림오른쪽"],"total":"3.0"},"Lt 앞어깨세모근":{"region":"상체","plus":["어깨관절벌림오른쪽","어깨관절굽힘왼쪽","어깨관절안쪽돌림왼쪽"],"minus":["어깨관절모음왼쪽","어깨관절폄왼쪽","어깨관절바깥쪽돌림왼쪽"],"total":""},"Rt 중간어깨세모근":{"region":"상체","plus":["어깨관절벌림오른쪽"],"minus":["어깨관절모음오른쪽"],"total":"1.0"},"Lt 중간어깨세모근":{"region":"상체","plus":["어깨관절벌림왼쪽"],"minus":["어깨관절모음왼쪽"],"total":""},"Rt 뒤어깨세모근":{"region":"상체","plus":["어깨관절벌림오른쪽","어깨관절폄오른쪽","어깨관절바깥쪽돌림오른쪽"],"minus":["어깨관절모음왼쪽","어깨관절굽힘오른쪽","어깨관절안쪽돌림오른쪽"],"total":"3.0"},"Lt 뒤어깨세모근":{"region":"상체","plus":["어깨관절벌림오른쪽","어깨관절폄왼쪽","어깨관절바깥쪽돌림왼쪽"],"minus":["어깨관절모음왼쪽","어깨관절굽힘왼쪽","어깨관절안쪽돌림왼쪽"],"total":""},"Rt 가시위근":{"region":"상체","plus":["어깨관절벌림오른쪽"],"minus":["어깨관절모음오른쪽"],"total":"1.0"},"Lt 가시위근":{"region":"상체","plus":["어깨관절벌림왼쪽"],"minus":["어깨관절모음왼쪽"],"total":""},"Rt 가시아래근":{"region":"상체","plus":["어깨관절바깥쪽돌림오른쪽","어깨관절모음오른쪽","gh관절벌어짐오른쪽","최대어깨관절벌림방해오른쪽"],"minus":["어깨관절안쪽돌림오른쪽","어깨관절벌림오른쪽","gh관절좁아짐오른쪽"],"total":"2.0"},"Lt 가시아래근":{"region":"상체","plus":["어깨관절바깥쪽돌림왼쪽","어깨관절모음왼쪽","gh관절벌어짐왼쪽","최대어깨관절벌림방해왼쪽"],"minus":["어깨관절안쪽돌림왼쪽","어깨관절벌림왼쪽","gh관절좁아짐왼쪽"],"total":""},"Rt 위팔두갈래근장두(up)":{"region":"상체","plus":["어깨관절안쪽돌림오른쪽","어깨관절벌림오른쪽"],"minus":["어깨관절바깥쪽돌림오른쪽","어깨관절모음오른쪽"],"total":"2.0"},"Lt 위팔두갈래근장두(up)":{"region":"상체","plus":["어깨관절안쪽돌림왼쪽","어깨관절벌림왼쪽"],"minus":["어깨관절바깥쪽돌림왼쪽","어깨관절모음오른쪽"],"total":""},"Rt 위팔두갈래근장두(low)":{"region":"상체","plus":["팔꿈치굽힘오른쪽","노뼈바깥쪽돌림+자뼈안쪽돌림오른쪽"],"minus":["팔꿈치폄오른쪽","노뼈안쪽돌림+자뼈바깥쪽돌림오른쪽"],"total":"2.0"},"Lt 위팔두갈래근장두(low)":{"region":"상체","plus":["팔꿈치굽힘왼쪽","노뼈바깥쪽돌림+자뼈안쪽돌림왼쪽"],"minus":["팔꿈치폄왼쪽","노뼈안쪽돌림+자뼈바깥쪽돌림왼쪽"],"total":""},"Rt 위팔두갈래근단두(up)":{"region":"상체","plus":["어깨관절굽힘오른쪽"],"minus":["어깨관절폄오른쪽"],"total":"1.0"},"Lt 위팔두갈래근단두(up)":{"region":"상체","plus":["어깨관절굽힘왼쪽"],"minus":["어깨관절폄왼쪽"],"total":""},"Rt 위팔두갈래근단두(low)":{"region":"상체","plus":["팔꿈치굽힘오른쪽","노뼈바깥쪽돌림+자뼈안쪽돌림오른쪽"],"minus":["팔꿈치폄오른쪽","노뼈안쪽돌림+자뼈바깥쪽돌림오른쪽"],"total":"2.0"},"Lt 위팔두갈래근단두(low)":{"region":"상체","plus":["팔꿈치굽힘왼쪽","노뼈바깥쪽돌림+자뼈안쪽돌림왼쪽"],"minus":["팔꿈치폄왼쪽","노뼈안쪽돌림+자뼈바깥쪽돌림왼쪽"],"total":""},"Rt 위팔세갈래근(long)":{"region":"상체","plus":["팔꿈치폄오른쪽","어깨관절폄오른쪽"],"minus":["팔꿈치굽힘오른쪽","어깨관절굽힘오른쪽"],"total":"2.0"},"Lt 위팔세갈래근(long)":{"region":"상체","plus":["팔꿈치폄왼쪽","어깨관절폄왼쪽"],"minus":["팔꿈치굽힘왼쪽","어깨관절굽힘왼쪽"],"total":""},"Rt 위팔세갈래근(내측,외측두)":{"region":"상체","plus":["팔꿈치폄오른쪽","위팔뼈안쪽돌림+자뼈바깥쪽돌림오른쪽"],"minus":["팔꿈치굽힘오른쪽","위팔뼈바깥쪽돌림+자뼈안쪽돌림오른쪽"],"total":"2.0"},"Lt 위팔세갈래근(내측,외측두)":{"region":"상체","plus":["팔꿈치폄왼쪽","위팔뼈안쪽돌림+자뼈바깥쪽돌림왼쪽"],"minus":["팔꿈치굽힘왼쪽","위팔뼈바깥쪽돌림+자뼈안쪽돌림왼쪽"],"total":""},"Rt 뒤침근":{"region":"상체","plus":["아래팔바깥쪽돌림오른쪽","노뼈바깥쪽돌림+자뼈안쪽돌림오른쪽"],"minus":["아래팔안쪽돌림오른쪽","노뼈안쪽돌림+자뼈바깥쪽돌림오른쪽"],"total":"2.0"},"Lt 뒤침근":{"region":"상체","plus":["아래팔바깥쪽돌림왼쪽","노뼈바깥쪽돌림+자뼈안쪽돌림왼쪽"],"minus":["아래팔안쪽돌림왼쪽","노뼈안쪽돌림+자뼈바깥쪽돌림왼쪽"],"total":""},"Rt 상완근":{"region":"상체","plus":["팔꿈치굽힘오른쪽","위팔뼈바깥쪽돌림+자뼈안쪽돌림오른쪽"],"minus":["팔꿈치폄오른쪽","위팔뼈안쪽돌림+자뼈바깥쪽돌림오른쪽"],"total":"2.0"},"Lt 상완근":{"region":"상체","plus":["팔꿈치굽힘왼쪽","위팔뼈바깥쪽돌림+자뼈안쪽돌림왼쪽"],"minus":["팔꿈치폄왼쪽","위팔뼈안쪽돌림+자뼈바깥쪽돌림왼쪽"],"total":""},"Rt 손등굽힘근":{"region":"상체","plus":["손목손등쪽굽힘오른쪽","손목안쪽돌림오른쪽"],"minus":["손목손바닥쪽굽힘오른쪽","손목바깥쪽돌림오른쪽"],"total":"2.0"},"Lt 손등굽힘근":{"region":"상체","plus":["손목손등쪽굽힘왼쪽","손목안쪽돌림왼쪽"],"minus":["손목손바닥쪽굽힘왼쪽","손목바깥쪽돌림왼쪽"],"total":""},"Rt 손 바닥굽힘근":{"region":"상체","plus":["손목손바닥쪽굽힘오른쪽","손목바깥쪽돌림오른쪽"],"minus":["손목손등쪽굽힘오른쪽","손목안쪽돌림오른쪽"],"total":"2.0"},"Lt 손 바닥굽힘근":{"region":"상체","plus":["손목손바닥쪽굽힘왼쪽","손목바깥쪽돌림오른쪽"],"minus":["손목손등쪽굽힘왼쪽","손목안쪽돌림오른쪽"],"total":""},"Rt 배빗근(up)":{"region":"상체","plus":["하부흉추회전왼쪽","하부흉추볼록왼쪽","흉추후만오른쪽"],"minus":["하부흉추회전오른쪽","하부흉추볼록오른쪽","흉추전만오른쪽"],"total":"1.0"},"Lt 배빗근(up)":{"region":"상체","plus":["하부흉추회전오른쪽","하부흉추볼록오른쪽","흉추후만왼쪽"],"minus":["하부흉추회전왼쪽","하부흉추볼록왼쪽","흉추전만왼쪽"],"total":""},"Rt 배빗근(low)":{"region":"상체","plus":["요추후만오른쪽","골반후방경사오른쪽"],"minus":["요추전만오른쪽","골반전방경사오른쪽"],"total":"1.0"},"Lt 배빗근(low)":{"region":"상체","plus":["요추후만왼쪽","골반후방경사왼쪽"],"minus":["요추전만왼쪽","골반전방경사왼쪽"],"total":""},"Rt 작은마름근":{"region":"상체","plus":["어깨뼈상각모음오른쪽","높은어깨오른쪽","상방회전오른쪽","최대어깨관절벌림방해오른쪽","과하게펴진어깨1오른쪽","상부흉추볼록오른쪽","과하게펴진어깨2오른쪽","흉추전만오른쪽"],"minus":["어깨뼈상각벌림오른쪽","낮은어깨오른쪽","하방회전오른쪽","둥근어깨1오른쪽","상부흉추볼록왼쪽","둥근어깨2오른쪽","흉추후만오른쪽"],"total":"4.0"},"Lt 작은마름근":{"region":"상체","plus":["어깨뼈상각모음왼쪽","높은어깨왼쪽","상방회전왼쪽","최대어깨관절벌림방해왼쪽","과하게펴진어깨1왼쪽","상부흉추볼록왼쪽","과하게펴진어깨2왼쪽","흉추전만왼쪽"],"minus":["어깨뼈상각벌림왼쪽","낮은어깨왼쪽","하방회전왼쪽","둥근어깨1왼쪽","상부흉추볼록오른쪽","둥근어깨2왼쪽","흉추후만왼쪽"],"total":""},"Rt 큰마름근":{"region":"상체","plus":["높은어깨오른쪽","하방회전오른쪽","과하게펴진어깨1오른쪽","과하게펴진어깨2오른쪽","흉추전만오른쪽"],"minus":["낮은어깨오른쪽","상방회전오른쪽","둥근어깨1오른쪽","둥근어깨2오른쪽","흉추후만오른쪽"],"total":"4.0"},"Lt 큰마름근":{"region":"상체","plus":["높은어깨왼쪽","하방회전왼쪽","과하게펴진어깨1왼쪽","과하게펴진어깨2왼쪽","흉추전만왼쪽"],"minus":["낮은어깨왼쪽","상방회전왼쪽","둥근어깨1왼쪽","둥근어깨2왼쪽","흉추후만왼쪽"],"total":""},"Rt앞톱니근(up)":{"region":"상체","plus":["상방회전오른쪽","높은어깨오른쪽","과하게펴진어깨2오른쪽","둥근어깨1오른쪽","상부흉추회전오른쪽"],"minus":["하방회전오른쪽","낮은어깨오른쪽","과하게펴진어깨1오른쪽","둥근어깨2오른쪽","상부흉추회전왼쪽"],"total":"3.0"},"Lt앞톱니근(up)":{"region":"상체","plus":["상방회전왼쪽","높은어깨왼쪽","과하게펴진어깨2왼쪽","둥근어깨1왼쪽","상부흉추회전왼쪽"],"minus":["하방회전왼쪽","낮은어깨왼쪽","과하게펴진어깨1왼쪽","둥근어깨2왼쪽","상부흉추회전오른쪽"],"total":""},"Rt앞톱니근(low)":{"region":"상체","plus":["상방회전오른쪽","낮은어깨오른쪽","과하게펴진어깨2오른쪽","둥근어깨1오른쪽","하부흉추회전오른쪽"],"minus":["하방회전오른쪽","높은어깨오른쪽","과하게펴진어깨1오른쪽","둥근어깨2오른쪽","하부흉추회전왼쪽"],"total":"3.0"},"Lt앞톱니근(low)":{"region":"상체","plus":["상방회전왼쪽","낮은어깨왼쪽","과하게펴진어깨2왼쪽","둥근어깨1왼쪽","하부흉추회전왼쪽"],"minus":["하방회전왼쪽","높은어깨왼쪽","과하게펴진어깨1왼쪽","둥근어깨2왼쪽","하부흉추회전오른쪽"],"total":""},"Rt등넓은근(up)":{"region":"상체","plus":["하방회전오른쪽","어깨관절폄오른쪽","어깨관절안쪽돌림오른쪽","낮은어깨오른쪽","어깨관절모음오른쪽","중부흉추회전왼쪽"],"minus":["상방회전오른쪽","어깨관절굽힘오른쪽","어깨관절바깥쪽돌림오른쪽","높은어깨오른쪽","어깨관절벌림오른쪽","중부흉추회전오른쪽"],"total":"5.0"},"Lt등넓은근(up)":{"region":"상체","plus":["하방회전왼쪽","어깨관절폄왼쪽","어깨관절안쪽돌림왼쪽","낮은어깨왼쪽","어깨관절모음왼쪽","중부흉추회전오른쪽"],"minus":["상방회전왼쪽","어깨관절굽힘왼쪽","어깨관절바깥쪽돌림왼쪽","높은어깨왼쪽","어깨관절벌림왼쪽","중부흉추회전왼쪽"],"total":""},"Rt등넓은근(low)":{"region":"상체","plus":["골반전방경사오른쪽","높은골반오른쪽","요추전만오른쪽"],"minus":["골반후방경사오른쪽","낮은골반오른쪽","요추후만오른쪽"],"total":"2.0"},"Lt등넓은근(low)":{"region":"상체","plus":["골반전방경사왼쪽","높은골반왼쪽","요추전만왼쪽"],"minus":["골반후방경사왼쪽","낮은골반왼쪽","요추후만왼쪽"],"total":""},"배곧은근(up)":{"region":"상체","plus":["흉추후만오른쪽","흉추후만왼쪽"],"minus":["흉추전만오른쪽","흉추전만왼쪽"],"total":"1.0"},"배곧은근(low)":{"region":"상체","plus":["골반후방경사오른쪽","골반후방경사왼쪽","요추후만오른쪽","요추후만왼쪽"],"minus":["골반전방경사오른쪽","골반전방경사왼쪽","요추전만오른쪽","요추전만왼쪽"],"total":"1.0"},"Rt 허리네모근(내측)":{"region":"상체","plus":["요추전만오른쪽","요추볼록왼쪽","골반전방경사오른쪽"],"minus":["요추후만오른쪽","요추볼록오른쪽","골반후방경사왼쪽"],"total":"3.0"},"Lt 허리네모근(내측)":{"region":"상체","plus":["요추전만왼쪽","요추볼록오른쪽","골반전방경사왼쪽"],"minus":["요추후만왼쪽","요추볼록왼쪽","골반후방경사왼쪽"],"total":""},"Rt 허리네모근(외측)":{"region":"상체","plus":["요추전만오른쪽","높은골반오른쪽","골반전방경사오른쪽","요추볼록오른쪽+골반후방경사왼쪽+측방편위오른쪽"],"minus":["요추후만오른쪽","낮은골반오른쪽","골반후방경사오른쪽","요추볼록왼쪽+골반후방경사오른쪽+측방편위왼쪽"],"total":"3.0"},"Lt 허리네모근(외측)":{"region":"상체","plus":["요추전만왼쪽","높은골반왼쪽","골반전방경사왼쪽","요추볼록왼쪽+골반후방경사오른쪽+측방편위왼쪽"],"minus":["요추후만왼쪽","낮은골반왼쪽","골반후방경사왼쪽","요추볼록오른쪽+골반후방경사왼쪽+측방편위오른쪽"],"total":""},"Rt 큰허리근(up)":{"region":"상체","plus":["요추볼록왼쪽","요추후만오른쪽"],"minus":["요추볼록오른쪽","요추전만오른쪽"],"total":"2.0"},"Lt 큰허리근(up)":{"region":"상체","plus":["요추볼록오른쪽","요추후만왼쪽"],"minus":["요추볼록왼쪽","요추전만왼쪽"],"total":""},"Rt 큰허리근(low)":{"region":"상체","plus":["요추전만오른쪽","골반전방회전왼쪽"],"minus":["요추후만오른쪽","골반전방회전오른쪽"],"total":"2.0"},"Lt 큰허리근(low)":{"region":"상체","plus":["요추전만왼쪽","골반전방회전오른쪽"],"minus":["요추후만왼쪽","골반전방회전왼쪽"],"total":""},"Rt 엉덩근":{"region":"하지","plus":["엉덩관절굽힘오른쪽","엉덩관절모음오른쪽","엉덩관절바깥쪽돌림오른쪽"],"minus":["엉덩관절폄오른쪽","엉덩관절벌림오른쪽","엉덩관절안쪽돌림오른쪽"],"total":"3.0"},"Lt 엉덩근":{"region":"하지","plus":["엉덩관절굽힘왼쪽","엉덩관절모음왼쪽","엉덩관절바깥쪽돌림왼쪽"],"minus":["엉덩관절폄왼쪽","엉덩관절벌림왼쪽","엉덩관절안쪽돌림왼쪽"],"total":""},"Rt TFL(up)":{"region":"하지","plus":["엉덩관절굽힘오른쪽","엉덩관절벌림오른쪽"],"minus":["엉덩관절폄오른쪽","엉덩관절모음오른쪽"],"total":"2.0"},"Lt TFL (up)":{"region":"하지","plus":["엉덩관절굽힘왼쪽","엉덩관절벌림왼쪽"],"minus":["엉덩관절폄왼쪽","엉덩관절모음왼쪽"],"total":""},"Rt TFL(low)":{"region":"하지","plus":["정강뼈바깥쪽돌림오른쪽"],"minus":["정강뼈안쪽돌림오른쪽"],"total":"1.0"},"Lt TFL (low)":{"region":"하지","plus":["정강뼈바깥쪽돌림왼쪽"],"minus":["정강뼈안쪽돌림왼쪽"],"total":""},"Rt 넙다리곧은근(up)":{"region":"하지","plus":["엉덩관절굽힘오른쪽"],"minus":["엉덩관절폄오른쪽"],"total":"1.0"},"Lt넙다리곧은근(up)":{"region":"하지","plus":["엉덩관절굽힘왼쪽"],"minus":["엉덩관절폄왼쪽"],"total":""},"Rt 넙다리곧은근(low)":{"region":"하지","plus":["무릎폄오른쪽","무릎이올라감오른쪽"],"minus":["무릎굽힘오른쪽","무릎이올라감왼쪽"],"total":"2.0"},"Lt넙다리곧은근(low)":{"region":"하지","plus":["무릎폄왼쪽","무릎이올라감왼쪽"],"minus":["무릎굽힘왼쪽","무릎이올라감오른쪽"],"total":""},"Rt 모음근그룹":{"region":"하지","plus":["엉덩관절모음오른쪽","엉덩관절굽힘오른쪽","엉덩관절바깥쪽돌림오른쪽"],"minus":["엉덩관절벌림오른쪽","엉덩관절폄오른쪽","엉덩관절안쪽돌림오른쪽"],"total":"3.0"},"Lt 모음근그룹":{"region":"하지","plus":["엉덩관절모음왼쪽","엉덩관절굽힘왼쪽","엉덩관절바깥쪽돌림왼쪽"],"minus":["엉덩관절벌림왼쪽","엉덩관절폄왼쪽","엉덩관절안쪽돌림왼쪽"],"total":""},"Rt 이상근":{"region":"하지","plus":["엉덩관절바깥쪽돌림오른쪽","엉덩관절벌림오른쪽"],"minus":["엉덩관절안쪽돌림오른쪽","엉덩관절모음오른쪽"],"total":"2.0"},"Lt 이상근":{"region":"하지","plus":["엉덩관절바깥쪽돌림왼쪽","엉덩관절벌림왼쪽"],"minus":["엉덩관절안쪽돌림왼쪽","엉덩관절모음왼쪽"],"total":""},"Rt 바깥햄스트링 (up)":{"region":"하지","plus":["엉덩관절폄오른쪽","엉덩관절벌림오른쪽"],"minus":["엉덩관절굽힘오른쪽","엉덩관절모음오른쪽"],"total":"2.0"},"Lt 바깥햄스트링 (up)":{"region":"하지","plus":["엉덩관절폄왼쪽","엉덩관절벌림왼쪽"],"minus":["엉덩관절굽힘왼쪽","엉덩관절모음왼쪽"],"total":""},"Rt 안쪽햄스트링 (up)":{"region":"하지","plus":["엉덩관절폄오른쪽","엉덩관절모음오른쪽"],"minus":["엉덩관절굽힘오른쪽","엉덩관절벌림오른쪽"],"total":"2.0"},"Lt 안쪽햄스트링 (up)":{"region":"하지","plus":["엉덩관절폄왼쪽","엉덩관절모음왼쪽"],"minus":["엉덩관절굽힘왼쪽","엉덩관절벌림왼쪽"],"total":""},"Rt 바깥햄스트링 (low)":{"region":"하지","plus":["무릎굽힘오른쪽","정강뼈바깥쪽돌림오른쪽"],"minus":["무릎폄오른쪽","정강뼈안쪽돌림오른쪽"],"total":"2.0"},"Lt 바깥햄스트링 (low)":{"region":"하지","plus":["무릎굽힘왼쪽","정강뼈바깥쪽돌림왼쪽"],"minus":["무릎폄왼쪽","정강뼈안쪽돌림왼쪽"],"total":""},"Rt 안쪽햄스트링 (low)":{"region":"하지","plus":["무릎굽힘오른쪽","정강뼈안쪽돌림오른쪽"],"minus":["무릎폄오른쪽","정강뼈바깥쪽돌림오른쪽"],"total":"2.0"},"Lt 안쪽햄스트링 (low)":{"region":"하지","plus":["무릎굽힘왼쪽","정강뼈안쪽돌림왼쪽"],"minus":["무릎폄왼쪽","정강뼈바깥쪽돌림왼쪽"],"total":""},"Rt 뒤중간볼기근":{"region":"하지","plus":["엉덩관절벌림오른쪽","엉덩관절폄오른쪽"],"minus":["엉덩관절모음오른쪽","엉덩관절굽힘오른쪽"],"total":"2.0"},"Lt 뒤중간볼기근":{"region":"하지","plus":["엉덩관절벌림왼쪽","엉덩관절폄왼쪽"],"minus":["엉덩관절모음왼쪽","엉덩관절굽힘왼쪽"],"total":""},"Rt 대둔근(up)":{"region":"하지","plus":["골반후방경사오른쪽","엉덩관절바깥쪽돌림오른쪽"],"minus":["골반전방경사오른쪽","엉덩관절안쪽돌림오른쪽"],"total":"2.0"},"Lt 대둔근(up)":{"region":"하지","plus":["골반후방경사왼쪽","엉덩관절바깥쪽돌림왼쪽"],"minus":["골반전방경사왼쪽","엉덩관절안쪽돌림왼쪽"],"total":""},"Rt 대둔근(low)":{"region":"하지","plus":["엉덩관절폄오른쪽","엉덩관절벌림오른쪽"],"minus":["엉덩관절굽힘오른쪽","엉덩관절모음오른쪽"],"total":"2.0"},"Lt대둔근(low)":{"region":"하지","plus":["엉덩관절폄왼쪽","엉덩관절벌림왼쪽"],"minus":["엉덩관절굽힘왼쪽","엉덩관절모음왼쪽"],"total":""},"Rt 소둔근":{"region":"하지","plus":["엉덩관절안쪽돌림오른쪽"],"minus":["엉덩관절바깥쪽돌림오른쪽"],"total":"1.0"},"Lt 소둔근":{"region":"하지","plus":["엉덩관절안쪽돌림왼쪽"],"minus":["엉덩관절바깥쪽돌림왼쪽"],"total":""},"Rt 대퇴사두근":{"region":"하지","plus":["무릎폄오른쪽","무릎이올라감오른쪽"],"minus":["무릎굽힘오른쪽","무릎이올라감왼쪽"],"total":"2.0"},"Lt 대퇴사두근":{"region":"하지","plus":["무릎폄왼쪽","무릎이올라감왼쪽"],"minus":["무릎굽힘왼쪽","무릎이올라감오른쪽"],"total":""},"Rt pop":{"region":"하지","plus":["무릎굽힘오른쪽","넙다리뼈바깥쪽돌림+정강뼈안쪽돌림오른쪽"],"minus":["무릎폄오른쪽","넙다리뼈안쪽돌림+정강뼈바깥쪽돌림오른쪽"],"total":"2.0"},"Lt pop":{"region":"하지","plus":["무릎굽힘왼쪽","넙다리뼈바깥쪽돌림+정강뼈안쪽돌림왼쪽"],"minus":["무릎폄왼쪽","넙다리뼈안쪽돌림+정강뼈바깥쪽돌림왼쪽"],"total":""},"Rt T.A":{"region":"하지","plus":["정강뼈앞기울임오른쪽 \n=발등쪽굽힘","정강뼈안쪽돌림오른쪽","발목바깥돌림오른쪽"],"minus":["정강뼈뒤기울임오른쪽 \n=발바닥쪽굽힘","정강뼈바깥쪽돌림오른쪽","발목안쪽돌림오른쪽"],"total":"3.0"},"Lt T.A":{"region":"하지","plus":["정강뼈앞기울임왼쪽  =발등쪽굽힘","정강뼈안쪽돌림왼쪽","발목바깥돌림왼쪽"],"minus":["정강뼈뒤기울임왼쪽 \n=발바닥쪽굽힘","정강뼈바깥쪽돌림왼쪽","발목안쪽돌림왼쪽"],"total":""},"Rt Gas(up-바깥쪽)":{"region":"하지","plus":["무릎굽힘오른쪽","넙다리뼈바깥쪽돌림+정강뼈안쪽돌림오른쪽"],"minus":["무릎폄오른쪽","넙다리뼈안쪽돌림+정강뼈바깥쪽돌림오른쪽"],"total":"2.0"},"Lt Gas(up-바깥쪽)":{"region":"하지","plus":["무릎굽힘왼쪽","넙다리뼈바깥쪽돌림+정강뼈안쪽돌림왼쪽"],"minus":["무릎폄왼쪽","넙다리뼈안쪽돌림+정강뼈바깥쪽돌림왼쪽"],"total":""},"Rt Gas(up-안쪽)":{"region":"하지","plus":["무릎굽힘오른쪽","넙다리뼈안쪽돌림+정강뼈바깥쪽돌림오른쪽"],"minus":["무릎폄오른쪽","넙다리뼈바깥쪽돌림+정강뼈안쪽돌림오른쪽"],"total":"2.0"},"Lt Gas(up-안쪽)":{"region":"하지","plus":["무릎굽힘왼쪽","넙다리뼈안쪽돌림+정강뼈바깥쪽돌림왼쪽"],"minus":["무릎폄왼쪽","넙다리뼈바깥쪽돌림+정강뼈안쪽돌림왼쪽"],"total":""},"Rt Gas(low)":{"region":"하지","plus":["발목발바닥쪽굽힘오른쪽"],"minus":["발목발등쪽굽힘오른쪽"],"total":"1.0"},"Lt Gas(low)":{"region":"하지","plus":["발목발바닥쪽굽힘왼쪽"],"minus":["발목발등쪽굽힘왼쪽"],"total":""},"Rt sol":{"region":"하지","plus":["발목발바닥쪽굽힘오른쪽"],"minus":["발목발등쪽굽힘오른쪽"],"total":"1.0"},"Lt sol":{"region":"하지","plus":["발목발바닥쪽굽힘왼쪽"],"minus":["발목발등쪽굽힘왼쪽"],"total":""},"Rt 제3비골근":{"region":"하지","plus":["발목안쪽돌림오른쪽","발목발등쪽굽힘오른쪽"],"minus":["발목바깥돌림오른쪽","발목발바닥쪽굽힘오른쪽"],"total":"2.0"},"Lt 제3비골근":{"region":"하지","plus":["발목안쪽돌림왼쪽","발목발등쪽굽힘왼쪽"],"minus":["발목바깥돌림왼쪽","발목발바닥쪽굽힘왼쪽"],"total":""},"Rt 장단비골근":{"region":"하지","plus":["발목안쪽돌림오른쪽","발목발바닥쪽굽힘오른쪽","종아리뼈안쪽돌림오른쪽"],"minus":["발목바깥돌림오른쪽","발목발등쪽굽힘오른쪽","종아리뼈바깥쪽돌림오른쪽"],"total":"2.0"},"Lt 장단비골근":{"region":"하지","plus":["발목안쪽돌림왼쪽","발목발바닥쪽굽힘왼쪽","종아리뼈안쪽돌림왼쪽"],"minus":["발목바깥돌림왼쪽","발목발등쪽굽힘왼쪽","종아리뼈바깥쪽돌림왼쪽"],"total":""}},"groups":[{"key":"neck","label":"목·머리","findings":["거북목","머리기울어짐오른쪽","머리기울어짐왼쪽","버섯목","상위경추밴딩오른쪽","상위경추밴딩왼쪽","상위경추회전오른쪽","상위경추회전왼쪽","역c자목","일자목","중하위목뼈볼록오른쪽","중하위목뼈볼록왼쪽","중하위목뼈회전오른쪽","중하위목뼈회전왼쪽"]},{"key":"shoulder","label":"어깨·어깨뼈","findings":["gh관절벌어짐오른쪽","gh관절벌어짐왼쪽","gh관절좁아짐오른쪽","gh관절좁아짐왼쪽","과하게펴진어깨1오른쪽","과하게펴진어깨1왼쪽","과하게펴진어깨2오른쪽","과하게펴진어깨2왼쪽","낮은어깨오른쪽","낮은어깨왼쪽","높은어깨오른쪽","높은어깨왼쪽","둥근어깨1오른쪽","둥근어깨1왼쪽","둥근어깨2오른쪽","둥근어깨2왼쪽","상방회전오른쪽","상방회전왼쪽","어깨관절굽힘오른쪽","어깨관절굽힘왼쪽","어깨관절모음오른쪽","어깨관절모음왼쪽","어깨관절바깥쪽돌림오른쪽","어깨관절바깥쪽돌림왼쪽","어깨관절벌림오른쪽","어깨관절벌림왼쪽","어깨관절안쪽돌림오른쪽","어깨관절안쪽돌림왼쪽","어깨관절폄왼쪽","어깨관절최대굴곡방해오른쪽","어깨관절최대굴곡방해왼쪽","어깨관절폄오른쪽","어깨뼈상각모음오른쪽","어깨뼈상각모음왼쪽","어깨뼈상각벌림오른쪽","어깨뼈상각벌림왼쪽","어깨뼈전방경사오른쪽","어깨뼈전방경사왼쪽","어깨뼈후방경사오른쪽","어깨뼈후방경사왼쪽","최대어깨관절벌림방해오른쪽","최대어깨관절벌림방해왼쪽","하방회전오른쪽","하방회전왼쪽"]},{"key":"arm","label":"팔·손목","findings":["위팔뼈바깥쪽돌림+자뼈안쪽돌림오른쪽","위팔뼈바깥쪽돌림+자뼈안쪽돌림왼쪽","위팔뼈안쪽돌림+자뼈바깥쪽돌림오른쪽","위팔뼈안쪽돌림+자뼈바깥쪽돌림왼쪽","아래팔바깥쪽돌림오른쪽","아래팔바깥쪽돌림왼쪽","아래팔안쪽돌림오른쪽","아래팔안쪽돌림왼쪽","노뼈바깥쪽돌림+자뼈안쪽돌림오른쪽","노뼈바깥쪽돌림+자뼈안쪽돌림왼쪽","노뼈안쪽돌림+자뼈바깥쪽돌림오른쪽","노뼈안쪽돌림+자뼈바깥쪽돌림왼쪽","손목바깥쪽돌림오른쪽","손목바깥쪽돌림왼쪽","손목손등쪽굽힘오른쪽","손목손등쪽굽힘왼쪽","손목손바닥쪽굽힘오른쪽","손목손바닥쪽굽힘왼쪽","손목안쪽돌림오른쪽","손목안쪽돌림왼쪽","팔꿈치굽힘오른쪽","팔꿈치굽힘왼쪽","팔꿈치폄오른쪽","팔꿈치폄왼쪽"]},{"key":"thoracic","label":"흉추","findings":["상부흉추볼록오른쪽","상부흉추볼록왼쪽","상부흉추회전오른쪽","상부흉추회전왼쪽","중부흉추볼록오른쪽","중부흉추볼록왼쪽","중부흉추회전오른쪽","중부흉추회전왼쪽","하부흉추볼록오른쪽","하부흉추볼록왼쪽","하부흉추회전오른쪽","하부흉추회전왼쪽","흉추전만오른쪽","흉추전만왼쪽","흉추회전오른쪽","흉추회전왼쪽","흉추후만오른쪽","흉추후만왼쪽"]},{"key":"lumbar","label":"요추","findings":["요추볼록오른쪽","요추볼록오른쪽+골반후방경사왼쪽+측방편위오른쪽","요추볼록왼쪽","요추볼록왼쪽+골반후방경사오른쪽+측방편위왼쪽","요추전만오른쪽","요추전만왼쪽","요추후만오른쪽","요추후만왼쪽"]},{"key":"pelvis","label":"골반·엉덩","findings":["골반전방경사오른쪽","골반전방경사왼쪽","골반전방회전오른쪽","골반전방회전왼쪽","골반후방경사오른쪽","골반후방경사왼쪽","낮은골반오른쪽","낮은골반왼쪽","높은골반오른쪽","높은골반왼쪽","넙다리뼈바깥쪽돌림+정강뼈안쪽돌림오른쪽","넙다리뼈바깥쪽돌림+정강뼈안쪽돌림왼쪽","넙다리뼈안쪽돌림+정강뼈바깥쪽돌림오른쪽","넙다리뼈안쪽돌림+정강뼈바깥쪽돌림왼쪽","엉덩관절굽힘오른쪽","엉덩관절굽힘왼쪽","엉덩관절모음오른쪽","엉덩관절모음왼쪽","엉덩관절바깥쪽돌림오른쪽","엉덩관절바깥쪽돌림왼쪽","엉덩관절벌림오른쪽","엉덩관절벌림왼쪽","엉덩관절안쪽돌림오른쪽","엉덩관절안쪽돌림왼쪽","엉덩관절폄오른쪽","엉덩관절폄왼쪽"]},{"key":"knee","label":"무릎·다리","findings":["무릎굽힘오른쪽","무릎굽힘왼쪽","무릎이올라감오른쪽","무릎이올라감왼쪽","무릎폄오른쪽","무릎폄왼쪽","정강뼈뒤기울임오른쪽 \n=발바닥쪽굽힘","정강뼈뒤기울임왼쪽 \n=발바닥쪽굽힘","정강뼈바깥쪽돌림오른쪽","정강뼈바깥쪽돌림왼쪽","정강뼈안쪽돌림오른쪽","정강뼈안쪽돌림왼쪽","정강뼈앞기울임오른쪽 \n=발등쪽굽힘","정강뼈앞기울임왼쪽  =발등쪽굽힘","종아리뼈바깥쪽돌림오른쪽","종아리뼈바깥쪽돌림왼쪽","종아리뼈안쪽돌림오른쪽","종아리뼈안쪽돌림왼쪽"]},{"key":"ankle","label":"발목","findings":["발목바깥돌림오른쪽","발목바깥돌림왼쪽","발목발등쪽굽힘오른쪽","발목발등쪽굽힘왼쪽","발목발바닥쪽굽힘오른쪽","발목발바닥쪽굽힘왼쪽","발목안쪽돌림오른쪽","발목안쪽돌림왼쪽"]}],"measure":{"높은어깨오른쪽":{"m":"shoulderHigh","side":"R"},"높은어깨왼쪽":{"m":"shoulderHigh","side":"L"},"낮은어깨오른쪽":{"m":"shoulderHigh","side":"Lopp"},"낮은어깨왼쪽":{"m":"shoulderHigh","side":"Ropp"},"머리기울어짐오른쪽":{"m":"headTilt","side":"R"},"머리기울어짐왼쪽":{"m":"headTilt","side":"L"},"높은골반오른쪽":{"m":"hipHigh","side":"R"},"높은골반왼쪽":{"m":"hipHigh","side":"L"},"무릎이올라감오른쪽":{"m":"kneeHigh","side":"R"},"무릎이올라감왼쪽":{"m":"kneeHigh","side":"L"}},"pos":{"Rt전사각근":{"v":"front","x":72,"y":80},"Lt전사각근":{"v":"front","x":108,"y":80},"Rt중사각근":{"v":"front","x":70,"y":82},"Lt중사각근":{"v":"front","x":110,"y":82},"Rt후사각근":{"v":"back","x":110,"y":86},"Lt후사각근":{"v":"back","x":70,"y":86},"Rt목빗근":{"v":"front","x":66,"y":76},"Lt목빗근":{"v":"front","x":114,"y":76},"롱거스콜리":{"v":"front","x":90,"y":84},"Rt어깨올림근":{"v":"back","x":116,"y":94},"Lt어깨올림근":{"v":"back","x":64,"y":94},"Rt후두하근":{"v":"back","x":104,"y":52},"Lt후두하근":{"v":"back","x":76,"y":52},"목신전근":{"v":"back","x":90,"y":66},"Rt위등세모근":{"v":"back","x":124,"y":92},"Lt위등세모근":{"v":"back","x":56,"y":92},"Rt 중간등세모근":{"v":"back","x":120,"y":132},"Lt 중간등세모근":{"v":"back","x":60,"y":132},"Rt아래등세모근":{"v":"back","x":116,"y":166},"Lt아래등세모근":{"v":"back","x":64,"y":166},"Rt 작은가슴근":{"v":"front","x":60,"y":116},"Lt 작은가슴근":{"v":"front","x":120,"y":116},"Rt 큰가슴근":{"v":"front","x":56,"y":120},"Lt 큰가슴근":{"v":"front","x":124,"y":120},"Rt 부리위팔근":{"v":"front","x":46,"y":134},"Lt 부리위팔근":{"v":"front","x":134,"y":134},"Rt 앞어깨세모근":{"v":"front","x":44,"y":106},"Lt 앞어깨세모근":{"v":"front","x":136,"y":106},"Rt 중간어깨세모근":{"v":"front","x":40,"y":110},"Lt 중간어깨세모근":{"v":"front","x":140,"y":110},"Rt 뒤어깨세모근":{"v":"back","x":138,"y":110},"Lt 뒤어깨세모근":{"v":"back","x":42,"y":110},"Rt 가시위근":{"v":"back","x":128,"y":114},"Lt 가시위근":{"v":"back","x":52,"y":114},"Rt 가시아래근":{"v":"back","x":130,"y":132},"Lt 가시아래근":{"v":"back","x":50,"y":132},"Rt 위팔두갈래근장두(up)":{"v":"front","x":40,"y":158},"Lt 위팔두갈래근장두(up)":{"v":"front","x":140,"y":158},"Rt 위팔두갈래근장두(low)":{"v":"front","x":40,"y":174},"Lt 위팔두갈래근장두(low)":{"v":"front","x":140,"y":174},"Rt 위팔두갈래근단두(up)":{"v":"front","x":40,"y":158},"Lt 위팔두갈래근단두(up)":{"v":"front","x":140,"y":158},"Rt 위팔두갈래근단두(low)":{"v":"front","x":40,"y":174},"Lt 위팔두갈래근단두(low)":{"v":"front","x":140,"y":174},"Rt 위팔세갈래근(long)":{"v":"back","x":142,"y":158},"Lt 위팔세갈래근(long)":{"v":"back","x":38,"y":158},"Rt 위팔세갈래근(내측,외측두)":{"v":"back","x":142,"y":158},"Lt 위팔세갈래근(내측,외측두)":{"v":"back","x":38,"y":158},"Rt 뒤침근":{"v":"front","x":40,"y":204},"Lt 뒤침근":{"v":"front","x":140,"y":204},"Rt 상완근":{"v":"front","x":40,"y":176},"Lt 상완근":{"v":"front","x":140,"y":176},"Rt 손등굽힘근":{"v":"back","x":140,"y":206},"Lt 손등굽힘근":{"v":"back","x":40,"y":206},"Rt 손 바닥굽힘근":{"v":"front","x":40,"y":206},"Lt 손 바닥굽힘근":{"v":"front","x":140,"y":206},"Rt 배빗근(up)":{"v":"front","x":68,"y":188},"Lt 배빗근(up)":{"v":"front","x":112,"y":188},"Rt 배빗근(low)":{"v":"front","x":68,"y":204},"Lt 배빗근(low)":{"v":"front","x":112,"y":204},"Rt 작은마름근":{"v":"back","x":108,"y":138},"Lt 작은마름근":{"v":"back","x":72,"y":138},"Rt 큰마름근":{"v":"back","x":110,"y":146},"Lt 큰마름근":{"v":"back","x":70,"y":146},"Rt앞톱니근(up)":{"v":"front","x":50,"y":158},"Lt앞톱니근(up)":{"v":"front","x":130,"y":158},"Rt앞톱니근(low)":{"v":"front","x":50,"y":174},"Lt앞톱니근(low)":{"v":"front","x":130,"y":174},"Rt등넓은근(up)":{"v":"back","x":128,"y":182},"Lt등넓은근(up)":{"v":"back","x":52,"y":182},"Rt등넓은근(low)":{"v":"back","x":128,"y":198},"Lt등넓은근(low)":{"v":"back","x":52,"y":198},"배곧은근(up)":{"v":"front","x":90,"y":186},"배곧은근(low)":{"v":"front","x":90,"y":202},"Rt 허리네모근(내측)":{"v":"back","x":108,"y":194},"Lt 허리네모근(내측)":{"v":"back","x":72,"y":194},"Rt 허리네모근(외측)":{"v":"back","x":108,"y":194},"Lt 허리네모근(외측)":{"v":"back","x":72,"y":194},"Rt 큰허리근(up)":{"v":"front","x":74,"y":206},"Lt 큰허리근(up)":{"v":"front","x":106,"y":206},"Rt 큰허리근(low)":{"v":"front","x":74,"y":222},"Lt 큰허리근(low)":{"v":"front","x":106,"y":222},"Rt 엉덩근":{"v":"front","x":66,"y":214},"Lt 엉덩근":{"v":"front","x":114,"y":214},"Rt TFL(up)":{"v":"front","x":58,"y":232},"Lt TFL (up)":{"v":"front","x":122,"y":232},"Rt TFL(low)":{"v":"front","x":58,"y":248},"Lt TFL (low)":{"v":"front","x":122,"y":248},"Rt 넙다리곧은근(up)":{"v":"front","x":66,"y":262},"Lt넙다리곧은근(up)":{"v":"front","x":114,"y":262},"Rt 넙다리곧은근(low)":{"v":"front","x":66,"y":278},"Lt넙다리곧은근(low)":{"v":"front","x":114,"y":278},"Rt 모음근그룹":{"v":"front","x":76,"y":276},"Lt 모음근그룹":{"v":"front","x":104,"y":276},"Rt 이상근":{"v":"back","x":116,"y":224},"Lt 이상근":{"v":"back","x":64,"y":224},"Rt 바깥햄스트링 (up)":{"v":"back","x":116,"y":292},"Lt 바깥햄스트링 (up)":{"v":"back","x":64,"y":292},"Rt 안쪽햄스트링 (up)":{"v":"back","x":102,"y":292},"Lt 안쪽햄스트링 (up)":{"v":"back","x":78,"y":292},"Rt 바깥햄스트링 (low)":{"v":"back","x":116,"y":308},"Lt 바깥햄스트링 (low)":{"v":"back","x":64,"y":308},"Rt 안쪽햄스트링 (low)":{"v":"back","x":102,"y":308},"Lt 안쪽햄스트링 (low)":{"v":"back","x":78,"y":308},"Rt 뒤중간볼기근":{"v":"back","x":122,"y":216},"Lt 뒤중간볼기근":{"v":"back","x":58,"y":216},"Rt 대둔근(up)":{"v":"back","x":118,"y":230},"Lt 대둔근(up)":{"v":"back","x":62,"y":230},"Rt 대둔근(low)":{"v":"back","x":118,"y":246},"Lt대둔근(low)":{"v":"back","x":62,"y":246},"Rt 소둔근":{"v":"back","x":116,"y":222},"Lt 소둔근":{"v":"back","x":64,"y":222},"Rt 대퇴사두근":{"v":"front","x":74,"y":286},"Lt 대퇴사두근":{"v":"front","x":106,"y":286},"Rt pop":{"v":"back","x":106,"y":332},"Lt pop":{"v":"back","x":74,"y":332},"Rt T.A":{"v":"front","x":76,"y":374},"Lt T.A":{"v":"front","x":104,"y":374},"Rt Gas(up-바깥쪽)":{"v":"back","x":108,"y":352},"Lt Gas(up-바깥쪽)":{"v":"back","x":72,"y":352},"Rt Gas(up-안쪽)":{"v":"back","x":100,"y":352},"Lt Gas(up-안쪽)":{"v":"back","x":80,"y":352},"Rt Gas(low)":{"v":"back","x":104,"y":376},"Lt Gas(low)":{"v":"back","x":76,"y":376},"Rt sol":{"v":"back","x":102,"y":386},"Lt sol":{"v":"back","x":78,"y":386},"Rt 제3비골근":{"v":"front","x":68,"y":376},"Lt 제3비골근":{"v":"front","x":112,"y":376},"Rt 장단비골근":{"v":"front","x":66,"y":372},"Lt 장단비골근":{"v":"front","x":114,"y":372}}}</script>
+<script type="application/json" id="musclemap">{"Rt전사각근":["Scalenus anterior muscle.r"],"Lt전사각근":["Scalenus anterior muscle.l"],"Rt중사각근":["Scalenus medius muscle.r"],"Lt중사각근":["Scalenus medius muscle.l"],"Rt후사각근":["Scalenus posterior muscle.r"],"Lt후사각근":["Scalenus posterior muscle.l"],"Rt목빗근":["Sternocleidomastoid muscle.r"],"Lt목빗근":["Sternocleidomastoid muscle.l"],"롱거스콜리":["Longus colli muscle.l","Longus colli muscle.r"],"Rt어깨올림근":["Levator scapulae.r"],"Lt어깨올림근":["Levator scapulae.l"],"Rt후두하근":["Rectus posterior major capitis muscle.r","Rectus posterior minor capitis muscle.r","Obliquus superior capitis muscle.r","Obliquus inferior capitis muscle.r"],"Lt후두하근":["Rectus posterior major capitis muscle.l","Rectus posterior minor capitis muscle.l","Obliquus superior capitis muscle.l","Obliquus inferior capitis muscle.l"],"목신전근":["Splenius capitis muscle.l","Splenius capitis muscle.r","Semispinalis colli muscle.l","Semispinalis colli muscle.r"],"Rt위등세모근":["Descending part of trapezius muscle.r"],"Lt위등세모근":["Descending part of trapezius muscle.l"],"Rt 중간등세모근":["Transverse part of trapezius muscle.r"],"Lt 중간등세모근":["Transverse part of trapezius muscle.l"],"Rt아래등세모근":["Ascending part of trapezius muscle.r"],"Lt아래등세모근":["Ascending part of trapezius muscle.l"],"Rt 작은가슴근":["Pectoralis minor muscle.r"],"Lt 작은가슴근":["Pectoralis minor muscle.l"],"Rt 큰가슴근":["Clavicular head of pectoralis major muscle.r","Sternocostal head of pectoralis major muscle.r","(Abdominal part of pectoralis major muscle).r"],"Lt 큰가슴근":["Clavicular head of pectoralis major muscle.l","Sternocostal head of pectoralis major muscle.l","(Abdominal part of pectoralis major muscle).l"],"Rt 부리위팔근":["Coracobrachialis muscle.r"],"Lt 부리위팔근":["Coracobrachialis muscle.l"],"Rt 앞어깨세모근":["Clavicular part of deltoid muscle.r"],"Lt 앞어깨세모근":["Clavicular part of deltoid muscle.l"],"Rt 중간어깨세모근":["Acromial part of deltoid muscle.r"],"Lt 중간어깨세모근":["Acromial part of deltoid muscle.l"],"Rt 뒤어깨세모근":["Scapular spinal part of deltoid muscle.r"],"Lt 뒤어깨세모근":["Scapular spinal part of deltoid muscle.l"],"Rt 가시위근":["Supraspinatus muscle.r"],"Lt 가시위근":["Supraspinatus muscle.l"],"Rt 가시아래근":["Infraspinatus muscle.r"],"Lt 가시아래근":["Infraspinatus muscle.l"],"Rt 위팔두갈래근장두(up)":["Long head of biceps brachii.r"],"Lt 위팔두갈래근장두(up)":["Long head of biceps brachii.l"],"Rt 위팔두갈래근장두(low)":["Long head of biceps brachii.r"],"Lt 위팔두갈래근장두(low)":["Long head of biceps brachii.l"],"Rt 위팔두갈래근단두(up)":["Short head of biceps brachii.r"],"Lt 위팔두갈래근단두(up)":["Short head of biceps brachii.l"],"Rt 위팔두갈래근단두(low)":["Short head of biceps brachii.r"],"Lt 위팔두갈래근단두(low)":["Short head of biceps brachii.l"],"Rt 위팔세갈래근(long)":["Long head of triceps brachii.r"],"Lt 위팔세갈래근(long)":["Long head of triceps brachii.l"],"Rt 위팔세갈래근(내측,외측두)":["Lateral head of triceps brachii.r","Medial head of triceps brachii.r"],"Lt 위팔세갈래근(내측,외측두)":["Lateral head of triceps brachii.l","Medial head of triceps brachii.l"],"Rt 뒤침근":["Supinator.r"],"Lt 뒤침근":["Supinator.l"],"Rt 상완근":["Brachialis muscle.r"],"Lt 상완근":["Brachialis muscle.l"],"Rt 손등굽힘근":["Extensor carpi radialis longus.r","Extensor carpi radialis brevis.r","Humeral head of extensor carpi ulnaris.r","Ulnar head of extensor carpi ulnaris.r","Extensor digitorum.r"],"Lt 손등굽힘근":["Extensor carpi radialis longus.l","Extensor carpi radialis brevis.l","Humeral head of extensor carpi ulnaris.l","Ulnar head of extensor carpi ulnaris.l","Extensor digitorum.l"],"Rt 손 바닥굽힘근":["Flexor carpi radialis.r","Humeral head of flexor carpi ulnaris.r","Ulnar head of flexor carpi ulnaris.r","Palmaris longus muscle.r"],"Lt 손 바닥굽힘근":["Flexor carpi radialis.l","Humeral head of flexor carpi ulnaris.l","Ulnar head of flexor carpi ulnaris.l","Palmaris longus muscle.l"],"Rt 배빗근(up)":["External abdominal oblique muscle.r","Internal abdominal oblique muscle.r"],"Lt 배빗근(up)":["External abdominal oblique muscle.l","Internal abdominal oblique muscle.l"],"Rt 배빗근(low)":["External abdominal oblique muscle.r","Internal abdominal oblique muscle.r"],"Lt 배빗근(low)":["External abdominal oblique muscle.l","Internal abdominal oblique muscle.l"],"Rt 작은마름근":["Rhomboid minor muscle.r"],"Lt 작은마름근":["Rhomboid minor muscle.l"],"Rt 큰마름근":["Rhomboid major muscle.r"],"Lt 큰마름근":["Rhomboid major muscle.l"],"Rt앞톱니근(up)":["Serratus anterior muscle.r"],"Lt앞톱니근(up)":["Serratus anterior muscle.l"],"Rt앞톱니근(low)":["Serratus anterior muscle.r"],"Lt앞톱니근(low)":["Serratus anterior muscle.l"],"Rt등넓은근(up)":["Latissimus dorsi muscle.r"],"Lt등넓은근(up)":["Latissimus dorsi muscle.l"],"Rt등넓은근(low)":["Latissimus dorsi muscle.r"],"Lt등넓은근(low)":["Latissimus dorsi muscle.l"],"배곧은근(up)":["Rectus abdominis muscle.l","Rectus abdominis muscle.r"],"배곧은근(low)":["Rectus abdominis muscle.l","Rectus abdominis muscle.r"],"Rt 허리네모근(내측)":["Quadratus lumborum muscle.r"],"Lt 허리네모근(내측)":["Quadratus lumborum muscle.l"],"Rt 허리네모근(외측)":["Quadratus lumborum muscle.r"],"Lt 허리네모근(외측)":["Quadratus lumborum muscle.l"],"Rt 큰허리근(up)":["Psoas major.r"],"Lt 큰허리근(up)":["Psoas major.l"],"Rt 큰허리근(low)":["Psoas major.r"],"Lt 큰허리근(low)":["Psoas major.l"],"Rt 엉덩근":["Iliacus muscle.r"],"Lt 엉덩근":["Iliacus muscle.l"],"Rt TFL(up)":["Tensor fasciae latae.r"],"Lt TFL (up)":["Tensor fasciae latae.l"],"Rt TFL(low)":["Tensor fasciae latae.r"],"Lt TFL (low)":["Tensor fasciae latae.l"],"Rt 넙다리곧은근(up)":["Rectus femoris muscle.r"],"Lt넙다리곧은근(up)":["Rectus femoris muscle.l"],"Rt 넙다리곧은근(low)":["Rectus femoris muscle.r"],"Lt넙다리곧은근(low)":["Rectus femoris muscle.l"],"Rt 모음근그룹":["Adductor longus.r","Adductor brevis.r","Adductor magnus.r","Pectineus muscle.r","Gracilis muscle.r"],"Lt 모음근그룹":["Adductor longus.l","Adductor brevis.l","Adductor magnus.l","Pectineus muscle.l","Gracilis muscle.l"],"Rt 이상근":["Piriformis muscle.r"],"Lt 이상근":["Piriformis muscle.l"],"Rt 바깥햄스트링 (up)":["Long head of biceps femoris.r","Short head of biceps femoris.r"],"Lt 바깥햄스트링 (up)":["Long head of biceps femoris.l","Short head of biceps femoris.l"],"Rt 안쪽햄스트링 (up)":["Semitendinosus muscle.r","Semimembranosus muscle.r"],"Lt 안쪽햄스트링 (up)":["Semitendinosus muscle.l","Semimembranosus muscle.l"],"Rt 바깥햄스트링 (low)":["Long head of biceps femoris.r","Short head of biceps femoris.r"],"Lt 바깥햄스트링 (low)":["Long head of biceps femoris.l","Short head of biceps femoris.l"],"Rt 안쪽햄스트링 (low)":["Semitendinosus muscle.r","Semimembranosus muscle.r"],"Lt 안쪽햄스트링 (low)":["Semitendinosus muscle.l","Semimembranosus muscle.l"],"Rt 뒤중간볼기근":["Gluteus medius muscle.r"],"Lt 뒤중간볼기근":["Gluteus medius muscle.l"],"Rt 대둔근(up)":["Gluteus maximus muscle.r"],"Lt 대둔근(up)":["Gluteus maximus muscle.l"],"Rt 대둔근(low)":["Gluteus maximus muscle.r"],"Lt대둔근(low)":["Gluteus maximus muscle.l"],"Rt 소둔근":["Gluteus minimus muscle.r"],"Lt 소둔근":["Gluteus minimus muscle.l"],"Rt 대퇴사두근":["Rectus femoris muscle.r","Vastus lateralis muscle.r","Vastus medialis muscle.r","Vastus intermedius muscle.r"],"Lt 대퇴사두근":["Rectus femoris muscle.l","Vastus lateralis muscle.l","Vastus medialis muscle.l","Vastus intermedius muscle.l"],"Rt pop":["Popliteus muscle.r"],"Lt pop":["Popliteus muscle.l"],"Rt T.A":["Tibialis anterior muscle.r"],"Lt T.A":["Tibialis anterior muscle.l"],"Rt Gas(up-바깥쪽)":["Medial head of gastrocnemius.r","Lateral head of gastrocnemius.r"],"Lt Gas(up-바깥쪽)":["Medial head of gastrocnemius.l","Lateral head of gastrocnemius.l"],"Rt Gas(up-안쪽)":["Medial head of gastrocnemius.r","Lateral head of gastrocnemius.r"],"Lt Gas(up-안쪽)":["Medial head of gastrocnemius.l","Lateral head of gastrocnemius.l"],"Rt Gas(low)":["Medial head of gastrocnemius.r","Lateral head of gastrocnemius.r"],"Lt Gas(low)":["Medial head of gastrocnemius.l","Lateral head of gastrocnemius.l"],"Rt sol":["Soleus muscle.r"],"Lt sol":["Soleus muscle.l"],"Rt 제3비골근":["Fibularis tertius muscle.r"],"Lt 제3비골근":["Fibularis tertius muscle.l"],"Rt 장단비골근":["Fibularis longus muscle.r","Fibularis brevis muscle.r"],"Lt 장단비골근":["Fibularis longus muscle.l","Fibularis brevis muscle.l"]}</script>
+
+<script>
+var DATA=JSON.parse(document.getElementById('bodydata').textContent);
+var MUS=DATA.muscles, GROUPS=DATA.groups, POS=DATA.pos||{};
+var NECKSET={}; (GROUPS||[]).forEach(function(g){ if(g.key==='neck') (g.findings||[]).forEach(function(x){NECKSET[x]=1;}); });
+var sel=new Set();       // 선택된 자세 findings
+var autoSet=new Set();   // 자동측정으로 켜진 것
+var lvl={};              // finding -> 정도(1약/2중/3강)
+var photos={front:null,side:null,back:null};
+var view='short';
+
+function toast(m){var t=document.getElementById('toast');if(!t){t=document.createElement('div');t.id='toast';document.body.appendChild(t);}t.textContent=m;t.classList.add('on');clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove('on');},1900);}
+
+/* ---------- 사진 ---------- */
+var SLOTS=[['front','정면(앞)'],['side','측면(옆)'],['back','후면(뒤)']];
+function renderPhotos(){
+  document.getElementById('photos').innerHTML=SLOTS.map(function(s){
+    var src=photos[s[0]];
+    return '<div class="pslot"><div class="drop" onclick="pickPhoto(\''+s[0]+'\')">'+(src?'<img src="'+src+'">':'<div class="ph">＋<br>'+s[1]+'</div>')+'</div><label>'+s[1]+'</label></div>';
+  }).join('');
+}
+function pickPhoto(slot){
+  var inp=document.createElement('input');inp.type='file';inp.accept='image/*';
+  inp.onchange=function(e){var f=e.target.files[0];if(!f)return;resizeImg(f,900,0.85,function(d){photos[slot]=d;renderPhotos();});};
+  inp.click();
+}
+function resizeImg(file,max,q,cb){
+  var img=new Image();img.onload=function(){
+    var sc=Math.min(1,max/Math.max(img.width,img.height));
+    var c=document.createElement('canvas');c.width=Math.round(img.width*sc);c.height=Math.round(img.height*sc);
+    c.getContext('2d').drawImage(img,0,0,c.width,c.height);cb(c.toDataURL('image/jpeg',q));
+  };img.src=URL.createObjectURL(file);
+}
+
+/* ---------- 자세 체크리스트 ---------- */
+function sideLabel(f){return f;}
+var EXMEMBERS={};
+var SP_POSE=['과하게펴진어깨1','과하게펴진어깨2','둥근어깨1','둥근어깨2'];
+function _lb(f){var L=lvl[f]||0;return L>=2?' <b class="lvb">'+(L===2?'2':'3')+'</b>':'';}
+var ANTAG=['손바닥쪽굽힘','손등쪽굽힘','발바닥쪽굽힘','발등쪽굽힘','안쪽돌림','바깥쪽돌림','바깥돌림','벌림','모음','앞기울임','뒤기울임','굽힘','폄'];
+var AX2={'높은어깨':['어깨높이','높음'],'낮은어깨':['어깨높이','낮음'],'상방회전':['어깨뼈회전','상방'],'하방회전':['어깨뼈회전','하방'],'어깨뼈전방경사':['어깨뼈경사','전방'],'어깨뼈후방경사':['어깨뼈경사','후방'],'gh관절벌어짐':['어깨관절','벌림'],'gh관절좁아짐':['어깨관절','모음']};
+var NECK=['거북목','일자목','버섯목','역c자목'];
+var MIDLINE=['머리기울어짐','중하위목뼈','상위경추','흉추','요추','골반'];
+function _classify(f){
+  if(f.indexOf('노뼈')===0&&f.indexOf('자뼈')>=0){var fs=f.slice(-3)==='오른쪽'?'오른쪽':(f.slice(-2)==='왼쪽'?'왼쪽':null); if(fs)return {gid:'forearm_'+fs,glabel:fs+' 하완 회전',olabel:(f.indexOf('노뼈바깥')>=0?'노뼈바깥쪽돌림+자뼈안쪽돌림':'노뼈안쪽돌림+자뼈바깥쪽돌림')};}
+  if(f.indexOf('위팔뼈')===0&&f.indexOf('자뼈')>=0){var us=f.slice(-3)==='오른쪽'?'오른쪽':(f.slice(-2)==='왼쪽'?'왼쪽':null); if(us)return {gid:'uparm_'+us,glabel:us+' 상완 회전',olabel:(f.indexOf('위팔뼈바깥')>=0?'위팔뼈바깥쪽돌림+자뼈안쪽돌림':'위팔뼈안쪽돌림+자뼈바깥쪽돌림')};}
+  if(f.indexOf('넙다리뼈')===0&&f.indexOf('정강뼈')>=0){var ls=f.slice(-3)==='오른쪽'?'오른쪽':(f.slice(-2)==='왼쪽'?'왼쪽':null); if(ls)return {gid:'thighrot_'+ls,glabel:ls+' 대퇴대비 하퇴 회전',olabel:(f.indexOf('넙다리뼈바깥')>=0?'넙다리뼈바깥쪽돌림+정강뼈안쪽돌림':'넙다리뼈안쪽돌림+정강뼈바깥쪽돌림')};}
+  if(f.indexOf('정강뼈앞기울임')===0||f.indexOf('정강뼈뒤기울임')===0)return {hide:true};
+  if(f.indexOf('요추볼록')===0&&f.indexOf('측방편위')>=0)return {gid:'speccombo',glabel:'특수 컴비네이션',olabel:f};
+  if(f.indexOf('+')>=0||f.indexOf('=')>=0||f.indexOf('\n')>=0)return null;
+  if(NECK.indexOf(f)>=0)return {gid:'necktype',glabel:'목 유형',olabel:f};
+  var i,side,base;
+  if(f.slice(-3)==='오른쪽'){side='오른쪽';base=f.slice(0,-3);}
+  else if(f.slice(-2)==='왼쪽'){side='왼쪽';base=f.slice(0,-2);}
+  else return null;
+  var sk=side;
+  for(i=0;i<SP_POSE.length;i++){ if(base.indexOf(SP_POSE[i])===0)return {gid:'shpose_'+side,glabel:sk+' 어깨뼈',olabel:SP_POSE[i].replace('어깨','')}; }
+  if(base.indexOf('어깨뼈상각모음')===0||base.indexOf('어깨뼈상각벌림')===0)return {gid:'scap_'+side,glabel:sk+' 어깨뼈상각',olabel:(base.indexOf('모음')>=0?'모음':'벌림')};
+  if(base==='최대어깨관절벌림방해'||base==='어깨관절최대굴곡방해')return {gid:'maxsh_'+side,glabel:sk+' 어깨관절 최대 가동시',olabel:(base.indexOf('벌림')>=0?'벌림':'굴곡'),multi:true};
+  if(base.indexOf('gh관절')===0)return {hide:true};
+  if(AX2[base])return {gid:'ax2_'+side+'_'+AX2[base][0],glabel:sk+' '+AX2[base][0],olabel:AX2[base][1]};
+  for(i=0;i<ANTAG.length;i++){ var tok=ANTAG[i], p=base.indexOf(tok);
+    if(p>=0){ var prefix=base.slice(0,p)||base, cat=(tok.indexOf('돌림')>=0?'rot':((tok==='벌림'||tok==='모음')?'abd':'flex'));
+      var axl=(cat==='flex'?'굽힘':(cat==='rot'?'회전':'벌림'));
+      var gl=(prefix==='아래팔')?(sk+' 상완대비 하완 회전'):((prefix==='팔꿈치')?(sk+' 팔꿈치 관절'):(sk+' '+prefix+' '+axl));
+      return {gid:'ax_'+side+'_'+prefix+'_'+cat, glabel:gl, olabel:tok}; } }
+  if(base==='흉추전만'||base==='흉추후만')return {gid:'thorax_'+side,glabel:sk+' 흉추',olabel:(base.indexOf('전만')>=0?'전만':'후만')};
+  if(base==='요추전만'||base==='요추후만')return {gid:'lumbar_'+side,glabel:sk+' 요추',olabel:(base.indexOf('전만')>=0?'전만':'후만')};
+  if(base==='골반전방경사'||base==='골반후방경사')return {gid:'pelvistilt_'+side,glabel:sk+' 골반 경사',olabel:(base.indexOf('전방')>=0?'전방':'후방')};
+  if(base==='높은골반')return {gid:'pelvish',glabel:'상대적 골반 높이(높은 쪽 선택)',olabel:side,special:'ph'};
+  if(base==='무릎이올라감')return {gid:'kneepos',glabel:'무릎위치차이(올라간 쪽)',olabel:side};
+  if(base==='낮은골반')return {hide:true};
+  for(i=0;i<MIDLINE.length;i++){ if(base.indexOf(MIDLINE[i])>=0)return {gid:'lr_'+base,glabel:base,olabel:sk}; }
+  return null;
+}
+function _buildItems(findings){
+  var items=[],groups={};
+  findings.forEach(function(f){
+    var c=_classify(f);
+    if(c&&c.hide)return;
+    if(!c){items.push({t:'chip',f:f});return;}
+    if(!groups[c.gid]){groups[c.gid]={glabel:c.glabel,opts:[],multi:c.multi,special:c.special};items.push({t:'grp',gid:c.gid});}
+    groups[c.gid].opts.push({f:f,o:c.olabel});
+  });
+  return {items:items,groups:groups};
+}
+function renderChecklist(){
+  EXMEMBERS={};
+  document.getElementById('checklist').innerHTML=GROUPS.map(function(g){
+    var bi=_buildItems(g.findings);
+    var inner=bi.items.map(function(it){
+      if(it.t==='chip'){var f=it.f,on=sel.has(f),au=autoSet.has(f);
+        return '<span class="chip'+(on?' on':'')+(au?' auto':'')+'" onclick="toggle(\''+esc(f)+'\')">'+f+(au?' <span class="a">🤖</span>':'')+_lb(f)+'</span>';}
+      var grp=bi.groups[it.gid]; EXMEMBERS[it.gid]=grp.opts.map(function(o){return o.f;});
+      var btns=grp.opts.map(function(o){var on=sel.has(o.f),au=autoSet.has(o.f);
+        return '<button class="exo'+(on?' on':'')+(au?' auto':'')+'" onclick="'+(grp.special==='ph'?('pickPelvisHigh(\''+esc(o.f)+'\')'):(grp.multi?('toggle(\''+esc(o.f)+'\')'):('pickEx(\''+esc(it.gid)+'\',\''+esc(o.f)+'\')')))+'">'+o.o+(au?' 🤖':'')+_lb(o.f)+'</button>';}).join('');
+      return '<div class="exg"><span class="exg-l">'+grp.glabel+'</span><span class="exg-o">'+btns+'</span></div>';
+    }).join('');
+    return '<div class="grp"><div class="gh">'+g.label+' <span class="cnt">'+g.findings.length+'</span></div>'+inner+'</div>';
+  }).join('');
+  document.getElementById('selCnt').textContent=sel.size?('· '+sel.size+'개 선택'):'';
+}
+function pickEx(gid,f){var mem=EXMEMBERS[gid]||[],deg=!NECKSET[f]; if(sel.has(f)){ if(deg){var L=lvl[f]||1; if(L<3)lvl[f]=L+1; else {sel.delete(f);delete lvl[f];autoSet.delete(f);}} else {sel.delete(f);delete lvl[f];autoSet.delete(f);} } else {mem.forEach(function(m){sel.delete(m);delete lvl[m];autoSet.delete(m);}); sel.add(f);lvl[f]=1;} renderChecklist();}
+function esc(s){return s.replace(/'/g,"\\'");}
+function pickPelvisHigh(hf){
+  var side=hf.slice(-3)==='오른쪽'?'오른쪽':'왼쪽', opp=(side==='오른쪽'?'왼쪽':'오른쪽');
+  var lowOpp='낮은골반'+opp, highOpp='높은골반'+opp, lowSame='낮은골반'+side;
+  if(sel.has(hf)){ var L=lvl[hf]||1; if(L<3){lvl[hf]=L+1;lvl[lowOpp]=L+1;} else {[hf,lowOpp].forEach(function(x){sel.delete(x);delete lvl[x];autoSet.delete(x);});} }
+  else { [highOpp,lowSame,hf,lowOpp].forEach(function(x){sel.delete(x);delete lvl[x];autoSet.delete(x);}); sel.add(hf);lvl[hf]=1; sel.add(lowOpp);lvl[lowOpp]=1; }
+  renderChecklist();
+}
+function toggle(f){var L=lvl[f]||0; if(!sel.has(f)){sel.add(f);lvl[f]=1;} else if(L<3){lvl[f]=L+1;} else {sel.delete(f);delete lvl[f];autoSet.delete(f);} renderChecklist();}
+function clearAll(){sel.clear();autoSet.clear();lvl={};renderChecklist();toast('전체 해제됨');}
+
+/* ---------- 엔진: 근육별 점수 ---------- */
+/* +조건 선택 = 짧아짐(+1), -조건 선택 = 늘어남(-1). 합산>0 = 짧아진 키머슬 */
+function computeAll(){
+  var out=[];
+  for(var name in MUS){var m=MUS[name];var s=0;
+    (m.plus||[]).forEach(function(f){if(sel.has(f))s+=(lvl[f]||1);});
+    (m.minus||[]).forEach(function(f){if(sel.has(f))s-=(lvl[f]||1);});
+    var tot=parseFloat(m.total)|| (m.plus.length||1);
+    var pct=tot? Math.round(s/tot*100):0;
+    out.push({name:name,region:m.region,score:s,pct:pct,total:tot});
+  }
+  return out;
+}
+
+/* ---------- 자동 분석 (MediaPipe Pose) ---------- */
+function runAuto(){
+  if(!photos.front){toast('정면 사진을 먼저 넣어주세요');return;}
+  var b=document.getElementById('btnAuto');b.disabled=true;b.textContent='🤖 분석 중…';
+  var img=new Image();
+  img.onload=function(){
+    if(!window.BODY_detectPose){toast('포즈 엔진 로딩 중… 잠시 후 다시');b.disabled=false;b.textContent='🤖 정면 사진 자동 분석';return;}
+    window.BODY_detectPose(img).then(function(lm){
+      b.disabled=false;b.textContent='🤖 정면 사진 자동 분석';
+      if(!lm){toast('사람을 인식하지 못했어요 (전신이 다 나오게 촬영)');return;}
+      applyPose(lm,img);
+    }).catch(function(e){b.disabled=false;b.textContent='🤖 정면 사진 자동 분석';toast('자동 분석 실패: '+(e&&e.message||e));});
+  };
+  img.src=photos.front;
+}
+function autoPick(hiR,hiL,names,T){ /* names: [R높,L높] 형태로 처리는 호출부에서 */ }
+function applyPose(lm,img){
+  function y(i){return lm[i]?lm[i].y:null;}
+  var shY=(y(11)+y(12))/2, hipY=(y(23)+y(24))/2;
+  var torso=Math.abs(shY-hipY)||0.3, T=torso*0.02;
+  var added=[];
+  function setF(f){var opp=f.slice(-3)==='오른쪽'?(f.slice(0,-3)+'왼쪽'):(f.slice(-2)==='왼쪽'?(f.slice(0,-2)+'오른쪽'):null);if(opp){sel.delete(opp);delete lvl[opp];autoSet.delete(opp);}sel.add(f);lvl[f]=1;autoSet.add(f);added.push(f);}
+  function pair(rY,lY,Rname,Lname,RoppLow,LoppLow){
+    // 본인 오른쪽 landmark = 홀수? MediaPipe: 11=왼어깨(본인), 12=오른어깨(본인)
+    if(rY==null||lY==null)return;
+    if(rY < lY-T){setF(Rname); if(RoppLow)setF(RoppLow);}      // 오른쪽이 더 높음(y작음)
+    else if(lY < rY-T){setF(Lname); if(LoppLow)setF(LoppLow);}
+  }
+  // 어깨: 12=오른(본인), 11=왼
+  pair(y(12),y(11),'높은어깨오른쪽','높은어깨왼쪽','낮은어깨왼쪽','낮은어깨오른쪽');
+  // 골반: 24=오른, 23=왼
+  pair(y(24),y(23),'높은골반오른쪽','높은골반왼쪽',null,null);
+  // 무릎: 26=오른, 25=왼
+  pair(y(26),y(25),'무릎이올라감오른쪽','무릎이올라감왼쪽',null,null);
+  // 머리기울임: 귀 8=오른,7=왼. 오른쪽으로 기울면 오른귀가 내려감(y큼)
+  var e8=y(8),e7=y(7);
+  if(e8!=null&&e7!=null){ if(e8>e7+T)setF('머리기울어짐오른쪽'); else if(e7>e8+T)setF('머리기울어짐왼쪽'); }
+  drawPose(lm,img);
+  renderChecklist();
+  toast(added.length? ('자동 판정 '+added.length+'개: '+added.join(', ')) : '뚜렷한 좌우차가 없어요(중립)');
+}
+function drawPose(lm,img){
+  var c=document.getElementById('poseCv');var W=Math.min(img.width,600),H=img.height*(W/img.width);
+  c.width=W;c.height=H;c.style.display='block';var ctx=c.getContext('2d');
+  ctx.drawImage(img,0,0,W,H);
+  var link=[[11,12],[11,23],[12,24],[23,24],[23,25],[24,26],[25,27],[26,28],[11,13],[13,15],[12,14],[14,16]];
+  ctx.strokeStyle='rgba(255,79,158,.9)';ctx.lineWidth=2;
+  link.forEach(function(p){if(lm[p[0]]&&lm[p[1]]){ctx.beginPath();ctx.moveTo(lm[p[0]].x*W,lm[p[0]].y*H);ctx.lineTo(lm[p[1]].x*W,lm[p[1]].y*H);ctx.stroke();}});
+  ctx.fillStyle='#7A5AE0';lm.forEach(function(p){if(p){ctx.beginPath();ctx.arc(p.x*W,p.y*H,3,0,7);ctx.fill();}});
+}
+
+/* ---------- 3D/평면 전환 ---------- */
+var _hideNeut=false;
+function toggleNeutral3D(){_hideNeut=!_hideNeut; if(window.BODY_hideNeutral3D)window.BODY_hideNeutral3D(_hideNeut); var b=document.getElementById('peelBtn'); if(b){b.textContent=_hideNeut?'✕ 전체 근육 보기':'겉근육 벗기기(속근육 보기)'; b.style.background=_hideNeut?'#e0396f':'rgba(255,255,255,.9)'; b.style.color=_hideNeut?'#fff':'#333';}}
+function bodyTab(v){
+  var is3=v==='3d';
+  document.getElementById('body3d').style.display=is3?'block':'none';
+  document.getElementById('bodymap').style.display=is3?'none':'block';
+  document.getElementById('tab3d').classList.toggle('on',is3);
+  document.getElementById('tab2d').classList.toggle('on',!is3);
+  if(is3&&window.BODY_resize3D)setTimeout(window.BODY_resize3D,50);
+  if(!is3&&window._res)drawBodyMap();
+}
+
+/* ---------- 관리 가이드: 이완/강화 · 부위별 · 순위+% ---------- */
+function guideWhy(name){
+  var m=MUS[name]; if(!m)return;
+  function lst(arr){return (arr||[]).filter(function(f){return sel.has(f);}).map(function(f){return '<li>'+f+((lvl[f]||1)>1?' <b>(정도 '+lvl[f]+')</b>':'')+'</li>';}).join('');}
+  var pl=lst(m.plus), mi=lst(m.minus);
+  var sc=(window._res||[]).filter(function(x){return x.name===name;})[0];
+  var html='<div style="font-weight:800;font-size:15px;margin-bottom:4px">'+name+'</div>'
+    +(sc?'<div class="muted" style="margin-bottom:10px">'+(sc.score>0?'짧아짐 ':'늘어남 ')+Math.min(100,Math.abs(sc.pct))+'% · 점수 '+(sc.score>0?'+':'')+sc.score+'</div>':'')
+    +'<div style="color:#e0396f;font-weight:800;font-size:13px">🔴 짧게 만든 자세</div><ul style="margin:2px 0 10px 18px;color:#2a2f38">'+(pl||'<li class="muted">없음</li>')+'</ul>'
+    +'<div style="color:#2f8fd6;font-weight:800;font-size:13px">🔵 늘어나게 한 자세</div><ul style="margin:2px 0 0 18px;color:#2a2f38">'+(mi||'<li class="muted">없음</li>')+'</ul>';
+  var o=document.getElementById('whyOverlay');
+  if(!o){o=document.createElement('div');o.id='whyOverlay';o.onclick=function(e){if(e.target===o)o.style.display='none';};document.body.appendChild(o);}
+  o.innerHTML='<div class="why-card">'+html+'<button onclick="document.getElementById(\'whyOverlay\').style.display=\'none\'" style="margin-top:14px;width:100%;padding:11px;border:none;border-radius:10px;background:#232733;color:#fff;font-weight:800">닫기</button></div>';
+  o.style.display='flex';
+}
+function _cat(name){
+  var m=MUS[name], p=POS[name];
+  var upper=(m&&m.region==='하지')?false:true;
+  var back=(p&&p.v==='back');
+  if(upper) return back?'상체 후면':'상체 전면';
+  return back?'하체 후면':'하체 전면';
+}
+function renderGuide(){
+  var box=document.getElementById('guideBox'); if(!box)return;
+  var res=window._res||[];
+  var CATS=['상체 후면','상체 전면','하체 후면','하체 전면'];
+  function block(list,title,col){
+    if(!list.length) return '<div style="font-weight:800;color:'+col+';margin:12px 0 4px">'+title+'</div><div class="muted" style="margin-bottom:4px">해당 없음</div>';
+    var byc={}; CATS.forEach(function(c){byc[c]=[];});
+    list.forEach(function(x){ byc[_cat(x.name)].push(x); });
+    var html='<div style="font-weight:800;color:'+col+';margin:12px 0 4px;font-size:14px">'+title+'</div>';
+    CATS.forEach(function(c){
+      var arr=byc[c].slice().sort(function(a,b){return Math.abs(b.pct)-Math.abs(a.pct);});
+      if(!arr.length)return;
+      var lab=c+(c==='하체 전면'?'(내전근 포함)':'');
+      html+='<div style="font-weight:700;font-size:12.5px;margin:7px 0 2px;color:#3a414e">'+lab+'</div>';
+      html+='<ol style="margin:0 0 2px 20px;padding:0;color:#2a2f38">'+arr.map(function(x){
+        return '<li style="margin:1px 0;cursor:pointer" onclick="guideWhy(\''+x.name+'\')">'+x.name+' <span style="color:#8a92a0;font-weight:700">('+Math.min(100,Math.abs(x.pct))+'% '+(x.score>0?'짧음':'늘어남')+')</span></li>';
+      }).join('')+'</ol>';
+    });
+    return html;
+  }
+  var shorten=res.filter(function(x){return x.score>0;});
+  var lengthen=res.filter(function(x){return x.score<0;});
+  if(!shorten.length&&!lengthen.length){ box.innerHTML='<span class="muted">분석 결과가 없어요. 자세를 선택하고 분석하기를 누르세요.</span>'; return; }
+  box.innerHTML=block(shorten,'🔴 이완이 필요한 근육 (짧아진)','#e0396f')+block(lengthen,'🔵 강화가 필요한 근육 (늘어난)','#2f8fd6');
+}
+
+/* ---------- 인체 근육 지도 (앞/뒤) ---------- */
+function silhouette(inner){
+  return '<svg viewBox="0 0 180 460" style="width:100%;max-width:250px;height:auto">'
+    +'<g fill="#e6eaf1" stroke="#c9d1de" stroke-width="1.2" stroke-linejoin="round">'
+    +'<ellipse cx="90" cy="34" rx="18" ry="21"/>'
+    +'<path d="M82 51 L98 51 L100 69 L80 69 Z"/>'
+    +'<path d="M56 72 Q90 62 124 72 L119 120 Q117 150 111 176 L108 230 Q90 241 72 230 L69 176 Q63 150 61 120 Z"/>'
+    +'<path d="M56 74 Q43 77 40 93 L45 200 Q46 210 52 208 L59 97 Q59 82 56 74 Z"/>'
+    +'<path d="M124 74 Q137 77 140 93 L135 200 Q134 210 128 208 L121 97 Q121 82 124 74 Z"/>'
+    +'<path d="M72 232 L68 338 L66 446 Q66 456 79 456 L83 338 L87 232 Z"/>'
+    +'<path d="M108 232 L112 338 L114 446 Q114 456 101 456 L97 338 L93 232 Z"/>'
+    +'</g>'+inner+'</svg>';
+}
+function drawBodyMap(){
+  var flat=window.BODY_flat3D?window.BODY_flat3D():null;
+  if(flat&&flat.front){
+    document.getElementById('bodymap').innerHTML=
+      '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;background:#080b12;border-radius:12px;padding:10px 8px">'
+      +'<div style="flex:1;min-width:140px;max-width:280px;text-align:center"><div style="color:#c2cad6;font-weight:800;margin-bottom:2px">앞모습</div><img src="'+flat.front+'" style="width:100%;border-radius:8px"></div>'
+      +'<div style="flex:1;min-width:140px;max-width:280px;text-align:center"><div style="color:#c2cad6;font-weight:800;margin-bottom:2px">뒷모습</div><img src="'+flat.back+'" style="width:100%;border-radius:8px"></div>'
+      +'</div>'
+      +'<div class="muted" style="text-align:center;margin-top:6px"><span style="color:#e0396f;font-weight:800">● 짧아짐(풀 곳)</span> &nbsp; <span style="color:#2f8fd6;font-weight:800">● 늘어남</span> · 해부 모델 앞/뒤(3D와 동일)</div>';
+    document.getElementById('bodymap').style.display='block';
+    return;
+  }
+  var res=(window._res||[]);
+  var mk={front:'',back:''};
+  res.forEach(function(x){
+    if(x.score===0)return; var p=POS[x.name]; if(!p)return;
+    var short=x.score>0, a=Math.min(100,Math.abs(x.pct));
+    var r=(4.2+Math.min(5,a/16)).toFixed(1), op=Math.min(1,0.78+a/130).toFixed(2), c=short?'#e0396f':'#2f8fd6';
+    mk[p.v]+='<circle cx="'+p.x+'" cy="'+p.y+'" r="'+r+'" fill="'+c+'" opacity="'+op+'" stroke="#fff" stroke-width="0.9"><title>'+x.name+' ('+(short?'짧아짐':'늘어남')+' '+a+'%)</title></circle>';
+  });
+  document.getElementById('bodymap').innerHTML=
+    '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">'
+    +'<div style="flex:1;min-width:150px;max-width:280px;text-align:center"><div class="muted" style="font-weight:800;margin-bottom:2px">앞모습</div>'+silhouette(mk.front)+'</div>'
+    +'<div style="flex:1;min-width:150px;max-width:280px;text-align:center"><div class="muted" style="font-weight:800;margin-bottom:2px">뒷모습</div>'+silhouette(mk.back)+'</div>'
+    +'</div>'
+    +'<div class="muted" style="text-align:center;margin-top:6px"><span style="color:#e0396f;font-weight:800">● 짧아짐(풀 곳)</span> &nbsp; <span style="color:#2f8fd6;font-weight:800">● 늘어남</span> · 점 크기=정도 · 탭하면 이름</div>';
+  document.getElementById('bodymap').style.display='block';
+}
+
+/* ---------- 결과 렌더 ---------- */
+function analyze(){
+  if(sel.size===0){toast('자세를 하나 이상 선택하세요');return;}
+  document.getElementById('seg').style.display='flex';
+  document.getElementById('bodyview').style.display='block';
+  window._res=computeAll();
+  if(window.BODY_update3D)window.BODY_update3D(window._res);
+  drawBodyMap();
+  renderGuide();
+  if(window.BODY_resize3D)setTimeout(window.BODY_resize3D,60);
+  setView(view);
+  document.getElementById('rank').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function setView(v){
+  view=v;
+  Array.prototype.forEach.call(document.querySelectorAll('#seg button'),function(b){b.classList.toggle('on',b.dataset.v===v);});
+  var r=(window._res||[]).slice();
+  var list;
+  if(v==='short')list=r.filter(function(x){return x.score>0;}).sort(function(a,b){return b.pct-a.pct;});
+  else if(v==='long')list=r.filter(function(x){return x.score<0;}).sort(function(a,b){return a.pct-b.pct;});
+  else list=r.filter(function(x){return x.score!==0;}).sort(function(a,b){return b.pct-a.pct;});
+  var box=document.getElementById('rank'),emp=document.getElementById('empty');
+  if(!list.length){box.innerHTML='';emp.style.display='block';return;}
+  emp.style.display='none';
+  box.innerHTML=list.map(function(x){
+    var isShort=x.score>0, w=Math.min(100,Math.abs(x.pct));
+    var g=guideGet(x.name);
+    return '<li class="'+(isShort?'short':'long')+'">'
+      +'<div class="top"><span class="nm" onclick="editGuide(\''+esc(x.name)+'\')">'+x.name+'</span>'
+      +'<span class="pc" style="color:'+(isShort?'var(--short)':'var(--long)')+'">'+(isShort?'짧아짐 ':'늘어남 ')+Math.abs(x.pct)+'%</span></div>'
+      +'<div class="reg">'+x.region+' · 점수 '+(x.score>0?'+':'')+x.score+'/'+x.total+'</div>'
+      +'<div class="bar '+(isShort?'short':'long')+'"><i style="'+(isShort?'left:0;':'right:0;')+'width:'+w+'%"></i></div>'
+      +(g?'<div class="gd">💠 '+g+'</div>':'')
+      +'</li>';
+  }).join('');
+}
+
+/* ---------- 근육별 관리 가이드 (로컬 저장) ---------- */
+function guideKey(){return 'sbody_guide';}
+function guideAll(){try{return JSON.parse(localStorage.getItem(guideKey())||'{}');}catch(e){return {};}}
+function guideGet(n){return guideAll()[n]||'';}
+function editGuide(n){
+  var cur=guideGet(n);
+  var v=prompt('['+n+'] 관리법 (대표 입력):',cur);
+  if(v===null)return;
+  var all=guideAll();if(v.trim())all[n]=v.trim();else delete all[n];
+  localStorage.setItem(guideKey(),JSON.stringify(all));
+  setView(view);toast('저장됨(이 기기)');
+}
+
+function showView(v){var a=document.getElementById('view-analyze'),r=document.getElementById('view-records');if(a)a.style.display=v==='analyze'?'block':'none';if(r)r.style.display=v==='records'?'block':'none';var na=document.getElementById('navAnalyze'),nr=document.getElementById('navRecords');if(na)na.classList.toggle('on',v==='analyze');if(nr)nr.classList.toggle('on',v==='records');if(v==='records')renderRecords();window.scrollTo(0,0);}
+var SB_URL='https://xzclowgorxhcbsfrrbop.supabase.co', SB_KEY='sb_publishable_66Ts2AQrKrjfitjTi11uCQ_dGXiY_EZ';
+function _sbH(x){return Object.assign({apikey:SB_KEY,Authorization:'Bearer '+(authTok||SB_KEY),'Content-Type':'application/json'},x||{});}
+/* ===== 스파드블랑 단일 공용계정 로그인 게이트 ===== */
+var authTok=null,_authT=null;
+function authGw(){return SB_URL.replace(/\/+$/,'')+'/auth/v1';}
+function authLoad(){try{return JSON.parse(localStorage.getItem('spadeblanc_auth')||'null');}catch(e){return null;}}
+function authSaveL(o){try{o?localStorage.setItem('spadeblanc_auth',JSON.stringify(o)):localStorage.removeItem('spadeblanc_auth');}catch(e){}}
+function authEmail(){var a=authLoad();return(a&&a.email)||null;}
+function authSched(){if(_authT)clearTimeout(_authT);_authT=setTimeout(authRefresh,40*60*1000);}
+async function authLogin(email,pw){
+  var r=await fetch(authGw()+'/token?grant_type=password',{method:'POST',headers:{apikey:SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({email:email,password:pw})});
+  var j=await r.json().catch(function(){return{};});
+  if(!r.ok||!j.access_token)throw new Error(j.error_description||j.msg||j.error||('로그인 실패 HTTP '+r.status));
+  authTok=j.access_token;authSaveL({email:email,refresh_token:j.refresh_token});authSched();return j;
+}
+async function authRefresh(){
+  var a=authLoad();if(!a||!a.refresh_token)return false;
+  try{
+    var r=await fetch(authGw()+'/token?grant_type=refresh_token',{method:'POST',headers:{apikey:SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:a.refresh_token})});
+    var j=await r.json();if(!r.ok||!j.access_token)throw 0;
+    authTok=j.access_token;authSaveL({email:a.email,refresh_token:j.refresh_token});authSched();return true;
+  }catch(e){authTok=null;return false;}
+}
+function showGate(show){var g=document.getElementById('loginGate');if(g)g.style.display=show?'flex':'none';}
+function authLogout(){authTok=null;authSaveL(null);if(_authT)clearTimeout(_authT);var m=document.getElementById('gateMsg');if(m)m.textContent='';showGate(true);}
+async function doLogin(){
+  var e=(document.getElementById('gateEmail').value||'').trim(), p=document.getElementById('gatePw').value||'';
+  var msg=document.getElementById('gateMsg'); if(!e||!p){msg.textContent='이메일·비밀번호를 입력하세요';return;} msg.textContent='로그인 중…';
+  try{ await authLogin(e,p); msg.textContent=''; document.getElementById('gatePw').value=''; showGate(false); renderRecords(); toast('로그인됨: '+e); }
+  catch(err){ msg.textContent='❌ '+((err&&err.message)||err); }
+}
+async function authBoot(){ var ok=await authRefresh(); if(ok){ showGate(false); renderRecords(); } else { showGate(true); } }
+function _recAll(){try{return JSON.parse(localStorage.getItem('spadeblanc_records')||'[]');}catch(e){return [];}}
+function _recSave(a){try{localStorage.setItem('spadeblanc_records',JSON.stringify(a));}catch(e){}}
+function _recState(r){return (r&&r.state)||(r&&r.data&&r.data.state)||{};}
+async function saveRecord(){
+  var nm=(document.getElementById('recName').value||'').trim();
+  if(!nm){toast('고객 이름을 입력하세요');return;}
+  if(sel.size===0){toast('자세를 선택한 뒤 저장하세요');return;}
+  var st={}; sel.forEach(function(fx){st[fx]=lvl[fx]||1;});
+  var d=new Date(), ds=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
+  var gv=function(id){var e=document.getElementById(id);return e?(e.value||'').trim():'';};
+  var ph=gv('recPhone'); var extra={phone:ph,gender:gv('recGender'),age:gv('recAge'),route:gv('recRoute'),memo:gv('recMemo')};
+  var rec={id:'b'+Date.now(),name:nm,phone:ph,date:ds,data:Object.assign({state:st},extra)};
+  var ok=false;
+  try{
+    var r=await fetch(SB_URL+'/rest/v1/spadeblanc_records',{method:'POST',headers:_sbH({Prefer:'resolution=merge-duplicates,return=minimal'}),body:JSON.stringify(Object.assign({updated_at:new Date().toISOString()},rec))});
+    if(r.ok)ok=true; else throw new Error('HTTP '+r.status);
+  }catch(e){ var arr=_recAll(); arr.unshift(Object.assign({state:st,phone:ph},rec)); _recSave(arr); }
+  document.getElementById('recName').value='';
+  toast(ok?('☁️ 클라우드 저장됨: '+nm):('로컬 저장됨(클라우드 미설정): '+nm));
+  renderRecords();
+}
+async function renderRecords(){
+  var box=document.getElementById('recList'); if(box)box.innerHTML='<div class="muted">불러오는 중…</div>';
+  var arr=null;
+  try{
+    var r=await fetch(SB_URL+'/rest/v1/spadeblanc_records?select=id,name,date,data&order=updated_at.desc',{headers:_sbH()});
+    if(r.ok)arr=await r.json(); else throw new Error('HTTP '+r.status);
+  }catch(e){ arr=_recAll(); }
+  window._recCache=arr||[];
+  _paintRecords();
+}
+function _paintRecords(){
+  var box=document.getElementById('recList'); if(!box)return;
+  var se=document.getElementById('recSearch'); var q=((se&&se.value)||'').trim().toLowerCase();
+  var arr=(window._recCache||[]).filter(function(r){return !q||(((r.name||'')+' '+((r.data&&r.data.phone)||r.phone||'')).toLowerCase().indexOf(q)>=0);});
+  if(!arr.length){box.innerHTML='<div class="muted">'+(q?'검색 결과 없음':'저장된 기록이 없어요. (분석 탭에서 저장)')+'</div>';return;}
+  var groups={},order=[];
+  arr.forEach(function(r){var nm=r.name||'(이름없음)'; if(!groups[nm]){groups[nm]=[];order.push(nm);} groups[nm].push(r);});
+  box.innerHTML=order.map(function(nm){
+    var sess=groups[nm].slice().sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
+    return '<div style="margin-bottom:10px;border:1px solid var(--line);border-radius:10px;overflow:hidden">'
+      +'<div style="background:#f7f8fb;padding:9px 12px;font-weight:800">👤 '+nm.replace(/</g,'&lt;')+' <span class="muted" style="font-size:12px;font-weight:600">· '+sess.length+'회</span>'+(function(){var ph='';sess.forEach(function(r){var p=(r.data&&r.data.phone)||r.phone;if(p&&!ph)ph=p;});return ph?' <span class="muted" style="font-size:12px;font-weight:600">📞 '+ph.replace(/</g,'&lt;')+'</span>':'';})()+'</div>'
+      +sess.map(function(r){var cnt=Object.keys(_recState(r)).length;
+        return '<div style="display:flex;align-items:center;gap:6px;padding:8px 12px;border-top:1px solid #f0f1f5"><div style="flex:1;min-width:0"><span class="muted" style="font-size:12.5px">'+(r.date||'')+' · '+cnt+'항목</span></div><button class="btn" style="padding:6px 10px;font-size:12px" onclick="loadRecord(\''+r.id+'\')">불러오기</button><button class="btn" style="padding:6px 10px;font-size:12px;color:#c02" onclick="delRecord(\''+r.id+'\')">삭제</button></div>';
+      }).join('')
+      +'</div>';
+  }).join('');
+}
+function loadRecord(id){
+  var r=(window._recCache||_recAll()).filter(function(x){return x.id===id;})[0]; if(!r)return;
+  var st=_recState(r);
+  sel.clear(); autoSet.clear(); lvl={};
+  Object.keys(st).forEach(function(fx){sel.add(fx);lvl[fx]=st[fx]||1;});
+  renderChecklist();
+  var e=document.getElementById('recName'); if(e)e.value=r.name||'';
+  var pe=document.getElementById('recPhone'); if(pe)pe.value=(r.data&&r.data.phone)||r.phone||'';
+  var dd=r.data||{}; var sv=function(id,val){var el=document.getElementById(id);if(el)el.value=val||'';};
+  sv('recGender',dd.gender); sv('recAge',dd.age); sv('recRoute',dd.route); sv('recMemo',dd.memo);
+  showView('analyze');
+  toast('불러옴: '+(r.name||'')+' · [분석하기]를 눌러 결과 보기'); window.scrollTo(0,0);
+}
+async function delRecord(id){
+  if(!confirm('이 기록을 삭제할까요?'))return;
+  try{ await fetch(SB_URL+'/rest/v1/spadeblanc_records?id=eq.'+encodeURIComponent(id),{method:'DELETE',headers:_sbH({Prefer:'return=minimal'})}); }catch(e){}
+  _recSave(_recAll().filter(function(x){return x.id!==id;}));
+  renderRecords(); toast('삭제됨');
+}
+renderPhotos();renderChecklist();authBoot();
+</script>
+
+<script type="module">
+import {PoseLandmarker, FilesetResolver} from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs";
+let pl=null;
+async function init(){
+  const files=await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm");
+  pl=await PoseLandmarker.createFromOptions(files,{
+    baseOptions:{modelAssetPath:"https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task"},
+    runningMode:"IMAGE", numPoses:1
+  });
+}
+window.BODY_detectPose=async function(img){
+  if(!pl)await init();
+  const res=pl.detect(img);
+  if(!res||!res.landmarks||!res.landmarks.length)return null;
+  return res.landmarks[0];
+};
+init().catch(function(e){console.warn('pose init',e);});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/DRACOLoader.js"></script>
+<script>
+(function(){
+  var ready=false,pending=null,colored={},hideNeutral=false,musRoot=null;
+  function fail(msg){var n=document.getElementById('no3d');if(n){n.style.display='block';var hint=/webgl|context/i.test(msg)?' → 크롬 탭을 여러 개 닫고 아래 [다시 시도]를 누르세요. 안 되면 크롬 완전 종료(⌘Q) 후 재실행, 또는 설정→시스템→"하드웨어 가속 사용" 켜기.':' → 인터넷/브라우저 확인';n.innerHTML='<div>3D를 불러오지 못했어요: '+msg+hint+'</div><button onclick="BODY_retry3D()" style="margin-top:10px;padding:9px 18px;border:none;border-radius:10px;background:#232733;color:#fff;font-weight:800;cursor:pointer">🔄 다시 시도</button>';}var c=document.getElementById('cv3d');if(c)c.style.display='none';}
+  window.BODY_update3D=function(res){pending=res;};
+  window.BODY_resize3D=function(){};
+  window.BODY_retry3D=function(){var old=document.getElementById('cv3d');if(old){var nc=document.createElement('canvas');nc.id='cv3d';old.parentNode.replaceChild(nc,old);}var n=document.getElementById('no3d');if(n)n.style.display='none';ready=false;start();};
+  function start(){
+    if(ready)return;
+    try{
+      if(typeof THREE==='undefined'||!THREE.OrbitControls||!THREE.GLTFLoader||!THREE.DRACOLoader){ fail('그래픽 라이브러리 로딩 실패 — 인터넷 또는 브라우저 확인(카톡/인스타 인앱이면 Safari·Chrome으로 열기)'); return; }
+      var MAP=JSON.parse(document.getElementById('musclemap').textContent);
+      var cv=document.getElementById('cv3d');
+      var renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true,preserveDrawingBuffer:true,failIfMajorPerformanceCaveat:false,powerPreference:'default'});
+      renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1));
+      try{renderer.outputEncoding=THREE.sRGBEncoding;}catch(e){}
+      var scene=new THREE.Scene();scene.background=new THREE.Color(0x080b12);
+      var cam=new THREE.PerspectiveCamera(35,1,0.01,1000);
+      var controls=new THREE.OrbitControls(cam,cv);
+      controls.enableDamping=true;controls.dampingFactor=0.08;controls.enablePan=true;controls.screenSpacePanning=true;controls.rotateSpeed=0.9;
+      scene.add(new THREE.AmbientLight(0xffffff,0.6));
+      scene.add(new THREE.HemisphereLight(0xffffff,0x222a36,0.3));
+      var dlx=new THREE.DirectionalLight(0xffffff,0.18);dlx.position.set(0,-5,-2);scene.add(dlx);
+      var dl=new THREE.DirectionalLight(0xffffff,0.55);dl.position.set(4,6,8);scene.add(dl);
+      var dl2=new THREE.DirectionalLight(0xffffff,0.3);dl2.position.set(-5,3,-7);scene.add(dl2);
+      var draco=new THREE.DRACOLoader();
+      draco.setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/draco/');
+      var loader=new THREE.GLTFLoader();loader.setDRACOLoader(draco);
+      var nodes={},allMus=[],NEUTRAL=0xDBB6A2;
+      var skelMat=new THREE.MeshStandardMaterial({color:0xEAE7DE,transparent:true,opacity:0.16,roughness:0.9,depthWrite:false});
+      function rawName(o){return (o.userData&&o.userData.name)||o.name||'';}
+      var SUPERF=['trapezius','latissimus dorsi','deltoid','pectoralis major','sternocleidomastoid','gluteus maximus','external abdominal oblique','rectus abdominis','biceps brachii','triceps brachii','brachioradialis','rectus femoris','sartorius','gracilis','tensor fasciae latae','gastrocnemius'];
+      function isSup(nm){nm=(nm||'').toLowerCase();for(var i=0;i<SUPERF.length;i++)if(nm.indexOf(SUPERF[i])>=0)return true;return false;}
+      function resize(){var b=document.getElementById('body3d');var w=b.clientWidth||320,hh=340;renderer.setSize(w,hh,false);cam.aspect=w/hh;cam.updateProjectionMatrix();}
+      window.BODY_resize3D=resize;
+      window.addEventListener('resize',function(){if(ready)resize();});
+      function resetMus(){allMus.forEach(function(o){var m=o.material;if(o.userData&&o.userData.base)m.color.copy(o.userData.base);else m.color.setHex(NEUTRAL);if(m.emissive){if(o.userData&&o.userData.base)m.emissive.copy(o.userData.base);else m.emissive.setHex(0);m.emissiveIntensity=0.14;}m.transparent=true;m.opacity=0.5;m.depthWrite=false;});}
+      function applyVis(){allMus.forEach(function(o){o.visible=hideNeutral?!(o.userData&&o.userData.sup):true;});}
+      window.BODY_hideNeutral3D=function(b){hideNeutral=!!b;applyVis();};
+      window.BODY_flat3D=function(){
+        try{
+          if(!ready||!musRoot)return null;
+          var el=renderer.domElement, W=360,H=560;
+          renderer.setSize(W,H,false);
+          var box=new THREE.Box3().setFromObject(musRoot);
+          var ctr=box.getCenter(new THREE.Vector3()), sz=box.getSize(new THREE.Vector3());
+          var sc=new THREE.PerspectiveCamera(30,W/H,0.01,1000);
+          var dist=(sz.y*0.5)/Math.tan(15*Math.PI/180)*1.12;
+          sc.position.set(ctr.x,ctr.y,ctr.z+dist); sc.lookAt(ctr); renderer.render(scene,sc);
+          var front=el.toDataURL('image/png');
+          sc.position.set(ctr.x,ctr.y,ctr.z-dist); sc.lookAt(ctr); renderer.render(scene,sc);
+          var back=el.toDataURL('image/png');
+          resize();
+          return {front:front,back:back};
+        }catch(e){ try{resize();}catch(_){} return null; }
+      };
+      window.BODY_update3D=function(res){
+        if(!ready){pending=res;return;}
+        resetMus(); colored={};
+        (res||[]).forEach(function(x){
+          if(x.score===0)return; var tg=MAP[x.name]; if(!tg)return;
+          var short=x.score>0;
+          tg.forEach(function(nn){ var arr=nodes[nn]; if(!arr)return; arr.forEach(function(o){ var m=o.material; var t=Math.min(1,Math.abs(x.pct)/100), hue=short?0.0:0.61; m.color.setHSL(hue,1,0.55-0.13*t); if(m.emissive){m.emissive.setHSL(hue,1,0.5);m.emissiveIntensity=0.6+0.7*t;} m.roughness=0.35; m.transparent=false; m.opacity=1; m.depthWrite=true; colored[o.id]=1; }); });
+        });
+        applyVis();
+      };
+      loader.load('skeleton.glb',function(g){ g.scene.traverse(function(o){if(o.isMesh)o.material=skelMat;}); scene.add(g.scene); },undefined,function(e){console.warn('skel',e);});
+      loader.load('muscles.glb',function(g){
+        musRoot=g.scene;
+        g.scene.traverse(function(o){ if(o.isMesh){
+          var _mi=allMus.length, h1=((_mi*2654435761)>>>0)%1000/1000, h2=((_mi*40503+9127)>>>0)%1000/1000, h3=((_mi*2246822519)>>>0)%1000/1000; var _bc=new THREE.Color().setHSL(0.035+h1*0.05, 0.34+h2*0.24, 0.44+h3*0.22); o.userData.base=_bc; o.material=new THREE.MeshStandardMaterial({color:_bc.clone(),emissive:_bc.clone(),emissiveIntensity:0.14,roughness:0.7,metalness:0.0,transparent:true,opacity:0.5,depthWrite:false});
+          allMus.push(o);
+          var nm=rawName(o); o.userData.sup=isSup(nm); if(nm){(nodes[nm]||(nodes[nm]=[])).push(o);}
+          var pn=o.parent?rawName(o.parent):''; if(pn){(nodes[pn]||(nodes[pn]=[])).push(o);}
+        }});
+        scene.add(g.scene);
+        var box=new THREE.Box3().setFromObject(g.scene);
+        var ctr=box.getCenter(new THREE.Vector3()), sz=box.getSize(new THREE.Vector3());
+        var maxd=Math.max(sz.x,sz.y,sz.z)||2;
+        controls.target.copy(ctr);
+        cam.position.set(ctr.x, ctr.y+sz.y*0.05, ctr.z+maxd*1.5);
+        controls.minDistance=maxd*0.5; controls.maxDistance=maxd*4;
+        ready=true; resize();
+        if(pending)window.BODY_update3D(pending);
+      },undefined,function(e){ fail('모델(muscles.glb) 로딩 실패: '+((e&&e.message)||e)); });
+      (function loop(){requestAnimationFrame(loop);controls.update();renderer.render(scene,cam);})();
+    }catch(e){ fail((e&&e.message)||String(e)); }
+  }
+  if(document.readyState==='complete'||document.readyState==='interactive') start(); else window.addEventListener('DOMContentLoaded',start);
+})();
+</script>
+<div id="toast"></div>
+</body>
+</html>
