@@ -685,7 +685,7 @@ function logAccess(){   /* 접속 로그: 하루 1회(기기별) events에 기�
     var today=new Date().toISOString().slice(0,10), key='soneed_accessDay';
     if(localStorage.getItem(key)===em+'|'+today)return;
     localStorage.setItem(key,em+'|'+today);
-    fetch(sbBase()+'events',{method:'POST',headers:sbHeaders({Prefer:'return=minimal'}),body:JSON.stringify({type:'access',visitor:em})}).catch(function(){});
+    fetch(sbBase()+'events',{method:'POST',headers:{apikey:cfg.key,Authorization:'Bearer '+cfg.key,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify({type:'access',visitor:em})}).catch(function(){});
   }catch(e){}
 }
 const ADMIN_EMAIL='soni0025@naver.com';
