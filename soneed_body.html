@@ -75,7 +75,7 @@ canvas.pose{width:100%;border-radius:10px;margin-top:8px;display:none}
 <body>
 <header>
   <div class="logo">SONEED 바디</div>
-  <div class="sub">키머슬(짧아진 근육) 분석 · v2.9 · 촉진 전 초안</div>
+  <div class="sub">키머슬(짧아진 근육) 분석 · v3.1 · 촉진 전 초안</div>
 </header>
 <div class="wrap">
 
@@ -176,6 +176,7 @@ function _classify(f){
   if(f.indexOf('위팔뼈')===0&&f.indexOf('자뼈')>=0){var us=f.slice(-3)==='오른쪽'?'오른쪽':(f.slice(-2)==='왼쪽'?'왼쪽':null); if(us)return {gid:'uparm_'+us,glabel:us+' 상완 회전',olabel:(f.indexOf('위팔뼈바깥')>=0?'위팔뼈바깥쪽돌림+자뼈안쪽돌림':'위팔뼈안쪽돌림+자뼈바깥쪽돌림')};}
   if(f.indexOf('넙다리뼈')===0&&f.indexOf('정강뼈')>=0){var ls=f.slice(-3)==='오른쪽'?'오른쪽':(f.slice(-2)==='왼쪽'?'왼쪽':null); if(ls)return {gid:'thighrot_'+ls,glabel:ls+' 대퇴대비 하퇴 회전',olabel:(f.indexOf('넙다리뼈바깥')>=0?'넙다리뼈바깥쪽돌림+정강뼈안쪽돌림':'넙다리뼈안쪽돌림+정강뼈바깥쪽돌림')};}
   if(f.indexOf('정강뼈앞기울임')===0||f.indexOf('정강뼈뒤기울임')===0)return {hide:true};
+  if(f.indexOf('요추볼록')===0&&f.indexOf('측방편위')>=0)return {gid:'speccombo',glabel:'특수 컴비네이션',olabel:f};
   if(f.indexOf('+')>=0||f.indexOf('=')>=0||f.indexOf('\n')>=0)return null;
   if(NECK.indexOf(f)>=0)return {gid:'necktype',glabel:'목 유형',olabel:f};
   var i,side,base;
@@ -366,15 +367,14 @@ function renderGuide(){
 /* ---------- 인체 근육 지도 (앞/뒤) ---------- */
 function silhouette(inner){
   return '<svg viewBox="0 0 180 460" style="width:100%;max-width:250px;height:auto">'
-    +'<g fill="#eaedf3" stroke="#cdd4e0" stroke-width="1">'
-    +'<circle cx="90" cy="38" r="22"/>'
-    +'<rect x="81" y="55" width="18" height="16" rx="4"/>'
-    +'<path d="M56 70 Q90 60 124 70 L118 176 Q90 187 62 176 Z"/>'
-    +'<rect x="62" y="171" width="56" height="52" rx="16"/>'
-    +'<rect x="35" y="74" width="17" height="132" rx="8"/>'
-    +'<rect x="128" y="74" width="17" height="132" rx="8"/>'
-    +'<rect x="66" y="214" width="21" height="202" rx="10"/>'
-    +'<rect x="93" y="214" width="21" height="202" rx="10"/>'
+    +'<g fill="#e6eaf1" stroke="#c9d1de" stroke-width="1.2" stroke-linejoin="round">'
+    +'<ellipse cx="90" cy="34" rx="18" ry="21"/>'
+    +'<path d="M82 51 L98 51 L100 69 L80 69 Z"/>'
+    +'<path d="M56 72 Q90 62 124 72 L119 120 Q117 150 111 176 L108 230 Q90 241 72 230 L69 176 Q63 150 61 120 Z"/>'
+    +'<path d="M56 74 Q43 77 40 93 L45 200 Q46 210 52 208 L59 97 Q59 82 56 74 Z"/>'
+    +'<path d="M124 74 Q137 77 140 93 L135 200 Q134 210 128 208 L121 97 Q121 82 124 74 Z"/>'
+    +'<path d="M72 232 L68 338 L66 446 Q66 456 79 456 L83 338 L87 232 Z"/>'
+    +'<path d="M108 232 L112 338 L114 446 Q114 456 101 456 L97 338 L93 232 Z"/>'
     +'</g>'+inner+'</svg>';
 }
 function drawBodyMap(){
@@ -473,7 +473,7 @@ init().catch(function(e){console.warn('pose init',e);});
 <script>
 (function(){
   var ready=false,pending=null;
-  function fail(msg){var n=document.getElementById('no3d');if(n){n.style.display='block';n.textContent='3D를 불러오지 못했어요: '+msg;}var c=document.getElementById('cv3d');if(c)c.style.display='none';}
+  function fail(msg){var n=document.getElementById('no3d');if(n){n.style.display='block';var hint=/webgl|context/i.test(msg)?' → 크롬 탭을 여러 개 닫아보세요(탭이 많으면 3D가 안 열려요). 안 되면 설정→시스템→"하드웨어 가속 사용" 켜기.':' → 인터넷/브라우저 확인';n.textContent='3D를 불러오지 못했어요: '+msg+hint;}var c=document.getElementById('cv3d');if(c)c.style.display='none';}
   window.BODY_update3D=function(res){pending=res;};
   window.BODY_resize3D=function(){};
   function start(){
@@ -481,7 +481,7 @@ init().catch(function(e){console.warn('pose init',e);});
       if(typeof THREE==='undefined'||!THREE.OrbitControls||!THREE.GLTFLoader||!THREE.DRACOLoader){ fail('그래픽 라이브러리 로딩 실패 — 인터넷 또는 브라우저 확인(카톡/인스타 인앱이면 Safari·Chrome으로 열기)'); return; }
       var MAP=JSON.parse(document.getElementById('musclemap').textContent);
       var cv=document.getElementById('cv3d');
-      var renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true});
+      var renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true,failIfMajorPerformanceCaveat:false,powerPreference:'default'});
       renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1));
       try{renderer.outputEncoding=THREE.sRGBEncoding;}catch(e){}
       var scene=new THREE.Scene();
