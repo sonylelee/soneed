@@ -79,7 +79,7 @@ canvas.pose{width:100%;border-radius:10px;margin-top:8px;display:none}
 <body>
 <header>
   <div class="logo">SONEED 바디</div>
-  <div class="sub">키머슬(짧아진 근육) 분석 · v4.4 · 촉진 전 초안</div>
+  <div class="sub">키머슬(짧아진 근육) 분석 · v4.5 · 촉진 전 초안</div>
 </header>
 <div class="wrap">
   <div class="topnav"><button id="navAnalyze" class="on" onclick="showView('analyze')">🔍 분석</button><button id="navRecords" onclick="showView('records')">📋 고객 기록</button></div>
@@ -88,6 +88,8 @@ canvas.pose{width:100%;border-radius:10px;margin-top:8px;display:none}
   <div class="card" style="padding:12px 14px">
     <label style="font-weight:800;font-size:13px;color:var(--brand);display:block;margin-bottom:5px">고객 성함</label>
     <input id="recName" placeholder="고객 이름을 입력하세요" style="width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10px;font-size:15px">
+    <label style="font-weight:800;font-size:13px;color:var(--brand);display:block;margin:9px 0 5px">연락처</label>
+    <input id="recPhone" placeholder="연락처 (선택)" style="width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10px;font-size:15px">
   </div>
 
   <div class="card">
@@ -491,12 +493,12 @@ async function saveRecord(){
   if(sel.size===0){toast('자세를 선택한 뒤 저장하세요');return;}
   var st={}; sel.forEach(function(fx){st[fx]=lvl[fx]||1;});
   var d=new Date(), ds=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
-  var rec={id:'b'+Date.now(),name:nm,date:ds,data:{state:st}};
+  var ph=(document.getElementById('recPhone').value||'').trim(); var rec={id:'b'+Date.now(),name:nm,phone:ph,date:ds,data:{state:st,phone:ph}};
   var ok=false;
   try{
     var r=await fetch(SB_URL+'/rest/v1/body_records',{method:'POST',headers:_sbH({Prefer:'resolution=merge-duplicates,return=minimal'}),body:JSON.stringify(Object.assign({updated_at:new Date().toISOString()},rec))});
     if(r.ok)ok=true; else throw new Error('HTTP '+r.status);
-  }catch(e){ var arr=_recAll(); arr.unshift(Object.assign({state:st},rec)); _recSave(arr); }
+  }catch(e){ var arr=_recAll(); arr.unshift(Object.assign({state:st,phone:ph},rec)); _recSave(arr); }
   document.getElementById('recName').value='';
   toast(ok?('☁️ 클라우드 저장됨: '+nm):('로컬 저장됨(클라우드 미설정): '+nm));
   renderRecords();
@@ -514,14 +516,14 @@ async function renderRecords(){
 function _paintRecords(){
   var box=document.getElementById('recList'); if(!box)return;
   var se=document.getElementById('recSearch'); var q=((se&&se.value)||'').trim().toLowerCase();
-  var arr=(window._recCache||[]).filter(function(r){return !q||((r.name||'').toLowerCase().indexOf(q)>=0);});
+  var arr=(window._recCache||[]).filter(function(r){return !q||(((r.name||'')+' '+((r.data&&r.data.phone)||r.phone||'')).toLowerCase().indexOf(q)>=0);});
   if(!arr.length){box.innerHTML='<div class="muted">'+(q?'검색 결과 없음':'저장된 기록이 없어요. (분석 탭에서 저장)')+'</div>';return;}
   var groups={},order=[];
   arr.forEach(function(r){var nm=r.name||'(이름없음)'; if(!groups[nm]){groups[nm]=[];order.push(nm);} groups[nm].push(r);});
   box.innerHTML=order.map(function(nm){
     var sess=groups[nm].slice().sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
     return '<div style="margin-bottom:10px;border:1px solid var(--line);border-radius:10px;overflow:hidden">'
-      +'<div style="background:#f7f8fb;padding:9px 12px;font-weight:800">👤 '+nm.replace(/</g,'&lt;')+' <span class="muted" style="font-size:12px;font-weight:600">· '+sess.length+'회</span></div>'
+      +'<div style="background:#f7f8fb;padding:9px 12px;font-weight:800">👤 '+nm.replace(/</g,'&lt;')+' <span class="muted" style="font-size:12px;font-weight:600">· '+sess.length+'회</span>'+(function(){var ph='';sess.forEach(function(r){var p=(r.data&&r.data.phone)||r.phone;if(p&&!ph)ph=p;});return ph?' <span class="muted" style="font-size:12px;font-weight:600">📞 '+ph.replace(/</g,'&lt;')+'</span>':'';})()+'</div>'
       +sess.map(function(r){var cnt=Object.keys(_recState(r)).length;
         return '<div style="display:flex;align-items:center;gap:6px;padding:8px 12px;border-top:1px solid #f0f1f5"><div style="flex:1;min-width:0"><span class="muted" style="font-size:12.5px">'+(r.date||'')+' · '+cnt+'항목</span></div><button class="btn" style="padding:6px 10px;font-size:12px" onclick="loadRecord(\''+r.id+'\')">불러오기</button><button class="btn" style="padding:6px 10px;font-size:12px;color:#c02" onclick="delRecord(\''+r.id+'\')">삭제</button></div>';
       }).join('')
@@ -535,6 +537,7 @@ function loadRecord(id){
   Object.keys(st).forEach(function(fx){sel.add(fx);lvl[fx]=st[fx]||1;});
   renderChecklist();
   var e=document.getElementById('recName'); if(e)e.value=r.name||'';
+  var pe=document.getElementById('recPhone'); if(pe)pe.value=(r.data&&r.data.phone)||r.phone||'';
   showView('analyze');
   toast('불러옴: '+(r.name||'')+' · [분석하기]를 눌러 결과 보기'); window.scrollTo(0,0);
 }
