@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>스파드블랑 · 커스텀스파 관리</title>
 <style>
-:root{--brand:#C81D74;--brand2:#7A5AE0;--ink:#1a1c22;--muted:#7a8090;--line:#e6e8ee;--bg:#eef0f5;--card:#fff;--short:#e0396f;--long:#2f8fd6}
+:root{--brand:#6E4A32;--brand2:#B07A45;--ink:#2C2320;--muted:#8C7E6F;--line:#E7DDCF;--bg:#F4EEE3;--card:#fffdfa;--short:#c0603a;--long:#5a86b0}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo',sans-serif;background:var(--bg);color:var(--ink);font-size:15px;line-height:1.5}
-header{position:sticky;top:0;z-index:20;background:linear-gradient(135deg,#181b22,#12141a);color:#fff;padding:12px 16px;box-shadow:0 2px 14px rgba(0,0,0,.3)}
-header .logo{font-weight:800;font-size:18px;background:linear-gradient(90deg,#ff4f9e,#9a7bff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-header .sub{font-size:11px;color:#aab;margin-top:2px}
+header{position:sticky;top:0;z-index:20;background:linear-gradient(135deg,#3B2A1F,#281C15);color:#fff;padding:14px 16px;box-shadow:0 3px 16px rgba(50,32,20,.35)}
+header .logo{font-weight:900;font-size:19px;letter-spacing:.3px;background:linear-gradient(90deg,#EBC48F,#D0965A);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+header .sub{font-size:11px;color:#CBB89E;margin-top:3px}
 .wrap{max-width:760px;margin:0 auto;padding:14px}
 .card{background:var(--card);border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 3px 14px rgba(20,22,30,.07)}
 .topnav{display:flex;gap:8px;margin-bottom:12px}
@@ -19,13 +19,13 @@ header .sub{font-size:11px;color:#aab;margin-top:2px}
 h2.sec{font-size:14px;font-weight:800;margin:2px 0 10px;color:var(--brand)}
 .photos{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .pslot{text-align:center}
-.drop{aspect-ratio:3/4;border:2px dashed #cdd2dc;border-radius:12px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#f7f8fb;cursor:pointer;position:relative}
+.drop{aspect-ratio:3/4;border:2px dashed #D8CBB8;border-radius:12px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#F6F0E7;cursor:pointer;position:relative}
 .drop img{width:100%;height:100%;object-fit:cover}
 .drop .ph{color:#aab;font-size:12px;font-weight:700}
 .pslot label{display:block;font-size:12px;color:var(--muted);margin-top:4px;font-weight:700}
 .btn{border:none;border-radius:12px;padding:11px 14px;font-size:14px;font-weight:800;cursor:pointer;background:#eef1f6;color:#333}
 .btn.primary{background:var(--brand);color:#fff}
-.btn.dark{background:#232733;color:#fff}
+.btn.dark{background:#3B2A1F;color:#fff}
 .btn.ghost{background:#fff;border:1px solid var(--line);color:#444}
 .btn.block{width:100%}
 .btn:disabled{opacity:.5}
@@ -49,7 +49,7 @@ h2.sec{font-size:14px;font-weight:800;margin:2px 0 10px;color:var(--brand)}
 .chip.on.auto{background:#20a08f;border-color:#20a08f;color:#fff}
 .chip .a{font-size:10px;opacity:.9}
 .rank{list-style:none;margin:0;padding:0}
-.rank li{padding:7px 0;border-bottom:1px solid #f0f1f5}
+.rank li{padding:7px 0;border-bottom:1px solid #EFE7DA}
 .rank .top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
 .rank .nm{font-weight:800;font-size:14px}
 .rank .pc{font-weight:800;font-variant-numeric:tabular-nums}
@@ -58,7 +58,7 @@ h2.sec{font-size:14px;font-weight:800;margin:2px 0 10px;color:var(--brand)}
 .bar>i{position:absolute;top:0;bottom:0;display:block;border-radius:6px}
 .short i{background:linear-gradient(90deg,#f0637f,#e0396f)}
 .long i{background:linear-gradient(90deg,#5fb0e6,#2f8fd6)}
-.gd{font-size:12px;color:#556;background:#f7f8fb;border-radius:8px;padding:7px 9px;margin-top:6px;white-space:pre-wrap;border:1px solid #eef0f5}
+.gd{font-size:12px;color:#556;background:#F6F0E7;border-radius:8px;padding:7px 9px;margin-top:6px;white-space:pre-wrap;border:1px solid #eef0f5}
 .gd.empty{color:#aab;font-style:italic}
 .muted{color:var(--muted);font-size:12px}
 .pill{display:inline-block;font-size:11px;font-weight:800;padding:2px 8px;border-radius:10px}
@@ -77,9 +77,9 @@ canvas.pose{width:100%;border-radius:10px;margin-top:8px;display:none}
 </style>
 </head>
 <body>
-<div id="loginGate" style="position:fixed;inset:0;z-index:9999;background:linear-gradient(160deg,#12141a,#181b22);display:flex;align-items:center;justify-content:center;padding:20px">
+<div id="loginGate" style="position:fixed;inset:0;z-index:9999;background:linear-gradient(160deg,#281C15,#3B2A1F);display:flex;align-items:center;justify-content:center;padding:20px">
   <div style="background:#fff;border-radius:16px;padding:26px 22px;max-width:360px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.4)">
-    <div style="font-weight:900;font-size:20px;color:#e84c88;margin-bottom:2px">스파드블랑</div>
+    <div style="font-weight:900;font-size:20px;color:#6E4A32;margin-bottom:2px">스파드블랑</div>
     <div style="font-weight:800;font-size:14px;margin-bottom:14px">커스텀스파 관리 프로그램</div>
     <div style="font-size:12.5px;color:#667;margin-bottom:14px;line-height:1.5">스파드블랑 공용 계정으로 로그인하세요.<br>모든 직원이 <b>같은 고객 정보</b>를 공유합니다.</div>
     <input id="gateEmail" type="email" autocomplete="username" placeholder="이메일" style="width:100%;padding:11px 13px;border:1px solid #dfe2ea;border-radius:10px;font-size:15px;margin-bottom:8px;box-sizing:border-box">
@@ -87,13 +87,13 @@ canvas.pose{width:100%;border-radius:10px;margin-top:8px;display:none}
       <input id="gatePw" type="password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="비밀번호" onkeydown="if(event.key==='Enter')doLogin()" style="width:100%;padding:11px 42px 11px 13px;border:1px solid #dfe2ea;border-radius:10px;font-size:15px;box-sizing:border-box">
       <button type="button" onclick="var p=document.getElementById('gatePw');p.type=(p.type==='password'?'text':'password');this.textContent=(p.type==='password'?'👁':'🙈')" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:0;cursor:pointer;font-size:17px;padding:4px">👁</button>
     </div>
-    <button onclick="doLogin()" style="width:100%;padding:12px;border:0;border-radius:10px;background:#e84c88;color:#fff;font-weight:800;font-size:15px;cursor:pointer">로그인</button>
+    <button onclick="doLogin()" style="width:100%;padding:12px;border:0;border-radius:10px;background:#6E4A32;color:#fff;font-weight:800;font-size:15px;cursor:pointer">로그인</button>
     <div id="gateMsg" style="font-size:12.5px;color:#c02;margin-top:10px;min-height:16px"></div>
   </div>
 </div>
 <header style="position:relative">
   <div class="logo">스파드블랑</div>
-  <div class="sub">커스텀스파 관리 프로그램 · v1.0 · 촉진 전 초안</div>
+  <div class="sub">커스텀스파 관리 프로그램 · v1.1 · 촉진 전 초안</div>
   <button id="logoutBtn" onclick="authLogout()" style="position:absolute;top:14px;right:16px;background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.28);border-radius:14px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer">🔓 로그아웃</button>
 </header>
 <div class="wrap">
@@ -578,9 +578,9 @@ function _paintRecords(){
   box.innerHTML=order.map(function(nm){
     var sess=groups[nm].slice().sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
     return '<div style="margin-bottom:10px;border:1px solid var(--line);border-radius:10px;overflow:hidden">'
-      +'<div style="background:#f7f8fb;padding:9px 12px;font-weight:800">👤 '+nm.replace(/</g,'&lt;')+' <span class="muted" style="font-size:12px;font-weight:600">· '+sess.length+'회</span>'+(function(){var ph='';sess.forEach(function(r){var p=(r.data&&r.data.phone)||r.phone;if(p&&!ph)ph=p;});return ph?' <span class="muted" style="font-size:12px;font-weight:600">📞 '+ph.replace(/</g,'&lt;')+'</span>':'';})()+'</div>'
+      +'<div style="background:#F6F0E7;padding:9px 12px;font-weight:800">👤 '+nm.replace(/</g,'&lt;')+' <span class="muted" style="font-size:12px;font-weight:600">· '+sess.length+'회</span>'+(function(){var ph='';sess.forEach(function(r){var p=(r.data&&r.data.phone)||r.phone;if(p&&!ph)ph=p;});return ph?' <span class="muted" style="font-size:12px;font-weight:600">📞 '+ph.replace(/</g,'&lt;')+'</span>':'';})()+'</div>'
       +sess.map(function(r){var cnt=Object.keys(_recState(r)).length;
-        return '<div style="display:flex;align-items:center;gap:6px;padding:8px 12px;border-top:1px solid #f0f1f5"><div style="flex:1;min-width:0"><span class="muted" style="font-size:12.5px">'+(r.date||'')+' · '+cnt+'항목</span></div><button class="btn" style="padding:6px 10px;font-size:12px" onclick="loadRecord(\''+r.id+'\')">불러오기</button><button class="btn" style="padding:6px 10px;font-size:12px;color:#c02" onclick="delRecord(\''+r.id+'\')">삭제</button></div>';
+        return '<div style="display:flex;align-items:center;gap:6px;padding:8px 12px;border-top:1px solid #EFE7DA"><div style="flex:1;min-width:0"><span class="muted" style="font-size:12.5px">'+(r.date||'')+' · '+cnt+'항목</span></div><button class="btn" style="padding:6px 10px;font-size:12px" onclick="loadRecord(\''+r.id+'\')">불러오기</button><button class="btn" style="padding:6px 10px;font-size:12px;color:#c02" onclick="delRecord(\''+r.id+'\')">삭제</button></div>';
       }).join('')
       +'</div>';
   }).join('');
