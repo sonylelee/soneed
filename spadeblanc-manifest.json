@@ -1,0 +1,12 @@
+{
+  "name": "스파드블랑 커스텀스파 관리",
+  "short_name": "스파드블랑",
+  "start_url": "./spadeblanc.html",
+  "display": "standalone",
+  "background_color": "#3B2A1F",
+  "theme_color": "#3B2A1F",
+  "icons": [
+    {"src": "spadeblanc-icon-180.png", "sizes": "180x180", "type": "image/png"},
+    {"src": "spadeblanc-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"}
+  ]
+}
