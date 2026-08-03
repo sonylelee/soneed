@@ -79,7 +79,7 @@ canvas.pose{width:100%;border-radius:10px;margin-top:8px;display:none}
 <body>
 <header>
   <div class="logo">SONEED 바디</div>
-  <div class="sub">키머슬(짧아진 근육) 분석 · v4.9 · 촉진 전 초안</div>
+  <div class="sub">키머슬(짧아진 근육) 분석 · v5.0 · 촉진 전 초안</div>
 </header>
 <div class="wrap">
   <div class="topnav"><button id="navAnalyze" class="on" onclick="showView('analyze')">🔍 분석</button><button id="navRecords" onclick="showView('records')">📋 고객 기록</button></div>
@@ -90,6 +90,14 @@ canvas.pose{width:100%;border-radius:10px;margin-top:8px;display:none}
     <input id="recName" placeholder="고객 이름을 입력하세요" style="width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10px;font-size:15px">
     <label style="font-weight:800;font-size:13px;color:var(--brand);display:block;margin:9px 0 5px">연락처</label>
     <input id="recPhone" placeholder="연락처 (선택)" style="width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10px;font-size:15px">
+    <div style="display:flex;gap:8px">
+      <div style="flex:1"><label style="font-weight:800;font-size:13px;color:var(--brand);display:block;margin:9px 0 5px">성별</label><select id="recGender" style="width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10px;font-size:15px"><option value="">-</option><option>여</option><option>남</option></select></div>
+      <div style="flex:1"><label style="font-weight:800;font-size:13px;color:var(--brand);display:block;margin:9px 0 5px">나이</label><input id="recAge" type="number" inputmode="numeric" placeholder="나이" style="width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10px;font-size:15px"></div>
+    </div>
+    <label style="font-weight:800;font-size:13px;color:var(--brand);display:block;margin:9px 0 5px">방문 경로</label>
+    <input id="recRoute" placeholder="예: 소개 / 인스타 / 네이버예약" style="width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10px;font-size:15px">
+    <label style="font-weight:800;font-size:13px;color:var(--brand);display:block;margin:9px 0 5px">메모 · 특이사항</label>
+    <textarea id="recMemo" rows="3" placeholder="상담·시술·요청사항 등 자유 기입" style="width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10px;font-size:15px;resize:vertical"></textarea>
   </div>
 
   <div class="card">
@@ -493,7 +501,9 @@ async function saveRecord(){
   if(sel.size===0){toast('자세를 선택한 뒤 저장하세요');return;}
   var st={}; sel.forEach(function(fx){st[fx]=lvl[fx]||1;});
   var d=new Date(), ds=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
-  var ph=(document.getElementById('recPhone').value||'').trim(); var rec={id:'b'+Date.now(),name:nm,phone:ph,date:ds,data:{state:st,phone:ph}};
+  var gv=function(id){var e=document.getElementById(id);return e?(e.value||'').trim():'';};
+  var ph=gv('recPhone'); var extra={phone:ph,gender:gv('recGender'),age:gv('recAge'),route:gv('recRoute'),memo:gv('recMemo')};
+  var rec={id:'b'+Date.now(),name:nm,phone:ph,date:ds,data:Object.assign({state:st},extra)};
   var ok=false;
   try{
     var r=await fetch(SB_URL+'/rest/v1/body_records',{method:'POST',headers:_sbH({Prefer:'resolution=merge-duplicates,return=minimal'}),body:JSON.stringify(Object.assign({updated_at:new Date().toISOString()},rec))});
@@ -538,6 +548,8 @@ function loadRecord(id){
   renderChecklist();
   var e=document.getElementById('recName'); if(e)e.value=r.name||'';
   var pe=document.getElementById('recPhone'); if(pe)pe.value=(r.data&&r.data.phone)||r.phone||'';
+  var dd=r.data||{}; var sv=function(id,val){var el=document.getElementById(id);if(el)el.value=val||'';};
+  sv('recGender',dd.gender); sv('recAge',dd.age); sv('recRoute',dd.route); sv('recMemo',dd.memo);
   showView('analyze');
   toast('불러옴: '+(r.name||'')+' · [분석하기]를 눌러 결과 보기'); window.scrollTo(0,0);
 }
