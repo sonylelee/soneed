@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>SONEED 바디 · 키머슬 분석</title>
+<link rel="apple-touch-icon" href="soneed-icon-180.png">
+<link rel="icon" type="image/png" href="soneed-icon-512.png">
+<link rel="manifest" href="soneed-body-manifest.json">
+<meta name="apple-mobile-web-app-title" content="SONEED 바디">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#3B2A1F">
 <style>
 :root{--brand:#6E4A32;--brand2:#B07A45;--ink:#2C2320;--muted:#8C7E6F;--line:#E7DDCF;--bg:#F4EEE3;--card:#fffdfa;--short:#c0603a;--long:#5a86b0}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -79,7 +86,7 @@ canvas.pose{width:100%;border-radius:10px;margin-top:8px;display:none}
 <body>
 <header>
   <div class="logo">SONEED 바디</div>
-  <div class="sub">키머슬(짧아진 근육) 분석 · v5.2 · 촉진 전 초안</div>
+  <div class="sub">키머슬(짧아진 근육) 분석 · v5.4 · 촉진 전 초안</div>
 </header>
 <div class="wrap">
   <div class="topnav"><button id="navAnalyze" class="on" onclick="showView('analyze')">🔍 분석</button><button id="navRecords" onclick="showView('records')">📋 고객 기록</button></div>
@@ -541,8 +548,8 @@ function _paintRecords(){
     var sess=groups[nm].slice().sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
     return '<div style="margin-bottom:10px;border:1px solid var(--line);border-radius:10px;overflow:hidden">'
       +'<div style="background:#F6F0E7;padding:9px 12px;font-weight:800">👤 '+nm.replace(/</g,'&lt;')+' <span class="muted" style="font-size:12px;font-weight:600">· '+sess.length+'회</span>'+(function(){var ph='';sess.forEach(function(r){var p=(r.data&&r.data.phone)||r.phone;if(p&&!ph)ph=p;});return ph?' <span class="muted" style="font-size:12px;font-weight:600">📞 '+ph.replace(/</g,'&lt;')+'</span>':'';})()+'</div>'
-      +sess.map(function(r){var cnt=Object.keys(_recState(r)).length;
-        return '<div style="display:flex;align-items:center;gap:6px;padding:8px 12px;border-top:1px solid #EFE7DA"><div style="flex:1;min-width:0"><span class="muted" style="font-size:12.5px">'+(r.date||'')+' · '+cnt+'항목</span></div><button class="btn" style="padding:6px 10px;font-size:12px" onclick="loadRecord(\''+r.id+'\')">불러오기</button><button class="btn" style="padding:6px 10px;font-size:12px;color:#c02" onclick="delRecord(\''+r.id+'\')">삭제</button></div>';
+      +sess.map(function(r){var cnt=Object.keys(_recState(r)).length; var dd=r.data||{}; var prog=(dd.program||'').replace(/</g,'&lt;'); var price=(dd.price||'').replace(/</g,'&lt;'); var meta='📅 '+(r.date||'')+(prog?' · <b style="color:var(--brand)">'+prog+'</b>':'')+(price?' · '+price:'');
+        return '<div style="display:flex;align-items:center;gap:6px;padding:8px 12px;border-top:1px solid #EFE7DA"><div style="flex:1;min-width:0"><div style="font-size:12.5px;color:#556">'+meta+'</div><div class="muted" style="font-size:11px;margin-top:1px">'+cnt+'항목</div></div><button class="btn" style="padding:6px 10px;font-size:12px" onclick="loadRecord(\''+r.id+'\')">불러오기</button><button class="btn" style="padding:6px 10px;font-size:12px;color:#c02" onclick="delRecord(\''+r.id+'\')">삭제</button></div>';
       }).join('')
       +'</div>';
   }).join('');
