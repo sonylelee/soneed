@@ -93,7 +93,7 @@ canvas.pose{width:100%;border-radius:10px;margin-top:8px;display:none}
 </div>
 <header style="position:relative">
   <div class="logo">스파드블랑</div>
-  <div class="sub">커스텀스파 관리 프로그램 · v1.1 · 촉진 전 초안</div>
+  <div class="sub">커스텀스파 관리 프로그램 · v1.2 · 촉진 전 초안</div>
   <button id="logoutBtn" onclick="authLogout()" style="position:absolute;top:14px;right:16px;background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.28);border-radius:14px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer">🔓 로그아웃</button>
 </header>
 <div class="wrap">
@@ -105,12 +105,18 @@ canvas.pose{width:100%;border-radius:10px;margin-top:8px;display:none}
     <input id="recName" placeholder="고객 이름을 입력하세요" style="width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10px;font-size:15px">
     <label style="font-weight:800;font-size:13px;color:var(--brand);display:block;margin:9px 0 5px">연락처</label>
     <input id="recPhone" placeholder="연락처 (선택)" style="width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10px;font-size:15px">
+    <label style="font-weight:800;font-size:13px;color:var(--brand);display:block;margin:9px 0 5px">방문일자</label>
+    <input id="recDate" type="date" style="width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10px;font-size:15px">
     <div style="display:flex;gap:8px">
       <div style="flex:1"><label style="font-weight:800;font-size:13px;color:var(--brand);display:block;margin:9px 0 5px">성별</label><select id="recGender" style="width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10px;font-size:15px"><option value="">-</option><option>여</option><option>남</option></select></div>
       <div style="flex:1"><label style="font-weight:800;font-size:13px;color:var(--brand);display:block;margin:9px 0 5px">나이</label><input id="recAge" type="number" inputmode="numeric" placeholder="나이" style="width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10px;font-size:15px"></div>
     </div>
     <label style="font-weight:800;font-size:13px;color:var(--brand);display:block;margin:9px 0 5px">방문 경로</label>
     <input id="recRoute" placeholder="예: 소개 / 인스타 / 네이버예약" style="width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10px;font-size:15px">
+    <label style="font-weight:800;font-size:13px;color:var(--brand);display:block;margin:9px 0 5px">가입 프로그램</label>
+    <select id="recProgram" onchange="onProgramPick()" style="width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10px;font-size:15px"><option value="">- 프로그램 선택 -</option><optgroup label="Body Care"><option data-price="33만원">Signature Custom Spa 1회 · 33만원</option><option data-price="295만원">Signature Custom Spa 10회 · 295만원</option><option data-price="29만원">Relax Body Ritual 1회 · 29만원</option><option data-price="261만원">Relax Body Ritual 10회 · 261만원</option></optgroup><optgroup label="Diet Care"><option data-price="24만원">엔더몰로지 바디관리 1회 · 24만원</option><option data-price="216만원">엔더몰로지 바디관리 10회 · 216만원</option><option data-price="36만원">극초단파 엔더몰로지 1회 · 36만원</option><option data-price="324만원">극초단파 엔더몰로지 10회 · 324만원</option></optgroup><optgroup label="Facial Care"><option data-price="23만원">Blanc Face Ritual 1회 · 23만원</option><option data-price="207만원">Blanc Face Ritual 10회 · 207만원</option><option data-price="16만원">Glow Facial 1회 · 16만원</option><option data-price="144만원">Glow Facial 10회 · 144만원</option><option data-price="16만원">Clear Facial 1회 · 16만원</option><option data-price="144만원">Clear Facial 10회 · 144만원</option><option data-price="16만원">Facial Sculpting 1회 · 16만원</option><option data-price="144만원">Facial Sculpting 10회 · 144만원</option></optgroup><optgroup label="Signature Contour Care"><option data-price="19만원">페이스 리세팅 1회 · 19만원</option><option data-price="256만원">페이스 리세팅 15회 · 256만원</option><option data-price="30만원">페이스 리세팅 1회(원장) · 30만원</option><option data-price="405만원">페이스 리세팅 15회(원장) · 405만원</option><option data-price="21만원">스마트 윤곽 1회 · 21만원</option><option data-price="283만원">스마트 윤곽 15회 · 283만원</option><option data-price="32만원">스마트 윤곽 1회(원장) · 32만원</option><option data-price="432만원">스마트 윤곽 15회(원장) · 432만원</option></optgroup><optgroup label="패키지"><option data-price="427만원">시그니처 패키지 15회 · 427만원</option><option data-price="526만원">시그니처 패키지 15회(원장) · 526만원</option><option data-price="271만원">윤곽 디자인 패키지 10회 · 271만원</option><option data-price="321만원">윤곽 디자인 패키지 10회(원장) · 321만원</option></optgroup><optgroup label="선불권"><option data-price="300만원">300만원권 (+30만 증정) · 300만원</option><option data-price="500만원">500만원권 (+50만 증정) · 500만원</option><option data-price="1000만원">1000만원권 (+120만 증정) · 1000만원</option><option data-price="2000만원">2000만원권 (+300만 증정) · 2000만원</option></optgroup></select>
+    <label style="font-weight:800;font-size:13px;color:var(--brand);display:block;margin:9px 0 5px">가격</label>
+    <input id="recPrice" placeholder="예: 30만원" style="width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10px;font-size:15px">
     <label style="font-weight:800;font-size:13px;color:var(--brand);display:block;margin:9px 0 5px">메모 · 특이사항</label>
     <textarea id="recMemo" rows="3" placeholder="상담·시술·요청사항 등 자유 기입" style="width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10px;font-size:15px;resize:vertical"></textarea>
   </div>
@@ -545,9 +551,10 @@ async function saveRecord(){
   if(!nm){toast('고객 이름을 입력하세요');return;}
   if(sel.size===0){toast('자세를 선택한 뒤 저장하세요');return;}
   var st={}; sel.forEach(function(fx){st[fx]=lvl[fx]||1;});
-  var d=new Date(), ds=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
+  var d=new Date(), ds0=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
   var gv=function(id){var e=document.getElementById(id);return e?(e.value||'').trim():'';};
-  var ph=gv('recPhone'); var extra={phone:ph,gender:gv('recGender'),age:gv('recAge'),route:gv('recRoute'),memo:gv('recMemo')};
+  var ph=gv('recPhone'); var ds=gv('recDate')||ds0;
+  var extra={phone:ph,gender:gv('recGender'),age:gv('recAge'),route:gv('recRoute'),memo:gv('recMemo'),program:gv('recProgram'),price:gv('recPrice')};
   var rec={id:'b'+Date.now(),name:nm,phone:ph,date:ds,data:Object.assign({state:st},extra)};
   var ok=false;
   try{
@@ -595,6 +602,7 @@ function loadRecord(id){
   var pe=document.getElementById('recPhone'); if(pe)pe.value=(r.data&&r.data.phone)||r.phone||'';
   var dd=r.data||{}; var sv=function(id,val){var el=document.getElementById(id);if(el)el.value=val||'';};
   sv('recGender',dd.gender); sv('recAge',dd.age); sv('recRoute',dd.route); sv('recMemo',dd.memo);
+  sv('recProgram',dd.program); sv('recPrice',dd.price); sv('recDate',r.date);
   showView('analyze');
   toast('불러옴: '+(r.name||'')+' · [분석하기]를 눌러 결과 보기'); window.scrollTo(0,0);
 }
@@ -604,6 +612,8 @@ async function delRecord(id){
   _recSave(_recAll().filter(function(x){return x.id!==id;}));
   renderRecords(); toast('삭제됨');
 }
+function onProgramPick(){var s=document.getElementById('recProgram');var o=s&&s.options[s.selectedIndex];var p=o&&o.getAttribute('data-price');var pe=document.getElementById('recPrice');if(pe&&p)pe.value=p;}
+(function(){var d=new Date(),t=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);var e=document.getElementById('recDate');if(e&&!e.value)e.value=t;})();
 renderPhotos();renderChecklist();authBoot();
 </script>
 
