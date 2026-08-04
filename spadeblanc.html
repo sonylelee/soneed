@@ -81,6 +81,7 @@ canvas.pose{width:100%;border-radius:10px;margin-top:8px;display:none}
 #body3d{position:relative;width:100%;height:400px;background:radial-gradient(circle at 50% 38%,#161d2a,#05070b);border-radius:12px;overflow:hidden;touch-action:none}
 #body3d .muted{color:#c2cad6}
 #body3d canvas{display:block;width:100%;height:340px}
+.advb{font-size:12.5px;font-weight:700;padding:6px 11px;border-radius:16px;border:1px solid var(--line);background:#fff;color:var(--brand);cursor:pointer;margin:0 5px 5px 0}
 </style>
 </head>
 <body>
@@ -100,7 +101,7 @@ canvas.pose{width:100%;border-radius:10px;margin-top:8px;display:none}
 </div>
 <header style="position:relative">
   <div class="logo">스파드블랑</div>
-  <div class="sub">커스텀스파 관리 프로그램 · v1.6 · 촉진 전 초안</div>
+  <div class="sub">커스텀스파 관리 프로그램 · v1.7 · 촉진 전 초안</div>
   <button id="logoutBtn" onclick="authLogout()" style="position:absolute;top:14px;right:16px;background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.28);border-radius:14px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer">🔓 로그아웃</button>
 </header>
 <div class="wrap">
@@ -173,7 +174,15 @@ canvas.pose{width:100%;border-radius:10px;margin-top:8px;display:none}
   </div>
 
   <div class="card">
-    <h2 class="sec">5 · 차트 저장</h2>
+    <h2 class="sec">5 · 고객에게 드릴 멘트 (생활 가이드)</h2>
+    <div class="hint">체크한 자세에 맞는 <b>생활 가이드</b>를 추천해요. 항목을 <b>탭하면 아래 멘트에 추가</b>돼요. 직접 수정·추가도 됩니다.</div>
+    <div id="adviceSug"></div>
+    <details style="margin:8px 0"><summary style="cursor:pointer;font-weight:700;font-size:13px;color:var(--brand)">＋ 전체 가이드에서 고르기</summary><div id="adviceAll" style="margin-top:6px"></div></details>
+    <textarea id="recGuide" rows="5" placeholder="고객에게 드릴 생활 가이드 멘트를 여기에 정리하세요" style="width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10px;font-size:14.5px;line-height:1.6;resize:vertical;box-sizing:border-box"></textarea>
+  </div>
+
+  <div class="card">
+    <h2 class="sec">6 · 차트 저장</h2>
     <div class="hint">맨 위 <b>고객 성함</b>으로 이 분석을 저장 → [📋 고객 기록] 탭에서 불러오기. (☁️ 클라우드 · 사진 제외)</div>
     <button class="btn primary" style="width:100%" onclick="saveRecord()">☁️ 이 분석 저장</button>
   </div>
@@ -285,7 +294,7 @@ function renderChecklist(){
     }).join('');
     return '<div class="grp"><div class="gh">'+g.label+' <span class="cnt">'+g.findings.length+'</span></div>'+inner+'</div>';
   }).join('');
-  document.getElementById('selCnt').textContent=sel.size?('· '+sel.size+'개 선택'):'';
+  document.getElementById('selCnt').textContent=sel.size?('· '+sel.size+'개 선택'):''; try{renderAdvice();}catch(e){}
 }
 function pickEx(gid,f){var mem=EXMEMBERS[gid]||[],deg=!NECKSET[f]; if(sel.has(f)){ if(deg){var L=lvl[f]||1; if(L<2)lvl[f]=L+1; else {sel.delete(f);delete lvl[f];autoSet.delete(f);}} else {sel.delete(f);delete lvl[f];autoSet.delete(f);} } else {mem.forEach(function(m){sel.delete(m);delete lvl[m];autoSet.delete(m);}); sel.add(f);lvl[f]=1;} renderChecklist();}
 function esc(s){return s.replace(/'/g,"\\'");}
@@ -399,6 +408,22 @@ function _cat(name){
   if(upper) return back?'상체 후면':'상체 전면';
   return back?'하체 후면':'하체 전면';
 }
+var ADVICE=[
+ {t:'거북목', m:['거북목'], a:'거북목: 높은 베개를 베는 것이 좋아요.'},
+ {t:'일자목', m:['일자목'], a:'일자목: 목베개를 베고, 바닥을 보기보다 하늘을 더 자주 보세요.'},
+ {t:'일자등', m:[], a:'일자등: 어깨를 말지 않고 등을 살짝 굽혀야 일자허리가 되는 것을 방지할 수 있어요.'},
+ {t:'낮은어깨', m:['낮은어깨'], a:'낮은어깨: 무거운 옷·짐을 드는 동작, 어깨 강화를 위해 팔을 벌리는 동작은 피해주세요.'},
+ {t:'일자허리', m:[], a:'일자허리: 무릎보다 낮은 의자는 피하고 바의자처럼 허리를 세워 앉되, 앉을 때 등이 더 펴지지 않게 주의하세요.'},
+ {t:'굽은등', m:[], a:'굽은등: 명치를 30도 정도 들어올려 등을 펴고 생활하세요.'}
+];
+function _adviceMatch(x){ if(!x.m||!x.m.length)return false; var got=false; sel.forEach(function(f){ if(x.m.some(function(k){return f.indexOf(k)>=0;}))got=true; }); return got; }
+function renderAdvice(){
+  var sug=document.getElementById('adviceSug'), all=document.getElementById('adviceAll'); if(!sug)return;
+  var matched=[]; ADVICE.forEach(function(x,i){ if(_adviceMatch(x))matched.push(i); });
+  sug.innerHTML=matched.length ? ('<div style="font-size:12px;font-weight:700;color:var(--brand);margin:2px 0 5px">체크한 자세 추천</div>'+matched.map(function(i){return '<button class="advb" onclick="addAdvice('+i+')">＋ '+esc(ADVICE[i].t)+'</button>';}).join('')) : '<div class="muted" style="font-size:12.5px">자세를 체크하면 맞춤 가이드가 추천돼요. (아래 [전체 가이드]에서 직접 고를 수도 있어요)</div>';
+  if(all)all.innerHTML=ADVICE.map(function(x,i){return '<button class="advb" onclick="addAdvice('+i+')">＋ '+esc(x.t)+'</button>';}).join('');
+}
+function addAdvice(i){ var x=ADVICE[i]; if(!x)return; var ta=document.getElementById('recGuide'); if(!ta)return; var cur=ta.value.trim(); if(cur.indexOf(x.a)>=0){toast('이미 추가된 멘트예요');return;} ta.value=(cur?cur+'\n':'')+x.a; toast('멘트 추가됨'); }
 function renderGuide(){
   var box=document.getElementById('guideBox'); if(!box)return;
   var res=window._res||[];
@@ -561,7 +586,7 @@ async function saveRecord(){
   var d=new Date(), ds0=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
   var gv=function(id){var e=document.getElementById(id);return e?(e.value||'').trim():'';};
   var ph=gv('recPhone'); var ds=gv('recDate')||ds0;
-  var extra={phone:ph,gender:gv('recGender'),age:gv('recAge'),route:gv('recRoute'),memo:gv('recMemo'),program:gv('recProgram'),price:gv('recPrice')};
+  var extra={phone:ph,gender:gv('recGender'),age:gv('recAge'),route:gv('recRoute'),memo:gv('recMemo'),program:gv('recProgram'),price:gv('recPrice'),guide:gv('recGuide')};
   var rec={id:'b'+Date.now(),name:nm,phone:ph,date:ds,data:Object.assign({state:st},extra)};
   var ok=false;
   try{
@@ -609,7 +634,7 @@ function loadRecord(id){
   var pe=document.getElementById('recPhone'); if(pe)pe.value=(r.data&&r.data.phone)||r.phone||'';
   var dd=r.data||{}; var sv=function(id,val){var el=document.getElementById(id);if(el)el.value=val||'';};
   sv('recGender',dd.gender); sv('recAge',dd.age); sv('recRoute',dd.route); sv('recMemo',dd.memo);
-  sv('recProgram',dd.program); sv('recPrice',dd.price); sv('recDate',r.date);
+  sv('recProgram',dd.program); sv('recPrice',dd.price); sv('recDate',r.date); sv('recGuide',dd.guide);
   showView('analyze');
   toast('불러옴: '+(r.name||'')+' · [분석하기]를 눌러 결과 보기'); window.scrollTo(0,0);
 }
