@@ -291,7 +291,7 @@
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v134 (2026-07-29)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v136 (2026-07-29)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트</button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">🎓 아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()">🔒 로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -1842,30 +1842,39 @@ async function showBAImprove(i){
   }catch(e){}
   progHide();
   if(!bF||!aF){toast('얼굴 인식 실패 — 정면 사진이 선명한지 확인하세요');return;}
-  var rows=[];
-  function push(label,bv,av){
+  var rows=[],_rB=0,_rA=0;
+  function push(label,bv,av,robust){
     bv=(bv==null?null:Math.abs(bv));av=(av==null?null:Math.abs(av));
-    if(bv==null||av==null){rows.push({label:label,na:true});return;}
+    if(bv==null||av==null){rows.push({label:label,na:true,robust:robust});return;}
     var diff=av-bv, pct=(bv>=0.1)?Math.round((bv-av)/bv*100):null,verdict=diff<-0.08?'개선':(diff>0.08?'악화':'유지');
-    rows.push({label:label,bv:bv,av:av,pct:pct,verdict:verdict});
+    if(robust&&bv>=0.05){_rB+=bv;_rA+=av;}
+    rows.push({label:label,bv:bv,av:av,pct:pct,verdict:verdict,robust:robust});
   }
-  push('눈 기울기 (좌우 눈높이)',bF.eye_dy_norm,aF.eye_dy_norm);
-  push('코 편차 (밀림)',bF.nose_dx,aF.nose_dx);
-  push('회전 치우침',bF.nose_off,aF.nose_off);
-  push('콧볼 높낮이',bF.ala_diff,aF.ala_diff);
-  if(bU&&aU) push('후두골 기울기 (고개 든)',bU.dy_norm,aU.dy_norm);
+  push('눈 기울기 (좌우 눈높이)',bF.eye_dy_norm,aF.eye_dy_norm,true);
+  push('콧볼 높낮이',bF.ala_diff,aF.ala_diff,true);
+  if(bU&&aU) push('후두골 기울기 (고개 든)',bU.dy_norm,aU.dy_norm,true);
+  push('코 편차 (밀림)',bF.nose_dx,aF.nose_dx,false);
+  push('회전 치우침',bF.nose_off,aF.nose_off,false);
+  var _ov=(_rB>=0.1)?Math.round((_rB-_rA)/_rB*100):null,_ovTxt,_ovCol;
+  if(_ov==null){_ovTxt='거의 대칭';_ovCol='#8a8592';}
+  else if(_ov>0){_ovTxt=_ov+'% 개선';_ovCol='#1f9d55';}
+  else if(_ov<0){_ovTxt=Math.abs(_ov)+'% 악화';_ovCol='#d64545';}
+  else{_ovTxt='유지';_ovCol='#8a8592';}
   var html='<div class="ba-card"><div class="ba-h">📊 전/후 개선률'+(a.session?(' · '+a.session):'')+(a.date?(' · '+a.date):'')+'</div>';
+  html+='<div style="text-align:center;margin:6px 0 12px;padding:12px;border-radius:12px;background:#f2fbf5;border:1px solid #cdeeda"><div style="font-size:12px;color:#5a8a6a">핵심 대칭 개선률 <span style="color:#aaa">(자세에 강한 지표 기준)</span></div><div style="font-size:30px;font-weight:900;color:'+_ovCol+';margin-top:2px">'+_ovTxt+'</div></div>';
   html+='<table class="ba-t"><tr><th>항목</th><th>전</th><th>후</th><th>결과</th></tr>';
   rows.forEach(function(r){
-    if(r.na){html+='<tr><td>'+r.label+'</td><td class="n" colspan="3" style="color:#aaa">사진 부족</td></tr>';return;}
+    if(r.na){html+='<tr><td>'+r.label+(r.robust===false?' <span style="color:#bbb;font-size:11px">자세 영향·참고</span>':'')+'</td><td class="n" colspan="3" style="color:#aaa">사진 부족</td></tr>';return;}
     var res,col;
+    if(r.robust===false){ var d=r.av-r.bv; res=(r.av<0.1)?'대칭 근접':(d<-0.08?'감소':(d>0.08?'증가':'유지')); col='#8a8592';
+      html+='<tr><td>'+r.label+' <span style="color:#bbb;font-size:11px">자세 영향·참고</span></td><td class="n">'+r.bv.toFixed(2)+'</td><td class="n">'+r.av.toFixed(2)+'</td><td class="n" style="color:'+col+'">'+res+'</td></tr>'; return; }
     if(r.bv<0.1&&r.av<0.1){res='양쪽 대칭';col='#8a8592';}
     else{col=r.verdict==='개선'?'#1f9d55':(r.verdict==='악화'?'#d64545':'#8a8592');res=(r.pct!=null)?(r.pct>0?r.pct+'% 개선':(r.pct<0?Math.abs(r.pct)+'% 악화':'유지')):r.verdict;}
     html+='<tr><td>'+r.label+'</td><td class="n">'+r.bv.toFixed(2)+'</td><td class="n">'+r.av.toFixed(2)+'</td><td class="n" style="color:'+col+';font-weight:800">'+res+'</td></tr>';
   });
   html+='<tr><td>얼굴 가로세로비 <span style="color:#aaa">(작아지면 갸름)</span></td><td class="n">'+bF.wh.toFixed(1)+'</td><td class="n">'+aF.wh.toFixed(1)+'</td><td class="n" style="color:#8a8592">참고</td></tr>';
   html+='</table>';
-  html+='<div class="ba-note">숫자 = 비대칭 크기(0에 가까울수록 대칭). 코·회전 변화는 <b>고개 각도(자세) 차이일 수도, 실제 회전 교정(관리 결과)일 수도</b> 있어요 — 사진 한 장으론 구분 못 하니 <b>고개 든 사진(후두골)과 촉진으로 판단</b>하세요. <b>눈 기울기</b>는 자세에 덜 흔들려 신뢰도 높음. 겹쳐 촬영하면 자세 변수를 줄여줘요. 타입·팔자 등은 측정 불가 → 촉진.</div>';
+  html+='<div class="ba-note"><b>핵심 대칭 개선률</b>은 <b>자세(고개 각도)에 강한 지표(눈 기울기·콧볼·후두골)</b>만으로 계산해요 — 실제 관리 효과가 왜곡 없이 잡힙니다. <b>코 편차·회전</b>은 애프터 사진 고개 각도에 크게 흔들려 <b>참고</b>로만 뒀어요(실제 교정일 수도, 자세 차이일 수도 — 촉진으로 판단). 겹쳐 촬영(비포 오버레이)하면 더 정확해요. 숫자=비대칭 크기(0=대칭).</div>';
   html+='<button class="btn primary" style="width:100%;margin-top:12px" onclick="document.getElementById(\'baOv\').style.display=\'none\'">닫기</button></div>';
   var o=document.getElementById('baOv');
   if(!o){o=document.createElement('div');o.id='baOv';o.onclick=function(e){if(e.target===o)o.style.display='none';};document.body.appendChild(o);}
@@ -1885,7 +1894,7 @@ async function onChartPhoto(e){
   try{
     const dataURL=await new Promise(res=>resizeToDataURL(file,1600,0.85,res));const b64=dataURL.split(',')[1];
     const prompt=`이 이미지는 얼굴윤곽 관리사가 손으로 작성한 '소니드 얼굴윤곽 3D 분석차트' 작업지를 촬영한 것입니다. 관리사 본인의 필기(파란펜 동그라미·체크·밑줄 등)를 디지털로 옮기는 단순 전사 작업입니다. 각 행이 분석 항목이고, 손으로 표시된 칸이 그 항목에서 선택된 값입니다. 아래 항목별 가능한 값 목록을 참고해, 각 항목에서 표시된 값을 최대한 판독하세요. 필기가 다소 흐릿하거나 애매해도 가장 그럴듯한 값을 적어주세요 — 사람이 나중에 검토합니다. 표시가 전혀 없는 항목만 생략하세요. 여러 곳이 표시된 항목(예: 럭비프레스 위치)은 값들의 배열로 답하세요. 값은 반드시 목록의 문자열과 정확히 일치해야 합니다. 다른 설명 없이 JSON 객체만 출력하세요.\n\n항목: ${JSON.stringify(schemaForPrompt())}\n\n출력 예시: {"타입":"A","워터슬라이드":"R","얼굴부피에서 가장 큰 부분 (럭비프레스 위치)":["좌 광대","우 후두"]}`;
-    const resp=await fetch(RELAY,{method:"POST",headers:{"Content-Type":"application/json","x-sb-token":(authTok||"")},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,messages:[{role:"user",content:[{type:"image",source:{type:"base64",media_type:"image/jpeg",data:b64}},{type:"text",text:prompt}]}]})});
+    const resp=await fetch(RELAY,{method:"POST",headers:{"Content-Type":"application/json","x-sb-token":(authTok||"")},body:JSON.stringify({model:"claude-sonnet-5",max_tokens:1000,messages:[{role:"user",content:[{type:"image",source:{type:"base64",media_type:"image/jpeg",data:b64}},{type:"text",text:prompt}]}]})});
     const data=await resp.json();
     const text=(data.content||[]).filter(x=>x.type==='text').map(x=>x.text).join('\n');
     const clean=text.replace(/```json|```/g,'').trim();
@@ -2292,7 +2301,7 @@ async function onFaceAnalyze(){
   async function callOnce(){
     const ctl=new AbortController();const timer=setTimeout(()=>ctl.abort(),120000);
     try{
-      const resp=await fetch(RELAY,{method:"POST",headers:{"Content-Type":"application/json","x-sb-token":(authTok||"")},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:4000,messages:[{role:"user",content}]}),signal:ctl.signal});
+      const resp=await fetch(RELAY,{method:"POST",headers:{"Content-Type":"application/json","x-sb-token":(authTok||"")},body:JSON.stringify({model:"claude-sonnet-5",max_tokens:4000,messages:[{role:"user",content}]}),signal:ctl.signal});
       clearTimeout(timer);
       let data;try{data=await resp.json();}catch(je){throw new Error('응답을 읽지 못했습니다 (HTTP '+resp.status+')');}
       if(!resp.ok||(data&&data.error)){throw new Error('API 오류 '+(resp.status||'')+' · '+((data&&data.error&&data.error.message)||JSON.stringify(data).slice(0,300)));}
@@ -2341,7 +2350,7 @@ async function onCodeAnalyze(){
     const content=[];
     for(const [s,ko] of slots){const b64=await shrinkForAI(form['photo_'+s],560,0.55);content.push({type:'text',text:'['+ko+' 사진]'});content.push({type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}});}
     content.push({type:'text',text:'당신은 소니드 얼굴 분석 보조입니다. 아래 지침대로 "안면 코드"만 판정해 JSON 하나만 출력하세요(다른 설명 금지).\n\n'+measureText(meas,null,earsU)+'\n\n'+FCODE_PROMPT});
-    const resp=await fetch(RELAY,{method:"POST",headers:{"Content-Type":"application/json","x-sb-token":(authTok||"")},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:600,messages:[{role:"user",content}]})});
+    const resp=await fetch(RELAY,{method:"POST",headers:{"Content-Type":"application/json","x-sb-token":(authTok||"")},body:JSON.stringify({model:"claude-sonnet-5",max_tokens:600,messages:[{role:"user",content}]})});
     let data;try{data=await resp.json();}catch(je){throw new Error('응답을 읽지 못했습니다 (HTTP '+resp.status+')');}
     if(!resp.ok||(data&&data.error)){throw new Error('API 오류 '+(resp.status||'')+' · '+((data&&data.error&&data.error.message)||JSON.stringify(data).slice(0,200)));}
     const text=(data.content||[]).filter(x=>x.type==='text').map(x=>x.text).join('\n');
@@ -2375,7 +2384,7 @@ async function onAfterFaceAnalyze(i){
     var content=[];
     for(var si=0;si<slots.length;si++){var s=slots[si][0],ko=slots[si][1];var b64=await shrinkForAI(a['photo_'+s],560,0.55);content.push({type:'text',text:'['+ko+' 사진]'});content.push({type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}});}
     content.push({type:'text',text:FACE_PROMPT+'\n\n'+measureText(meas,earsF,earsU)+'\n\n항목 목록: '+JSON.stringify(faceSchema())});
-    var resp=await fetch(RELAY,{method:"POST",headers:{"Content-Type":"application/json","x-sb-token":(authTok||"")},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:4000,messages:[{role:"user",content:content}]})});
+    var resp=await fetch(RELAY,{method:"POST",headers:{"Content-Type":"application/json","x-sb-token":(authTok||"")},body:JSON.stringify({model:"claude-sonnet-5",max_tokens:4000,messages:[{role:"user",content:content}]})});
     var data=await resp.json();
     if(!resp.ok||(data&&data.error))throw new Error((data&&data.error&&data.error.message)||('HTTP '+resp.status));
     var text=(data.content||[]).filter(function(x){return x.type==='text';}).map(function(x){return x.text;}).join('\n');
