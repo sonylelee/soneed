@@ -100,10 +100,10 @@ h2.sec,.logo{letter-spacing:-.02em}
 <body>
 <header>
   <div class="logo">SONEED 바디</div>
-  <div class="sub">키머슬(짧아진 근육) 분석 · v6.3 · 촉진 전 초안</div>
+  <div class="sub">키머슬(짧아진 근육) 분석 · v6.4 · 촉진 전 초안</div>
 </header>
 <div class="wrap">
-  <div class="topnav"><button id="navAnalyze" class="on" onclick="showView('analyze')">🔍 분석</button><button id="navRecords" onclick="showView('records')">📋 고객 기록</button></div>
+  <div class="topnav"><button id="navAnalyze" class="on" onclick="showView('analyze')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>분석</button><button id="navRecords" onclick="showView('records')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>고객 기록</button></div>
   <div id="view-analyze">
 
   <div class="card" style="padding:12px 14px">
@@ -132,7 +132,7 @@ h2.sec,.logo{letter-spacing:-.02em}
     <div class="hint">정면 사진으로 자동 측정(어깨·골반·무릎 높이, 머리기울임)이 됩니다. 나머지(척추·회전·목 유형 등)는 아래에서 직접 체크·촉진하세요.</div>
     <div class="photos" id="photos"></div>
     <canvas class="pose" id="poseCv"></canvas>
-    <button class="btn dark block" id="btnAuto" style="margin-top:10px" onclick="runAuto()">🤖 정면 사진 자동 분석</button>
+    <button class="btn dark block" id="btnAuto" style="margin-top:10px" onclick="runAuto()"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-2px;margin-right:5px"><path d="M12 2l1.9 4.6L18.5 8.5 13.9 10.4 12 15l-1.9-4.6L5.5 8.5 10.1 6.6z"/></svg>정면 사진 자동 분석</button>
   </div>
 
   <div class="card">
@@ -144,11 +144,11 @@ h2.sec,.logo{letter-spacing:-.02em}
 
   <div class="card">
     <h2 class="sec">3 · 결과 — 키머슬 랭킹</h2>
-    <button class="btn primary block" onclick="analyze()">📊 분석하기</button>
+    <button class="btn primary block" onclick="analyze()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px"><path d="M6 20v-6M12 20V8M18 20v-9"/></svg>분석하기</button>
     <div id="bodyview" style="display:none;margin-top:12px">
       <div class="seg" style="margin-bottom:8px">
-        <button class="on" id="tab3d" onclick="bodyTab('3d')">🧍 3D 모형</button>
-        <button id="tab2d" onclick="bodyTab('2d')">🗺 평면도</button>
+        <button class="on" id="tab3d" onclick="bodyTab('3d')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px"><circle cx="12" cy="6" r="3.2"/><path d="M6 21v-1.5a4.5 4.5 0 014.5-4.5h3a4.5 4.5 0 014.5 4.5V21"/></svg>3D 모형</button>
+        <button id="tab2d" onclick="bodyTab('2d')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px"><path d="M9 4L3.5 6v14L9 18l6 2 5.5-2V4L15 6 9 4zM9 4v14M15 6v14"/></svg>평면도</button>
       </div>
       <div id="body3d"><canvas id="cv3d"></canvas><button id="peelBtn" onclick="toggleNeutral3D()" style="position:absolute;top:8px;right:8px;z-index:6;background:rgba(255,255,255,.9);border:none;border-radius:14px;padding:6px 12px;font-size:12px;font-weight:800;color:#333;cursor:pointer">겉근육 벗기기(속근육 보기)</button>
         <div class="muted" style="text-align:center;margin-top:4px">손가락으로 돌리기 · 벌려서 확대 · <b>두 손가락으로 이동</b>(머리 등으로) · <span style="color:#e0396f;font-weight:800">🔴짧아짐</span> <span style="color:#2f8fd6;font-weight:800">🔵늘어남</span></div>
