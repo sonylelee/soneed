@@ -100,7 +100,7 @@ h2.sec,.logo{letter-spacing:-.02em}
 <body>
 <header>
   <div class="logo">SONEED 바디</div>
-  <div class="sub">키머슬(짧아진 근육) 분석 · v6.4 · 촉진 전 초안</div>
+  <div class="sub">키머슬(짧아진 근육) 분석 · v6.5 · 촉진 전 초안</div>
 </header>
 <div class="wrap">
   <div class="topnav"><button id="navAnalyze" class="on" onclick="showView('analyze')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>분석</button><button id="navRecords" onclick="showView('records')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>고객 기록</button></div>
@@ -137,7 +137,7 @@ h2.sec,.logo{letter-spacing:-.02em}
 
   <div class="card">
     <h2 class="sec">2 · 자세 체크 <span class="muted" id="selCnt"></span></h2>
-    <div class="hint">관찰·촉진한 자세 이상을 켜세요. <b>누를수록 정도가 세져요(약→중→강, 뱃지 2·3), 한 번 더 누르면 해제.</b> 손목·발목 같은 관절은 <b>좌우 각각</b> 선택돼요(양쪽 다 같은 방향 가능). 🤖=사진 자동판정.</div>
+    <div class="hint">관찰·촉진한 자세 이상을 켜세요. <b>누를수록 정도가 세져요(약→중→강, 뱃지 2·3), 한 번 더 누르면 해제.</b> 손목·발목 같은 관절은 <b>좌우 각각</b> 선택돼요(양쪽 다 같은 방향 가능).=사진 자동판정.</div>
     <div id="checklist"></div>
     <button class="btn ghost block" style="margin-top:8px" onclick="clearAll()">전체 해제</button>
   </div>
@@ -181,12 +181,12 @@ h2.sec,.logo{letter-spacing:-.02em}
 
   <div class="card">
     <h2 class="sec">6 · 차트 저장</h2>
-    <div class="hint">맨 위 <b>고객 성함</b>으로 이 분석을 저장 → [📋 고객 기록] 탭에서 불러오기. (☁️ 클라우드 · 사진 제외)</div>
-    <button class="btn primary" style="width:100%" onclick="saveRecord()">☁️ 이 분석 저장</button>
+    <div class="hint">맨 위 <b>고객 성함</b>으로 이 분석을 저장 → [고객 기록] 탭에서 불러오기. (클라우드 · 사진 제외)</div>
+    <button class="btn primary" style="width:100%" onclick="saveRecord()">이 분석 저장</button>
   </div>
 
   </div>
-  <div id="view-records" style="display:none"><div class="card"><h2 class="sec">📋 고객 기록</h2><div class="hint">☁️ 클라우드 저장 — <b>어느 브라우저·폰·기기에서든</b> 보여요. [불러오기]로 복원 후 [분석하기].</div><input id="recSearch" oninput="_paintRecords()" placeholder="🔍 고객 이름 검색" style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;margin-bottom:10px"><div id="recList"></div></div></div>
+  <div id="view-records" style="display:none"><div class="card"><h2 class="sec">고객 기록</h2><div class="hint">클라우드 저장 — <b>어느 브라우저·폰·기기에서든</b> 보여요. [불러오기]로 복원 후 [분석하기].</div><input id="recSearch" oninput="_paintRecords()" placeholder="고객 이름 검색" style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;margin-bottom:10px"><div id="recList"></div></div></div>
   <div class="muted" style="text-align:center;padding:6px 0 20px">SONEED Body OS · 사진 분석은 가설, 촉진은 검증<br><span style="font-size:10px;opacity:.7">3D 해부 모델: Z-Anatomy / BodyParts3D · CC BY-SA</span></div>
 </div>
 
@@ -284,10 +284,10 @@ function renderChecklist(){
     var bi=_buildItems(g.findings);
     var inner=bi.items.map(function(it){
       if(it.t==='chip'){var f=it.f,on=sel.has(f),au=autoSet.has(f);
-        return '<span class="chip'+(on?' on':'')+(au?' auto':'')+'" onclick="toggle(\''+esc(f)+'\')">'+f+(au?' <span class="a">🤖</span>':'')+_lb(f)+'</span>';}
+        return '<span class="chip'+(on?' on':'')+(au?' auto':'')+'" onclick="toggle(\''+esc(f)+'\')">'+f+(au?' <span class="a"></span>':'')+_lb(f)+'</span>';}
       var grp=bi.groups[it.gid]; EXMEMBERS[it.gid]=grp.opts.map(function(o){return o.f;});
       var btns=grp.opts.map(function(o){var on=sel.has(o.f),au=autoSet.has(o.f);
-        return '<button class="exo'+(on?' on':'')+(au?' auto':'')+'" onclick="'+(grp.special==='ph'?('pickPelvisHigh(\''+esc(o.f)+'\')'):(grp.multi?('toggle(\''+esc(o.f)+'\')'):('pickEx(\''+esc(it.gid)+'\',\''+esc(o.f)+'\')')))+'">'+o.o+(au?' 🤖':'')+_lb(o.f)+'</button>';}).join('');
+        return '<button class="exo'+(on?' on':'')+(au?' auto':'')+'" onclick="'+(grp.special==='ph'?('pickPelvisHigh(\''+esc(o.f)+'\')'):(grp.multi?('toggle(\''+esc(o.f)+'\')'):('pickEx(\''+esc(it.gid)+'\',\''+esc(o.f)+'\')')))+'">'+o.o+(au?'':'')+_lb(o.f)+'</button>';}).join('');
       return '<div class="exg"><span class="exg-l">'+grp.glabel+'</span><span class="exg-o">'+btns+'</span></div>';
     }).join('');
     return '<div class="grp"><div class="gh">'+g.label+' <span class="cnt">'+g.findings.length+'</span></div>'+inner+'</div>';
@@ -323,15 +323,15 @@ function computeAll(){
 /* ---------- 자동 분석 (MediaPipe Pose) ---------- */
 function runAuto(){
   if(!photos.front){toast('정면 사진을 먼저 넣어주세요');return;}
-  var b=document.getElementById('btnAuto');b.disabled=true;b.textContent='🤖 분석 중…';
+  var b=document.getElementById('btnAuto');b.disabled=true;b.textContent='분석 중…';
   var img=new Image();
   img.onload=function(){
-    if(!window.BODY_detectPose){toast('포즈 엔진 로딩 중… 잠시 후 다시');b.disabled=false;b.textContent='🤖 정면 사진 자동 분석';return;}
+    if(!window.BODY_detectPose){toast('포즈 엔진 로딩 중… 잠시 후 다시');b.disabled=false;b.textContent='정면 사진 자동 분석';return;}
     window.BODY_detectPose(img).then(function(lm){
-      b.disabled=false;b.textContent='🤖 정면 사진 자동 분석';
+      b.disabled=false;b.textContent='정면 사진 자동 분석';
       if(!lm){toast('사람을 인식하지 못했어요 (전신이 다 나오게 촬영)');return;}
       applyPose(lm,img);
-    }).catch(function(e){b.disabled=false;b.textContent='🤖 정면 사진 자동 분석';toast('자동 분석 실패: '+(e&&e.message||e));});
+    }).catch(function(e){b.disabled=false;b.textContent='정면 사진 자동 분석';toast('자동 분석 실패: '+(e&&e.message||e));});
   };
   img.src=photos.front;
 }
@@ -522,7 +522,7 @@ function setView(v){
       +'<span class="pc" style="color:'+(isShort?'var(--short)':'var(--long)')+'">'+(isShort?'짧아짐 ':'늘어남 ')+Math.abs(x.pct)+'%</span></div>'
       +'<div class="reg">'+x.region+' · 점수 '+(x.score>0?'+':'')+x.score+'/'+x.total+'</div>'
       +'<div class="bar '+(isShort?'short':'long')+'"><i style="'+(isShort?'left:0;':'right:0;')+'width:'+w+'%"></i></div>'
-      +(g?'<div class="gd">💠 '+g+'</div>':'')
+      +(g?'<div class="gd">'+g+'</div>':'')
       +'</li>';
   }).join('');
 }
@@ -562,7 +562,7 @@ async function saveRecord(){
     if(r.ok)ok=true; else throw new Error('HTTP '+r.status);
   }catch(e){ var arr=_recAll(); arr.unshift(Object.assign({state:st,phone:ph},rec)); _recSave(arr); }
   document.getElementById('recName').value='';
-  toast(ok?('☁️ 클라우드 저장됨: '+nm):('로컬 저장됨(클라우드 미설정): '+nm));
+  toast(ok?('클라우드 저장됨: '+nm):('로컬 저장됨(클라우드 미설정): '+nm));
   renderRecords();
 }
 async function renderRecords(){
@@ -585,8 +585,8 @@ function _paintRecords(){
   box.innerHTML=order.map(function(nm){
     var sess=groups[nm].slice().sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
     return '<div style="margin-bottom:10px;border:1px solid var(--line);border-radius:10px;overflow:hidden">'
-      +'<div style="background:#f7f8fb;padding:9px 12px;font-weight:800">👤 '+nm.replace(/</g,'&lt;')+' <span class="muted" style="font-size:12px;font-weight:600">· '+sess.length+'회</span>'+(function(){var ph='';sess.forEach(function(r){var p=(r.data&&r.data.phone)||r.phone;if(p&&!ph)ph=p;});return ph?' <span class="muted" style="font-size:12px;font-weight:600">📞 '+ph.replace(/</g,'&lt;')+'</span>':'';})()+'</div>'
-      +sess.map(function(r){var cnt=Object.keys(_recState(r)).length; var dd=r.data||{}; var prog=(dd.program||'').replace(/</g,'&lt;'); var price=(dd.price||'').replace(/</g,'&lt;'); var meta='📅 '+(r.date||'')+(prog?' · <b style="color:var(--brand)">'+prog+'</b>':'')+(price?' · '+price:'');
+      +'<div style="background:#f7f8fb;padding:9px 12px;font-weight:800">'+nm.replace(/</g,'&lt;')+' <span class="muted" style="font-size:12px;font-weight:600">· '+sess.length+'회</span>'+(function(){var ph='';sess.forEach(function(r){var p=(r.data&&r.data.phone)||r.phone;if(p&&!ph)ph=p;});return ph?' <span class="muted" style="font-size:12px;font-weight:600">'+ph.replace(/</g,'&lt;')+'</span>':'';})()+'</div>'
+      +sess.map(function(r){var cnt=Object.keys(_recState(r)).length; var dd=r.data||{}; var prog=(dd.program||'').replace(/</g,'&lt;'); var price=(dd.price||'').replace(/</g,'&lt;'); var meta=''+(r.date||'')+(prog?' · <b style="color:var(--brand)">'+prog+'</b>':'')+(price?' · '+price:'');
         return '<div style="display:flex;align-items:center;gap:6px;padding:8px 12px;border-top:1px solid #f0f1f5"><div style="flex:1;min-width:0"><div style="font-size:12.5px;color:#556">'+meta+'</div><div class="muted" style="font-size:11px;margin-top:1px">'+cnt+'항목</div></div><button class="btn" style="padding:6px 10px;font-size:12px" onclick="loadRecord(\''+r.id+'\')">불러오기</button><button class="btn" style="padding:6px 10px;font-size:12px;color:#c02" onclick="delRecord(\''+r.id+'\')">삭제</button></div>';
       }).join('')
       +'</div>';
@@ -641,7 +641,7 @@ init().catch(function(e){console.warn('pose init',e);});
 <script>
 (function(){
   var ready=false,pending=null,colored={},hideNeutral=false,musRoot=null;
-  function fail(msg){var n=document.getElementById('no3d');if(n){n.style.display='block';var hint=/webgl|context/i.test(msg)?' → 크롬 탭을 여러 개 닫고 아래 [다시 시도]를 누르세요. 안 되면 크롬 완전 종료(⌘Q) 후 재실행, 또는 설정→시스템→"하드웨어 가속 사용" 켜기.':' → 인터넷/브라우저 확인';n.innerHTML='<div>3D를 불러오지 못했어요: '+msg+hint+'</div><button onclick="BODY_retry3D()" style="margin-top:10px;padding:9px 18px;border:none;border-radius:10px;background:#232733;color:#fff;font-weight:800;cursor:pointer">🔄 다시 시도</button>';}var c=document.getElementById('cv3d');if(c)c.style.display='none';}
+  function fail(msg){var n=document.getElementById('no3d');if(n){n.style.display='block';var hint=/webgl|context/i.test(msg)?' → 크롬 탭을 여러 개 닫고 아래 [다시 시도]를 누르세요. 안 되면 크롬 완전 종료(⌘Q) 후 재실행, 또는 설정→시스템→"하드웨어 가속 사용" 켜기.':' → 인터넷/브라우저 확인';n.innerHTML='<div>3D를 불러오지 못했어요: '+msg+hint+'</div><button onclick="BODY_retry3D()" style="margin-top:10px;padding:9px 18px;border:none;border-radius:10px;background:#232733;color:#fff;font-weight:800;cursor:pointer">다시 시도</button>';}var c=document.getElementById('cv3d');if(c)c.style.display='none';}
   window.BODY_update3D=function(res){pending=res;};
   window.BODY_resize3D=function(){};
   window.BODY_retry3D=function(){var old=document.getElementById('cv3d');if(old){var nc=document.createElement('canvas');nc.id='cv3d';old.parentNode.replaceChild(nc,old);}var n=document.getElementById('no3d');if(n)n.style.display='none';ready=false;start();};
