@@ -14,7 +14,7 @@
 <style>
 :root{--brand:#6E4A32;--brand2:#B07A45;--ink:#2C2320;--muted:#8C7E6F;--line:#E7DDCF;--bg:#F4EEE3;--card:#fffdfa;--short:#c0603a;--long:#5a86b0}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo',sans-serif;background:var(--bg);color:var(--ink);font-size:15px;line-height:1.5}
+body{margin:0;font-family:'Pretendard Variable',Pretendard,-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo',sans-serif;background:var(--bg);color:var(--ink);font-size:15px;line-height:1.5}
 header{position:sticky;top:0;z-index:20;background:linear-gradient(135deg,#3B2A1F,#281C15);color:#fff;padding:14px 16px;box-shadow:0 3px 16px rgba(50,32,20,.35)}
 header .logo{font-weight:900;font-size:19px;letter-spacing:.3px;background:linear-gradient(90deg,#EBC48F,#D0965A);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 header .sub{font-size:11px;color:#CBB89E;margin-top:3px}
@@ -83,6 +83,19 @@ canvas.pose{width:100%;border-radius:10px;margin-top:8px;display:none}
 #body3d canvas{display:block;width:100%;height:340px}
 .advb{font-size:12.5px;font-weight:700;padding:6px 11px;border-radius:16px;border:1px solid var(--line);background:#fff;color:var(--brand);cursor:pointer;margin:0 5px 5px 0}
 </style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<style id="proTheme">
+*{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+body{letter-spacing:-.011em}
+.card{box-shadow:0 1px 2px rgba(18,20,30,.05),0 14px 30px -10px rgba(18,20,30,.10);border:1px solid rgba(18,20,30,.06)}
+.btn,button{transition:transform .12s ease,box-shadow .15s ease,filter .15s ease,background .15s ease,border-color .15s ease}
+.btn:active,button:active{transform:translateY(1px)}
+.btn.primary{box-shadow:0 6px 16px -6px var(--brand)}
+.btn.primary:hover{filter:brightness(.96)}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--brand)!important;box-shadow:0 0 0 3px color-mix(in srgb,var(--brand) 16%,transparent)}
+h2.sec,.logo{letter-spacing:-.02em}
+.topnav button{transition:all .15s ease}
+</style>
 </head>
 <body>
 <div id="loginGate" style="position:fixed;inset:0;z-index:9999;background:linear-gradient(160deg,#281C15,#3B2A1F);display:flex;align-items:center;justify-content:center;padding:20px">
@@ -101,7 +114,7 @@ canvas.pose{width:100%;border-radius:10px;margin-top:8px;display:none}
 </div>
 <header style="position:relative">
   <div class="logo">스파드블랑</div>
-  <div class="sub">커스텀스파 관리 프로그램 · v2.0 · 촉진 전 초안</div>
+  <div class="sub">커스텀스파 관리 프로그램 · v2.1 · 촉진 전 초안</div>
   <button id="logoutBtn" onclick="authLogout()" style="position:absolute;top:14px;right:16px;background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.28);border-radius:14px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer">🔓 로그아웃</button>
 </header>
 <div class="wrap">
