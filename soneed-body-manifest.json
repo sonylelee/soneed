@@ -3,10 +3,19 @@
   "short_name": "SONEED 바디",
   "start_url": "./soneed_body.html",
   "display": "standalone",
-  "background_color": "#3B2A1F",
-  "theme_color": "#3B2A1F",
+  "background_color": "#12141a",
+  "theme_color": "#181b22",
   "icons": [
-    {"src": "soneed-icon-180.png", "sizes": "180x180", "type": "image/png"},
-    {"src": "soneed-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"}
+    {
+      "src": "soneed-icon-180.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "soneed-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
   ]
 }

@@ -106,7 +106,7 @@ h2.sec,.logo{letter-spacing:-.02em}
     <input id="gateEmail" type="email" autocomplete="username" placeholder="이메일" style="width:100%;padding:11px 13px;border:1px solid #dfe2ea;border-radius:10px;font-size:15px;margin-bottom:8px;box-sizing:border-box">
     <div style="position:relative;margin-bottom:12px">
       <input id="gatePw" type="password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="비밀번호" onkeydown="if(event.key==='Enter')doLogin()" style="width:100%;padding:11px 42px 11px 13px;border:1px solid #dfe2ea;border-radius:10px;font-size:15px;box-sizing:border-box">
-      <button type="button" onclick="var p=document.getElementById('gatePw');p.type=(p.type==='password'?'text':'password');this.textContent=(p.type==='password'?'':'')" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:0;cursor:pointer;font-size:17px;padding:4px"></button>
+      <button type="button" onclick="var p=document.getElementById('gatePw');var sh=p.type==='password';p.type=sh?'text':'password';this.textContent=sh?'숨김':'보기'" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:0;cursor:pointer;font-size:12.5px;font-weight:700;color:#8C7E6F;padding:4px 6px">보기</button>
     </div>
     <button onclick="doLogin()" style="width:100%;padding:12px;border:0;border-radius:10px;background:#6E4A32;color:#fff;font-weight:800;font-size:15px;cursor:pointer">로그인</button>
     <div id="gateMsg" style="font-size:12.5px;color:#c02;margin-top:10px;min-height:16px"></div>
@@ -114,7 +114,7 @@ h2.sec,.logo{letter-spacing:-.02em}
 </div>
 <header style="position:relative">
   <div class="logo">스파드블랑</div>
-  <div class="sub">커스텀스파 관리 프로그램 · v2.3 · 촉진 전 초안</div>
+  <div class="sub">커스텀스파 관리 프로그램 · v2.4 · 촉진 전 초안</div>
   <button id="logoutBtn" onclick="authLogout()" style="position:absolute;top:14px;right:16px;background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.28);border-radius:14px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer">로그아웃</button>
 </header>
 <div class="wrap">
