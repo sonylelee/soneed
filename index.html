@@ -300,7 +300,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v143 (2026-07-29)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v144 (2026-07-29)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트</button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -2477,7 +2477,8 @@ async function saveRecord(){
   toast(photoFail?'기본정보는 저장됨 · 사진은 용량이 커서 저장 실패':(updateValidation()?'저장되었습니다':'저장됨 · 회전 오류가 남아있어요'));
   document.getElementById('editState').textContent=(form.code||'무제')+' · 저장됨 (편집 중)';document.getElementById('delBtn').style.display='';refreshAll();try{if(mode==='cloud')_saveRecCache(records);}catch(e){}
 }
-function _who(em){ if(!em)return ''; if(em===authEmail())return '나'; var n=em.split('@')[0]; return n; }
+var STAFF_NAMES={'ryeun88@naver.com':'김려은','rudal4186@naver.com':'신경미','spvkxmfl@naver.com':'신대성','soneed2512@gmail.com':'김현주','highfot25@naver.com':'이수연','jsa255@naver.com':'정수영','soni0025@naver.com':'이소니 원장','soni00025@gmail.com':'이소니 원장'};
+function _who(em){ if(!em)return ''; var e=(em||'').toLowerCase(); if(STAFF_NAMES[e])return STAFF_NAMES[e]; if(em===authEmail())return '나'; return em.split('@')[0]; }
 function renderConfirmUI(){
   var cb=document.getElementById('confirmBtn'), info=document.getElementById('confirmInfo'); if(!info)return;
   var admin=(typeof isAdmin==='function'&&isAdmin());
