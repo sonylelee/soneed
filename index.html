@@ -300,7 +300,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v142 (2026-07-29)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v143 (2026-07-29)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트</button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -715,7 +715,8 @@ function logAccess(){   /* 접속 로그: 하루 1회(기기별) events에 기�
   }catch(e){}
 }
 const ADMIN_EMAIL='soni0025@naver.com';
-function isAdmin(){return !!(authTok&&authEmail()===ADMIN_EMAIL);}
+const ADMIN_EMAILS=['soni0025@naver.com','soni00025@gmail.com','soni0025@gmail.com'];
+function isAdmin(){return !!(authTok&&ADMIN_EMAILS.indexOf((authEmail()||'').toLowerCase())>=0);}
 /* 주인장(대표)만 보이는 UI 토글. 지금은 데이터 탭의 조건필터 카드. */
 function applyAdminUI(){
   var on=isAdmin();
