@@ -301,7 +301,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v155 (2026-08-20)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v156 (2026-08-20)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -2590,7 +2590,8 @@ function unreadCount(r){
     var me=(typeof authEmail==='function'&&authEmail())||''; if(!me||!r)return 0;
     var admin=(typeof isAdmin==='function'&&isAdmin());
     var seen=_notifSeen(); var last=seen[r.id]||''; var n=0;
-    (r.comments||[]).forEach(function(c){
+    var cms=r.comments; if(typeof cms==='string'){ try{cms=JSON.parse(cms);}catch(e){cms=[];} }
+    (cms||[]).forEach(function(c){
       if(!c||c.by===me||!c.at)return;
       var cAdmin=(typeof ADMIN_EMAILS!=='undefined'&&ADMIN_EMAILS.indexOf((c.by||'').toLowerCase())>=0);
       if(admin&&cAdmin)return; if(!admin&&!cAdmin)return;
@@ -2631,7 +2632,7 @@ function openComments(){
   o.innerHTML='<div style="background:#fff;width:100%;max-width:520px;border-radius:16px 16px 0 0;max-height:82vh;display:flex;flex-direction:column;overflow:hidden">'
    +'<div style="padding:14px 16px;border-bottom:1px solid #eee;display:flex;align-items:center;gap:8px"><b style="font-size:15px">코멘트 · 대화</b><span style="font-size:12px;color:#999">'+((form.code||'무제'))+'</span><button onclick="_cmtStopPoll();document.getElementById(\'cmtOv\').style.display=\'none\'" style="margin-left:auto;background:none;border:0;font-size:20px;color:#888;cursor:pointer">×</button></div>'
    +'<div id="cmtList" style="flex:1;overflow:auto;padding:14px 16px;background:#faf9fb"></div>'
-   +'<div style="padding:10px 12px;border-top:1px solid #eee;display:flex;gap:8px"><input id="cmtInput" placeholder="코멘트를 남기세요…" onkeydown="if(event.key===\'Enter\')addComment()" style="flex:1;padding:11px 13px;border:1px solid #ddd;border-radius:10px;font-size:16px"><button class="btn primary" style="padding:11px 16px" onclick="addComment()">등록</button></div>'
+   +'<div style="padding:10px 12px;border-top:1px solid #eee;display:flex;gap:8px"><input id="cmtInput" placeholder="코멘트를 남기세요…" onkeydown="if(event.key===\'Enter\'&&!event.isComposing&&event.keyCode!==229)addComment()" style="flex:1;padding:11px 13px;border:1px solid #ddd;border-radius:10px;font-size:16px"><button class="btn primary" style="padding:11px 16px" onclick="addComment()">등록</button></div>'
    +'</div>';
   renderComments(); o.style.display='flex'; if(currentId)markNotifSeen(currentId);
   setTimeout(function(){var el=document.getElementById('cmtInput');if(el)el.focus();},100);
