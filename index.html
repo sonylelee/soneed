@@ -300,7 +300,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v144 (2026-07-29)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v145 (2026-07-29)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트</button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -361,6 +361,7 @@ h2.section,.logo{letter-spacing:-.01em}
       <div class="actions">
         <button class="btn primary" onclick="saveRecord()">기록 저장</button>
         <button class="btn" id="confirmBtn" style="display:none;background:#0e9f6e;color:#fff" onclick="toggleConfirm()">원장 컨펌 완료</button>
+        <button class="btn ghost" id="commentBtn" style="display:none" onclick="openComments()">코멘트/대화 <span id="commentCnt" style="font-weight:800;color:#C81D74"></span></button>
         <button class="btn danger" id="delBtn" style="display:none" onclick="deleteCurrent()">이 기록 삭제</button>
       </div>
       <div id="confirmInfo" style="font-size:12px;color:var(--muted);margin-top:6px"></div>
@@ -1009,7 +1010,7 @@ function doLogout(){authLogout();closeLogin();}
 /* 목록은 사진 제외한 가벼운 필드만 로드 → 편집 시 그 기록만 전체 로드(editRecord) */
 async function cloudLoad(){
   var lk=FIELDS.map(function(f){return f.k;});
-  ['code','date','therapist','signup','branch','savedBy','lastBy','confirmedBy','confirmedAt','thumb','face_code'].forEach(function(k){if(lk.indexOf(k)<0)lk.push(k);});
+  ['code','date','therapist','signup','branch','savedBy','lastBy','confirmedBy','confirmedAt','comments','thumb','face_code'].forEach(function(k){if(lk.indexOf(k)<0)lk.push(k);});
   var sel=('id,updated_at,'+lk.map(function(k){return k+':data->'+k;}).join(',')).replace(/>/g,'%3E');
   try{
     const r=await fetch(sbBase()+'records?select='+sel+'&order=updated_at.desc',{headers:sbHeaders()});
@@ -2488,12 +2489,52 @@ function renderConfirmUI(){
   info.innerHTML=by+'<span style="color:'+(form.confirmedBy?'#0e9f6e':'#c98a00')+';font-weight:700">'+conf+'</span>';
   if(cb)cb.textContent=form.confirmedBy?'컨펌 해제':'원장 컨펌 완료';
   if(cb)cb.style.background=form.confirmedBy?'#8a8f98':'#0e9f6e';
+  var cmb=document.getElementById('commentBtn'); if(cmb){ cmb.style.display=(typeof authEmail==='function'&&authEmail())?'':'none'; var n=(form.comments||[]).length; document.getElementById('commentCnt').textContent=n?('('+n+')'):''; }
 }
 function toggleConfirm(){
   if(!(typeof isAdmin==='function'&&isAdmin())){toast('원장(대표)만 컨펌할 수 있어요');return;}
   if(form.confirmedBy){ form.confirmedBy=null; form.confirmedAt=null; toast('컨펌 해제됨'); }
   else{ form.confirmedBy=authEmail(); form.confirmedAt=new Date().toISOString(); toast('원장 컨펌 완료'); }
   renderConfirmUI(); saveRecord();
+}
+function openComments(){
+  if(!(typeof authEmail==='function'&&authEmail())){toast('로그인 후 코멘트를 남길 수 있어요');return;}
+  var o=document.getElementById('cmtOv');
+  if(!o){o=document.createElement('div');o.id='cmtOv';o.style.cssText='position:fixed;inset:0;z-index:100002;background:rgba(20,18,26,.55);display:flex;align-items:flex-end;justify-content:center';o.onclick=function(e){if(e.target===o)o.style.display='none';};document.body.appendChild(o);}
+  o.innerHTML='<div style="background:#fff;width:100%;max-width:520px;border-radius:16px 16px 0 0;max-height:82vh;display:flex;flex-direction:column;overflow:hidden">'
+   +'<div style="padding:14px 16px;border-bottom:1px solid #eee;display:flex;align-items:center;gap:8px"><b style="font-size:15px">코멘트 · 대화</b><span style="font-size:12px;color:#999">'+((form.code||'무제'))+'</span><button onclick="document.getElementById(\'cmtOv\').style.display=\'none\'" style="margin-left:auto;background:none;border:0;font-size:20px;color:#888;cursor:pointer">×</button></div>'
+   +'<div id="cmtList" style="flex:1;overflow:auto;padding:14px 16px;background:#faf9fb"></div>'
+   +'<div style="padding:10px 12px;border-top:1px solid #eee;display:flex;gap:8px"><input id="cmtInput" placeholder="코멘트를 남기세요…" onkeydown="if(event.key===\'Enter\')addComment()" style="flex:1;padding:11px 13px;border:1px solid #ddd;border-radius:10px;font-size:14px"><button class="btn primary" style="padding:11px 16px" onclick="addComment()">등록</button></div>'
+   +'</div>';
+  renderComments(); o.style.display='flex';
+  setTimeout(function(){var el=document.getElementById('cmtInput');if(el)el.focus();},100);
+}
+function renderComments(){
+  var box=document.getElementById('cmtList'); if(!box)return;
+  var arr=form.comments||[];
+  if(!arr.length){box.innerHTML='<div style="color:#aaa;text-align:center;padding:30px 0;font-size:13px">아직 코멘트가 없어요.<br>첫 코멘트를 남겨보세요.</div>';return;}
+  var me=(typeof authEmail==='function'&&authEmail())||'';
+  box.innerHTML=arr.map(function(c,i){
+    var mine=c.by===me, adm=(typeof ADMIN_EMAILS!=='undefined'&&ADMIN_EMAILS.indexOf((c.by||'').toLowerCase())>=0);
+    var nm=_who(c.by), when=(c.at||'').slice(0,16).replace('T',' ');
+    var del=mine?('<span onclick="delComment('+i+')" style="cursor:pointer;color:#c66;font-size:11px;margin-left:6px">삭제</span>'):'';
+    return '<div style="margin-bottom:12px;'+(mine?'text-align:right':'')+'"><div style="font-size:11px;color:'+(adm?'#0e9f6e':'#8a7aa8')+';font-weight:700;margin-bottom:3px">'+nm+(adm?' · 원장':'')+' <span style="color:#bbb;font-weight:400">'+when+'</span>'+del+'</div><div style="display:inline-block;max-width:85%;text-align:left;padding:9px 12px;border-radius:12px;font-size:14px;line-height:1.5;background:'+(mine?'#fce4f0':'#fff')+';border:1px solid '+(mine?'#f5c4dc':'#eee')+';white-space:pre-wrap;word-break:break-word">'+(c.text||'').replace(/</g,'&lt;')+'</div></div>';
+  }).join('');
+  box.scrollTop=box.scrollHeight;
+}
+function addComment(){
+  var el=document.getElementById('cmtInput'); if(!el)return; var t=(el.value||'').trim(); if(!t)return;
+  if(!form.comments)form.comments=[];
+  form.comments.push({by:authEmail(),text:t,at:new Date().toISOString()});
+  el.value=''; renderComments(); renderConfirmUI();
+  if(typeof saveRecord==='function')saveRecord();
+}
+function delComment(i){
+  var arr=form.comments||[]; if(!arr[i])return;
+  if(arr[i].by!==authEmail()){toast('본인 코멘트만 삭제할 수 있어요');return;}
+  if(!confirm('이 코멘트를 삭제할까요?'))return;
+  arr.splice(i,1); renderComments(); renderConfirmUI();
+  if(typeof saveRecord==='function')saveRecord();
 }
 async function editRecord(id){var r=records.find(x=>String(x.id)===String(id));if(!r)return;
   _reportScroll=window.scrollY||document.documentElement.scrollTop||0;_restoreReport=true;
