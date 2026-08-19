@@ -300,7 +300,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v145 (2026-08-19)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v146 (2026-08-19)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트</button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -312,6 +312,7 @@ h2.section,.logo{letter-spacing:-.01em}
   <section id="view-entry">
     <div class="toolbar">
       <div class="grow subtle" id="editState">새 기록을 작성합니다.</div>
+      <button class="btn" id="commentBtnTop" style="display:none;background:#C81D74;color:#fff;font-weight:800" onclick="openComments()">코멘트/대화 <span id="commentCntTop" style="background:#fff;color:#C81D74;border-radius:10px;padding:0 7px;margin-left:2px;font-size:12px"></span></button>
       <button class="btn auto" id="autoBtn" onclick="document.getElementById('chartInput').click()">종이차트 사진으로 자동 채우기</button>
       <input type="file" id="chartInput" accept="image/*,.heic,.heif" style="display:none" onchange="onChartPhoto(event)">
       <button class="btn auto" id="faceBtn" onclick="onFaceAnalyze()">심화차트 AI 분석</button>
@@ -361,7 +362,6 @@ h2.section,.logo{letter-spacing:-.01em}
       <div class="actions">
         <button class="btn primary" onclick="saveRecord()">기록 저장</button>
         <button class="btn" id="confirmBtn" style="display:none;background:#0e9f6e;color:#fff" onclick="toggleConfirm()">원장 컨펌 완료</button>
-        <button class="btn ghost" id="commentBtn" style="display:none" onclick="openComments()">코멘트/대화 <span id="commentCnt" style="font-weight:800;color:#C81D74"></span></button>
         <button class="btn danger" id="delBtn" style="display:none" onclick="deleteCurrent()">이 기록 삭제</button>
       </div>
       <div id="confirmInfo" style="font-size:12px;color:var(--muted);margin-top:6px"></div>
@@ -2489,7 +2489,9 @@ function renderConfirmUI(){
   info.innerHTML=by+'<span style="color:'+(form.confirmedBy?'#0e9f6e':'#c98a00')+';font-weight:700">'+conf+'</span>';
   if(cb)cb.textContent=form.confirmedBy?'컨펌 해제':'원장 컨펌 완료';
   if(cb)cb.style.background=form.confirmedBy?'#8a8f98':'#0e9f6e';
-  var cmb=document.getElementById('commentBtn'); if(cmb){ cmb.style.display=(typeof authEmail==='function'&&authEmail())?'':'none'; var n=(form.comments||[]).length; document.getElementById('commentCnt').textContent=n?('('+n+')'):''; }
+  var loggedIn=(typeof authEmail==='function'&&authEmail());
+  var n=(form.comments||[]).length;
+  var cmt=document.getElementById('commentBtnTop'); if(cmt){ cmt.style.display=loggedIn?'':'none'; var cc=document.getElementById('commentCntTop'); if(cc)cc.textContent=n||''; }
 }
 function toggleConfirm(){
   if(!(typeof isAdmin==='function'&&isAdmin())){toast('원장(대표)만 컨펌할 수 있어요');return;}
