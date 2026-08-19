@@ -300,7 +300,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v153 (2026-08-20)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v154 (2026-08-20)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -2584,6 +2584,21 @@ function renderNotif(){
   // 앱 열렸을 때 폰/데스크톱 알림(권한 있으면)
   try{ if(window._notifPushKey!==total+':'+((ns[0]&&ns[0].latest)||'') && typeof Notification!=='undefined' && Notification.permission==='granted' && total>0){ window._notifPushKey=total+':'+((ns[0]&&ns[0].latest)||''); new Notification('SONEED 새 알림 '+total+'건',{body:(ns[0].rec.code||'무제')+' 외',tag:'soneed-notif'}); } }catch(e){}
 }
+function unreadCount(r){
+  try{
+    var me=(typeof authEmail==='function'&&authEmail())||''; if(!me||!r)return 0;
+    var admin=(typeof isAdmin==='function'&&isAdmin());
+    var seen=_notifSeen(); var last=seen[r.id]||''; var n=0;
+    (r.comments||[]).forEach(function(c){
+      if(!c||c.by===me||!c.at)return;
+      var cAdmin=(typeof ADMIN_EMAILS!=='undefined'&&ADMIN_EMAILS.indexOf((c.by||'').toLowerCase())>=0);
+      if(admin&&cAdmin)return; if(!admin&&!cAdmin)return;
+      if(c.at>last)n++;
+    });
+    if(!admin&&r.confirmedBy&&r.confirmedAt&&r.confirmedBy!==me&&r.confirmedAt>last&&(r.savedBy||'')===me)n++;
+    return n;
+  }catch(e){ return 0; }
+}
 function markNotifSeen(recId){ var s=_notifSeen(); s[recId]=new Date().toISOString(); _notifSave(s); renderNotif(); }
 function markAllNotifSeen(){ var s=_notifSeen(); (records||[]).forEach(function(r){s[r.id]=new Date().toISOString();}); _notifSave(s); renderNotif(); toast('모든 알림을 읽음 처리했어요'); }
 function openFromNotif(id){ markNotifSeen(id); editRecord(id); setTimeout(function(){openComments();},350); }
@@ -2679,6 +2694,7 @@ async function editRecord(id){var r=records.find(x=>String(x.id)===String(id));i
   _reportScroll=window.scrollY||document.documentElement.scrollTop||0;_restoreReport=true;
   if(r._light && mode==='cloud'){ try{ toast('불러오는 중…'); var full=await fetchFull(id); var i=records.findIndex(x=>String(x.id)===String(id)); if(i>=0)records[i]=full; r=full; }catch(e){ toast('기록 불러오기 실패: '+(e.message||e)); return; } }
   else if(mode==='cloud'){ try{ var fr=await fetch(sbBase()+'records?id=eq.'+encodeURIComponent(id)+'&select=data->comments,data->confirmedBy,data->confirmedAt',{headers:sbHeaders()}); if(fr.ok){ var fj=await fr.json(); if(fj&&fj[0]){ r.comments=fj[0].comments||r.comments; r.confirmedBy=(fj[0].confirmedBy!==undefined?fj[0].confirmedBy:r.confirmedBy); r.confirmedAt=(fj[0].confirmedAt!==undefined?fj[0].confirmedAt:r.confirmedAt); } } }catch(e){} }
+  try{ markNotifSeen(id); }catch(e){}
   form=Object.assign({},r);currentId=r.id;autoFilled={};renderForm();applyFormToUI();document.getElementById('editState').textContent=(r.code||'무제')+' · 편집 중';document.getElementById('delBtn').style.display='';document.getElementById('autoMsg').innerHTML='';const _fr2=document.getElementById('faceResult');if(_fr2)_fr2.innerHTML='';renderConfirmUI();showView('entry');}
 async function deleteCurrent(){if(!currentId)return;if(!confirm('이 기록을 삭제할까요?'))return;try{await removeRecord(currentId);}catch(e){toast('삭제 실패: '+e.message);return;}records=records.filter(r=>String(r.id)!==String(currentId));clearForm();toast('삭제되었습니다');refreshAll();try{if(mode==='cloud')_saveRecCache(records);}catch(e){}}
 function clearFormConfirm(){var has=form&&Object.keys(form).some(function(k){var v=form[k];return v!=null&&v!==''&&!(Array.isArray(v)&&!v.length);});if(has&&!confirm('현재 화면에 입력한 내용이 지워지고 새 기록을 작성합니다.\n(이미 저장한 기록은 목록에 그대로 남아요)\n계속할까요?'))return;clearForm();}
@@ -2752,7 +2768,7 @@ function renderRecList(){
     } }catch(e){}
   try{ renderNotif(); }catch(e){}
   if(list.length===0){box.innerHTML=`<div class="empty-note" style="grid-column:1/-1"><b>아직 기록이 없습니다.</b><br>‘기록 입력’ 탭에서 첫 데이터를 저장해 보세요.</div>`;return;}
-  box.innerHTML=list.map(r=>{const p=recPhoto(r);const thumb=p?`<img src="${p}" loading="lazy" decoding="async">`:`<span>사진 없음</span>`;const sub=[r.date,r.therapist,r.signup].filter(Boolean).join(' · ');const chips=CHIP_KEYS.map(k=>chipFor(r,k)).filter(Boolean).join('');const fcd=recCode(r);return `<div class="rec" onclick="editRecord('${r.id}')"><div class="thumb ${p?'':'empty'}">${thumb}</div><div class="meta"><div class="code">${r.code||'무제'}</div>${fcd?`<div class="fcode-tag">${fcd}</div>`:''}<div class="sub">${sub||'&nbsp;'}</div>${r.savedBy?'<div class="sub" style="color:#8a7aa8;font-size:11px">올린이 '+_who(r.savedBy)+(r.lastBy&&r.lastBy!==r.savedBy?(' · 수정 '+_who(r.lastBy)):'')+'</div>':''}${r.confirmedBy?'<div class="sub" style="color:#0e9f6e;font-weight:800;font-size:11px">✓ 원장 컨펌</div>':'<div class="sub" style="color:#c98a00;font-size:11px">· 컨펌 대기</div>'}<div class="chips">${chips||'<span class="chip k">미입력</span>'}</div></div></div>`;}).join('');
+  box.innerHTML=list.map(r=>{const p=recPhoto(r);const thumb=p?`<img src="${p}" loading="lazy" decoding="async">`:`<span>사진 없음</span>`;const sub=[r.date,r.therapist,r.signup].filter(Boolean).join(' · ');const chips=CHIP_KEYS.map(k=>chipFor(r,k)).filter(Boolean).join('');const fcd=recCode(r);return `<div class="rec" onclick="editRecord('${r.id}')"><div class="thumb ${p?'':'empty'}">${thumb}</div><div class="meta"><div class="code">${r.code||'무제'}${(function(){var u=unreadCount(r);return u?' <span style="display:inline-block;min-width:16px;height:16px;line-height:16px;text-align:center;background:#e02424;color:#fff;border-radius:9px;font-size:11px;font-weight:800;padding:0 4px;vertical-align:1px">'+u+'</span>':'';})()}</div>${fcd?`<div class="fcode-tag">${fcd}</div>`:''}<div class="sub">${sub||'&nbsp;'}</div>${r.savedBy?'<div class="sub" style="color:#8a7aa8;font-size:11px">올린이 '+_who(r.savedBy)+(r.lastBy&&r.lastBy!==r.savedBy?(' · 수정 '+_who(r.lastBy)):'')+'</div>':''}${r.confirmedBy?'<div class="sub" style="color:#0e9f6e;font-weight:800;font-size:11px">✓ 원장 컨펌</div>':'<div class="sub" style="color:#c98a00;font-size:11px">· 컨펌 대기</div>'}<div class="chips">${chips||'<span class="chip k">미입력</span>'}</div></div></div>`;}).join('');
 }
 function fillXtSelects(){const opts='<option value="">(선택)</option>'+FILTERABLE.map(f=>`<option value="${f.k}">${f.label}</option>`).join('');const row=document.getElementById('xtRow'),col=document.getElementById('xtCol');row.innerHTML=opts;col.innerHTML=opts;row.value='zyg_maxilla';col.value='nasolabial';}
 function renderCrosstab(){
