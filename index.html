@@ -301,7 +301,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v156 (2026-08-20)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v157 (2026-08-20)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -2548,27 +2548,25 @@ async function saveRecord(){
   toast(photoFail?'기본정보는 저장됨 · 사진은 용량이 커서 저장 실패':(updateValidation()?'저장되었습니다':'저장됨 · 회전 오류가 남아있어요'));
   document.getElementById('editState').textContent=(form.code||'무제')+' · 저장됨 (편집 중)';document.getElementById('delBtn').style.display='';refreshAll();try{if(mode==='cloud')_saveRecCache(records);}catch(e){}
 }
-var STAFF_NAMES={'ryeun88@naver.com':'김려은','rudal4186@naver.com':'신경미','spvkxmfl@naver.com':'신대성','soneed2512@gmail.com':'김현주','highfot25@naver.com':'이수연','jsa255@naver.com':'정수영','soni0025@naver.com':'이소니 원장','soni00025@gmail.com':'이소니 원장'};
+var STAFF_NAMES={'ryeun88@naver.com':'김려은','rudal4186@naver.com':'신경미','spvkxmfl@naver.com':'신대성','soneed2512@gmail.com':'김현주','highfot25@naver.com':'이수연','jsa255@naver.com':'정수영','soni0025@naver.com':'이소니','soni00025@gmail.com':'이소니'};
 function _notifSeen(){try{return JSON.parse(localStorage.getItem('soneed_notifSeen')||'{}');}catch(e){return {};}}
 function _notifSave(o){try{localStorage.setItem('soneed_notifSeen',JSON.stringify(o));}catch(e){}}
 /* 각 기록에서 '내가 마지막 본 시각(rec별)' 이후의 남의 활동을 수집. 원장=선생님 코멘트 / 선생님=원장 코멘트+컨펌 */
 function collectNotifs(){
   var me=(typeof authEmail==='function'&&authEmail())||''; if(!me)return [];
   var admin=(typeof isAdmin==='function'&&isAdmin());
-  var seen=_notifSeen(), out=[];
+  var out=[];
   (records||[]).forEach(function(r){
-    var last=seen[r.id]||'', items=[];
-    (r.comments||[]).forEach(function(c){
-      if(!c||c.by===me||!c.at)return;
+    var u=unreadCount(r); if(u<=0)return;
+    // 상대 코멘트만 뽑아 마지막 u개를 '안읽음'으로
+    var cms=r.comments; if(typeof cms==='string'){ try{cms=JSON.parse(cms);}catch(e){cms=[];} }
+    var mine=(cms||[]).filter(function(c){
+      if(!c||c.by===me)return false;
       var cAdmin=(typeof ADMIN_EMAILS!=='undefined'&&ADMIN_EMAILS.indexOf((c.by||'').toLowerCase())>=0);
-      if(admin&&cAdmin)return;              // 원장은 다른 원장코멘트 제외
-      if(!admin&&!cAdmin)return;            // 선생님은 원장코멘트만
-      if(c.at>last)items.push({type:'comment',by:c.by,text:c.text,at:c.at});
+      if(admin&&cAdmin)return false; if(!admin&&!cAdmin)return false; return true;
     });
-    if(!admin&&r.confirmedBy&&r.confirmedAt&&r.confirmedBy!==me&&r.confirmedAt>last){  // 선생님: 원장 컨펌 알림(본인 기록)
-      if((r.savedBy||'')===me) items.push({type:'confirm',by:r.confirmedBy,at:r.confirmedAt});
-    }
-    if(items.length){ items.sort(function(a,b){return (a.at||'').localeCompare(b.at||'');}); out.push({rec:r,items:items,latest:items[items.length-1].at}); }
+    var items=mine.slice(-u).map(function(c){return {type:'comment',by:c.by,text:c.text,at:c.at};});
+    if(items.length){ out.push({rec:r,items:items,latest:(items[items.length-1].at||''),count:u}); }
   });
   out.sort(function(a,b){return (b.latest||'').localeCompare(a.latest||'');});
   return out;
@@ -2585,23 +2583,32 @@ function renderNotif(){
   // 앱 열렸을 때 폰/데스크톱 알림(권한 있으면)
   try{ if(window._notifPushKey!==total+':'+((ns[0]&&ns[0].latest)||'') && typeof Notification!=='undefined' && Notification.permission==='granted' && total>0){ window._notifPushKey=total+':'+((ns[0]&&ns[0].latest)||''); new Notification('SONEED 새 알림 '+total+'건',{body:(ns[0].rec.code||'무제')+' 외',tag:'soneed-notif'}); } }catch(e){}
 }
+function _relevantCount(r){   /* 상대(남)가 남긴 코멘트 수 — 원장=선생님 코멘트 / 선생님=원장 코멘트 (시계 무관, 개수 기준) */
+  var me=(typeof authEmail==='function'&&authEmail())||''; if(!me||!r)return 0;
+  var admin=(typeof isAdmin==='function'&&isAdmin());
+  var cms=r.comments; if(typeof cms==='string'){ try{cms=JSON.parse(cms);}catch(e){cms=[];} }
+  var n=0;
+  (cms||[]).forEach(function(c){
+    if(!c||c.by===me)return;
+    var cAdmin=(typeof ADMIN_EMAILS!=='undefined'&&ADMIN_EMAILS.indexOf((c.by||'').toLowerCase())>=0);
+    if(admin&&cAdmin)return; if(!admin&&!cAdmin)return;
+    n++;
+  });
+  return n;
+}
 function unreadCount(r){
   try{
-    var me=(typeof authEmail==='function'&&authEmail())||''; if(!me||!r)return 0;
-    var admin=(typeof isAdmin==='function'&&isAdmin());
-    var seen=_notifSeen(); var last=seen[r.id]||''; var n=0;
-    var cms=r.comments; if(typeof cms==='string'){ try{cms=JSON.parse(cms);}catch(e){cms=[];} }
-    (cms||[]).forEach(function(c){
-      if(!c||c.by===me||!c.at)return;
-      var cAdmin=(typeof ADMIN_EMAILS!=='undefined'&&ADMIN_EMAILS.indexOf((c.by||'').toLowerCase())>=0);
-      if(admin&&cAdmin)return; if(!admin&&!cAdmin)return;
-      if(c.at>last)n++;
-    });
-    if(!admin&&r.confirmedBy&&r.confirmedAt&&r.confirmedBy!==me&&r.confirmedAt>last&&(r.savedBy||'')===me)n++;
-    return n;
+    if(!r)return 0;
+    var seen=_notifSeen(); var seenN=seen[r.id]; if(typeof seenN!=='number')seenN=0;
+    var n=_relevantCount(r)-seenN;
+    return n>0?n:0;
   }catch(e){ return 0; }
 }
-function markNotifSeen(recId){ var s=_notifSeen(); s[recId]=new Date().toISOString(); _notifSave(s); renderNotif(); }
+function markNotifSeen(recId){
+  try{ var rr=(records||[]).find(function(x){return String(x.id)===String(recId);}); if(rr){ var s=_notifSeen(); s[recId]=_relevantCount(rr); _notifSave(s); if(typeof renderNotif==='function')renderNotif(); return; } }catch(e){}
+  _markNotifSeenOld(recId);
+}
+function _markNotifSeenOld(recId){ var s=_notifSeen(); s[recId]=new Date().toISOString(); _notifSave(s); renderNotif(); }
 function markAllNotifSeen(){ var s=_notifSeen(); (records||[]).forEach(function(r){s[r.id]=new Date().toISOString();}); _notifSave(s); renderNotif(); toast('모든 알림을 읽음 처리했어요'); }
 function openFromNotif(id){ markNotifSeen(id); editRecord(id); setTimeout(function(){openComments();},350); }
 function _who(em){ if(!em)return ''; var e=(em||'').toLowerCase(); if(STAFF_NAMES[e])return STAFF_NAMES[e]; if(em===authEmail())return '나'; return em.split('@')[0]; }
