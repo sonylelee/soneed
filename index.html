@@ -300,8 +300,8 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v146 (2026-08-19)</span></div>
-  <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트</button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v147 (2026-08-19)</span></div>
+  <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
   <span class="count-pill">기록 <b id="totalCount">0</b></span>
@@ -448,6 +448,7 @@ h2.section,.logo{letter-spacing:-.01em}
       </div>
       <div id="therapistStats" style="display:none;margin-top:10px"></div>
     </div>
+    <div id="notifBar" style="display:none"></div>
     <div id="recList" class="recgrid"></div>
   </section>
   <section id="view-admin" style="display:none">
@@ -2479,6 +2480,45 @@ async function saveRecord(){
   document.getElementById('editState').textContent=(form.code||'무제')+' · 저장됨 (편집 중)';document.getElementById('delBtn').style.display='';refreshAll();try{if(mode==='cloud')_saveRecCache(records);}catch(e){}
 }
 var STAFF_NAMES={'ryeun88@naver.com':'김려은','rudal4186@naver.com':'신경미','spvkxmfl@naver.com':'신대성','soneed2512@gmail.com':'김현주','highfot25@naver.com':'이수연','jsa255@naver.com':'정수영','soni0025@naver.com':'이소니 원장','soni00025@gmail.com':'이소니 원장'};
+function _notifSeen(){try{return JSON.parse(localStorage.getItem('soneed_notifSeen')||'{}');}catch(e){return {};}}
+function _notifSave(o){try{localStorage.setItem('soneed_notifSeen',JSON.stringify(o));}catch(e){}}
+/* 각 기록에서 '내가 마지막 본 시각(rec별)' 이후의 남의 활동을 수집. 원장=선생님 코멘트 / 선생님=원장 코멘트+컨펌 */
+function collectNotifs(){
+  var me=(typeof authEmail==='function'&&authEmail())||''; if(!me)return [];
+  var admin=(typeof isAdmin==='function'&&isAdmin());
+  var seen=_notifSeen(), out=[];
+  (records||[]).forEach(function(r){
+    var last=seen[r.id]||'', items=[];
+    (r.comments||[]).forEach(function(c){
+      if(!c||c.by===me||!c.at)return;
+      var cAdmin=(typeof ADMIN_EMAILS!=='undefined'&&ADMIN_EMAILS.indexOf((c.by||'').toLowerCase())>=0);
+      if(admin&&cAdmin)return;              // 원장은 다른 원장코멘트 제외
+      if(!admin&&!cAdmin)return;            // 선생님은 원장코멘트만
+      if(c.at>last)items.push({type:'comment',by:c.by,text:c.text,at:c.at});
+    });
+    if(!admin&&r.confirmedBy&&r.confirmedAt&&r.confirmedBy!==me&&r.confirmedAt>last){  // 선생님: 원장 컨펌 알림(본인 기록)
+      if((r.savedBy||'')===me) items.push({type:'confirm',by:r.confirmedBy,at:r.confirmedAt});
+    }
+    if(items.length){ items.sort(function(a,b){return (a.at||'').localeCompare(b.at||'');}); out.push({rec:r,items:items,latest:items[items.length-1].at}); }
+  });
+  out.sort(function(a,b){return (b.latest||'').localeCompare(a.latest||'');});
+  return out;
+}
+function renderNotif(){
+  var ns=collectNotifs(), total=ns.reduce(function(s,x){return s+x.items.length;},0);
+  var dot=document.getElementById('notifDot'); if(dot){ dot.style.display=total?'':'none'; dot.textContent=total; }
+  var bar=document.getElementById('notifBar'); if(!bar)return;
+  if(!ns.length){ bar.style.display='none'; bar.innerHTML=''; return; }
+  bar.style.display='';
+  bar.innerHTML='<div style="background:#fff5f8;border:1px solid #f3c9dd;border-radius:12px;padding:12px 14px;margin:0 2px 14px"><div style="font-weight:800;font-size:13.5px;color:#C81D74;margin-bottom:8px">새 알림 '+total+'건 <span onclick="markAllNotifSeen()" style="float:right;font-size:12px;color:#999;cursor:pointer;font-weight:600">모두 읽음</span></div>'
+    +ns.map(function(x){var it=x.items[x.items.length-1];var msg=it.type==="confirm"?"원장 컨펌 완료":(_who(it.by)+": "+(it.text||"").slice(0,40));return '<div onclick="openFromNotif(\''+x.rec.id+'\')" style="cursor:pointer;padding:8px 10px;border-radius:8px;background:#fff;border:1px solid #f0e0e8;margin-bottom:6px;display:flex;gap:8px;align-items:center"><b style="font-size:13px">'+((x.rec.code||"무제"))+'</b><span style="font-size:12.5px;color:#555;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+msg.replace(/</g,"&lt;")+'</span><span style="font-size:11px;color:#c02;font-weight:800">'+x.items.length+'</span></div>';}).join('')
+    +'</div>';
+  // 앱 열렸을 때 폰/데스크톱 알림(권한 있으면)
+  try{ if(window._notifPushKey!==total+':'+((ns[0]&&ns[0].latest)||'') && typeof Notification!=='undefined' && Notification.permission==='granted' && total>0){ window._notifPushKey=total+':'+((ns[0]&&ns[0].latest)||''); new Notification('SONEED 새 알림 '+total+'건',{body:(ns[0].rec.code||'무제')+' 외',tag:'soneed-notif'}); } }catch(e){}
+}
+function markNotifSeen(recId){ var s=_notifSeen(); s[recId]=new Date().toISOString(); _notifSave(s); renderNotif(); }
+function markAllNotifSeen(){ var s=_notifSeen(); (records||[]).forEach(function(r){s[r.id]=new Date().toISOString();}); _notifSave(s); renderNotif(); toast('모든 알림을 읽음 처리했어요'); }
+function openFromNotif(id){ markNotifSeen(id); editRecord(id); setTimeout(function(){openComments();},350); }
 function _who(em){ if(!em)return ''; var e=(em||'').toLowerCase(); if(STAFF_NAMES[e])return STAFF_NAMES[e]; if(em===authEmail())return '나'; return em.split('@')[0]; }
 function renderConfirmUI(){
   var cb=document.getElementById('confirmBtn'), info=document.getElementById('confirmInfo'); if(!info)return;
@@ -2508,7 +2548,7 @@ function openComments(){
    +'<div id="cmtList" style="flex:1;overflow:auto;padding:14px 16px;background:#faf9fb"></div>'
    +'<div style="padding:10px 12px;border-top:1px solid #eee;display:flex;gap:8px"><input id="cmtInput" placeholder="코멘트를 남기세요…" onkeydown="if(event.key===\'Enter\')addComment()" style="flex:1;padding:11px 13px;border:1px solid #ddd;border-radius:10px;font-size:14px"><button class="btn primary" style="padding:11px 16px" onclick="addComment()">등록</button></div>'
    +'</div>';
-  renderComments(); o.style.display='flex';
+  renderComments(); o.style.display='flex'; if(currentId)markNotifSeen(currentId);
   setTimeout(function(){var el=document.getElementById('cmtInput');if(el)el.focus();},100);
 }
 function renderComments(){
@@ -2550,6 +2590,7 @@ function showView(v){
   if((v==='admin'||v==='academy')&&!isAdmin())v='data';   // 관리·아카데미는 대표만
   document.getElementById('view-entry').style.display=v==='entry'?'':'none';
   document.getElementById('view-data').style.display=v==='data'?'':'none';
+  if(v==='data'){ try{ if(typeof Notification!=='undefined'&&Notification.permission==='default')Notification.requestPermission(); }catch(e){} setTimeout(function(){try{renderNotif();}catch(e){}},60); }
   var va=document.getElementById('view-admin'); if(va)va.style.display=v==='admin'?'':'none';
   var vac=document.getElementById('view-academy'); if(vac)vac.style.display=v==='academy'?'':'none';
   document.getElementById('tabEntry').classList.toggle('on',v==='entry');
@@ -2607,6 +2648,7 @@ function renderRecList(){
   try{ var _bar=document.getElementById('adminReportBar'); if(_bar&&typeof isAdmin==='function'){ _bar.style.display=isAdmin()?'':'none'; if(isAdmin())_fillWhoFilter(); } }catch(e){}
   const list=sortList(filtered()),box=document.getElementById('recList');
   try{ var _rc=document.getElementById('reportCount'); if(_rc){ var _w=list.filter(function(r){return !r.confirmedBy;}).length; _rc.textContent=list.length+'건 · 컨펌대기 '+_w; } }catch(e){}
+  try{ renderNotif(); }catch(e){}
   if(list.length===0){box.innerHTML=`<div class="empty-note" style="grid-column:1/-1"><b>아직 기록이 없습니다.</b><br>‘기록 입력’ 탭에서 첫 데이터를 저장해 보세요.</div>`;return;}
   box.innerHTML=list.map(r=>{const p=recPhoto(r);const thumb=p?`<img src="${p}" loading="lazy" decoding="async">`:`<span>사진 없음</span>`;const sub=[r.date,r.therapist,r.signup].filter(Boolean).join(' · ');const chips=CHIP_KEYS.map(k=>chipFor(r,k)).filter(Boolean).join('');const fcd=recCode(r);return `<div class="rec" onclick="editRecord('${r.id}')"><div class="thumb ${p?'':'empty'}">${thumb}</div><div class="meta"><div class="code">${r.code||'무제'}</div>${fcd?`<div class="fcode-tag">${fcd}</div>`:''}<div class="sub">${sub||'&nbsp;'}</div>${r.savedBy?'<div class="sub" style="color:#8a7aa8;font-size:11px">올린이 '+_who(r.savedBy)+(r.lastBy&&r.lastBy!==r.savedBy?(' · 수정 '+_who(r.lastBy)):'')+'</div>':''}${r.confirmedBy?'<div class="sub" style="color:#0e9f6e;font-weight:800;font-size:11px">✓ 원장 컨펌</div>':'<div class="sub" style="color:#c98a00;font-size:11px">· 컨펌 대기</div>'}<div class="chips">${chips||'<span class="chip k">미입력</span>'}</div></div></div>`;}).join('');
 }
