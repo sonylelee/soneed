@@ -300,7 +300,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v152 (2026-08-20)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v153 (2026-08-20)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -2678,6 +2678,7 @@ function delComment(i){
 async function editRecord(id){var r=records.find(x=>String(x.id)===String(id));if(!r)return;
   _reportScroll=window.scrollY||document.documentElement.scrollTop||0;_restoreReport=true;
   if(r._light && mode==='cloud'){ try{ toast('불러오는 중…'); var full=await fetchFull(id); var i=records.findIndex(x=>String(x.id)===String(id)); if(i>=0)records[i]=full; r=full; }catch(e){ toast('기록 불러오기 실패: '+(e.message||e)); return; } }
+  else if(mode==='cloud'){ try{ var fr=await fetch(sbBase()+'records?id=eq.'+encodeURIComponent(id)+'&select=data->comments,data->confirmedBy,data->confirmedAt',{headers:sbHeaders()}); if(fr.ok){ var fj=await fr.json(); if(fj&&fj[0]){ r.comments=fj[0].comments||r.comments; r.confirmedBy=(fj[0].confirmedBy!==undefined?fj[0].confirmedBy:r.confirmedBy); r.confirmedAt=(fj[0].confirmedAt!==undefined?fj[0].confirmedAt:r.confirmedAt); } } }catch(e){} }
   form=Object.assign({},r);currentId=r.id;autoFilled={};renderForm();applyFormToUI();document.getElementById('editState').textContent=(r.code||'무제')+' · 편집 중';document.getElementById('delBtn').style.display='';document.getElementById('autoMsg').innerHTML='';const _fr2=document.getElementById('faceResult');if(_fr2)_fr2.innerHTML='';renderConfirmUI();showView('entry');}
 async function deleteCurrent(){if(!currentId)return;if(!confirm('이 기록을 삭제할까요?'))return;try{await removeRecord(currentId);}catch(e){toast('삭제 실패: '+e.message);return;}records=records.filter(r=>String(r.id)!==String(currentId));clearForm();toast('삭제되었습니다');refreshAll();try{if(mode==='cloud')_saveRecCache(records);}catch(e){}}
 function clearFormConfirm(){var has=form&&Object.keys(form).some(function(k){var v=form[k];return v!=null&&v!==''&&!(Array.isArray(v)&&!v.length);});if(has&&!confirm('현재 화면에 입력한 내용이 지워지고 새 기록을 작성합니다.\n(이미 저장한 기록은 목록에 그대로 남아요)\n계속할까요?'))return;clearForm();}
@@ -2687,7 +2688,7 @@ function showView(v){
   if((v==='admin'||v==='academy')&&!isAdmin())v='data';   // 관리·아카데미는 대표만
   document.getElementById('view-entry').style.display=v==='entry'?'':'none';
   document.getElementById('view-data').style.display=v==='data'?'':'none';
-  if(v==='data'){ try{ if(typeof Notification!=='undefined'&&Notification.permission==='default')Notification.requestPermission(); }catch(e){} setTimeout(function(){try{renderNotif();}catch(e){}},60); }
+  if(v==='data'){ try{ if(typeof loadAll==='function'&&mode==='cloud')loadAll(); }catch(e){} try{ if(typeof Notification!=='undefined'&&Notification.permission==='default')Notification.requestPermission(); }catch(e){} setTimeout(function(){try{renderNotif();}catch(e){}},60); }
   var va=document.getElementById('view-admin'); if(va)va.style.display=v==='admin'?'':'none';
   var vac=document.getElementById('view-academy'); if(vac)vac.style.display=v==='academy'?'':'none';
   document.getElementById('tabEntry').classList.toggle('on',v==='entry');
