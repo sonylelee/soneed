@@ -300,7 +300,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v141 (2026-07-29)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v142 (2026-07-29)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트</button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -431,6 +431,21 @@ h2.section,.logo{letter-spacing:-.01em}
       </select>
       <input id="recSearch" list="recCodeList" oninput="onRecSearch(this.value)" placeholder="코드·이름 검색 (예: A7 · 왼오오오 · 홍길동)" style="flex:1;min-width:180px;font-size:13px;padding:6px 11px;border:1px solid #D3D7DE;border-radius:8px;background:#fff">
       <datalist id="recCodeList"></datalist>
+    </div>
+    <div id="adminReportBar" style="display:none;margin:0 2px 12px;padding:10px 12px;background:#faf7fb;border:1px solid #ecdcec;border-radius:10px">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <label style="font-size:12.5px;color:#71717a">컨펌 상태</label>
+        <select id="confFilter" onchange="applyFilter()" style="font-size:13px;padding:5px 9px;border:1px solid #D3D7DE;border-radius:8px;background:#fff">
+          <option value="">전체</option>
+          <option value="wait">컨펌 대기만</option>
+          <option value="done">컨펌 완료만</option>
+        </select>
+        <label style="font-size:12.5px;color:#71717a">선생님</label>
+        <select id="whoFilter" onchange="applyFilter()" style="font-size:13px;padding:5px 9px;border:1px solid #D3D7DE;border-radius:8px;background:#fff"><option value="">전체</option></select>
+        <button class="btn ghost" style="padding:6px 12px;font-size:12.5px" onclick="toggleTherapistStats()">선생님별 통계</button>
+        <span id="reportCount" style="font-size:12px;color:#a0a0a8;margin-left:auto"></span>
+      </div>
+      <div id="therapistStats" style="display:none;margin-top:10px"></div>
     </div>
     <div id="recList" class="recgrid"></div>
   </section>
@@ -2517,8 +2532,22 @@ var _recQuery='';
 function onRecSearch(v){_recQuery=(v||'').trim().toLowerCase();renderRecList();}
 function recCode(r){return (r&&(r.face_code||fcodeStr(r.fcode||{})))||'';}  /* 저장된 코드 없으면 구성요소로 재계산(중립=0 포함) */
 function _matchQuery(r){ if(!_recQuery)return true; var hay=(recCode(r)+' '+(r.code||'')).toLowerCase(); return hay.indexOf(_recQuery)>=0; }
-function filtered(){return records.filter(r=>_matchQuery(r)&&conds.every(c=>!c.v||getVals(r,c.k).includes(c.v)));}
-function applyFilter(){document.getElementById('filterCount').textContent=filtered().length;renderRecList();renderCrosstab();}
+function _confSel(){var e=document.getElementById('confFilter');return e?e.value:'';}
+function _whoSel(){var e=document.getElementById('whoFilter');return e?e.value:'';}
+function filtered(){var cf=_confSel(),wf=_whoSel();return records.filter(function(r){
+  if(!(_matchQuery(r)&&conds.every(function(c){return !c.v||getVals(r,c.k).includes(c.v);})))return false;
+  if(cf==='wait'&&r.confirmedBy)return false;
+  if(cf==='done'&&!r.confirmedBy)return false;
+  if(wf&&(r.savedBy||'')!==wf)return false;
+  return true;
+});}
+function _fillWhoFilter(){var sel=document.getElementById('whoFilter');if(!sel)return;var cur=sel.value;var m={};records.forEach(function(r){if(r.savedBy)m[r.savedBy]=(m[r.savedBy]||0)+1;});var keys=Object.keys(m).sort();sel.innerHTML='<option value="">전체 선생님</option>'+keys.map(function(e){return '<option value="'+e+'"'+(e===cur?' selected':'')+'>'+_who(e)+' ('+m[e]+')</option>';}).join('');}
+function applyFilter(){var fc=document.getElementById('filterCount');if(fc)fc.textContent=filtered().length;var bar=document.getElementById('adminReportBar');if(bar&&typeof isAdmin==='function')bar.style.display=isAdmin()?'':'none';_fillWhoFilter();var n=filtered().length,wait=filtered().filter(function(r){return !r.confirmedBy;}).length;var rc=document.getElementById('reportCount');if(rc)rc.textContent=n+'건 · 컨펌대기 '+wait;renderRecList();renderCrosstab();}
+function toggleTherapistStats(){var box=document.getElementById('therapistStats');if(!box)return;if(box.style.display!=='none'){box.style.display='none';return;}
+  var m={};records.forEach(function(r){var e=r.savedBy||'(미상)';if(!m[e])m[e]={total:0,conf:0};m[e].total++;if(r.confirmedBy)m[e].conf++;});
+  var keys=Object.keys(m).sort(function(a,b){return m[b].total-m[a].total;});
+  box.innerHTML='<table style="width:100%;border-collapse:collapse;font-size:13px"><tr style="text-align:left;color:#71717a"><th style="padding:5px 8px">선생님</th><th style="padding:5px 8px">전체</th><th style="padding:5px 8px">컨펌</th><th style="padding:5px 8px">대기</th></tr>'+keys.map(function(e){var t=m[e].total,c=m[e].conf;return '<tr style="border-top:1px solid #eee"><td style="padding:5px 8px;font-weight:700">'+_who(e)+'</td><td style="padding:5px 8px">'+t+'</td><td style="padding:5px 8px;color:#0e9f6e">'+c+'</td><td style="padding:5px 8px;color:#c98a00">'+(t-c)+'</td></tr>';}).join('')+'</table>';
+  box.style.display='';}
 function recPhoto(r){for(const [s] of PHOTO_SLOTS){if(r['photo_'+s])return r['photo_'+s];}return r.thumb||null;}
 function chipFor(r,k){let v=r[k];if(v==null||v==='')return'';if(Array.isArray(v))v=v.join(',');const neu=NEUTRAL.includes(v)?' neu':'';return `<span class="chip${neu}">${FMAP[k].label.split(' ')[0].slice(0,4)}:${v}</span>`;}
 function fillCodeList(){
@@ -2530,7 +2559,9 @@ function fillCodeList(){
 }
 function renderRecList(){
   fillCodeList();
+  try{ var _bar=document.getElementById('adminReportBar'); if(_bar&&typeof isAdmin==='function'){ _bar.style.display=isAdmin()?'':'none'; if(isAdmin())_fillWhoFilter(); } }catch(e){}
   const list=sortList(filtered()),box=document.getElementById('recList');
+  try{ var _rc=document.getElementById('reportCount'); if(_rc){ var _w=list.filter(function(r){return !r.confirmedBy;}).length; _rc.textContent=list.length+'건 · 컨펌대기 '+_w; } }catch(e){}
   if(list.length===0){box.innerHTML=`<div class="empty-note" style="grid-column:1/-1"><b>아직 기록이 없습니다.</b><br>‘기록 입력’ 탭에서 첫 데이터를 저장해 보세요.</div>`;return;}
   box.innerHTML=list.map(r=>{const p=recPhoto(r);const thumb=p?`<img src="${p}" loading="lazy" decoding="async">`:`<span>사진 없음</span>`;const sub=[r.date,r.therapist,r.signup].filter(Boolean).join(' · ');const chips=CHIP_KEYS.map(k=>chipFor(r,k)).filter(Boolean).join('');const fcd=recCode(r);return `<div class="rec" onclick="editRecord('${r.id}')"><div class="thumb ${p?'':'empty'}">${thumb}</div><div class="meta"><div class="code">${r.code||'무제'}</div>${fcd?`<div class="fcode-tag">${fcd}</div>`:''}<div class="sub">${sub||'&nbsp;'}</div>${r.savedBy?'<div class="sub" style="color:#8a7aa8;font-size:11px">올린이 '+_who(r.savedBy)+(r.lastBy&&r.lastBy!==r.savedBy?(' · 수정 '+_who(r.lastBy)):'')+'</div>':''}${r.confirmedBy?'<div class="sub" style="color:#0e9f6e;font-weight:800;font-size:11px">✓ 원장 컨펌</div>':'<div class="sub" style="color:#c98a00;font-size:11px">· 컨펌 대기</div>'}<div class="chips">${chips||'<span class="chip k">미입력</span>'}</div></div></div>`;}).join('');
 }
