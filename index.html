@@ -301,7 +301,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v160 (2026-08-20)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v162 (2026-08-20)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -2651,8 +2651,10 @@ function renderConfirmUI(){
   var admin=(typeof isAdmin==='function'&&isAdmin());
   if(cb)cb.style.display=admin?'':'none';
   var by=form.savedBy?('올린이: '+_who(form.savedBy)+(form.savedBy!==authEmail()?(' ('+form.savedBy+')'):'')):'올린이: -';
-  var conf=form.confirmedBy?('  ·  ✓ 원장 컨펌 완료 ('+(form.confirmedAt||'').slice(0,10)+')'):'  ·  컨펌 대기';
+  var sbAdmin=(typeof ADMIN_EMAILS!=='undefined'&&ADMIN_EMAILS.indexOf((form.savedBy||'').toLowerCase())>=0);
+  var conf=sbAdmin?'':(form.confirmedBy?('  ·  ✓ 원장 컨펌 완료 ('+(form.confirmedAt||'').slice(0,10)+')'):'  ·  컨펌 대기');
   info.innerHTML=by+'<span style="color:'+(form.confirmedBy?'#0e9f6e':'#c98a00')+';font-weight:700">'+conf+'</span>';
+  if(cb)cb.style.display=(admin&&!sbAdmin)?'':'none';
   if(cb)cb.textContent=form.confirmedBy?'컨펌 해제':'원장 컨펌 완료';
   if(cb)cb.style.background=form.confirmedBy?'#8a8f98':'#0e9f6e';
   var loggedIn=(typeof authEmail==='function'&&authEmail());
@@ -2811,7 +2813,7 @@ function renderRecList(){
     } }catch(e){}
   try{ renderNotif(); }catch(e){}
   if(list.length===0){box.innerHTML=`<div class="empty-note" style="grid-column:1/-1"><b>아직 기록이 없습니다.</b><br>‘기록 입력’ 탭에서 첫 데이터를 저장해 보세요.</div>`;return;}
-  box.innerHTML=list.map(r=>{const p=recPhoto(r);const thumb=p?`<img src="${p}" loading="lazy" decoding="async">`:`<span>사진 없음</span>`;const sub=[r.date,r.therapist,r.signup].filter(Boolean).join(' · ');const chips=CHIP_KEYS.map(k=>chipFor(r,k)).filter(Boolean).join('');const fcd=recCode(r);return `<div class="rec" onclick="editRecord('${r.id}')"><div class="thumb ${p?'':'empty'}">${thumb}</div><div class="meta"><div class="code">${r.code||'무제'}${(function(){var u=unreadCount(r);return u?' <span style="display:inline-block;min-width:16px;height:16px;line-height:16px;text-align:center;background:#e02424;color:#fff;border-radius:9px;font-size:11px;font-weight:800;padding:0 4px;vertical-align:1px">'+u+'</span>':'';})()}</div>${fcd?`<div class="fcode-tag">${fcd}</div>`:''}<div class="sub">${sub||'&nbsp;'}</div>${r.savedBy?'<div class="sub" style="color:#8a7aa8;font-size:11px">올린이 '+_who(r.savedBy)+(r.lastBy&&r.lastBy!==r.savedBy?(' · 수정 '+_who(r.lastBy)):'')+'</div>':''}${r.confirmedBy?'<div class="sub" style="color:#0e9f6e;font-weight:800;font-size:11px">✓ 원장 컨펌</div>':'<div class="sub" style="color:#c98a00;font-size:11px">· 컨펌 대기</div>'}<div class="chips">${chips||'<span class="chip k">미입력</span>'}</div></div></div>`;}).join('');
+  box.innerHTML=list.map(r=>{const p=recPhoto(r);const thumb=p?`<img src="${p}" loading="lazy" decoding="async">`:`<span>사진 없음</span>`;const sub=[r.date,r.therapist,r.signup].filter(Boolean).join(' · ');const chips=CHIP_KEYS.map(k=>chipFor(r,k)).filter(Boolean).join('');const fcd=recCode(r);return `<div class="rec" onclick="editRecord('${r.id}')"><div class="thumb ${p?'':'empty'}">${thumb}</div><div class="meta"><div class="code">${r.code||'무제'}${(function(){var u=unreadCount(r);return u?' <span style="display:inline-block;min-width:16px;height:16px;line-height:16px;text-align:center;background:#e02424;color:#fff;border-radius:9px;font-size:11px;font-weight:800;padding:0 4px;vertical-align:1px">'+u+'</span>':'';})()}</div>${fcd?`<div class="fcode-tag">${fcd}</div>`:''}<div class="sub">${sub||'&nbsp;'}</div>${r.savedBy?'<div class="sub" style="color:#8a7aa8;font-size:11px">올린이 '+_who(r.savedBy)+(r.lastBy&&r.lastBy!==r.savedBy?(' · 수정 '+_who(r.lastBy)):'')+'</div>':''}${(function(){var sb=(r.savedBy||'').toLowerCase();var byAdmin=(typeof ADMIN_EMAILS!=='undefined'&&ADMIN_EMAILS.indexOf(sb)>=0);if(byAdmin)return '';return r.confirmedBy?'<div class="sub" style="color:#0e9f6e;font-weight:800;font-size:11px">✓ 원장 컨펌</div>':'<div class="sub" style="color:#c98a00;font-size:11px">· 컨펌 대기</div>';})()}<div class="chips">${chips||'<span class="chip k">미입력</span>'}</div></div></div>`;}).join('');
 }
 function fillXtSelects(){const opts='<option value="">(선택)</option>'+FILTERABLE.map(f=>`<option value="${f.k}">${f.label}</option>`).join('');const row=document.getElementById('xtRow'),col=document.getElementById('xtCol');row.innerHTML=opts;col.innerHTML=opts;row.value='zyg_maxilla';col.value='nasolabial';}
 function renderCrosstab(){
@@ -3146,15 +3148,22 @@ function fpSetSource(rx,ry,rw,rh){
   srcC.getContext("2d").drawImage(origImg,rx,ry,rw,rh,0,0,srcC.width,srcC.height);
   return fpDetect();
 }
+function _fpApplyOut(out){
+  if(!out.faceLandmarks||!out.faceLandmarks.length){ P=null; fpEnable(false); fpLog("얼굴 인식 실패 — 정면 사진이 선명한지 확인하세요"); fpDraw($("fp_cvA"),srcC,null); fpDraw($("fp_cvB"),srcC,null); return; }
+  P=out.faceLandmarks[0].map(function(p){return{x:p.x*srcC.width,y:p.y*srcC.height,z:p.z*srcC.width};});
+  fpEnable(true); fpDraw($("fp_cvA"),srcC,showDots?P:null); fpRender(num("fp_amp"));
+  fpLog("랜드마크 "+P.length+"개 · "+(isFit?"얼굴 확대":"전체")+" · "+srcC.width+"×"+srcC.height);
+}
 function fpDetect(){
   fpLog("얼굴 인식 중…");
   return getLandmarker().then(function(lm){
-    var out=lm.detect(srcC);
-    if(!out.faceLandmarks||!out.faceLandmarks.length){ P=null; fpEnable(false); fpLog("얼굴 인식 실패"); fpDraw($("fp_cvA"),srcC,null); fpDraw($("fp_cvB"),srcC,null); return; }
-    P=out.faceLandmarks[0].map(function(p){return{x:p.x*srcC.width,y:p.y*srcC.height,z:p.z*srcC.width};});
-    fpEnable(true); fpDraw($("fp_cvA"),srcC,showDots?P:null); fpRender(num("fp_amp"));
-    fpLog("랜드마크 "+P.length+"개 · "+(isFit?"얼굴 확대":"전체")+" · "+srcC.width+"×"+srcC.height);
-  }).catch(function(e){ fpLog("오류: "+(e&&e.message||e)); });
+    try{ return _fpApplyOut(lm.detect(srcC)); }
+    catch(err){
+      // WebGL/activeTexture 등 그래픽 컨텍스트 오류 → MediaPipe 새로 만들어 1회 재시도
+      fpLog("엔진 재시작 중…"); _fl=null; _flLoading=null;
+      return getLandmarker().then(function(lm2){ try{ return _fpApplyOut(lm2.detect(srcC)); }catch(e2){ fpLog("오류: "+(e2&&e2.message||e2)+" · 페이지 새로고침(⌘R) 후 다시 시도하세요"); } });
+    }
+  }).catch(function(e){ fpLog("오류: "+(e&&e.message||e)+" · 인터넷 연결/새로고침 확인"); });
 }
 function fpRestore(){
   var s=(typeof form!=="undefined"&&form)?form.face3d:null; if(!s)return;
