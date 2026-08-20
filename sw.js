@@ -24,10 +24,17 @@ self.addEventListener('push', function(event){
 self.addEventListener('notificationclick', function(event){
   event.notification.close();
   var url = (event.notification.data && event.notification.data.url) || './';
+  var openId = ''; try{ openId = new URL(url).searchParams.get('open') || ''; }catch(e){}
   event.waitUntil(
     self.clients.matchAll({ type:'window', includeUncontrolled:true }).then(function(list){
-      for (var i=0;i<list.length;i++){ if(list[i].url.indexOf(url)>=0 && 'focus' in list[i]) return list[i].focus(); }
-      if (self.clients.openWindow) return self.clients.openWindow(url);
+      for (var i=0;i<list.length;i++){
+        var c = list[i];
+        if (c.url.indexOf('sonylelee.github.io/soneed') >= 0 && 'focus' in c){
+          if (openId && c.postMessage) c.postMessage({ type:'openRecord', id: openId });   // 이미 열린 앱에 '이 기록 열어' 전달
+          return c.focus();
+        }
+      }
+      if (self.clients.openWindow) return self.clients.openWindow(url);   // 안 열려있으면 새로 (?open=id 포함)
     })
   );
 });
