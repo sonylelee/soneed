@@ -301,7 +301,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v157 (2026-08-20)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v159 (2026-08-20)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -458,6 +458,11 @@ h2.section,.logo{letter-spacing:-.01em}
     <div id="recList" class="recgrid"></div>
   </section>
   <section id="view-admin" style="display:none">
+    <div class="card pad" style="margin-bottom:16px;border:2px solid #1f72b0">
+      <h2 class="section" style="margin-top:0">폰 알림 켠 사람 <span class="subtle" style="text-transform:none;letter-spacing:0;font-weight:600">누가 알림을 받고 있는지 확인</span></h2>
+      <button class="btn ghost" style="font-size:12.5px;padding:6px 12px" onclick="loadPushWho()">새로고침</button>
+      <div id="pushWhoBox" style="margin-top:10px" class="subtle">[새로고침]을 눌러 확인하세요.</div>
+    </div>
     <div class="card pad" style="margin-bottom:16px;border:2px solid #7c3aed">
       <h2 class="section" style="margin-top:0">안면 코드 솔루션 <span class="subtle" style="text-transform:none;letter-spacing:0;font-weight:600">코드별 시술 동작 · 관리사 공용</span></h2>
       <div class="subtle" style="margin-bottom:10px">코드를 고르거나 아래 목록에서 눌러 솔루션(동작 순서)을 입력하세요. 저장하면 모든 관리사 폰에 같은 내용이 뜹니다.</div>
@@ -856,6 +861,27 @@ function applyTierUI(){
 /* 대표 전용: 앱 고객(관리사/구독자) 목록. accounts(등급·이름) + 기록의 savedBy(활동/기록수) 합집합. */
 let _appCustBusy=false;
 function _tierBadge(t){var c=t==='베이직'?'#8a94a6':(t==='스탠다드'?'#0891b2':'#C81D74');return '<span style="display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:800;color:#fff;background:'+c+'">'+t+'</span>';}
+async function loadPushWho(){
+  var box=document.getElementById('pushWhoBox'); if(!box)return; box.textContent='불러오는 중…';
+  try{
+    var r=await fetch(PUSH_URL+'/who',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+    var j=await r.json();
+    if(!j||!j.ok){ box.textContent='조회 실패: '+((j&&j.error)||r.status); return; }
+    var subscribed={}; (j.emails||[]).forEach(function(x){ subscribed[(x.email||'').toLowerCase()]=x.last; });
+    // 전체 관리사 명단(STAFF_NAMES) 기준으로 켬/안켬 표시
+    var names=(typeof STAFF_NAMES!=='undefined')?STAFF_NAMES:{};
+    var rows=Object.keys(names).map(function(em){
+      var on=subscribed[em.toLowerCase()]; var nm=names[em];
+      var when=on?(' <span style="color:#999;font-size:11px">'+String(on).slice(0,10)+'</span>'):'';
+      return '<div style="display:flex;align-items:center;gap:8px;padding:7px 4px;border-bottom:1px solid #f0f0f4"><span style="flex:1;font-weight:600">'+nm+' <span style="color:#bbb;font-size:11px">'+em+'</span></span><span style="font-weight:800;color:'+(on?'#1f9d55':'#c02')+'">'+(on?'알림 켬':'꺼짐')+'</span>'+when+'</div>';
+    });
+    // 명단에 없는 구독자(기타)
+    var extra=(j.emails||[]).filter(function(x){ return !names[(x.email||'')] && !Object.keys(names).some(function(k){return k.toLowerCase()===(x.email||'').toLowerCase();}); });
+    var on=Object.keys(names).filter(function(em){return subscribed[em.toLowerCase()];}).length;
+    box.innerHTML='<div style="font-size:12.5px;color:#666;margin-bottom:6px">명단 '+Object.keys(names).length+'명 중 <b style="color:#1f9d55">'+on+'명</b> 알림 켬 · 전체 구독 '+j.count+'건</div>'+rows.join('')
+      +(extra.length?('<div style="font-size:11.5px;color:#999;margin-top:8px">기타 구독: '+extra.map(function(x){return x.email;}).join(', ')+'</div>'):'');
+  }catch(e){ box.textContent='조회 실패: '+(e&&e.message||e); }
+}
 async function renderAppCustomers(){
   if(!isAdmin())return; var box=document.getElementById('appCustList'); if(!box||_appCustBusy)return; _appCustBusy=true;
   try{
@@ -2594,6 +2620,8 @@ function _relevantCount(r){   /* 상대(남)가 남긴 코멘트 수 — 원장=
     if(admin&&cAdmin)return; if(!admin&&!cAdmin)return;
     n++;
   });
+  // 선생님: 본인 기록에 원장 컨펌되면 안읽음 1 (열면 사라짐)
+  if(!admin&&r.confirmedBy&&(r.savedBy||'').toLowerCase()===me.toLowerCase()&&(r.confirmedBy||'').toLowerCase()!==me.toLowerCase())n++;
   return n;
 }
 function unreadCount(r){
@@ -2629,7 +2657,7 @@ function toggleConfirm(){
   if(!(typeof isAdmin==='function'&&isAdmin())){toast('원장(대표)만 컨펌할 수 있어요');return;}
   if(form.confirmedBy){ form.confirmedBy=null; form.confirmedAt=null; toast('컨펌 해제됨'); }
   else{ form.confirmedBy=authEmail(); form.confirmedAt=new Date().toISOString(); toast('원장 컨펌 완료');
-    try{ if(form.savedBy&&form.savedBy!==authEmail()) sendPushTo(form.savedBy,'원장 컨펌 완료','"'+(form.code||'고객')+'" 기록이 컨펌되었습니다.'); }catch(e){} }
+    try{ if(form.savedBy&&form.savedBy.toLowerCase()!==(authEmail()||'').toLowerCase()){ sendPushTo(form.savedBy,'원장 컨펌 완료 · '+(form.code||'고객'),'"'+(form.code||'고객')+'" 기록을 원장이 컨펌했어요.'); } }catch(e){} }
   renderConfirmUI(); saveRecord();
 }
 function openComments(){
