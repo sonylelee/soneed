@@ -301,7 +301,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v159 (2026-08-20)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v160 (2026-08-20)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -627,8 +627,10 @@ const PUSH_URL="https://soneed-push.soni0025.workers.dev";   /* 푸시 발송 Wo
 const VAPID_PUB="BKhxP76VnLAj4kHORwzQRzbJBYD_QJ_l59BZ4UvvYNFU3XnNfRu7ED_r2lwy7AS-M-hMv6yk3xcHKeanihT28Us";
 function _u8FromB64u(s){s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';var b=atob(s),u=new Uint8Array(b.length);for(var i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u;}
 var _pushReady=false;
+function _bindSWMsg(){ try{ if(navigator.serviceWorker&&!window._swMsgBound){ window._swMsgBound=true; navigator.serviceWorker.addEventListener('message',function(ev){ var d=ev.data||{}; if(d.type==='openRecord'&&d.id){ try{ editRecord(d.id); setTimeout(function(){ if(typeof openComments==='function')openComments(); },500); }catch(e){} } }); } }catch(e){} }
 async function initPush(){
   try{
+    _bindSWMsg();
     if(!('serviceWorker' in navigator)||!('PushManager' in window))return;
     var reg=await navigator.serviceWorker.register('sw.js');
     _pushReady=true;
@@ -682,8 +684,8 @@ async function togglePush(){
   else await ensurePushPermission();
   try{ renderRecList(); }catch(e){}
 }
-async function sendPushTo(to,title,body,exclude){
-  try{ await fetch(PUSH_URL+'/notify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({to:to,title:title,body:body,exclude:exclude||null,url:'https://sonylelee.github.io/soneed/'})}); }catch(e){}
+async function sendPushTo(to,title,body,exclude,recId){
+  try{ var url='https://sonylelee.github.io/soneed/'+(recId?('?open='+encodeURIComponent(recId)):''); await fetch(PUSH_URL+'/notify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({to:to,title:title,body:body,exclude:exclude||null,url:url})}); }catch(e){}
 }
 const THERAPISTS=['','이소니','신대성','정수영','김현주','신경미','김려은','이수연','게스트1','게스트2'];
 
@@ -976,6 +978,10 @@ function importLead(id){
   _pendingLeadId=id;   // 저장할 때 목록에서 처리(가져오기만으론 안 사라짐)
   showView('entry');
   try{ initPush(); }catch(e){}
+  try{
+    var _op=new URLSearchParams(location.search).get('open');
+    if(_op){ setTimeout(function(){ try{ editRecord(_op); setTimeout(function(){ if(typeof openComments==='function')openComments(); },500); }catch(e){} }, 800); }
+  }catch(e){}
   toast('차트로 불러왔어요. AI 분석·촉진 후 [기록 저장]하면 목록에서 처리돼요.');
 }
 async function markLeadDone(id,silent){
@@ -2657,7 +2663,7 @@ function toggleConfirm(){
   if(!(typeof isAdmin==='function'&&isAdmin())){toast('원장(대표)만 컨펌할 수 있어요');return;}
   if(form.confirmedBy){ form.confirmedBy=null; form.confirmedAt=null; toast('컨펌 해제됨'); }
   else{ form.confirmedBy=authEmail(); form.confirmedAt=new Date().toISOString(); toast('원장 컨펌 완료');
-    try{ if(form.savedBy&&form.savedBy.toLowerCase()!==(authEmail()||'').toLowerCase()){ sendPushTo(form.savedBy,'원장 컨펌 완료 · '+(form.code||'고객'),'"'+(form.code||'고객')+'" 기록을 원장이 컨펌했어요.'); } }catch(e){} }
+    try{ if(form.savedBy&&form.savedBy.toLowerCase()!==(authEmail()||'').toLowerCase()){ sendPushTo(form.savedBy,'원장 컨펌 완료 · '+(form.code||'고객'),'"'+(form.code||'고객')+'" 기록을 원장이 컨펌했어요.', null, currentId); } }catch(e){} }
   renderConfirmUI(); saveRecord();
 }
 function openComments(){
@@ -2716,8 +2722,8 @@ function addComment(){
   if(typeof saveRecord==='function')saveRecord();
   _cmtLastSig=JSON.stringify(form.comments||[]);
   try{ var nm=(form.code||'고객'); var me=authEmail();
-    if(isAdmin()){ if(form.savedBy&&form.savedBy!==me) sendPushTo(form.savedBy,'원장 코멘트 · '+nm, t.slice(0,50)); }
-    else { sendPushTo('admin','새 코멘트 · '+nm, _who(me)+': '+t.slice(0,50), me); }
+    if(isAdmin()){ if(form.savedBy&&form.savedBy!==me) sendPushTo(form.savedBy,'원장 코멘트 · '+nm, t.slice(0,50), null, currentId); }
+    else { sendPushTo('admin','새 코멘트 · '+nm, _who(me)+': '+t.slice(0,50), me, currentId); }
   }catch(e){}
 }
 function delComment(i){
