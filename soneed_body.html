@@ -100,7 +100,7 @@ h2.sec,.logo{letter-spacing:-.02em}
 <body>
 <header>
   <div class="logo">SONEED 바디</div>
-  <div class="sub">키머슬(짧아진 근육) 분석 · v6.5 · 촉진 전 초안</div>
+  <div class="sub">키머슬(짧아진 근육) 분석 · v6.6 · 촉진 전 초안</div>
 </header>
 <div class="wrap">
   <div class="topnav"><button id="navAnalyze" class="on" onclick="showView('analyze')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>분석</button><button id="navRecords" onclick="showView('records')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>고객 기록</button></div>
@@ -407,20 +407,25 @@ function _cat(name){
   return back?'하체 후면':'하체 전면';
 }
 var ADVICE=[
- {t:'거북목', any:['거북목'], a:'거북목: 이마가 높은 베개를 베는 것이 좋아요.'},
- {t:'일자목', any:['일자목'], a:'일자목: 목베개를 베고, 바닥을 보기보다 하늘을 더 자주 보세요.'},
- {t:'일자등', all:['흉추전만오른쪽','흉추전만왼쪽'], a:'일자등: 어깨를 말지 않고 등을 살짝 굽혀야 일자허리가 되는 것을 방지할 수 있어요.'},
- {t:'낮은어깨', any:['낮은어깨'], a:'낮은어깨: 무거운 옷·짐을 드는 동작, 어깨 강화를 위해 팔을 벌리는 동작은 피해주세요.'},
- {t:'일자허리', all:['요추후만오른쪽','요추후만왼쪽'], a:'일자허리: 무릎보다 낮은 의자는 피하고 바의자처럼 허리를 세워 앉되, 앉을 때 등이 더 펴지지 않게 주의하세요.'},
- {t:'굽은등', all:['흉추후만오른쪽','흉추후만왼쪽'], a:'굽은등: 명치를 30도 정도 들어올려 등을 펴고 생활하세요.'}
+ {t:'거북목', any:['거북목'], a:'[거북목]\n- 턱을 당기고 목을 길게 쓰는 습관이 좋아요.\n- 뒷목 스트레칭 해주세요.\n- 적당한 높이의 베개를 머리 위쪽으로 베는 습관이 좋아요.'},
+ {t:'일자목', any:['일자목'], a:'[일자목]\n- 컴퓨터 & 핸드폰 눈 높이보다 높게해주세요.\n- 턱 당기는 습관을 피해주세요.\n- 목 베개 베는 습관이 좋아요.\n- 앞목 스트레칭 해주세요.\n- 운동 : 목 커브 만들기'},
+ {t:'버섯목', any:['버섯목'], a:'[버섯목]\n- 목 주변 이완 및 스트레칭 많이 해주세요.'},
+ {t:'굽은등', allAny:[['흉추후만오른쪽','흉추후만왼쪽']], a:'[굽은등]\n- 등 펴는 습관(명치를 들어올린다는 느낌)이 좋아요.\n- 가슴 스트레칭 해주세요.'},
+ {t:'일자등', allAny:[['흉추전만오른쪽','흉추전만왼쪽']], a:'[일자등]\n- 등을 펴는 습관을 피해주세요.\n- 운동 : 상복부 운동'},
+ {t:'허리 C 커브 (요추전만)', allAny:[['요추전만오른쪽','요추전만왼쪽']], a:'[허리 C 커브 (요추전만)]\n- 오리엉덩이 자세를 피해주세요.\n- 딱딱한 침대는 좋지 않아요.\n- 운동 : 하복부 운동'},
+ {t:'일자허리', allAny:[['요추후만오른쪽','요추후만왼쪽']], a:'[일자허리]\n- 푹신한 침대는 좋지 않아요.\n- 운동 : 코어운동'},
+ {t:'허리 C 커브(요추전만) + 골반 전방경사', allAny:[['요추전만오른쪽','요추전만왼쪽'],['골반전방경사오른쪽','골반전방경사왼쪽']], a:'[허리 C 커브(요추전만) + 골반 전방경사]\n- 딱딱한 침대는 좋지 않아요.\n- 하복부와 엉덩이 힘주고 서있는 습관이 좋아요.\n- 의자에 걸터앉지 말고 골반과 허리를 등받이에 붙여 앉아주세요.\n- 고관절 앞쪽을 스트레칭하고 하복부와 둔근 운동을 추천해요.'},
+ {t:'일자허리 + 골반 후방경사', allAny:[['요추후만오른쪽','요추후만왼쪽'],['골반후방경사오른쪽','골반후방경사왼쪽']], a:'[일자허리 + 골반 후방경사]\n- 푹신한 침대는 피해주세요.\n- 의자 높이를 높여주세요. (엉덩이가 무릎보다 더 높게)\n- 허리 커브를 살리고 앉아주세요. (Ex : 허리커브 받침대 이용)\n- 햄스트링 스트레칭 좋아요.\n- 코어 운동'},
+ {t:'높은어깨', any:['높은어깨'], a:'[높은어깨]\n- 어깨 내리는 습관을 들여주세요.\n- 높은쪽 어깨에만 가방 메는 습관을 피해주세요.\n- 포지셔닝 : 어깨 내려주기'},
+ {t:'낮은어깨', any:['낮은어깨'], a:'[낮은어깨]\n- 상부승모근 스트레칭을 피해주세요.\n- 어깨 높이는 습관을 들여주세요.\n- 포지셔닝 : 어깨 올려주기'},
+ {t:'멀어진 어깨뼈 + 굽은등', a:'[멀어진 어깨뼈 + 굽은등]\n- 가슴 스트레칭 해주세요.\n- 운동 : 등\n- 포지셔닝 : 팔 베드 밖으로 떨어지는 시간 줄이기'},
+ {t:'가까운 어깨뼈 + 일자등', a:'[가까운 어깨뼈 + 일자등]\n- 척추와 날개뼈 사이 이완이 필요해요.\n- 운동 : 전거근 운동\n- 포지셔닝 : 팔 베드 밖으로'},
+ {t:'뜬 어깨뼈', a:'[뜬 어깨뼈]\n- 날개뼈 주변 이완을 피해주세요.\n- 운동 : 전거근, 등'},
+ {t:'높은 골반 + 편위된 골반 + 모음 다리', a:'[높은 골반 + 편위된 골반 + 모음 다리]\n- 다리를 꼬지 마시고, 꼬아야한다면 반대쪽 다리가 위로 가게 해주세요.\n- 신발을 신거나 바지를 입을 때 반대쪽 다리 먼저 신거나 입어주세요.\n- 운동 : 엉덩이'},
+ {t:'빽니 + 발목발바닥 굽힘', a:'[빽니 + 발목발바닥 굽힘]\n- 누워있을 때 무릎 밑 수건이나 쿠션을 받쳐주세요.\n- 하이힐을 피해주세요.\n- 종아리 스트레칭을 자주 해주세요.'},
+ {t:'발목 발등 굽힘 + 아치 높음', a:'[발목 발등 굽힘 + 아치 높음]\n- 앞정강근 이완이 필요해요.\n- 발등쪽 스트레칭 해주세요.'}
 ];
-function _adviceMatch(x){ if(x.all)return x.all.every(function(f){return sel.has(f);}); if(x.any){var got=false; sel.forEach(function(f){ if(x.any.some(function(k){return f.indexOf(k)>=0;}))got=true; }); return got;} return false; }
-function renderAdvice(){
-  var sug=document.getElementById('adviceSug'), all=document.getElementById('adviceAll'); if(!sug)return;
-  var matched=[]; ADVICE.forEach(function(x,i){ if(_adviceMatch(x))matched.push(i); });
-  sug.innerHTML=matched.length ? ('<div style="font-size:12px;font-weight:700;color:var(--brand);margin:2px 0 5px">체크한 자세 추천</div>'+matched.map(function(i){return '<button class="advb" onclick="addAdvice('+i+')">＋ '+esc(ADVICE[i].t)+'</button>';}).join('')) : '<div class="muted" style="font-size:12.5px">자세를 체크하면 맞춤 가이드가 추천돼요. (아래 [전체 가이드]에서 직접 고를 수도 있어요)</div>';
-  if(all)all.innerHTML=ADVICE.map(function(x,i){return '<button class="advb" onclick="addAdvice('+i+')">＋ '+esc(x.t)+'</button>';}).join('');
-}
+function _adviceMatch(x){ if(x.allAny)return x.allAny.every(function(g){return g.some(function(f){return sel.has(f);});}); if(x.all)return x.all.every(function(f){return sel.has(f);}); if(x.any){var got=false; sel.forEach(function(f){ if(x.any.some(function(k){return f.indexOf(k)>=0;}))got=true; }); return got;} return false; }
 function addAdvice(i){ var x=ADVICE[i]; if(!x)return; var ta=document.getElementById('recGuide'); if(!ta)return; var cur=ta.value.trim(); if(cur.indexOf(x.a)>=0){toast('이미 추가된 멘트예요');return;} ta.value=(cur?cur+'\n':'')+x.a; toast('멘트 추가됨'); }
 function renderGuide(){
   var box=document.getElementById('guideBox'); if(!box)return;
