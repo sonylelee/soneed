@@ -100,7 +100,7 @@ h2.sec,.logo{letter-spacing:-.02em}
 <body>
 <header>
   <div class="logo">SONEED 바디 · 오리지널</div>
-  <div class="sub">키머슬(짧아진 근육) 분석 · v7.2 · 촉진 전 초안</div>
+  <div class="sub">키머슬(짧아진 근육) 분석 · v7.3 · 촉진 전 초안</div>
 </header>
 <div class="wrap">
   <div class="topnav"><button id="navAnalyze" class="on" onclick="showView('analyze')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>분석</button><button id="navRecords" onclick="showView('records')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>고객 기록</button></div>
@@ -130,6 +130,13 @@ h2.sec,.logo{letter-spacing:-.02em}
     <input id="recPrice" placeholder="예: 30만원" style="width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:6px;font-size:15px">
     <label style="font-weight:800;font-size:13px;color:var(--brand);display:block;margin:9px 0 5px">메모 · 특이사항</label>
     <textarea id="recMemo" rows="3" placeholder="상담·시술·요청사항 등 자유 기입" style="width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:6px;font-size:15px;resize:vertical"></textarea>
+    <label style="font-weight:800;font-size:13px;color:var(--brand);display:block;margin:14px 0 5px">날짜별 메모 · 코멘트</label>
+    <div id="memoList" style="max-height:260px;overflow:auto;background:#f7f7fa;border:1px solid var(--line);border-radius:6px;padding:8px;margin-bottom:6px"></div>
+    <div style="display:flex;gap:6px">
+      <input id="memoWho" placeholder="작성자(선택)" style="width:88px;padding:9px 10px;border:1px solid var(--line);border-radius:6px;font-size:14px">
+      <input id="memoInput" placeholder="메모·코멘트 입력" onkeydown="if(event.key===&quot;Enter&quot;&amp;&amp;!event.isComposing)addMemo()" style="flex:1;padding:9px 11px;border:1px solid var(--line);border-radius:6px;font-size:16px">
+      <button class="btn primary" style="padding:9px 14px" onclick="addMemo()">＋</button>
+    </div>
   </div>
 
   <div class="card">
@@ -439,7 +446,7 @@ function newClient(){
   ['recName','recPhone','recAge','recRoute','recMemo','recProgram','recPrice','recGuide','recDate'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
   var rg=document.getElementById('recGender'); if(rg)rg.value='';
   var d=new Date(),t=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); var rd=document.getElementById('recDate'); if(rd)rd.value=t;
-  try{renderChecklist();}catch(e){} var bv=document.getElementById('bodyview'); if(bv)bv.style.display='none'; var sg=document.getElementById('seg'); if(sg)sg.style.display='none';
+  window._curMemos=[]; try{renderMemos();}catch(e){} try{renderChecklist();}catch(e){} var bv=document.getElementById('bodyview'); if(bv)bv.style.display='none'; var sg=document.getElementById('seg'); if(sg)sg.style.display='none';
   try{renderAdvice();}catch(e){} window.scrollTo(0,0); toast('새 고객 작성');
 }
 function showClientGuide(){
@@ -639,6 +646,29 @@ function _sbH(x){return Object.assign({apikey:SB_KEY,Authorization:'Bearer '+SB_
 function _recAll(){try{return JSON.parse(localStorage.getItem('sbody_records')||'[]');}catch(e){return [];}}
 function _recSave(a){try{localStorage.setItem('sbody_records',JSON.stringify(a));}catch(e){}}
 function _recState(r){return (r&&r.state)||(r&&r.data&&r.data.state)||{};}
+async function _memoFmt(iso){ if(!iso)return ''; var s=String(iso).replace('T',' '); var d=s.slice(5,10).replace('-','/'), t=s.slice(11,16); return d+' '+t; }
+function renderMemos(){
+  var box=document.getElementById('memoList'); if(!box)return;
+  var arr=(window._curMemos||[]);
+  if(!arr.length){ box.innerHTML='<div style="color:#aaa;font-size:12.5px;text-align:center;padding:16px 0">아직 메모가 없어요. 아래에 입력해 추가하세요.</div>'; return; }
+  box.innerHTML=arr.map(function(m,i){
+    return '<div style="padding:7px 4px;border-bottom:1px solid #ececf2"><div style="font-size:11px;color:var(--brand);font-weight:700">'+_memoFmt(m.at)+(m.by?(' · '+String(m.by).replace(/</g,"&lt;")):'')+' <span onclick="delMemo('+i+')" style="float:right;color:#c66;cursor:pointer;font-weight:400">삭제</span></div><div style="font-size:14px;line-height:1.5;white-space:pre-wrap;word-break:break-word;margin-top:2px">'+String(m.text||'').replace(/</g,"&lt;")+'</div></div>';
+  }).join('');
+  box.scrollTop=box.scrollHeight;
+}
+function addMemo(){
+  var el=document.getElementById('memoInput'); if(!el)return; var t=(el.value||'').trim(); if(!t)return;
+  var who=((document.getElementById('memoWho')||{}).value||'').trim();
+  if(!window._curMemos)window._curMemos=[];
+  window._curMemos.push({at:new Date().toISOString(),by:who,text:t});
+  el.value=''; renderMemos();
+  if(typeof saveRecord==='function')saveRecord();
+}
+function delMemo(i){
+  var arr=(window._curMemos||[]); if(!arr[i])return;
+  if(!confirm('이 메모를 삭제할까요?'))return;
+  arr.splice(i,1); renderMemos(); if(typeof saveRecord==='function')saveRecord();
+}
 async function saveRecord(){
   var nm=(document.getElementById('recName').value||'').trim();
   if(!nm){toast('고객 이름을 입력하세요');return;}
@@ -647,7 +677,7 @@ async function saveRecord(){
   var d=new Date(), ds0=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
   var gv=function(id){var e=document.getElementById(id);return e?(e.value||'').trim():'';};
   var ph=gv('recPhone'); var ds=gv('recDate')||ds0;
-  var extra={phone:ph,gender:gv('recGender'),age:gv('recAge'),route:gv('recRoute'),memo:gv('recMemo'),program:gv('recProgram'),price:gv('recPrice'),guide:gv('recGuide')};
+  var extra={phone:ph,gender:gv('recGender'),age:gv('recAge'),route:gv('recRoute'),memo:gv('recMemo'),program:gv('recProgram'),price:gv('recPrice'),guide:gv('recGuide'),memos:(window._curMemos||[])};
   var rec={id:'b'+Date.now(),name:nm,phone:ph,date:ds,data:Object.assign({state:st},extra)};
   var ok=false;
   try{
@@ -696,6 +726,7 @@ function loadRecord(id){
   var dd=r.data||{}; var sv=function(id,val){var el=document.getElementById(id);if(el)el.value=val||'';};
   sv('recGender',dd.gender); sv('recAge',dd.age); sv('recRoute',dd.route); sv('recMemo',dd.memo);
   sv('recProgram',dd.program); sv('recPrice',dd.price); sv('recDate',r.date); sv('recGuide',dd.guide);
+  window._curMemos=(dd.memos||[]); try{renderMemos();}catch(e){}
   showView('analyze');
   window.scrollTo(0,0);
   toast('불러옴: '+(r.name||''));
