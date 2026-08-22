@@ -303,7 +303,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v174 (2026-08-22)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v177 (2026-08-22)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -2840,6 +2840,7 @@ function initEntryTabs(){
   Array.prototype.forEach.call(h2s,function(x){ if(!big && x.textContent.indexOf('사진')>=0)big=x.closest('.card'); });
   if(big){ big.setAttribute('data-bigcard','1'); var cur=0;
     Array.prototype.forEach.call(big.children,function(el){
+      if(el.id==='fp_panel'){ el.setAttribute('data-etab','2'); return; }   // 3D는 탭2 고정(특이사항 뒤에 있어도)
       if(el.tagName==='H2'&&el.classList.contains('section')){
         var t=el.textContent;
         if(t.indexOf('사진')>=0||t.indexOf('기본 정보')>=0)cur=1;
@@ -2849,6 +2850,16 @@ function initEntryTabs(){
       if(cur)el.setAttribute('data-etab',cur);
     });
   }
+  // 명시적 보정: 회전진단=2, 회차별애프터(+h2)=3, 특이사항 h2=3
+  var rs=document.getElementById('rotSection'); if(rs)rs.setAttribute('data-etab','2');
+  var af=document.getElementById('afters'); if(af){ af.setAttribute('data-etab','3');
+    var p=af.previousElementSibling; if(p&&p.tagName==='H2')p.setAttribute('data-etab','3'); }
+  entry.querySelectorAll('h2.section').forEach(function(x){
+    var t=x.textContent;
+    if(t.indexOf('회차별 애프터')>=0||t.indexOf('특이사항')>=0){ x.setAttribute('data-etab','3');
+      var n=x.nextElementSibling; if(n&&n.tagName!=='H2')n.setAttribute('data-etab','3'); }
+    else if(t.indexOf('회전 진단')>=0){ x.setAttribute('data-etab','2'); }
+  });
   showEntryTab(window._entryTab||1);
 }
 function showEntryTab(n){
@@ -3353,6 +3364,20 @@ var _method=$("fp_method"); if(_method)_method.onclick=function(){
   seq.forEach(function(id){ var g=_fpGuide(id); if(g){ step++; out.push(step+". "+g.name); g.lines.forEach(function(l){out.push(l);}); out.push(""); } });
   if(out.length&&out[out.length-1]==="")out.pop();
   $("fp_method_out").textContent=out.length?("리세팅가이드 (촉진 전 참고 · 움직인 순서대로)\n\n"+out.join("\n")):"조정된 슬라이더가 없습니다.";
+  // ① 리세팅가이드 옆에 정면 사진 표시
+  try{
+    var pf=(typeof form!=="undefined"&&form)?form.photo_front:null;
+    var box=document.getElementById("fp_facePhoto");
+    if(!box){ box=document.createElement("div"); box.id="fp_facePhoto"; box.style.cssText="text-align:center;margin:10px 0"; var mo=$("fp_method_out"); if(mo&&mo.parentNode)mo.parentNode.insertBefore(box,mo); }
+    box.innerHTML=pf?('<div style="font-size:12px;color:#888;margin-bottom:4px">정면</div><img src="'+pf+'" style="max-width:200px;width:60%;border-radius:8px">'):'';
+  }catch(e){}
+  // ② 리세팅가이드 = 차트 자동 저장 (맨 아래 저장 안 눌러도 됨)
+  try{
+    if(typeof form!=="undefined"&&form){
+      form.face3d={v:1,amp:num("fp_amp"),tilt:num("fp_tilt"),comp:num("fp_comp"),draw:num("fp_draw"),roll:num("fp_roll"),ham:num("fp_ham"),nostrilR:num("fp_nostR"),nostrilL:num("fp_nostL"),tm:num("fp_tm"),order:_fpOrder.slice(),method:($("fp_method_out").textContent||"")};
+      if(typeof saveRecord==="function"){ saveRecord(); fpLog("가이드 생성 + 차트 자동 저장됨"); }
+    }
+  }catch(e){}
 };
 var _save=$("fp_save"); if(_save)_save.onclick=function(){
   if(typeof form==="undefined"||!form){ fpLog("저장 대상을 찾지 못했습니다."); return; }
