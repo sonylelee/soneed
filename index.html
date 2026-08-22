@@ -303,7 +303,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v190 (2026-08-22)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v191 (2026-08-22)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -357,14 +357,16 @@ h2.section,.logo{letter-spacing:-.01em}
         <div id="rotWarn"></div>
       </div>
       <div id="rotLocked" class="subtle" style="display:none;padding:10px 0;border-top:1px dashed #e2d7f7">🔒 회전 진단은 <b>프리미엄 등급</b> 차트입니다. 베이직·스탠다드는 심플 차트(2D·좌우)로 진행됩니다.</div>
+      <div id="afterSection" data-etab="3">
       <h2 class="section">회차별 애프터 사진</h2>
-      <div id="afters"></div>
       <button class="btn primary" style="width:100%" onclick="camNewAfter()">애프터 촬영 추가<br><span style="font-size:11px;font-weight:400;opacity:.85">정면·든·숙임 이어서 · 초회차 겹침</span></button>
       <button class="btn ghost" style="width:100%;margin-top:6px" onclick="document.getElementById('afterInput').click()">앨범에서 3장 넣기</button>
+      <div id="afters" style="margin-top:12px"></div>
       <button class="btn primary" style="width:100%;margin-top:8px" onclick="makeAfterImage()">고객에게 보낼 전/후 이미지 만들기</button>
       <div id="afterCompare" style="margin-top:12px"></div>
       <input type="file" id="afterInput" accept="image/*,.heic,.heif" multiple style="display:none" onchange="onMulti(event,'after')">
-    <input type="file" id="afterOneInput" accept="image/*,.heic,.heif" style="display:none" onchange="afterOnePicked(event)">
+      <input type="file" id="afterOneInput" accept="image/*,.heic,.heif" style="display:none" onchange="afterOnePicked(event)">
+      </div>
       <h2 class="section">특이사항</h2>
       <textarea id="f_notes" placeholder="관리 순서, 특이사항, 다음 회차 계획 등"></textarea>
       <div class="actions">
@@ -1165,20 +1167,41 @@ async function loadMore(){
     _saveRecCache(records); sortRecs(); refreshAll();
   }catch(e){ var m2=document.getElementById('recMoreBtn'); if(m2){m2.disabled=false;m2.textContent='더 보기 (다시 시도)';} }
 }
+/* ===== 사진 분리(2단계): 사진은 records.photos 컬럼에, 나머지는 data에. 옛 기록(data에 사진)도 계속 읽힘 ===== */
+var PHOTO_KEYS_MAIN=['photo_front','photo_up','photo_down'];
+var PHOTO_KEYS_AFTER=['photo_front','photo_up','photo_down','before_front','before_up','before_down'];
+function _splitPhotos(rec){
+  var core=JSON.parse(JSON.stringify(rec)), photos={};
+  PHOTO_KEYS_MAIN.forEach(function(k){ if(core[k]){photos[k]=core[k]; delete core[k];} });
+  if(Array.isArray(core.afters)){ var ap={}; core.afters.forEach(function(a){ if(!a.id)a.id=newId(); var pa={}; PHOTO_KEYS_AFTER.forEach(function(k){ if(a[k]){pa[k]=a[k]; delete a[k];} }); if(Object.keys(pa).length)ap[a.id]=pa; }); if(Object.keys(ap).length)photos.afters=ap; }
+  return {core:core, photos:photos};
+}
+function _mergePhotos(data,photos,id){
+  var rec=Object.assign({}, data||{}); if(id!=null)rec.id=id;
+  if(photos){
+    PHOTO_KEYS_MAIN.forEach(function(k){ if(photos[k])rec[k]=photos[k]; });
+    if(photos.afters&&Array.isArray(rec.afters)){ rec.afters.forEach(function(a){ var pa=a.id&&photos.afters[a.id]; if(pa)Object.keys(pa).forEach(function(k){a[k]=pa[k];}); }); }
+  }
+  return rec;
+}
 async function fetchFull(id){
-  var r=await fetch(sbBase()+'records?id=eq.'+encodeURIComponent(id)+'&select=data',{headers:sbHeaders()});
-  if(!r.ok) throw new Error('HTTP '+r.status);
+  var r=await fetch(sbBase()+'records?id=eq.'+encodeURIComponent(id)+'&select=data,photos',{headers:sbHeaders()});
+  if(!r.ok){ if(r.status===400){ /* photos 컬럼 없는 구버전 DB 폴백 */ var r0=await fetch(sbBase()+'records?id=eq.'+encodeURIComponent(id)+'&select=data',{headers:sbHeaders()}); if(!r0.ok)throw new Error('HTTP '+r0.status); var j0=await r0.json(); if(!j0.length)throw new Error('기록을 찾지 못했어요'); return Object.assign({},j0[0].data,{id:id}); } throw new Error('HTTP '+r.status); }
   var j=await r.json(); if(!j.length) throw new Error('기록을 찾지 못했어요');
-  return Object.assign({}, j[0].data, {id:id});
+  return _mergePhotos(j[0].data, j[0].photos, id);
+}
+async function cloudPutPhotos(id,photosObj){
+  const r=await fetch(sbBase()+'records?id=eq.'+encodeURIComponent(String(id)),{method:'PATCH',headers:sbHeaders({Prefer:'return=minimal'}),body:JSON.stringify({photos:photosObj,updated_at:new Date().toISOString()})});
+  if(!r.ok)throw new Error('HTTP '+r.status+' '+await r.text());
 }
 async function cloudPut(id,dataObj){if(authEmail()){try{if(!dataObj.savedBy)dataObj.savedBy=authEmail();dataObj.lastBy=authEmail();}catch(e){}}const r=await fetch(sbBase()+'records',{method:'POST',headers:sbHeaders({Prefer:'resolution=merge-duplicates,return=minimal'}),body:JSON.stringify({id:String(id),data:dataObj,updated_at:new Date().toISOString()})});if(!r.ok)throw new Error('HTTP '+r.status+' '+await r.text());}
 async function cloudSaveRecord(rec){
-  const core=JSON.parse(JSON.stringify(rec));
-  delete core.photo_front;delete core.photo_up;delete core.photo_down;
-  if(Array.isArray(core.afters))core.afters.forEach(a=>{delete a.photo_front;delete a.photo_up;delete a.photo_down;});
-  await cloudPut(rec.id,core); // 1) 사진 제외 기본정보 먼저 저장(작고 안전)
-  const hasPhoto=rec.photo_front||rec.photo_up||rec.photo_down||(Array.isArray(rec.afters)&&rec.afters.some(a=>a.photo_front||a.photo_up||a.photo_down));
-  if(hasPhoto){try{await cloudPut(rec.id,rec);}catch(e){throw {photoOnly:true,message:e.message};} } // 2) 사진 포함 저장 시도
+  if(Array.isArray(rec.afters))rec.afters.forEach(function(a){if(a&&!a.id)a.id=newId();});   // 회차 id 보장(사진 매칭 키)
+  var sp=_splitPhotos(rec);
+  await cloudPut(rec.id, sp.core);                 // 1) 사진 제외 기본정보 먼저(작고 안전, photos 컬럼은 유지)
+  var n=sp.photos?Object.keys(sp.photos).length:0;
+  try{ await cloudPutPhotos(rec.id, sp.photos||{}); }   // 2) 사진은 photos 컬럼에 별도 저장(삭제 반영 위해 비어도 저장)
+  catch(e){ if(n>0) throw {photoOnly:true,message:e.message}; }
 }
 async function cloudDelete(id){const r=await fetch(sbBase()+'records?id=eq.'+encodeURIComponent(String(id)),{method:'DELETE',headers:sbHeaders({Prefer:'return=minimal'})});if(!r.ok)throw new Error('HTTP '+r.status);}
 
@@ -2948,6 +2971,7 @@ function initEntryTabs(){
   }
   // 명시적 보정: 회전진단=2, 회차별애프터(+h2)=3, 특이사항 h2=3
   var rs=document.getElementById('rotSection'); if(rs)rs.setAttribute('data-etab','2');
+  var asec=document.getElementById('afterSection'); if(asec)asec.setAttribute('data-etab','3');
   var af=document.getElementById('afters'); if(af){ af.setAttribute('data-etab','3');
     var p=af.previousElementSibling; if(p&&p.tagName==='H2')p.setAttribute('data-etab','3'); }
   entry.querySelectorAll('h2.section').forEach(function(x){
