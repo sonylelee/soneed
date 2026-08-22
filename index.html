@@ -301,7 +301,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v170 (2026-08-22)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v172 (2026-08-22)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -322,6 +322,11 @@ h2.section,.logo{letter-spacing:-.01em}
     </div>
     <div id="autoMsg"></div>
     <div id="faceResult"></div>
+    <div id="etabBar" style="display:flex;gap:6px;margin:10px 2px 14px">
+      <button class="etab on" data-t="1" onclick="showEntryTab(1)" style="flex:1;padding:10px;border:1px solid var(--line2);border-radius:8px;background:var(--brand);color:#fff;font-weight:800;font-size:13px;cursor:pointer">1 사진·기본</button>
+      <button class="etab" data-t="2" onclick="showEntryTab(2)" style="flex:1;padding:10px;border:1px solid var(--line2);border-radius:8px;background:var(--surface);color:var(--muted);font-weight:800;font-size:13px;cursor:pointer">2 진단</button>
+      <button class="etab" data-t="3" onclick="showEntryTab(3)" style="flex:1;padding:10px;border:1px solid var(--line2);border-radius:8px;background:var(--surface);color:var(--muted);font-weight:800;font-size:13px;cursor:pointer">3 비포·애프터</button>
+    </div>
     <div class="card pad" id="fcodeCard" style="border:2px solid #7c3aed">
       <h2 class="section" style="margin-top:0">안면 코드 <span class="tag all">빠른 판독 · 첫 촉진용</span></h2>
       <div class="subtle" style="margin:-4px 0 8px;font-size:12px">AI가 타입~콧볼 예측 · <b>오른마루</b>는 촉진 후 직접 선택</div>
@@ -1501,8 +1506,8 @@ function onMulti(e,kind){const files=Array.from(e.target.files||[]).slice(0,3);e
 const AFTER_READS=[['type','타입'],['occiput_clock','후두골 시간'],['nose_diag','코 방향'],['eye_lip','눈>입술 먼쪽'],['waterslide','워터슬라이드'],['d_forehead_parietal','마루 두께']];
 function afterField(i,a){const opts='<option value="">회차</option>'+Array.from({length:40},(_,n)=>'<option '+(a.session===(n+1)+'회'?'selected':'')+'>'+(n+1)+'회</option>').join('');
   function _slotHTML(pfx){ return PHOTO_SLOTS.map(([s,ko])=>{var key=pfx+s;var src=a[key];return '<div class="pslot"><div class="photo-drop" style="aspect-ratio:3/4;cursor:pointer" onclick="afterRetake('+i+',\''+key+'\')">'+(src?'<img src="'+src+'">':'<div class="ph">＋<br>'+ko+'</div>')+'</div><div style="display:flex;gap:4px;justify-content:center;margin-top:4px"><button class="btn" style="padding:3px 8px;font-size:11px" onclick="event.stopPropagation();afterRetake('+i+',\''+key+'\')">촬영</button><button class="btn" style="padding:3px 8px;font-size:11px" onclick="event.stopPropagation();afterPickOne('+i+',\''+key+'\')">앨범</button>'+(src?'<button class="btn danger" style="padding:3px 8px;font-size:11px" onclick="event.stopPropagation();afterClearPhoto('+i+',\''+key+'\')">✕</button>':'')+'</div><label>'+ko+'</label></div>';}).join(''); }
-  const thumbs='<div style="font-size:12px;font-weight:800;color:#888;margin:2px 0 4px">BEFORE (시술 전)</div><div class="rowline" style="gap:6px">'+_slotHTML('before_')+'</div>'
-    +'<div style="font-size:12px;font-weight:800;color:#C81D74;margin:8px 0 4px">AFTER (시술 후)</div><div class="rowline" style="gap:6px">'+_slotHTML('photo_')+'</div>';
+  const thumbs='<div style="font-size:12px;font-weight:800;color:#888;margin:2px 0 5px">BEFORE (시술 전)</div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">'+_slotHTML('before_')+'</div>'
+    +'<div style="font-size:12px;font-weight:800;color:#C81D74;margin:10px 0 5px">AFTER (시술 후)</div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">'+_slotHTML('photo_')+'</div>';
   const reads=AFTER_READS.map(function(rk){var k=rk[0],ko=rk[1],f=FMAP[k];var o='<option value="">-</option>'+f.opt.filter(function(x){return x!=='';}).map(function(x){return '<option'+(a[k]===x?' selected':'')+' value="'+x+'">'+x+'</option>';}).join('');return '<div class="field" style="max-width:150px"><label>'+ko+'</label><select onchange="form.afters['+i+'][\''+k+'\']=this.value||null;renderAfterCompare()">'+o+'</select></div>';}).join('');
   return '<div class="card pad" style="margin-bottom:10px"><div class="rowline" style="margin-bottom:10px">'
     +'<div class="field" style="max-width:130px"><label>회차</label><select onchange="form.afters['+i+'].session=this.value||null;renderAfterCompare()">'+opts+'</select></div>'
@@ -2820,9 +2825,39 @@ async function deleteCurrent(){if(!currentId)return;if(!confirm('이 기록을 �
 function clearFormConfirm(){var has=form&&Object.keys(form).some(function(k){var v=form[k];return v!=null&&v!==''&&!(Array.isArray(v)&&!v.length);});if(has&&!confirm('현재 화면에 입력한 내용이 지워지고 새 기록을 작성합니다.\n(이미 저장한 기록은 목록에 그대로 남아요)\n계속할까요?'))return;clearForm();}
 function clearForm(){form={};currentId=null;autoFilled={};_pendingLeadId=null;renderForm();renderStickyThumbs();document.getElementById('f_notes').value='';document.getElementById('autoMsg').innerHTML='';const _fr=document.getElementById('faceResult');if(_fr)_fr.innerHTML='';document.getElementById('editState').textContent='새 기록을 작성합니다.';document.getElementById('delBtn').style.display='none';updateValidation();}
 var _reportScroll=0,_restoreReport=false;
+function initEntryTabs(){
+  var entry=document.getElementById('view-entry'); if(!entry)return;
+  var T1=['안면 코드','사진','기본 정보'], T2=['2D 진단','좌우 진단','회전 진단'], T3=['회차별 애프터','특이사항'];
+  Array.prototype.forEach.call(entry.children,function(el){
+    if(!el.classList)return;
+    if(el.classList.contains('toolbar')||el.id==='etabBar'){ return; }
+    var tab=0;
+    if(el.id==='fp_panel'){ tab=3; }
+    else { var h2=el.querySelector?el.querySelector('h2.section'):null; var txt=h2?h2.textContent:'';
+      if(txt){ if(T1.some(function(k){return txt.indexOf(k)>=0;}))tab=1;
+        else if(T2.some(function(k){return txt.indexOf(k)>=0;}))tab=2;
+        else if(T3.some(function(k){return txt.indexOf(k)>=0;}))tab=3; } }
+    if(tab)el.setAttribute('data-etab',tab); else el.removeAttribute('data-etab');
+  });
+  showEntryTab(window._entryTab||1);
+}
+function showEntryTab(n){
+  window._entryTab=n;
+  var entry=document.getElementById('view-entry'); if(!entry)return;
+  Array.prototype.forEach.call(entry.children,function(el){
+    if(!el.getAttribute)return; var t=el.getAttribute('data-etab');
+    if(t)el.style.display=(String(t)===String(n))?'':'none';
+  });
+  document.querySelectorAll('#etabBar .etab').forEach(function(b){
+    var on=(b.getAttribute('data-t')===String(n));
+    b.style.background=on?'var(--brand)':'var(--surface)'; b.style.color=on?'#fff':'var(--muted)';
+  });
+  try{window.scrollTo(0,0);}catch(e){}
+}
 function showView(v){
   if((v==='admin'||v==='academy')&&!isAdmin())v='data';   // 관리·아카데미는 대표만
   document.getElementById('view-entry').style.display=v==='entry'?'':'none';
+  if(v==='entry')setTimeout(function(){try{initEntryTabs();}catch(e){}},20);
   document.getElementById('view-data').style.display=v==='data'?'':'none';
   if(v==='data'){ try{ if(typeof loadAll==='function'&&mode==='cloud')loadAll(); }catch(e){} try{ if(typeof Notification!=='undefined'&&Notification.permission==='default')Notification.requestPermission(); }catch(e){} setTimeout(function(){try{renderNotif();}catch(e){}},60); }
   var va=document.getElementById('view-admin'); if(va)va.style.display=v==='admin'?'':'none';
