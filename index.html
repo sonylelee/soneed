@@ -303,7 +303,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v178 (2026-08-22)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v179 (2026-08-22)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -1569,8 +1569,9 @@ function openTodayBA(){
   var d=new Date(), ds=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
   form.afters.unshift({session:(form.afters.length+1)+'회', date:ds});
   if(typeof renderAfters==='function')renderAfters();
+  if(typeof showEntryTab==='function')showEntryTab(3);   // 비포·애프터 관리 탭으로 이동
   toast('오늘 회차 추가 · 비포/애프터 사진을 넣어주세요');
-  setTimeout(function(){ var el=document.getElementById('aftersWrap')||document.querySelector('.afters'); if(el)el.scrollIntoView({behavior:'smooth',block:'start'}); }, 100);
+  setTimeout(function(){ var el=document.getElementById('afters')||document.getElementById('aftersWrap'); if(el)el.scrollIntoView({behavior:'smooth',block:'center'}); }, 150);
 }
 function openBAEditor(shots, meta){
   baSizes(); var m=baModal(); baBuild(m); m.style.display='flex'; _baState.meta=meta; _baState.shots=shots;
