@@ -547,7 +547,7 @@ function _bindThoDrag(){
     var h=document.getElementById('thoHandle_'+side); if(!h)return;
     var svg=h.ownerSVGElement; if(!svg)return;
     function pt(ev){ var r=svg.getBoundingClientRect(); var cy=(ev.touches?ev.touches[0].clientY:ev.clientY); return (cy-r.top)/r.height*156; }
-    function move(ev){ ev.preventDefault(); var y=pt(ev); if(y<33)y=33; if(y>57)y=57; _thoConv=y; drawBodyMap(); _bindThoDrag(); }
+    function move(ev){ ev.preventDefault(); var y=pt(ev); if(y<34)y=34; if(y>54)y=54; _thoConv=y; drawBodyMap(); _bindThoDrag(); }
     function up(){ document.removeEventListener('mousemove',move); document.removeEventListener('mouseup',up); document.removeEventListener('touchmove',move); document.removeEventListener('touchend',up); if(typeof saveRecord==='function')saveRecord(); }
     function down(ev){ ev.preventDefault(); document.addEventListener('mousemove',move); document.addEventListener('mouseup',up); document.addEventListener('touchmove',move,{passive:false}); document.addEventListener('touchend',up); }
     h.addEventListener('mousedown',down); h.addEventListener('touchstart',down,{passive:false});
@@ -559,7 +559,7 @@ function _bodyLines(side){
   function ownScreenLeft(own){ var r=(own==='오른쪽'); return side==='front'? r : !r; }
   function hi(base){ if(sel.has(base+'오른쪽'))return '오른쪽'; if(sel.has(base+'왼쪽'))return '왼쪽'; return null; }
   var out='';
-  var shY=34, shL=26, shR=74, hpY=82, hpL=32, hpR=68, kY=116, aY=148;   // 어깨선 위로(34)·외측(26~74), 골반 외측(32~68)
+  var shY=34, shL=26, shR=74, hpY=66, hpL=32, hpR=68, kY=116, aY=148;   // 어깨선 위로(34)·외측(26~74), 골반 외측(32~68)
   // 어깨선
   var hiS=hi('높은어깨'), yl=shY, yr=shY;
   if(hiS){ if(ownScreenLeft(hiS))yl-=4.5; else yr-=4.5; }
@@ -575,7 +575,7 @@ function _bodyLines(side){
     var sl=ownScreenLeft(own); var hx=sl?42:58, kx=sl?44:56, ax=sl?45:55;
     if(sel.has('엉덩관절모음'+own))kx+=sl?3.5:-3.5;
     if(sel.has('엉덩관절벌림'+own))kx+=sl?-3.5:3.5;
-    return '<polyline points="'+hx+',82 '+kx+','+kY+' '+ax+','+aY+'" fill="none" stroke="'+L+'" stroke-width="'+SW+'" stroke-linecap="round" stroke-linejoin="round"/>';
+    return '<polyline points="'+hx+',78 '+kx+','+kY+' '+ax+','+aY+'" fill="none" stroke="'+L+'" stroke-width="'+SW+'" stroke-linecap="round" stroke-linejoin="round"/>';
   }
   out+=leg('오른쪽')+leg('왼쪽');
   // 척추(뒷모습만): 경추·흉추·요추 색 분리
@@ -584,14 +584,14 @@ function _bodyLines(side){
     var neck=sel.has('중하위목뼈볼록오른쪽')?2.5:(sel.has('중하위목뼈볼록왼쪽')?-2.5:0);
     var tho=(sel.has('흉추볼록오른쪽')||sel.has('상부흉추볼록오른쪽')||sel.has('하부흉추볼록오른쪽'))?3:((sel.has('흉추볼록왼쪽')||sel.has('상부흉추볼록왼쪽')||sel.has('하부흉추볼록왼쪽'))?-3:0);
     var lum=sel.has('요추볼록오른쪽')?3:(sel.has('요추볼록왼쪽')?-3:0);
-    var thoY=(typeof _thoConv!=='undefined'&&_thoConv)?_thoConv:45;   // 흉추 볼록 세로위치(드래그)
-    out+='<path d="M '+sx+' 20 Q '+(sx+neck)+' 26 '+sx+' 32" fill="none" stroke="'+C_NECK+'" stroke-width="1.8" stroke-linecap="round"/>';
-    out+='<path d="M '+sx+' 32 Q '+(sx+tho)+' '+thoY+' '+sx+' 58" fill="none" stroke="'+C_THO+'" stroke-width="1.8" stroke-linecap="round"/>';
-    out+='<path d="M '+sx+' 58 Q '+(sx+lum)+' 67 '+sx+' 76" fill="none" stroke="'+C_LUM+'" stroke-width="1.8" stroke-linecap="round"/>';
-    if(tho!==0){ out+='<circle id="thoHandle_'+side+'" cx="'+(sx+tho)+'" cy="'+thoY+'" r="2.6" fill="'+C_THO+'" stroke="#fff" stroke-width="0.8" style="cursor:ns-resize;pointer-events:auto"/>'; }
-    out+='<text x="'+(sx+6)+'" y="27" fill="'+C_NECK+'" font-size="3.6" font-weight="700">경추</text>';
-    out+='<text x="'+(sx+7)+'" y="46" fill="'+C_THO+'" font-size="3.6" font-weight="700">흉추</text>';
-    out+='<text x="'+(sx+7)+'" y="69" fill="'+C_LUM+'" font-size="3.6" font-weight="700">요추</text>';
+    var thoY=(typeof _thoConv!=='undefined'&&_thoConv)?_thoConv:44;   // 흉추 볼록 세로위치(드래그)
+    out+='<path d="M '+sx+' 22 Q '+(sx+neck)+' 27 '+sx+' 32" fill="none" stroke="'+C_NECK+'" stroke-width="1.8" stroke-linecap="round"/>';
+    out+='<path d="M '+sx+' 32 Q '+(sx+tho)+' '+thoY+' '+sx+' 56" fill="none" stroke="'+C_THO+'" stroke-width="1.8" stroke-linecap="round"/>';
+    out+='<path d="M '+sx+' 56 Q '+(sx+lum)+' 61 '+sx+' 66" fill="none" stroke="'+C_LUM+'" stroke-width="1.8" stroke-linecap="round"/>';
+    out+='<circle id="thoHandle_'+side+'" cx="'+(sx+tho)+'" cy="'+thoY+'" r="3" fill="'+C_THO+'" stroke="#fff" stroke-width="1" style="cursor:ns-resize;pointer-events:all"/>';
+    out+='<text x="'+(sx+6)+'" y="28" fill="'+C_NECK+'" font-size="3.6" font-weight="700">경추</text>';
+    out+='<text x="'+(sx+7)+'" y="44" fill="'+C_THO+'" font-size="3.6" font-weight="700">흉추</text>';
+    out+='<text x="'+(sx+7)+'" y="62" fill="'+C_LUM+'" font-size="3.6" font-weight="700">요추</text>';
   }
   return out;
 }
