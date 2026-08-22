@@ -301,7 +301,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v166 (2026-08-22)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v168 (2026-08-22)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -1116,7 +1116,7 @@ function doLogout(){authLogout();closeLogin();}
 /* 목록은 사진 제외한 가벼운 필드만 로드 → 편집 시 그 기록만 전체 로드(editRecord) */
 async function cloudLoad(){
   var lk=FIELDS.map(function(f){return f.k;});
-  ['code','date','therapist','signup','branch','savedBy','lastBy','confirmedBy','confirmedAt','comments','thumb','face_code'].forEach(function(k){if(lk.indexOf(k)<0)lk.push(k);});
+  ['code','date','therapist','signup','branch','savedBy','lastBy','confirmedBy','confirmedAt','comments','reads','thumb','face_code'].forEach(function(k){if(lk.indexOf(k)<0)lk.push(k);});
   var sel=('id,updated_at,'+lk.map(function(k){return k+':data->'+k;}).join(',')).replace(/>/g,'%3E');
   try{
     const r=await fetch(sbBase()+'records?select='+sel+'&order=updated_at.desc',{headers:sbHeaders()});
@@ -2693,6 +2693,7 @@ function openComments(){
    +'<div id="cmtList" style="flex:1;overflow:auto;padding:14px 16px;background:#faf9fb"></div>'
    +'<div style="padding:10px 12px;border-top:1px solid #eee;display:flex;gap:8px"><input id="cmtInput" placeholder="코멘트를 남기세요…" onkeydown="if(event.key===\'Enter\'&&!event.isComposing&&event.keyCode!==229)addComment()" style="flex:1;padding:11px 13px;border:1px solid #ddd;border-radius:10px;font-size:16px"><button class="btn primary" style="padding:11px 16px" onclick="addComment()">등록</button></div>'
    +'</div>';
+  _markRead();
   renderComments(); o.style.display='flex'; if(currentId)markNotifSeen(currentId);
   setTimeout(function(){var el=document.getElementById('cmtInput');if(el)el.focus();},100);
   _cmtStartPoll();
@@ -2706,18 +2707,41 @@ function _cmtStartPoll(){
     var ov=document.getElementById('cmtOv');
     if(!ov||ov.style.display==='none'||_cmtPollId!==currentId){ _cmtStopPoll(); return; }
     _cmtRefresh(_cmtPollId);
-  }, 3000);
+  }, 1200);
 }
 async function _cmtRefresh(id){
   try{
-    var r=await fetch(sbBase()+'records?id=eq.'+encodeURIComponent(id)+'&select=data->comments',{headers:sbHeaders()});
+    var r=await fetch(sbBase()+'records?id=eq.'+encodeURIComponent(id)+'&select=data->comments,data->reads',{headers:sbHeaders()});
     if(!r.ok)return; var j=await r.json(); if(!j||!j[0])return;
-    var incoming=j[0].comments||[]; var sig=JSON.stringify(incoming);
+    var incoming=j[0].comments||[]; if(j[0].reads)form.reads=j[0].reads; var sig=JSON.stringify(incoming)+JSON.stringify(j[0].reads||{});
     if(sig===_cmtLastSig)return;                         // 변화 없음
     // 내가 방금 친 미저장분 유실 방지: 서버 것 기준으로 교체(저장은 즉시 되므로 안전)
     _cmtLastSig=sig; form.comments=incoming;
     if(currentId===id){ renderComments(); renderConfirmUI(); markNotifSeen(id); }
   }catch(e){}
+}
+function _otherParty(){
+  var me=(authEmail()||'').toLowerCase(); var admin=(typeof isAdmin==='function'&&isAdmin());
+  if(admin) return (form.savedBy||'').toLowerCase();
+  return (typeof ADMIN_EMAIL!=='undefined'?ADMIN_EMAIL:'soni0025@naver.com').toLowerCase();
+}
+function _markRead(){
+  try{ if(!form.reads)form.reads={}; var me=(authEmail()||'').toLowerCase(); if(!me)return;
+    form.reads[me]=new Date().toISOString();
+    if(typeof saveRecord==='function')saveRecord();
+  }catch(e){}
+}
+function _fmtWhen(iso){
+  if(!iso)return '';
+  var s=String(iso).replace('T',' ').replace('Z','');
+  var d=s.slice(0,10).split('-'), t=s.slice(11,16);   // YYYY-MM-DD HH:MM
+  if(d.length<3)return s.slice(0,16);
+  var mo=parseInt(d[1],10), da=parseInt(d[2],10);
+  var now=new Date(), todayStr=now.getFullYear()+'-'+('0'+(now.getMonth()+1)).slice(-2)+'-'+('0'+now.getDate()).slice(-2);
+  var ymd=d.join('-'), pref='';
+  if(ymd===todayStr)pref='오늘 '; 
+  else { var y=new Date(now.getTime()-86400000); var yStr=y.getFullYear()+'-'+('0'+(y.getMonth()+1)).slice(-2)+'-'+('0'+y.getDate()).slice(-2); if(ymd===yStr)pref='어제 '; else pref=mo+'월 '+da+'일 '; }
+  return pref+t;
 }
 function renderComments(){
   var box=document.getElementById('cmtList'); if(!box)return;
@@ -2726,9 +2750,11 @@ function renderComments(){
   var me=(typeof authEmail==='function'&&authEmail())||'';
   box.innerHTML=arr.map(function(c,i){
     var mine=c.by===me, adm=(typeof ADMIN_EMAILS!=='undefined'&&ADMIN_EMAILS.indexOf((c.by||'').toLowerCase())>=0);
-    var nm=_who(c.by), when=(c.at||'').slice(0,16).replace('T',' ');
+    var nm=_who(c.by), when=_fmtWhen(c.at);
     var del=mine?('<span onclick="delComment('+i+')" style="cursor:pointer;color:#c66;font-size:11px;margin-left:6px">삭제</span>'):'';
-    return '<div style="margin-bottom:12px;'+(mine?'text-align:right':'')+'"><div style="font-size:11px;color:'+(adm?'#0e9f6e':'#8a7aa8')+';font-weight:700;margin-bottom:3px">'+nm+(adm?' · 원장':'')+' <span style="color:#bbb;font-weight:400">'+when+'</span>'+del+'</div><div style="display:inline-block;max-width:85%;text-align:left;padding:9px 12px;border-radius:12px;font-size:14px;line-height:1.5;background:'+(mine?'#fce4f0':'#fff')+';border:1px solid '+(mine?'#f5c4dc':'#eee')+';white-space:pre-wrap;word-break:break-word">'+(c.text||'').replace(/</g,'&lt;')+'</div></div>';
+    var unread='';
+    if(mine){ var reads=(form.reads||{}); var other=_otherParty(); var rt=other?reads[other]:null; if(!rt||(c.at&&c.at>rt)) unread='<span style="color:#e0396f;font-weight:900;font-size:12px;margin:0 5px" title="상대 안 읽음">1</span>'; }
+    return '<div style="margin-bottom:12px;'+(mine?'text-align:right':'')+'"><div style="font-size:11px;color:'+(adm?'#0e9f6e':'#8a7aa8')+';font-weight:700;margin-bottom:3px">'+(mine?unread:'')+nm+(adm?' · 원장':'')+' <span style="color:#bbb;font-weight:400">'+when+'</span>'+del+'</div><div style="display:inline-block;max-width:85%;text-align:left;padding:9px 12px;border-radius:12px;font-size:14px;line-height:1.5;background:'+(mine?'#fce4f0':'#fff')+';border:1px solid '+(mine?'#f5c4dc':'#eee')+';white-space:pre-wrap;word-break:break-word">'+(c.text||'').replace(/</g,'&lt;')+'</div></div>';
   }).join('');
   box.scrollTop=box.scrollHeight;
 }
