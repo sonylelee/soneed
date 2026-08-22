@@ -303,7 +303,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v183 (2026-08-22)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v185 (2026-08-22)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -1122,24 +1122,38 @@ async function doLogin(){
 }
 function doLogout(){authLogout();closeLogin();}
 /* 목록은 사진 제외한 가벼운 필드만 로드 → 편집 시 그 기록만 전체 로드(editRecord) */
-async function cloudLoad(){
-  var lk=FIELDS.map(function(f){return f.k;});
-  ['code','date','therapist','signup','branch','savedBy','lastBy','confirmedBy','confirmedAt','comments','reads','thumb','face_code'].forEach(function(k){if(lk.indexOf(k)<0)lk.push(k);});
+/* 목록에 필요한 최소 필드만(사진·상세 제외). data jsonb에서 이것만 뽑아 statement timeout 회피 */
+var LIST_KEYS=['code','date','therapist','signup','branch','savedBy','lastBy','confirmedBy','confirmedAt','comments','reads','face_code','fcode','type','waterslide','nasolabial','zyg_maxilla'];
+var _recOff=0, _recEnd=false; const _PAGE=50;
+async function cloudLoad(offset,limit){
+  offset=offset||0; limit=limit||_PAGE;
+  var lk=LIST_KEYS;
   var sel=('id,updated_at,'+lk.map(function(k){return k+':data->'+k;}).join(',')).replace(/>/g,'%3E');
+  var _ctl=new AbortController(), _to=setTimeout(function(){_ctl.abort();},15000);
   try{
-    const r=await fetch(sbBase()+'records?select='+sel+'&order=updated_at.desc',{headers:sbHeaders()});
+    const r=await fetch(sbBase()+'records?select='+sel+'&order=updated_at.desc&offset='+offset+'&limit='+limit,{headers:sbHeaders(),signal:_ctl.signal});
+    clearTimeout(_to);
     if(r.status===401||r.status===403){openLogin();throw new Error('auth');}
-    if(!r.ok) throw new Error('light '+r.status);
-    const rows=await r.json();updMap={};
+    if(!r.ok) throw new Error('목록 '+r.status+' '+await r.text());
+    const rows=await r.json();
     return rows.map(function(x){ updMap[x.id]=x.updated_at; var o={id:x.id,_light:true}; lk.forEach(function(k){ if(x[k]!=null) o[k]=x[k]; }); return o; });
   }catch(e){
+    clearTimeout(_to);
     if(String(e&&e.message)==='auth') throw e;
-    /* 폴백: 전체 로드(구버전/오류 대비) */
-    const r=await fetch(sbBase()+'records?select=id,data,updated_at&order=updated_at.desc',{headers:sbHeaders()});
-    if(!r.ok){if(r.status===401||r.status===403){openLogin();}throw new Error('HTTP '+r.status+' '+await r.text());}
-    const rows=await r.json();updMap={};
-    return rows.map(x=>{updMap[x.id]=x.updated_at;return Object.assign({},x.data,{id:x.id});});
+    if(e&&e.name==='AbortError') throw new Error('네트워크가 느려 시간초과됐어요');
+    throw e;
   }
+}
+async function loadMore(){
+  if(_recEnd||mode!=='cloud')return;
+  var mb=document.getElementById('recMoreBtn'); if(mb){mb.disabled=true;mb.textContent='불러오는 중…';}
+  try{
+    var more=await cloudLoad(_recOff,_PAGE);
+    var have={}; records.forEach(function(r){have[r.id]=1;}); more=more.filter(function(r){return !have[r.id];});
+    var cc=_loadRecCache(); if(cc&&cc.length){ var _tm={}; cc.forEach(function(r){ if(r&&r.thumb)_tm[r.id]=r.thumb; }); more.forEach(function(r){ if(r&&!r.thumb&&_tm[r.id])r.thumb=_tm[r.id]; }); }
+    records=records.concat(more); _recOff+=more.length; if(more.length<_PAGE)_recEnd=true;
+    _saveRecCache(records); sortRecs(); refreshAll();
+  }catch(e){ var m2=document.getElementById('recMoreBtn'); if(m2){m2.disabled=false;m2.textContent='더 보기 (다시 시도)';} }
 }
 async function fetchFull(id){
   var r=await fetch(sbBase()+'records?id=eq.'+encodeURIComponent(id)+'&select=data',{headers:sbHeaders()});
@@ -1169,11 +1183,13 @@ async function loadAll(){
     var cached=_loadRecCache();
     if(cached&&cached.length){records=cached;sortRecs();refreshAll();}          // 캐시로 즉시 표시
     progShow(cached&&cached.length?'최신 데이터 확인 중':'공용 DB에서 불러오는 중');
+    updMap={}; _recOff=0; _recEnd=false;
     try{
-      var fresh=await cloudLoad();
-      records=fresh;_saveRecCache(fresh);
+      var fresh=await cloudLoad(0,_PAGE);
+      if(cached&&cached.length){ var _tm={}; cached.forEach(function(r){ if(r&&r.thumb)_tm[r.id]=r.thumb; }); fresh.forEach(function(r){ if(r&&!r.thumb&&_tm[r.id])r.thumb=_tm[r.id]; }); }  // 썸네일은 캐시에서 채움(전송량↓·목록 사진 유지)
+      records=fresh; _recOff=fresh.length; _recEnd=fresh.length<_PAGE; _saveRecCache(records);
       const b=document.getElementById('storeBanner');if(b)b.style.display='none';
-      progDone(records.length+'건 · 공용 클라우드 DB');
+      progDone(records.length+(_recEnd?'':'+')+'건 · 공용 클라우드 DB');
     }catch(e){
       if(String(e&&e.message)==='auth'){progHide();}
       else{
@@ -3010,6 +3026,7 @@ function renderRecList(){
   try{ renderNotif(); }catch(e){}
   if(list.length===0){box.innerHTML=`<div class="empty-note" style="grid-column:1/-1"><b>아직 기록이 없습니다.</b><br>‘기록 입력’ 탭에서 첫 데이터를 저장해 보세요.</div>`;return;}
   box.innerHTML=list.map(r=>{const p=recPhoto(r);const thumb=p?`<img src="${p}" loading="lazy" decoding="async">`:`<span>사진 없음</span>`;const sub=[r.date,r.therapist,r.signup].filter(Boolean).join(' · ');const chips=CHIP_KEYS.map(k=>chipFor(r,k)).filter(Boolean).join('');const fcd=recCode(r);return `<div class="rec" onclick="editRecord('${r.id}')"><div class="thumb ${p?'':'empty'}">${thumb}</div><div class="meta"><div class="code">${r.code||'무제'}${(function(){var u=unreadCount(r);return u?' <span style="display:inline-block;min-width:16px;height:16px;line-height:16px;text-align:center;background:#e02424;color:#fff;border-radius:9px;font-size:11px;font-weight:800;padding:0 4px;vertical-align:1px">'+u+'</span>':'';})()}</div>${fcd?`<div class="fcode-tag">${fcd}</div>`:''}<div class="sub">${sub||'&nbsp;'}</div>${r.savedBy?'<div class="sub" style="color:#8a7aa8;font-size:11px">올린이 '+_who(r.savedBy)+(r.lastBy&&r.lastBy!==r.savedBy?(' · 수정 '+_who(r.lastBy)):'')+'</div>':''}${(function(){var sb=(r.savedBy||'').toLowerCase();var byAdmin=(typeof ADMIN_EMAILS!=='undefined'&&ADMIN_EMAILS.indexOf(sb)>=0);if(byAdmin)return '';return r.confirmedBy?'<div class="sub" style="color:#0e9f6e;font-weight:800;font-size:11px">✓ 원장 컨펌</div>':'<div class="sub" style="color:#c98a00;font-size:11px">· 컨펌 대기</div>';})()}<div class="chips">${chips||'<span class="chip k">미입력</span>'}</div></div></div>`;}).join('');
+  if(mode==='cloud'&&!_recEnd){ box.innerHTML+='<div style="grid-column:1/-1;text-align:center;padding:14px"><button id="recMoreBtn" class="btn ghost" onclick="loadMore()">더 보기 (+'+_PAGE+'건)</button></div>'; }
 }
 function fillXtSelects(){const opts='<option value="">(선택)</option>'+FILTERABLE.map(f=>`<option value="${f.k}">${f.label}</option>`).join('');const row=document.getElementById('xtRow'),col=document.getElementById('xtCol');row.innerHTML=opts;col.innerHTML=opts;row.value='zyg_maxilla';col.value='nasolabial';}
 function renderCrosstab(){
