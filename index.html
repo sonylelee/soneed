@@ -303,7 +303,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v193 (2026-08-22)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v196 (2026-08-22)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -383,6 +383,7 @@ h2.section,.logo{letter-spacing:-.01em}
           <button type="button" class="btn ghost" id="fp_sxs" disabled>📸 전·후 한장</button>
           <button type="button" class="btn ghost" id="fp_reset" disabled>↺ 원위치</button>
           <button type="button" class="btn ghost" id="fp_dots" disabled>랜드마크 켬</button>
+          <button type="button" class="btn ghost" id="fp_angle" disabled>📐 각도선 켜기</button>
           <button type="button" class="btn primary" id="fp_save" disabled>차트에 저장</button>
         </div>
         <div class="fpx-panes">
@@ -1137,7 +1138,7 @@ function doLogout(){authLogout();closeLogin();}
 /* 목록은 사진 제외한 가벼운 필드만 로드 → 편집 시 그 기록만 전체 로드(editRecord) */
 /* 목록에 필요한 최소 필드만(사진·상세 제외). data jsonb에서 이것만 뽑아 statement timeout 회피 */
 var LIST_KEYS=['code','date','therapist','signup','branch','savedBy','lastBy','confirmedBy','confirmedAt','comments','reads','face_code','fcode','type','waterslide','nasolabial','zyg_maxilla','thumb'];
-var _recOff=0, _recEnd=false; const _PAGE=20;
+var _recOff=0, _recEnd=false; const _PAGE=500;
 async function cloudLoad(offset,limit){
   offset=offset||0; limit=limit||_PAGE;
   var lk=LIST_KEYS;
@@ -1580,10 +1581,12 @@ function baReopen(){var o=document.getElementById('photoZoom');if(o)o.style.disp
 function makeAfterImage(){
   var shots=[];
   if(form.photo_front) shots.push({label:'초기 · '+(form.date||'첫 방문'), src:form.photo_front, dt:form.date||'첫 방문'});
-  (form.afters||[]).filter(function(a){return a.photo_front;}).slice().sort(function(a,b){return (a.date||'9999').localeCompare(b.date||'9999');}).forEach(function(a){
-    shots.push({label:(a.session||'회차')+(a.date?(' · '+a.date):''), src:a.photo_front, dt:(a.date||'')+(a.session?(' · '+a.session):'')});
+  (form.afters||[]).filter(function(a){return a.photo_front||a.before_front;}).slice().sort(function(a,b){return (a.date||'9999').localeCompare(b.date||'9999');}).forEach(function(a){
+    var s=(a.session||'회차'), d=a.date?(' · '+a.date):'';
+    if(a.before_front) shots.push({label:s+' 비포'+d, src:a.before_front, dt:d+' 비포'});   // 회차별 비포도 선택 가능
+    if(a.photo_front)  shots.push({label:s+' 애프터'+d, src:a.photo_front, dt:d+' 애프터'});
   });
-  if(shots.length<2){toast('비교하려면 정면 사진이 2장 이상 필요해요 (초기 + 애프터)');return;}
+  if(shots.length<2){toast('비교하려면 정면 사진이 2장 이상 필요해요 (초기 + 애프터/비포)');return;}
   openBAEditor(shots, {code:form.code||'', branch:form.branch||''});
 }
 function baTileHTML(which,label){
@@ -3236,7 +3239,7 @@ var _css="#fp_panel{border:1px solid #e6e6ea;border-radius:12px;padding:8px 14px
 +"#fp_method_out:empty{display:none}";
 var _st=document.createElement("style"); _st.textContent=_css; (document.head||document.documentElement).appendChild(_st);
 var $=function(id){return document.getElementById(id);};
-var P=null, srcC=null, origImg=null, curRegion=null, isFit=false, showDots=true, cmpBefore=false;
+var P=null, srcC=null, origImg=null, curRegion=null, isFit=false, showDots=true, cmpBefore=false, showAngle=false;
 var IDX_OUT_A=234, IDX_OUT_B=454, IDX_FOREHEAD=10, IDX_CHIN=152;
 const YAWS=-1;
 function faceCentroid(){
@@ -3410,6 +3413,20 @@ function fpDraw(cv,base,pts,arrows){
     var ang=Math.atan2(a.y1-a.y0,a.x1-a.x0); c.beginPath(); c.moveTo(a.x1,a.y1);
     c.lineTo(a.x1-9*Math.cos(ang-0.4),a.y1-9*Math.sin(ang-0.4)); c.lineTo(a.x1-9*Math.cos(ang+0.4),a.y1-9*Math.sin(ang+0.4)); c.closePath(); c.fill(); } }
 }
+function _fpAngleOverlay(cv){
+  if(!P||!cv||!cv.getContext)return; var g=cv.getContext("2d");
+  function L(a,b,col,w,dash){ if(!P[a]||!P[b])return; g.strokeStyle=col;g.lineWidth=w||2;g.setLineDash(dash||[]);g.beginPath();g.moveTo(P[a].x,P[a].y);g.lineTo(P[b].x,P[b].y);g.stroke();g.setLineDash([]); }
+  function D(i,col,r){ if(!P[i])return; g.fillStyle=col;g.beginPath();g.arc(P[i].x,P[i].y,r||3.5,0,7);g.fill(); }
+  L(10,152,"rgba(255,79,158,.9)",2,[6,5]);      // 정중선(이마↔턱)
+  L(468,473,"rgba(60,170,255,.98)",2.5);        // 눈선(좌우 홍채)
+  L(127,356,"rgba(120,220,150,.9)",2,[5,4]);    // 귀선
+  L(61,291,"rgba(255,150,90,.95)",2.5);         // 입술선(입꼬리)
+  [234,454].forEach(function(i){D(i,"#ffd24a",4);});
+  [468,473,127,356,10,152].forEach(function(i){D(i,"#fff",2.5);});
+  if(P[468]&&P[473]){ var dx=P[473].x-P[468].x, dy=P[473].y-P[468].y, ang=Math.abs(Math.atan2(dy,dx)*180/Math.PI); if(ang>90)ang=180-ang;
+    g.fillStyle="#0af"; g.font="700 13px -apple-system,sans-serif"; g.textAlign="left"; g.fillText("눈 "+ang.toFixed(1)+"\u00b0", P[473].x+6, P[473].y-6); }
+}
+function _fpDrawSrc(){ if(!srcC)return; fpDraw($("fp_cvA"),srcC,showDots?P:null); if(showAngle)_fpAngleOverlay($("fp_cvA")); }
 function fpLog(m){ var e=$("fp_log"); if(e)e.textContent=m; }
 function num(id){ return parseFloat($(id).value)||0; }
 function fpRender(pct){
@@ -3443,7 +3460,7 @@ function fpRender(pct){
 }
 var _pend=null,_raf=0;
 function fpQ(pct){ _pend=pct; if(!_raf)_raf=requestAnimationFrame(function(){_raf=0; if(_pend!=null){fpRender(_pend);_pend=null;}}); }
-function fpEnable(on){ ["fp_amp","fp_tilt","fp_comp","fp_draw","fp_roll","fp_ham","fp_nostR","fp_nostL","fp_tm","fp_mid","fp_fit","fp_method","fp_sxs","fp_reset","fp_dots","fp_save"].forEach(function(id){var e=$(id); if(e)e.disabled=!on;}); }
+function fpEnable(on){ ["fp_amp","fp_tilt","fp_comp","fp_draw","fp_roll","fp_ham","fp_nostR","fp_nostL","fp_tm","fp_mid","fp_fit","fp_method","fp_sxs","fp_reset","fp_dots","fp_angle","fp_save"].forEach(function(id){var e=$(id); if(e)e.disabled=!on;}); }
 function fpSetSource(rx,ry,rw,rh){
   curRegion={x:rx,y:ry,w:rw,h:rh};
   var scale=680/Math.max(rw,rh); if(scale>3)scale=3;
@@ -3455,7 +3472,7 @@ function fpSetSource(rx,ry,rw,rh){
 function _fpApplyOut(out){
   if(!out.faceLandmarks||!out.faceLandmarks.length){ P=null; fpEnable(false); fpLog("얼굴 인식 실패 — 정면 사진이 선명한지 확인하세요"); fpDraw($("fp_cvA"),srcC,null); fpDraw($("fp_cvB"),srcC,null); return; }
   P=out.faceLandmarks[0].map(function(p){return{x:p.x*srcC.width,y:p.y*srcC.height,z:p.z*srcC.width};});
-  fpEnable(true); fpDraw($("fp_cvA"),srcC,showDots?P:null); fpRender(num("fp_amp"));
+  fpEnable(true); _fpDrawSrc(); fpRender(num("fp_amp"));
   fpLog("랜드마크 "+P.length+"개 · "+(isFit?"얼굴 확대":"전체")+" · "+srcC.width+"×"+srcC.height);
 }
 function fpDetect(){
@@ -3538,7 +3555,8 @@ function fpShowImg(url){
     +'<button class="btn ghost" style="color:#fff;border-color:#666" onclick="document.getElementById(\'fpImgOv\').style.display=\'none\'">닫기</button></div>';
 }
 var _reset=$("fp_reset"); if(_reset)_reset.onclick=function(){ ["fp_amp","fp_comp","fp_draw","fp_roll","fp_ham","fp_nostR","fp_nostL","fp_tm","fp_mid"].forEach(function(id){$(id).value=0;}); $("fp_tilt").value=10; _fpOrder=[]; $("fp_method_out").textContent=""; fpRender(0); };
-var _dots=$("fp_dots"); if(_dots)_dots.onclick=function(){ showDots=!showDots; _dots.textContent="랜드마크 "+(showDots?"켬":"끔"); if(P)fpDraw($("fp_cvA"),srcC,showDots?P:null); fpRender(num("fp_amp")); };
+var _dots=$("fp_dots"); if(_dots)_dots.onclick=function(){ showDots=!showDots; _dots.textContent="랜드마크 "+(showDots?"켬":"끔"); _fpDrawSrc(); fpRender(num("fp_amp")); };
+var _ang=$("fp_angle"); if(_ang)_ang.onclick=function(){ showAngle=!showAngle; _ang.textContent="\ud83d\udcd0 각도선 "+(showAngle?"끄기":"켜기"); _fpDrawSrc(); };
 /* 슬라이더 하나의 가이드(현재 값 기준). 조정 안 됐으면 null. {name, lines} 반환 */
 function _fpGuide(id){
   var v;
