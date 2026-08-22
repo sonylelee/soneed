@@ -303,7 +303,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v188 (2026-08-22)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v190 (2026-08-22)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -451,9 +451,17 @@ h2.section,.logo{letter-spacing:-.01em}
           <option value="done">컨펌 완료만</option>
         </select>
         <label style="font-size:12.5px;color:#71717a">선생님</label>
-        <div id="whoFilterBox" style="display:flex;flex-wrap:wrap;gap:5px;align-items:center"></div>
-        <button class="btn ghost" style="padding:4px 9px;font-size:11.5px" onclick="whoAll(true)">전체선택</button>
-        <button class="btn ghost" style="padding:4px 9px;font-size:11.5px" onclick="whoAll(false)">해제</button>
+        <div style="position:relative">
+          <button type="button" id="whoDropBtn" class="btn ghost" style="padding:5px 12px;font-size:12.5px" onclick="toggleWhoDrop(event)">전체 선생님 ▾</button>
+          <div id="whoDropPanel" style="display:none;position:absolute;z-index:50;top:calc(100% + 4px);left:0;min-width:210px;max-width:280px;background:#fff;border:1px solid #e0d5e0;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.14);padding:8px">
+            <input id="whoSearch" oninput="_fillWhoFilter()" placeholder="선생님 검색" style="width:100%;box-sizing:border-box;font-size:12.5px;padding:6px 9px;border:1px solid #D3D7DE;border-radius:7px;margin-bottom:6px">
+            <div style="display:flex;gap:6px;margin-bottom:6px">
+              <button class="btn ghost" style="flex:1;padding:4px;font-size:11.5px" onclick="whoAll(true)">전체선택</button>
+              <button class="btn ghost" style="flex:1;padding:4px;font-size:11.5px" onclick="whoAll(false)">해제</button>
+            </div>
+            <div id="whoFilterBox" style="max-height:260px;overflow:auto"></div>
+          </div>
+        </div>
         <button class="btn ghost" style="padding:6px 12px;font-size:12.5px" onclick="toggleTherapistStats()">선생님별 통계</button>
         <span id="reportCount" style="font-size:12px;color:#a0a0a8;margin-left:auto"></span>
       </div>
@@ -3005,13 +3013,26 @@ function filtered(){var cf=_confSel(),wf=_whoSel();return records.filter(functio
   if(wf&&wf.size>0&&!wf.has(r.savedBy||''))return false;
   return true;
 });}
-function _fillWhoFilter(){var box=document.getElementById('whoFilterBox');if(!box)return;
-  var m={};records.forEach(function(r){if(r.savedBy)m[r.savedBy]=(m[r.savedBy]||0)+1;});
-  var keys=Object.keys(m).sort(function(a,b){return _who(a).localeCompare(_who(b));});
+function _fillWhoFilter(){var box=document.getElementById('whoFilterBox');
   var sel=_loadWhoChecked();
+  var btn=document.getElementById('whoDropBtn');
+  if(btn){ var n=sel.size; btn.textContent=(n===0?'전체 선생님':(n+'명 선택'))+' ▾'; btn.style.color=n>0?'#a11258':''; btn.style.fontWeight=n>0?'800':'600'; }
+  if(!box)return;
+  var m={};records.forEach(function(r){if(r.savedBy)m[r.savedBy]=(m[r.savedBy]||0)+1;});
+  var keys=Object.keys(m);
+  if(typeof STAFF_NAMES!=='undefined'){ Object.keys(STAFF_NAMES).forEach(function(e){ if(typeof ADMIN_EMAILS!=='undefined'&&ADMIN_EMAILS.indexOf(e)>=0)return; if(keys.indexOf(e)<0)keys.push(e); }); }  // 등록 직원은 기록 없어도 항상 표시
+  keys.sort(function(a,b){return _who(a).localeCompare(_who(b));});
+  var q=((document.getElementById('whoSearch')||{}).value||'').trim().toLowerCase();
+  if(q)keys=keys.filter(function(e){return (_who(e)+' '+e).toLowerCase().indexOf(q)>=0;});
   box.innerHTML=keys.map(function(e){var on=sel.has(e);
-    return '<label style="display:inline-flex;align-items:center;gap:4px;font-size:12.5px;padding:4px 9px;border:1px solid '+(on?'#C81D74':'#e0d5e0')+';border-radius:14px;background:'+(on?'#fbeef5':'#fff')+';cursor:pointer;color:'+(on?'#a11258':'#555')+';font-weight:'+(on?'800':'600')+'"><input type="checkbox" '+(on?'checked':'')+' onchange="toggleWho(\''+e+'\',this.checked)" style="margin:0;accent-color:#C81D74"> '+_who(e)+' <span style="color:#b0a5b0;font-weight:600">'+m[e]+'</span></label>';
-  }).join('')||'<span style="font-size:12px;color:#b0a5b0">기록 없음</span>';}
+    return '<label style="display:flex;align-items:center;gap:8px;padding:6px 8px;cursor:pointer;border-radius:6px;font-size:13px;'+(on?'background:#fbeef5;':'')+'"><input type="checkbox" '+(on?'checked':'')+' onchange="toggleWho(\''+e+'\',this.checked)" style="margin:0;accent-color:#C81D74;width:15px;height:15px"> <span style="flex:1;font-weight:'+(on?'800':'600')+';color:'+(on?'#a11258':'#333')+'">'+_who(e)+'</span> <span style="color:#b0a5b0;font-size:12px">'+(m[e]||0)+'</span></label>';
+  }).join('')||'<div style="font-size:12px;color:#b0a5b0;padding:8px">해당 선생님 없음</div>';}
+function toggleWhoDrop(ev){ if(ev)ev.stopPropagation(); var p=document.getElementById('whoDropPanel'); if(!p)return;
+  var show=(p.style.display==='none'||!p.style.display); p.style.display=show?'block':'none';
+  if(show){ _fillWhoFilter(); setTimeout(function(){document.addEventListener('click',_whoOutside);},0); var s=document.getElementById('whoSearch'); if(s){s.value='';s.focus();} }
+  else document.removeEventListener('click',_whoOutside);
+}
+function _whoOutside(e){ var p=document.getElementById('whoDropPanel'),b=document.getElementById('whoDropBtn'); if(!p)return; if((p&&p.contains(e.target))||(b&&b.contains(e.target)))return; p.style.display='none'; document.removeEventListener('click',_whoOutside); }
 function applyFilter(){var fc=document.getElementById('filterCount');if(fc)fc.textContent=filtered().length;var bar=document.getElementById('adminReportBar');if(bar&&typeof isAdmin==='function')bar.style.display=isAdmin()?'':'none';_fillWhoFilter();var n=filtered().length,wait=filtered().filter(function(r){return !r.confirmedBy;}).length;var rc=document.getElementById('reportCount');if(rc)rc.textContent=n+'건 · 컨펌대기 '+wait;renderRecList();renderCrosstab();}
 function toggleTherapistStats(){var box=document.getElementById('therapistStats');if(!box)return;if(box.style.display!=='none'){box.style.display='none';return;}
   var m={};records.forEach(function(r){var e=r.savedBy||'(미상)';if(!m[e])m[e]={total:0,conf:0};m[e].total++;if(r.confirmedBy)m[e].conf++;});
