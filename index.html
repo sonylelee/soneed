@@ -303,7 +303,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v182 (2026-08-22)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v183 (2026-08-22)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -378,7 +378,7 @@ h2.section,.logo{letter-spacing:-.01em}
         <div class="fpx-row">
           <button type="button" class="btn ghost" id="fp_load">정면사진 불러오기</button>
           <button type="button" class="btn ghost" id="fp_fit" disabled>얼굴 확대</button>
-          <button type="button" class="btn ghost" id="fp_cmp" disabled>전/후 비교</button>
+          <button type="button" class="btn ghost" id="fp_sxs" disabled>📸 전·후 한장</button>
           <button type="button" class="btn ghost" id="fp_reset" disabled>↺ 원위치</button>
           <button type="button" class="btn ghost" id="fp_dots" disabled>랜드마크 켬</button>
           <button type="button" class="btn primary" id="fp_save" disabled>차트에 저장</button>
@@ -396,6 +396,7 @@ h2.section,.logo{letter-spacing:-.01em}
         <div class="fpx-sl"><label>⑦ 콧볼 오른쪽(+위/−아래)</label><input type="range" id="fp_nostR" min="-100" max="100" step="5" value="0" disabled><span id="fp_nostRV">0%</span></div>
         <div class="fpx-sl"><label>⑧ 콧볼 왼쪽(+위/−아래)</label><input type="range" id="fp_nostL" min="-100" max="100" step="5" value="0" disabled><span id="fp_nostLV">0%</span></div>
         <div class="fpx-sl"><label>⑨ 전체 기울이기(수평 보정)</label><input type="range" id="fp_roll" min="-12" max="12" step="0.5" value="0" disabled><span id="fp_rollV">0.0°</span></div>
+        <div class="fpx-sl"><label>⑩ 중안부 줄이기(+짧게/−길게)</label><input type="range" id="fp_mid" min="-100" max="100" step="5" value="0" disabled><span id="fp_midV">0%</span></div>
         <button type="button" class="btn primary" id="fp_method" disabled style="width:100%;margin-top:10px">리세팅가이드</button>
         <div id="fp_log">정면사진을 저장(또는 사진 슬롯에 넣은 뒤) [정면사진 불러오기]를 누르세요.</div>
         <div id="fp_method_out"></div>
@@ -1507,9 +1508,9 @@ function onMulti(e,kind){const files=Array.from(e.target.files||[]).slice(0,3);e
     photoDate(files[0],d=>{if(d)after.date=d;renderAfters();});renderAfters();}}
 const AFTER_READS=[['type','타입'],['occiput_clock','후두골 시간'],['nose_diag','코 방향'],['eye_lip','눈>입술 먼쪽'],['waterslide','워터슬라이드'],['d_forehead_parietal','마루 두께']];
 function afterField(i,a){const opts='<option value="">회차</option>'+Array.from({length:40},(_,n)=>'<option '+(a.session===(n+1)+'회'?'selected':'')+'>'+(n+1)+'회</option>').join('');
-  function _slotHTML(pfx){ return PHOTO_SLOTS.map(([s,ko])=>{var key=pfx+s;var src=a[key];return '<div class="pslot"><div class="photo-drop" style="aspect-ratio:3/4;cursor:pointer" onclick="afterRetake('+i+',\''+key+'\')">'+(src?'<img src="'+src+'">':'<div class="ph">＋<br>'+ko+'</div>')+'</div><div style="display:flex;gap:4px;justify-content:center;margin-top:4px"><button class="btn" style="padding:3px 8px;font-size:11px" onclick="event.stopPropagation();afterRetake('+i+',\''+key+'\')">촬영</button><button class="btn" style="padding:3px 8px;font-size:11px" onclick="event.stopPropagation();afterPickOne('+i+',\''+key+'\')">앨범</button>'+(src?'<button class="btn danger" style="padding:3px 8px;font-size:11px" onclick="event.stopPropagation();afterClearPhoto('+i+',\''+key+'\')">✕</button>':'')+'</div><label>'+ko+'</label></div>';}).join(''); }
-  const thumbs='<div style="font-size:12px;font-weight:800;color:#888;margin:2px 0 5px">BEFORE (시술 전)</div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">'+_slotHTML('before_')+'</div>'
-    +'<div style="font-size:12px;font-weight:800;color:#C81D74;margin:10px 0 5px">AFTER (시술 후)</div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">'+_slotHTML('photo_')+'</div>';
+  function _slotHTML(pfx){ return PHOTO_SLOTS.map(([s,ko])=>{var key=pfx+s;var src=a[key];return '<div class="pslot"><div class="photo-drop" style="aspect-ratio:3/4;cursor:pointer" onclick="afterRetake('+i+',\''+key+'\')">'+(src?'<img src="'+src+'">':'<div class="ph">＋<br>'+ko+'</div>')+'</div><div style="display:flex;flex-wrap:wrap;gap:3px;justify-content:center;margin-top:4px"><button class="btn" style="padding:3px 6px;font-size:10.5px;min-width:0;flex:0 0 auto" onclick="event.stopPropagation();afterRetake('+i+',\''+key+'\')">촬영</button><button class="btn" style="padding:3px 6px;font-size:10.5px;min-width:0;flex:0 0 auto" onclick="event.stopPropagation();afterPickOne('+i+',\''+key+'\')">앨범</button>'+(src?'<button class="btn danger" style="padding:3px 6px;font-size:10.5px;min-width:0;flex:0 0 auto" onclick="event.stopPropagation();afterClearPhoto('+i+',\''+key+'\')">✕</button>':'')+'</div><label>'+ko+'</label></div>';}).join(''); }
+  const thumbs='<div style="font-size:12px;font-weight:800;color:#888;margin:2px 0 5px">BEFORE (시술 전)</div><div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);gap:6px">'+_slotHTML('before_')+'</div>'
+    +'<div style="font-size:12px;font-weight:800;color:#C81D74;margin:10px 0 5px">AFTER (시술 후)</div><div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);gap:6px">'+_slotHTML('photo_')+'</div>';
   const reads=AFTER_READS.map(function(rk){var k=rk[0],ko=rk[1],f=FMAP[k];var o='<option value="">-</option>'+f.opt.filter(function(x){return x!=='';}).map(function(x){return '<option'+(a[k]===x?' selected':'')+' value="'+x+'">'+x+'</option>';}).join('');return '<div class="field" style="max-width:150px"><label>'+ko+'</label><select onchange="form.afters['+i+'][\''+k+'\']=this.value||null;renderAfterCompare()">'+o+'</select></div>';}).join('');
   return '<div class="card pad" style="margin-bottom:10px"><div class="rowline" style="margin-bottom:10px">'
     +'<div class="field" style="max-width:130px"><label>회차</label><select onchange="form.afters['+i+'].session=this.value||null;renderAfterCompare()">'+opts+'</select></div>'
@@ -3160,7 +3161,7 @@ function smoothGrid(g,w,h,iter){
    부호는 모두 본인 기준→§2(화면왼쪽=본인오른쪽)로 변환. 수치 테스트로 방향 확정. */
 function makeField(o){
   const {cx,cy,cz}=faceCentroid();
-  const yawRad=o.yawRad||0, pitchRad=o.pitchRad||0, comp=o.comp||0, drawv=o.draw||0, roll=o.roll||0, ham=o.ham||0, nR=o.nostrilR||0, nL=o.nostrilL||0, tm=o.tmComp||0;
+  const yawRad=o.yawRad||0, pitchRad=o.pitchRad||0, comp=o.comp||0, drawv=o.draw||0, roll=o.roll||0, ham=o.ham||0, nR=o.nostrilR||0, nL=o.nostrilL||0, tm=o.tmComp||0, mid=o.midface||0;
   const st=Math.sin(YAWS*yawRad), ct=Math.cos(yawRad), sp=Math.sin(pitchRad);
   const fW=Math.hypot(P[IDX_OUT_A].x-P[IDX_OUT_B].x,P[IDX_OUT_A].y-P[IDX_OUT_B].y);
   const fH=Math.abs(P[IDX_CHIN].y-P[IDX_FOREHEAD].y), halfW=fW/2, chinY=P[IDX_CHIN].y, foreY=P[IDX_FOREHEAD].y;
@@ -3250,6 +3251,12 @@ function makeField(o){
       const jawOn=Math.sign(x-cx)===tmJaw?1:0, headOn=Math.sign(x-cx)===tmHead?1:0;  // 대각: 각 밴드는 지정된 한쪽만
       ddx += -kk*(x-cx)*Math.max(jw2*jawOn, cw2*headOn);
     }
+    if(mid!==0){                                     // ⑩ 중안부(눈밑~윗입술) 세로 축소: 코밑 길이 줄이고 하안부는 위로 평행이동(찢어짐 방지)
+      const k=(mid/100)*fH*0.14;                      // 최대 축소량(+면 짧게)
+      const top=cy - fH*0.04, bot=cy + fH*0.20;       // 중안부 위(눈밑)~아래(윗입술)
+      let s = y<=top ? 0 : (y>=bot ? 1 : (y-top)/(bot-top));
+      ddy += -k*s;
+    }
     const fx=(x-minx)/cell, fy=(y-miny)/cell;         // 얼굴 영역은 IDW 변위 합산
     if(!(fx<0||fy<0||fx>=gW-1||fy>=gH-1)){
       const x0=fx|0, y0=fy|0, tx=fx-x0, ty=fy-y0;
@@ -3306,13 +3313,12 @@ function num(id){ return parseFloat($(id).value)||0; }
 function fpRender(pct){
   if(!P||!srcC)return;
   $("fp_amp").value=pct; $("fp_ampV").textContent=(pct>0?"+":"")+(+pct).toFixed(1)+"%";
-  var tilt=num("fp_tilt"),comp=num("fp_comp"),drw=num("fp_draw"),roll=num("fp_roll"),ham=num("fp_ham"),nR=num("fp_nostR"),nL=num("fp_nostL"),tm=num("fp_tm");
+  var tilt=num("fp_tilt"),comp=num("fp_comp"),drw=num("fp_draw"),roll=num("fp_roll"),ham=num("fp_ham"),nR=num("fp_nostR"),nL=num("fp_nostL"),tm=num("fp_tm"),mid=num("fp_mid");
   $("fp_tiltV").textContent=tilt+"°"; $("fp_compV").textContent=(comp>0?"+":"")+comp+"%"; $("fp_drawV").textContent=(drw>0?"+":"")+drw+"%";
   $("fp_rollV").textContent=(roll>0?"+":"")+roll.toFixed(1)+"°"; $("fp_hamV").textContent=(ham>0?"+":"")+ham+"%";
-  $("fp_nostRV").textContent=(nR>0?"+":"")+nR+"%"; $("fp_nostLV").textContent=(nL>0?"+":"")+nL+"%"; $("fp_tmV").textContent=(tm>0?"+":"")+tm+"%";
-  cmpBefore=false; var cb=$("fp_cmp"); if(cb)cb.textContent="전/후 비교";
-  if(pct===0&&comp===0&&drw===0&&roll===0&&ham===0&&nR===0&&nL===0&&tm===0){ fpDraw($("fp_cvB"),srcC,showDots?P:null); fpLog("원본(모든 슬라이더 0)."); return; }
-  var o={ yawRad:(pct/100)*30*Math.PI/180, pitchRad:tilt*Math.PI/180, comp:comp, draw:drw, roll:roll*Math.PI/180, ham:ham, nostrilR:nR, nostrilL:nL, tmComp:tm };
+  $("fp_nostRV").textContent=(nR>0?"+":"")+nR+"%"; $("fp_nostLV").textContent=(nL>0?"+":"")+nL+"%"; $("fp_tmV").textContent=(tm>0?"+":"")+tm+"%"; $("fp_midV").textContent=(mid>0?"+":"")+mid+"%";
+  if(pct===0&&comp===0&&drw===0&&roll===0&&ham===0&&nR===0&&nL===0&&tm===0&&mid===0){ fpDraw($("fp_cvB"),srcC,showDots?P:null); fpLog("원본(모든 슬라이더 0)."); return; }
+  var o={ yawRad:(pct/100)*30*Math.PI/180, pitchRad:tilt*Math.PI/180, comp:comp, draw:drw, roll:roll*Math.PI/180, ham:ham, nostrilR:nR, nostrilL:nL, tmComp:tm, midface:mid };
   var field,warped,turn;
   try{
     field=makeField(o); warped=warp(srcC,field); var sc={dx:0,dy:0};
@@ -3330,11 +3336,12 @@ function fpRender(pct){
   if(nR!==0)L.push("⑦ 콧볼 오른쪽 "+(nR>0?"올림":"내림"));
   if(nL!==0)L.push("⑧ 콧볼 왼쪽 "+(nL>0?"올림":"내림"));
   if(roll!==0)L.push("⑨ 기울이기 "+(roll>0?"+":"")+roll.toFixed(1)+"°");
+  if(mid!==0)L.push("⑩ 중안부 "+(mid>0?"줄이기":"늘리기"));
   fpLog(L.join("\n"));
 }
 var _pend=null,_raf=0;
 function fpQ(pct){ _pend=pct; if(!_raf)_raf=requestAnimationFrame(function(){_raf=0; if(_pend!=null){fpRender(_pend);_pend=null;}}); }
-function fpEnable(on){ ["fp_amp","fp_tilt","fp_comp","fp_draw","fp_roll","fp_ham","fp_nostR","fp_nostL","fp_tm","fp_fit","fp_method","fp_cmp","fp_reset","fp_dots","fp_save"].forEach(function(id){var e=$(id); if(e)e.disabled=!on;}); }
+function fpEnable(on){ ["fp_amp","fp_tilt","fp_comp","fp_draw","fp_roll","fp_ham","fp_nostR","fp_nostL","fp_tm","fp_mid","fp_fit","fp_method","fp_sxs","fp_reset","fp_dots","fp_save"].forEach(function(id){var e=$(id); if(e)e.disabled=!on;}); }
 function fpSetSource(rx,ry,rw,rh){
   curRegion={x:rx,y:ry,w:rw,h:rh};
   var scale=680/Math.max(rw,rh); if(scale>3)scale=3;
@@ -3362,7 +3369,7 @@ function fpDetect(){
 }
 function fpRestore(){
   var s=(typeof form!=="undefined"&&form)?form.face3d:null; if(!s)return;
-  var map={amp:"fp_amp",tilt:"fp_tilt",comp:"fp_comp",draw:"fp_draw",roll:"fp_roll",ham:"fp_ham",nostrilR:"fp_nostR",nostrilL:"fp_nostL",tm:"fp_tm"};
+  var map={amp:"fp_amp",tilt:"fp_tilt",comp:"fp_comp",draw:"fp_draw",roll:"fp_roll",ham:"fp_ham",nostrilR:"fp_nostR",nostrilL:"fp_nostL",tm:"fp_tm",mid:"fp_mid"};
   Object.keys(map).forEach(function(k){ if(k in s){ var e=$(map[k]); if(e)e.value=s[k]; } });
   _fpOrder=(s.order&&s.order.slice)?s.order.slice():[];   // 저장된 움직인 순서 복원(없으면 기본순서로 나열)
   fpRender(num("fp_amp")); fpLog("저장된 조정값을 불러왔습니다.");
@@ -3376,7 +3383,7 @@ function fpAutoLoad(){
   var lb=$("fp_load"); if(!lb) return;
   _fpLoading=true; try{ lb.click(); } finally { setTimeout(function(){_fpLoading=false;},1500); }
 }
-var _fpSl=/^fp_(amp|tilt|comp|draw|roll|ham|nostR|nostL|tm)$/;
+var _fpSl=/^fp_(amp|tilt|comp|draw|roll|ham|nostR|nostL|tm|mid)$/;
 var _fpOrder=[];                                   // 슬라이더 움직인 순서(첫 터치 기준, 가이드 나열용)
 function _fpTouch(id){ if(_fpSl.test(id)&&_fpOrder.indexOf(id)<0)_fpOrder.push(id); }
 document.addEventListener("input",function(ev){ if(ev.target&&_fpSl.test(ev.target.id)){ _fpTouch(ev.target.id); fpQ(num("fp_amp")); } });
@@ -3403,11 +3410,32 @@ var _fit=$("fp_fit"); if(_fit)_fit.onclick=function(){
   if(ox<0){ow+=ox;ox=0;} if(oy<0){oh+=oy;oy=0;} if(ox+ow>origImg.width)ow=origImg.width-ox; if(oy+oh>origImg.height)oh=origImg.height-oy;
   isFit=true; _fit.textContent="전체"; fpSetSource(ox,oy,ow,oh);
 };
-var _cmp=$("fp_cmp"); if(_cmp)_cmp.onclick=function(){
-  if(!P||!srcC)return; cmpBefore=!cmpBefore; _cmp.textContent=cmpBefore?"후(변형) 보기":"전/후 비교";
-  if(cmpBefore){ fpDraw($("fp_cvB"),srcC,showDots?P:null); fpLog("전(원본) 표시 중 — 다시 눌러 후(변형)로"); } else fpRender(num("fp_amp"));
-};
-var _reset=$("fp_reset"); if(_reset)_reset.onclick=function(){ cmpBefore=false; var cb=$("fp_cmp"); if(cb)cb.textContent="전/후 비교"; ["fp_amp","fp_comp","fp_draw","fp_roll","fp_ham","fp_nostR","fp_nostL","fp_tm"].forEach(function(id){$(id).value=0;}); $("fp_tilt").value=10; _fpOrder=[]; $("fp_method_out").textContent=""; fpRender(0); };
+var _sxs=$("fp_sxs"); if(_sxs)_sxs.onclick=function(){ fpSideBySide(); };
+function fpSideBySide(){                                  // 원본|미리보기를 한 장으로 합쳐 상담용(Before | After)
+  if(!P||!srcC){ fpLog("먼저 [정면사진 불러오기]를 누르세요."); return; }
+  var A=$("fp_cvA"), B=$("fp_cvB");
+  if(!A.width||!B.width||A.width<2){ fpLog("사진을 먼저 불러오고 슬라이더를 조정하세요."); return; }
+  var gap=14, labH=46, W=A.width+B.width+gap, H=Math.max(A.height,B.height)+labH;
+  var cv=document.createElement("canvas"); cv.width=W; cv.height=H;
+  var c=cv.getContext("2d"); c.fillStyle="#12141a"; c.fillRect(0,0,W,H);
+  c.drawImage(A,0,labH); c.drawImage(B,A.width+gap,labH);
+  c.textAlign="center"; c.font="bold 22px -apple-system,system-ui,sans-serif";
+  c.fillStyle="#ffffff"; c.fillText("Before (현재)", A.width/2, 30);
+  c.fillStyle="#ff8fc4"; c.fillText("After (예상)", A.width+gap+B.width/2, 30);
+  c.font="12px -apple-system,system-ui,sans-serif"; c.fillStyle="#8b93a7";
+  c.fillText("SONEED · 촉진 전 참고 · 실제 결과와 다를 수 있습니다", W/2, H-8);
+  fpShowImg(cv.toDataURL("image/jpeg",0.92));
+}
+function fpShowImg(url){
+  var o=document.getElementById("fpImgOv");
+  if(!o){ o=document.createElement("div"); o.id="fpImgOv"; o.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px;gap:12px"; o.onclick=function(e){ if(e.target===o)o.style.display="none"; }; document.body.appendChild(o); }
+  o.style.display="flex";
+  o.innerHTML='<div style="color:#fff;font-weight:800;font-size:15px">상담용 전 · 후 한 장 <span style="color:#9aa;font-weight:600;font-size:12px">(예상 · 참고용)</span></div>'
+    +'<img src="'+url+'" style="max-width:96%;max-height:70vh;border-radius:10px;box-shadow:0 10px 40px rgba(0,0,0,.6)">'
+    +'<div style="display:flex;gap:10px"><a href="'+url+'" download="soneed_before_after.jpg" class="btn primary" style="text-decoration:none">사진 저장</a>'
+    +'<button class="btn ghost" style="color:#fff;border-color:#666" onclick="document.getElementById(\'fpImgOv\').style.display=\'none\'">닫기</button></div>';
+}
+var _reset=$("fp_reset"); if(_reset)_reset.onclick=function(){ ["fp_amp","fp_comp","fp_draw","fp_roll","fp_ham","fp_nostR","fp_nostL","fp_tm","fp_mid"].forEach(function(id){$(id).value=0;}); $("fp_tilt").value=10; _fpOrder=[]; $("fp_method_out").textContent=""; fpRender(0); };
 var _dots=$("fp_dots"); if(_dots)_dots.onclick=function(){ showDots=!showDots; _dots.textContent="랜드마크 "+(showDots?"켬":"끔"); if(P)fpDraw($("fp_cvA"),srcC,showDots?P:null); fpRender(num("fp_amp")); };
 /* 슬라이더 하나의 가이드(현재 값 기준). 조정 안 됐으면 null. {name, lines} 반환 */
 function _fpGuide(id){
@@ -3444,14 +3472,14 @@ var _method=$("fp_method"); if(_method)_method.onclick=function(){
   // ② 리세팅가이드 = 차트 자동 저장 (맨 아래 저장 안 눌러도 됨)
   try{
     if(typeof form!=="undefined"&&form){
-      form.face3d={v:1,amp:num("fp_amp"),tilt:num("fp_tilt"),comp:num("fp_comp"),draw:num("fp_draw"),roll:num("fp_roll"),ham:num("fp_ham"),nostrilR:num("fp_nostR"),nostrilL:num("fp_nostL"),tm:num("fp_tm"),order:_fpOrder.slice(),method:($("fp_method_out").textContent||"")};
+      form.face3d={v:1,amp:num("fp_amp"),tilt:num("fp_tilt"),comp:num("fp_comp"),draw:num("fp_draw"),roll:num("fp_roll"),ham:num("fp_ham"),nostrilR:num("fp_nostR"),nostrilL:num("fp_nostL"),tm:num("fp_tm"),mid:num("fp_mid"),order:_fpOrder.slice(),method:($("fp_method_out").textContent||"")};
       if(typeof saveRecord==="function"){ saveRecord(); fpLog("가이드 생성 + 차트 자동 저장됨"); }
     }
   }catch(e){}
 };
 var _save=$("fp_save"); if(_save)_save.onclick=function(){
   if(typeof form==="undefined"||!form){ fpLog("저장 대상을 찾지 못했습니다."); return; }
-  form.face3d={v:1,amp:num("fp_amp"),tilt:num("fp_tilt"),comp:num("fp_comp"),draw:num("fp_draw"),roll:num("fp_roll"),ham:num("fp_ham"),nostrilR:num("fp_nostR"),nostrilL:num("fp_nostL"),tm:num("fp_tm"),order:_fpOrder.slice(),method:($("fp_method_out").textContent||"")};
+  form.face3d={v:1,amp:num("fp_amp"),tilt:num("fp_tilt"),comp:num("fp_comp"),draw:num("fp_draw"),roll:num("fp_roll"),ham:num("fp_ham"),nostrilR:num("fp_nostR"),nostrilL:num("fp_nostL"),tm:num("fp_tm"),mid:num("fp_mid"),order:_fpOrder.slice(),method:($("fp_method_out").textContent||"")};
   if(typeof saveRecord==="function"){ saveRecord(); fpLog("차트에 조정값 저장됨."); }
   else fpLog("상단 [기록 저장]을 눌러주세요.");
 };
@@ -3460,12 +3488,11 @@ var _save=$("fp_save"); if(_save)_save.onclick=function(){
 function fpResetPanel(){
   P=null; srcC=null; origImg=null; curRegion=null; isFit=false; cmpBefore=false;
   fpEnable(false);
-  ["fp_amp","fp_comp","fp_draw","fp_roll","fp_ham","fp_nostR","fp_nostL","fp_tm"].forEach(function(id){var e=$(id);if(e)e.value=0;});
+  ["fp_amp","fp_comp","fp_draw","fp_roll","fp_ham","fp_nostR","fp_nostL","fp_tm","fp_mid"].forEach(function(id){var e=$(id);if(e)e.value=0;});
   var t=$("fp_tilt"); if(t)t.value=10;
   _fpOrder=[];
   var mo=$("fp_method_out"); if(mo)mo.textContent="";
   var fb=$("fp_fit"); if(fb)fb.textContent="얼굴 확대";
-  var cb=$("fp_cmp"); if(cb)cb.textContent="전/후 비교";
   ["fp_cvA","fp_cvB"].forEach(function(id){var cv=$(id); if(cv){cv.width=1;cv.height=1;}});
   // 저장된 3D 조정값이 있는 기록이면: 패널을 펼치고 자동으로 불러오기(+가이드)
   if(typeof form!=="undefined"&&form&&form.face3d&&form.photo_front){
