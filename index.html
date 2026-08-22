@@ -303,7 +303,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v186 (2026-08-22)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v187 (2026-08-22)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -1525,8 +1525,8 @@ function onMulti(e,kind){const files=Array.from(e.target.files||[]).slice(0,3);e
 const AFTER_READS=[['type','타입'],['occiput_clock','후두골 시간'],['nose_diag','코 방향'],['eye_lip','눈>입술 먼쪽'],['waterslide','워터슬라이드'],['d_forehead_parietal','마루 두께']];
 function afterField(i,a){const opts='<option value="">회차</option>'+Array.from({length:40},(_,n)=>'<option '+(a.session===(n+1)+'회'?'selected':'')+'>'+(n+1)+'회</option>').join('');
   function _slotHTML(pfx){ return PHOTO_SLOTS.map(([s,ko])=>{var key=pfx+s;var src=a[key];return '<div class="pslot"><div class="photo-drop" style="aspect-ratio:3/4;cursor:pointer" onclick="afterRetake('+i+',\''+key+'\')">'+(src?'<img src="'+src+'">':'<div class="ph">＋<br>'+ko+'</div>')+'</div><div style="display:flex;flex-wrap:wrap;gap:3px;justify-content:center;margin-top:4px"><button class="btn" style="padding:3px 6px;font-size:10.5px;min-width:0;flex:0 0 auto" onclick="event.stopPropagation();afterRetake('+i+',\''+key+'\')">촬영</button><button class="btn" style="padding:3px 6px;font-size:10.5px;min-width:0;flex:0 0 auto" onclick="event.stopPropagation();afterPickOne('+i+',\''+key+'\')">앨범</button>'+(src?'<button class="btn danger" style="padding:3px 6px;font-size:10.5px;min-width:0;flex:0 0 auto" onclick="event.stopPropagation();afterClearPhoto('+i+',\''+key+'\')">✕</button>':'')+'</div><label>'+ko+'</label></div>';}).join(''); }
-  const thumbs='<div style="font-size:12px;font-weight:800;color:#888;margin:2px 0 5px">BEFORE (시술 전)</div><div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);gap:6px">'+_slotHTML('before_')+'</div>'
-    +'<div style="font-size:12px;font-weight:800;color:#C81D74;margin:10px 0 5px">AFTER (시술 후)</div><div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);gap:6px">'+_slotHTML('photo_')+'</div>';
+  const thumbs='<div style="font-size:12px;font-weight:800;color:#888;margin:2px 0 5px">BEFORE (케어 전)</div><div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);gap:6px">'+_slotHTML('before_')+'</div>'
+    +'<div style="font-size:12px;font-weight:800;color:#C81D74;margin:10px 0 5px">AFTER (케어 후)</div><div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);gap:6px">'+_slotHTML('photo_')+'</div>';
   const reads=AFTER_READS.map(function(rk){var k=rk[0],ko=rk[1],f=FMAP[k];var o='<option value="">-</option>'+f.opt.filter(function(x){return x!=='';}).map(function(x){return '<option'+(a[k]===x?' selected':'')+' value="'+x+'">'+x+'</option>';}).join('');return '<div class="field" style="max-width:150px"><label>'+ko+'</label><select onchange="form.afters['+i+'][\''+k+'\']=this.value||null;renderAfterCompare()">'+o+'</select></div>';}).join('');
   return '<div class="card pad" style="margin-bottom:10px"><div class="rowline" style="margin-bottom:10px">'
     +'<div class="field" style="max-width:130px"><label>회차</label><select onchange="form.afters['+i+'].session=this.value||null;renderAfterCompare()">'+opts+'</select></div>'
@@ -1534,7 +1534,7 @@ function afterField(i,a){const opts='<option value="">회차</option>'+Array.fro
     +'<div style="margin-left:auto;display:flex;gap:6px;align-items:flex-end;flex-wrap:wrap;justify-content:flex-end"><button class="btn" style="padding:8px 12px;font-size:12px;white-space:nowrap;background:#eef6ff;color:#26307a;border:1px solid #cfe0f5" onclick="showBAImprove('+i+')">전/후 개선률</button><button class="btn auto" style="padding:8px 12px;font-size:12px;white-space:nowrap" onclick="onAfterFaceAnalyze('+i+')">AI 판독</button><button class="btn danger" style="padding:8px 12px;font-size:12px" onclick="delAfter(\''+a.id+'\')">삭제</button></div>'
     +'</div>'
     +'<div class="rowline" style="margin-bottom:10px;flex-wrap:wrap;gap:8px"><div style="width:100%;font-size:12px;color:var(--muted);font-weight:700;margin-bottom:-2px">판독값 (이 회차 · 촉진 후 기록)</div>'+reads+'</div>'
-    +'<div class="photos">'+thumbs+'</div></div>';}
+    +'<div style="margin-top:2px">'+thumbs+'</div></div>';}
 /* 고객에게 보낼 전/후 비교 이미지 — BEFORE(첫 정면) | AFTER(최신 애프터). 얼굴크롭으로 프레이밍 일관 */
 function fpDrawCover(c,img,x,y,w,h){var ir=img.width/img.height,rr=w/h,sw,sh,sx,sy;if(ir>rr){sh=img.height;sw=sh*rr;sx=(img.width-sw)/2;sy=0;}else{sw=img.width;sh=sw/rr;sx=0;sy=(img.height-sh)/2;}c.drawImage(img,sx,sy,sw,sh,x,y,w,h);}
 /* 전/후 이미지 — 편집(드래그 이동·슬라이더 확대) 후 저장 */
@@ -1803,7 +1803,7 @@ function renderAfterCompare(){
   var cols=[{h:'초기(진단)',get:function(rk){return form[rk[0]];}}];
   afters.forEach(function(a){ if(AFTER_READS.some(function(rk){return a[rk[0]];})) cols.push({h:(a.session||a.date||'회차'),get:function(rk){return a[rk[0]];}}); });
   var th='text-align:left;padding:6px 8px;color:#999;font-size:11px;white-space:nowrap';
-  var html='<h2 class="section" style="margin-top:4px">회차별 판독 변화 <span class="subtle" style="text-transform:none;letter-spacing:0;font-weight:600">시술 전후 비교</span></h2>'
+  var html='<h2 class="section" style="margin-top:4px">회차별 판독 변화 <span class="subtle" style="text-transform:none;letter-spacing:0;font-weight:600">케어 전후 비교</span></h2>'
     +'<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">'
     +'<tr><th style="'+th+'">항목</th>'+cols.map(function(c){return '<th style="'+th+'">'+_esc(c.h)+'</th>';}).join('')+'</tr>';
   AFTER_READS.forEach(function(rk){
