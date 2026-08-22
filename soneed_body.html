@@ -100,7 +100,7 @@ h2.sec,.logo{letter-spacing:-.02em}
 <body>
 <header>
   <div class="logo">SONEED 바디</div>
-  <div class="sub">키머슬(짧아진 근육) 분석 · v6.9 · 촉진 전 초안</div>
+  <div class="sub">키머슬(짧아진 근육) 분석 · v7.0 · 촉진 전 초안</div>
 </header>
 <div class="wrap">
   <div class="topnav"><button id="navAnalyze" class="on" onclick="showView('analyze')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>분석</button><button id="navRecords" onclick="showView('records')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>고객 기록</button></div>
@@ -514,15 +514,58 @@ function silhouette(inner){
     +'<path d="M108 232 L112 338 L114 446 Q114 456 101 456 L97 338 L93 232 Z"/>'
     +'</g>'+inner+'</svg>';
 }
+function _bodyLines(side){
+  // side: 'front'|'back'. 체크값 기반 체형 라인 자동 표기. 좌표=viewBox 0~100 x 0~156
+  var L='#ffd21a', SP='#37e0c0', SW=1.5;
+  function ownScreenLeft(own){ var r=(own==='오른쪽'); return side==='front'? r : !r; }  // 앞:본인오른=화면왼 / 뒤:본인오른=화면오른
+  function hi(base){ if(sel.has(base+'오른쪽'))return '오른쪽'; if(sel.has(base+'왼쪽'))return '왼쪽'; return null; }
+  var out='';
+  var shY=40, shL=34, shR=66, hpY=82, hpL=41, hpR=59, kY=116, aY=148;
+  // 어깨선
+  var hiS=hi('높은어깨'), yl=shY, yr=shY;
+  if(hiS){ if(ownScreenLeft(hiS))yl-=4.5; else yr-=4.5; }
+  out+='<line x1="'+shL+'" y1="'+yl+'" x2="'+shR+'" y2="'+yr+'" stroke="'+L+'" stroke-width="'+SW+'" stroke-linecap="round"/>';
+  out+='<text x="'+((shL+shR)/2)+'" y="'+(Math.min(yl,yr)-2.5)+'" fill="'+L+'" font-size="4.2" text-anchor="middle" font-weight="700">어깨</text>';
+  // 골반선
+  var hiH=hi('높은골반'), hyl=hpY, hyr=hpY;
+  if(hiH){ if(ownScreenLeft(hiH))hyl-=4.5; else hyr-=4.5; }
+  out+='<line x1="'+hpL+'" y1="'+hyl+'" x2="'+hpR+'" y2="'+hyr+'" stroke="'+L+'" stroke-width="'+SW+'" stroke-linecap="round"/>';
+  out+='<text x="50" y="'+(Math.min(hyl,hyr)-2.5)+'" fill="'+L+'" font-size="4.2" text-anchor="middle" font-weight="700">골반</text>';
+  // 다리선(모음/벌림)
+  function leg(own){
+    var sl=ownScreenLeft(own); var hx=sl?hpL:hpR, kx=sl?44:56, ax=sl?45:55;
+    if(sel.has('엉덩관절모음'+own))kx+=sl?3.5:-3.5;
+    if(sel.has('엉덩관절벌림'+own))kx+=sl?-3.5:3.5;
+    return '<polyline points="'+hx+','+hpY+' '+kx+','+kY+' '+ax+','+aY+'" fill="none" stroke="'+L+'" stroke-width="'+SW+'" stroke-linecap="round" stroke-linejoin="round"/>';
+  }
+  out+=leg('오른쪽')+leg('왼쪽');
+  // 척추(뒷모습만): 경추·흉추·요추 나눠서, 볼록방향으로 휨
+  if(side==='back'){
+    var sx=50;
+    var neck = sel.has('중하위목뼈볼록오른쪽')?2.5:(sel.has('중하위목뼈볼록왼쪽')?-2.5:0);
+    var tho  = (sel.has('흉추볼록오른쪽')||sel.has('상부흉추볼록오른쪽')||sel.has('하부흉추볼록오른쪽'))?3:((sel.has('흉추볼록왼쪽')||sel.has('상부흉추볼록왼쪽')||sel.has('하부흉추볼록왼쪽'))?-3:0);
+    var lum  = sel.has('요추볼록오른쪽')?3:(sel.has('요추볼록왼쪽')?-3:0);
+    // 뒤에서 본인오른쪽=화면오른쪽(+x). 볼록 방향 그대로.
+    var d='M '+sx+' 26'
+        +' Q '+(sx+neck)+' 34 '+sx+' 42'      // 경추
+        +' Q '+(sx+tho)+' 54 '+sx+' 66'       // 흉추
+        +' Q '+(sx+lum)+' 76 '+sx+' 86';      // 요추
+    out+='<path d="'+d+'" fill="none" stroke="'+SP+'" stroke-width="1.8" stroke-linecap="round"/>';
+    out+='<text x="'+(sx+6)+'" y="36" fill="'+SP+'" font-size="3.6" font-weight="700">경추</text>';
+    out+='<text x="'+(sx+7)+'" y="56" fill="'+SP+'" font-size="3.6" font-weight="700">흉추</text>';
+    out+='<text x="'+(sx+7)+'" y="78" fill="'+SP+'" font-size="3.6" font-weight="700">요추</text>';
+  }
+  return out;
+}
 function drawBodyMap(){
   var flat=window.BODY_flat3D?window.BODY_flat3D():null;
   if(flat&&flat.front){
     document.getElementById('bodymap').innerHTML=
       '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;background:#080b12;border-radius:12px;padding:10px 8px">'
-      +'<div style="flex:1;min-width:140px;max-width:280px;text-align:center"><div style="color:#c2cad6;font-weight:800;margin-bottom:2px">앞모습</div><img src="'+flat.front+'" style="width:100%;border-radius:8px"></div>'
-      +'<div style="flex:1;min-width:140px;max-width:280px;text-align:center"><div style="color:#c2cad6;font-weight:800;margin-bottom:2px">뒷모습</div><img src="'+flat.back+'" style="width:100%;border-radius:8px"></div>'
+      +'<div style="flex:1;min-width:140px;max-width:280px;text-align:center"><div style="color:#c2cad6;font-weight:800;margin-bottom:2px">앞모습</div><div style="position:relative"><img src="'+flat.front+'" style="width:100%;border-radius:8px;display:block"><svg viewBox="0 0 100 156" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none">'+_bodyLines('front')+'</svg></div></div>'
+      +'<div style="flex:1;min-width:140px;max-width:280px;text-align:center"><div style="color:#c2cad6;font-weight:800;margin-bottom:2px">뒷모습</div><div style="position:relative"><img src="'+flat.back+'" style="width:100%;border-radius:8px;display:block"><svg viewBox="0 0 100 156" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none">'+_bodyLines('back')+'</svg></div></div>'
       +'</div>'
-      +'<div class="muted" style="text-align:center;margin-top:6px"><span style="color:#e0396f;font-weight:800">● 짧아짐(풀 곳)</span> &nbsp; <span style="color:#2f8fd6;font-weight:800">● 늘어남</span> · 해부 모델 앞/뒤(3D와 동일)</div>';
+      +'<div class="muted" style="text-align:center;margin-top:6px"><span style="color:#e0396f;font-weight:800">● 짧아짐(풀 곳)</span> &nbsp; <span style="color:#2f8fd6;font-weight:800">● 늘어남</span> · 해부 모델 · <span style="color:#ffd21a">━ 어깨/골반/다리</span> <span style="color:#37e0c0">━ 척추(경·흉·요)</span></div>';
     document.getElementById('bodymap').style.display='block';
     return;
   }
