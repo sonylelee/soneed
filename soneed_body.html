@@ -100,7 +100,7 @@ h2.sec,.logo{letter-spacing:-.02em}
 <body>
 <header>
   <div class="logo">SONEED 바디 · 오리지널</div>
-  <div class="sub">키머슬(짧아진 근육) 분석 · v7.3 · 촉진 전 초안</div>
+  <div class="sub">키머슬(짧아진 근육) 분석 · v7.4 · 촉진 전 초안</div>
 </header>
 <div class="wrap">
   <div class="topnav"><button id="navAnalyze" class="on" onclick="showView('analyze')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>분석</button><button id="navRecords" onclick="showView('records')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>고객 기록</button></div>
@@ -521,6 +521,18 @@ function silhouette(inner){
     +'<path d="M108 232 L112 338 L114 446 Q114 456 101 456 L97 338 L93 232 Z"/>'
     +'</g>'+inner+'</svg>';
 }
+var _thoConv=45;   /* 흉추 볼록 세로위치(32~58). 드래그로 변경 */
+function _bindThoDrag(){
+  ['front','back'].forEach(function(side){
+    var h=document.getElementById('thoHandle_'+side); if(!h)return;
+    var svg=h.ownerSVGElement; if(!svg)return;
+    function pt(ev){ var r=svg.getBoundingClientRect(); var cy=(ev.touches?ev.touches[0].clientY:ev.clientY); return (cy-r.top)/r.height*156; }
+    function move(ev){ ev.preventDefault(); var y=pt(ev); if(y<33)y=33; if(y>57)y=57; _thoConv=y; drawBodyMap(); _bindThoDrag(); }
+    function up(){ document.removeEventListener('mousemove',move); document.removeEventListener('mouseup',up); document.removeEventListener('touchmove',move); document.removeEventListener('touchend',up); if(typeof saveRecord==='function')saveRecord(); }
+    function down(ev){ ev.preventDefault(); document.addEventListener('mousemove',move); document.addEventListener('mouseup',up); document.addEventListener('touchmove',move,{passive:false}); document.addEventListener('touchend',up); }
+    h.addEventListener('mousedown',down); h.addEventListener('touchstart',down,{passive:false});
+  });
+}
 function _bodyLines(side){
   var L='#ffd21a', SW=1.5;
   var C_NECK='#4fc3f7', C_THO='#66bb6a', C_LUM='#ff9e57';   // 경추=하늘 흉추=초록 요추=주황
@@ -552,12 +564,14 @@ function _bodyLines(side){
     var neck=sel.has('중하위목뼈볼록오른쪽')?2.5:(sel.has('중하위목뼈볼록왼쪽')?-2.5:0);
     var tho=(sel.has('흉추볼록오른쪽')||sel.has('상부흉추볼록오른쪽')||sel.has('하부흉추볼록오른쪽'))?3:((sel.has('흉추볼록왼쪽')||sel.has('상부흉추볼록왼쪽')||sel.has('하부흉추볼록왼쪽'))?-3:0);
     var lum=sel.has('요추볼록오른쪽')?3:(sel.has('요추볼록왼쪽')?-3:0);
-    out+='<path d="M '+sx+' 26 Q '+(sx+neck)+' 34 '+sx+' 42" fill="none" stroke="'+C_NECK+'" stroke-width="1.8" stroke-linecap="round"/>';
-    out+='<path d="M '+sx+' 42 Q '+(sx+tho)+' 54 '+sx+' 66" fill="none" stroke="'+C_THO+'" stroke-width="1.8" stroke-linecap="round"/>';
-    out+='<path d="M '+sx+' 66 Q '+(sx+lum)+' 76 '+sx+' 86" fill="none" stroke="'+C_LUM+'" stroke-width="1.8" stroke-linecap="round"/>';
-    out+='<text x="'+(sx+6)+'" y="36" fill="'+C_NECK+'" font-size="3.6" font-weight="700">경추</text>';
-    out+='<text x="'+(sx+7)+'" y="56" fill="'+C_THO+'" font-size="3.6" font-weight="700">흉추</text>';
-    out+='<text x="'+(sx+7)+'" y="78" fill="'+C_LUM+'" font-size="3.6" font-weight="700">요추</text>';
+    var thoY=(typeof _thoConv!=='undefined'&&_thoConv)?_thoConv:45;   // 흉추 볼록 세로위치(드래그)
+    out+='<path d="M '+sx+' 20 Q '+(sx+neck)+' 26 '+sx+' 32" fill="none" stroke="'+C_NECK+'" stroke-width="1.8" stroke-linecap="round"/>';
+    out+='<path d="M '+sx+' 32 Q '+(sx+tho)+' '+thoY+' '+sx+' 58" fill="none" stroke="'+C_THO+'" stroke-width="1.8" stroke-linecap="round"/>';
+    out+='<path d="M '+sx+' 58 Q '+(sx+lum)+' 67 '+sx+' 76" fill="none" stroke="'+C_LUM+'" stroke-width="1.8" stroke-linecap="round"/>';
+    if(tho!==0){ out+='<circle id="thoHandle_'+side+'" cx="'+(sx+tho)+'" cy="'+thoY+'" r="2.6" fill="'+C_THO+'" stroke="#fff" stroke-width="0.8" style="cursor:ns-resize;pointer-events:auto"/>'; }
+    out+='<text x="'+(sx+6)+'" y="27" fill="'+C_NECK+'" font-size="3.6" font-weight="700">경추</text>';
+    out+='<text x="'+(sx+7)+'" y="46" fill="'+C_THO+'" font-size="3.6" font-weight="700">흉추</text>';
+    out+='<text x="'+(sx+7)+'" y="69" fill="'+C_LUM+'" font-size="3.6" font-weight="700">요추</text>';
   }
   return out;
 }
@@ -571,6 +585,7 @@ function drawBodyMap(){
       +'</div>'
       +'<div class="muted" style="text-align:center;margin-top:6px"><span style="color:#e0396f;font-weight:800">● 짧아짐(풀 곳)</span> &nbsp; <span style="color:#2f8fd6;font-weight:800">● 늘어남</span> · 해부 모델 · <span style="color:#ffd21a">━ 어깨/골반/다리</span> <span style="color:#4fc3f7">━경추</span> <span style="color:#66bb6a">━흉추</span> <span style="color:#ff9e57">━요추</span></div>';
     document.getElementById('bodymap').style.display='block';
+    setTimeout(function(){try{_bindThoDrag();}catch(e){}},30);
     return;
   }
   var res=(window._res||[]);
@@ -677,7 +692,7 @@ async function saveRecord(){
   var d=new Date(), ds0=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
   var gv=function(id){var e=document.getElementById(id);return e?(e.value||'').trim():'';};
   var ph=gv('recPhone'); var ds=gv('recDate')||ds0;
-  var extra={phone:ph,gender:gv('recGender'),age:gv('recAge'),route:gv('recRoute'),memo:gv('recMemo'),program:gv('recProgram'),price:gv('recPrice'),guide:gv('recGuide'),memos:(window._curMemos||[])};
+  var extra={phone:ph,gender:gv('recGender'),age:gv('recAge'),route:gv('recRoute'),memo:gv('recMemo'),program:gv('recProgram'),price:gv('recPrice'),guide:gv('recGuide'),memos:(window._curMemos||[]),thoConv:_thoConv};
   var rec={id:'b'+Date.now(),name:nm,phone:ph,date:ds,data:Object.assign({state:st},extra)};
   var ok=false;
   try{
@@ -726,7 +741,7 @@ function loadRecord(id){
   var dd=r.data||{}; var sv=function(id,val){var el=document.getElementById(id);if(el)el.value=val||'';};
   sv('recGender',dd.gender); sv('recAge',dd.age); sv('recRoute',dd.route); sv('recMemo',dd.memo);
   sv('recProgram',dd.program); sv('recPrice',dd.price); sv('recDate',r.date); sv('recGuide',dd.guide);
-  window._curMemos=(dd.memos||[]); try{renderMemos();}catch(e){}
+  window._curMemos=(dd.memos||[]); _thoConv=(typeof dd.thoConv==='number'?dd.thoConv:45); try{renderMemos();}catch(e){}
   showView('analyze');
   window.scrollTo(0,0);
   toast('불러옴: '+(r.name||''));
