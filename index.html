@@ -303,7 +303,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v179 (2026-08-22)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v180 (2026-08-22)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -1563,15 +1563,47 @@ function baBuild(m){
       +'<button class="btn primary" onclick="baSave()" style="min-width:130px">저장하기</button>'
     +'</div>';
 }
-function openTodayBA(){
-  // 오늘 방문 회차를 새로 추가 → 비포/애프터(정면·든·숙인) 사진 넣는 카드로 스크롤
+function openTodayBA(){ window._todayShot={}; window._todayAngle='front'; _renderTodayModal(); }
+function _todaySetAngle(a){ window._todayAngle=a; _renderTodayModal(); }
+function _todayPick(which){
+  var inp=document.getElementById('todayFile'); if(!inp)return;
+  inp.onchange=function(e){ var f=e.target.files&&e.target.files[0]; if(!f)return; var rd=new FileReader(); rd.onload=function(){ window._todayShot[which]=rd.result; _renderTodayModal(); }; rd.readAsDataURL(f); e.target.value=''; };
+  inp.click();
+}
+function _renderTodayModal(){
+  var o=document.getElementById('todayBAOv');
+  if(!o){ o=document.createElement('div'); o.id='todayBAOv'; o.style.cssText='position:fixed;inset:0;z-index:100060;background:rgba(20,18,26,.7);display:flex;align-items:center;justify-content:center;padding:14px'; o.onclick=function(e){if(e.target===o)o.style.display='none';}; document.body.appendChild(o); }
+  var a=window._todayAngle||'front', st=window._todayShot||{};
+  var angles=[['front','정면'],['up','고개 든'],['down','고개 숙인']];
+  function slot(pfx,label,color){ var key=pfx+a, src=st[key];
+    return '<div style="flex:1"><div style="font-size:12.5px;font-weight:800;color:'+color+';text-align:center;margin-bottom:5px">'+label+'</div>'
+      +'<div onclick="_todayPick(\''+key+'\')" style="aspect-ratio:3/4;border:2px dashed #ccc;border-radius:8px;background:#f5f5f7;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden">'
+      +(src?'<img src="'+src+'" style="width:100%;height:100%;object-fit:cover">':'<span style="color:#999;font-size:13px">＋ 사진 넣기</span>')+'</div>'
+      +(src?'<div style="text-align:center;margin-top:4px"><span onclick="event.stopPropagation();delete window._todayShot[\''+key+'\'];_renderTodayModal()" style="font-size:11px;color:#c66;cursor:pointer">✕ 지우기</span></div>':'')+'</div>';
+  }
+  var tabs=angles.map(function(x){ var cnt=(st['before_'+x[0]]?1:0)+(st['photo_'+x[0]]?1:0); return '<button onclick="_todaySetAngle(\''+x[0]+'\')" style="flex:1;padding:9px 4px;border:none;border-bottom:3px solid '+(a===x[0]?'#C81D74':'transparent')+';background:none;font-weight:800;font-size:13px;color:'+(a===x[0]?'#C81D74':'#999')+';cursor:pointer">'+x[1]+(cnt?' ('+cnt+')':'')+'</button>'; }).join('');
+  o.innerHTML='<div style="background:#fff;border-radius:10px;max-width:460px;width:100%;max-height:92vh;overflow:auto">'
+    +'<div style="padding:14px 16px;border-bottom:1px solid #eee;display:flex;align-items:center"><b style="font-size:16px">오늘의 비포/애프터</b><button onclick="document.getElementById(\'todayBAOv\').style.display=\'none\'" style="margin-left:auto;background:none;border:0;font-size:22px;color:#888;cursor:pointer">×</button></div>'
+    +'<div style="display:flex;border-bottom:1px solid #eee">'+tabs+'</div>'
+    +'<div style="padding:16px;display:flex;gap:12px">'+slot('before_','BEFORE (전)','#888')+slot('photo_','AFTER (후)','#C81D74')+'</div>'
+    +'<div style="padding:0 16px 12px;font-size:11.5px;color:#999;text-align:center">각도(정면·고개든·고개숙인)별로 전/후 사진을 넣으세요</div>'
+    +'<div style="padding:0 16px 16px"><button onclick="_todaySave()" style="width:100%;padding:13px;border:0;border-radius:8px;background:#C81D74;color:#fff;font-weight:800;font-size:15px;cursor:pointer">저장 · 탭3에 회차 추가</button></div>'
+    +'<input type="file" id="todayFile" accept="image/*" style="display:none">'
+    +'</div>';
+  o.style.display='flex';
+}
+function _todaySave(){
+  var st=window._todayShot||{};
+  if(!Object.keys(st).some(function(k){return st[k];})){toast('사진을 하나 이상 넣어주세요');return;}
+  if(typeof form==='undefined'||!form){toast('기록을 먼저 여세요');return;}
   if(!form.afters)form.afters=[];
-  var d=new Date(), ds=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
-  form.afters.unshift({session:(form.afters.length+1)+'회', date:ds});
+  var d=new Date(),ds=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
+  form.afters.unshift(Object.assign({session:(form.afters.length+1)+'회',date:ds}, st));
   if(typeof renderAfters==='function')renderAfters();
-  if(typeof showEntryTab==='function')showEntryTab(3);   // 비포·애프터 관리 탭으로 이동
-  toast('오늘 회차 추가 · 비포/애프터 사진을 넣어주세요');
-  setTimeout(function(){ var el=document.getElementById('afters')||document.getElementById('aftersWrap'); if(el)el.scrollIntoView({behavior:'smooth',block:'center'}); }, 150);
+  if(typeof showEntryTab==='function')showEntryTab(3);
+  if(typeof saveRecord==='function')saveRecord();
+  var o=document.getElementById('todayBAOv'); if(o)o.style.display='none';
+  toast('저장됨 · 탭3 비포/애프터 관리에 추가');
 }
 function openBAEditor(shots, meta){
   baSizes(); var m=baModal(); baBuild(m); m.style.display='flex'; _baState.meta=meta; _baState.shots=shots;
