@@ -301,7 +301,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v168 (2026-08-22)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v169 (2026-08-22)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -313,6 +313,7 @@ h2.section,.logo{letter-spacing:-.01em}
   <section id="view-entry">
     <div class="toolbar">
       <div class="grow subtle" id="editState">새 기록을 작성합니다.</div>
+      <button class="btn" style="background:#1f72b0;color:#fff;font-weight:800" onclick="openTodayBA()">오늘의 비포/애프터 업로드</button>
       <button class="btn" id="commentBtnTop" style="display:none;background:#C81D74;color:#fff;font-weight:800" onclick="openComments()">코멘트/대화 <span id="commentCntTop" style="background:#fff;color:#C81D74;border-radius:10px;padding:0 7px;margin-left:2px;font-size:12px"></span></button>
       <button class="btn auto" id="autoBtn" onclick="document.getElementById('chartInput').click()">종이차트 사진으로 자동 채우기</button>
       <input type="file" id="chartInput" accept="image/*,.heic,.heif" style="display:none" onchange="onChartPhoto(event)">
@@ -1528,7 +1529,8 @@ function makeAfterImage(){
 }
 function baTileHTML(which,label){
   return '<div style="text-align:center">'
-    +'<select id="basel_'+which+'" onchange="baPick(\''+which+'\')" style="width:'+BA_FW+'px;margin-bottom:8px;padding:7px 8px;border-radius:8px;border:1px solid #3a3f4c;background:#1b1e26;color:#fff;font-size:13px;font-weight:700"></select>'
+    +'<select id="basel_'+which+'" onchange="baPick(\''+which+'\')" style="width:'+BA_FW+'px;margin-bottom:4px;padding:7px 8px;border-radius:8px;border:1px solid #3a3f4c;background:#1b1e26;color:#fff;font-size:13px;font-weight:700"></select>'
+    +'<div style="margin-bottom:8px"><button onclick="baAddPhoto(\''+which+'\')" style="width:'+BA_FW+'px;padding:6px;border-radius:7px;border:1px solid #C81D74;background:rgba(200,29,116,.15);color:#ff7ab8;font-size:12px;font-weight:800;cursor:pointer">＋ 사진 추가 (앨범/카메라)</button><input type="file" id="baFile_'+which+'" accept="image/*" style="display:none" onchange="baFilePicked(\''+which+'\',event)"></div>'
     +'<div class="ba-frame" data-w="'+which+'" style="width:'+BA_FW+'px;height:'+BA_FH+'px;overflow:hidden;position:relative;border-radius:12px;background:#000;touch-action:none;cursor:grab">'
       +'<img id="baimg_'+which+'" draggable="false" style="position:absolute;left:0;top:0;transform-origin:0 0;user-select:none;-webkit-user-drag:none;max-width:none">'
       +'<div style="position:absolute;left:0;top:0;right:0;background:rgba(200,29,116,.92);color:#fff;font-weight:800;font-size:13px;padding:5px 0;text-align:center;pointer-events:none">'+label+'</div>'
@@ -1553,6 +1555,16 @@ function baBuild(m){
       +'<button class="btn primary" onclick="baSave()" style="min-width:130px">저장하기</button>'
     +'</div>';
 }
+function openTodayBA(){
+  // 기록에 저장된 정면 사진들(초기·회차 애프터)을 shots로 모으고, 없으면 빈 상태로 → [＋사진 추가]로 오늘 비포/애프터 넣기
+  var shots=[];
+  try{
+    if(form.photo_front)shots.push({label:'초기 정면', src:form.photo_front, dt:(form.date||'')});
+    (form.afters||[]).forEach(function(a,i){ if(a&&a.photo_front)shots.push({label:(a.session||('회차'+(i+1)))+' 정면', src:a.photo_front, dt:(a.date||'')}); });
+  }catch(e){}
+  if(!shots.length){ shots.push({label:'사진을 추가하세요', src:'data:image/svg+xml;base64,'+btoa('<svg xmlns="http://www.w3.org/2000/svg" width="210" height="280"><rect width="210" height="280" fill="#111"/><text x="105" y="140" fill="#666" font-size="13" text-anchor="middle">＋ 사진 추가</text></svg>'), dt:''}); }
+  openBAEditor(shots, {code:form.code||'', branch:form.branch||''});
+}
 function openBAEditor(shots, meta){
   baSizes(); var m=baModal(); baBuild(m); m.style.display='flex'; _baState.meta=meta; _baState.shots=shots;
   ['before','after'].forEach(function(w){
@@ -1561,6 +1573,27 @@ function openBAEditor(shots, meta){
     sel.value=(w==='before')?0:(shots.length-1);
   });
   baPick('before'); baPick('after');
+}
+function baAddPhoto(w){ var f=document.getElementById('baFile_'+w); if(f)f.click(); }
+function baFilePicked(w,ev){
+  var file=ev.target.files&&ev.target.files[0]; if(!file)return;
+  var rd=new FileReader();
+  rd.onload=function(){
+    if(!_baState.shots)_baState.shots=[];
+    var idx=_baState.shots.length;
+    _baState.shots.push({label:'추가 '+(idx+1), src:rd.result, dt:''});
+    // 양쪽 select 갱신
+    ['before','after'].forEach(function(ww){
+      var sel=document.getElementById('basel_'+ww); if(!sel)return;
+      var cur=sel.value;
+      sel.innerHTML=_baState.shots.map(function(sh,i){return '<option value="'+i+'">'+_esc(sh.label)+'</option>';}).join('');
+      sel.value=cur;
+    });
+    // 방금 추가한 사진을 이 칸에 선택
+    var s2=document.getElementById('basel_'+w); if(s2){ s2.value=idx; baPick(w); }
+  };
+  rd.readAsDataURL(file);
+  ev.target.value='';
 }
 function baPick(w){
   var shots=_baState.shots||[]; var sel=document.getElementById('basel_'+w); var sh=shots[parseInt(sel&&sel.value)]; if(!sh)return;
