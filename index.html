@@ -301,7 +301,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v163 (2026-08-20)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v164 (2026-08-20)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -1623,22 +1623,34 @@ function baShare(){
 }
 function baSave(){
   var meta=_baState.meta||{}; if(!_baState.before||!_baState.after){toast('사진을 불러오는 중이에요');return;}
-  var TW=460,TH=613,PAD=30,GAP=20,TOP=96,W=PAD*2+TW*2+GAP,H=TOP+TH+64,SS=2,ratio=TW/BA_FW;
+  var TW=440,TH=560,PAD=44,GAP=26,TOP=250,W=PAD*2+TW*2+GAP,H=TOP+TH+120,SS=2,ratio=TW/BA_FW;
   var cv=document.createElement('canvas');cv.width=W*SS;cv.height=H*SS;var c=cv.getContext('2d');
   c.scale(SS,SS);c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';
   c.fillStyle='#fff';c.fillRect(0,0,W,H);
-  c.fillStyle='#C81D74';c.font='bold 30px -apple-system,sans-serif';c.textAlign='center';c.fillText('SONEED   '+(meta.code||''),W/2,50);
-  c.fillStyle='#999';c.font='15px sans-serif';c.fillText((meta.branch||'')+'   얼굴윤곽 3D 분석',W/2,77);
-  function tile(w,label,dt,x){ var st=_baState[w],y=TOP,S=st.base*st.zoom;
-    c.save();c.beginPath();c.rect(x,y,TW,TH);c.clip();
-    c.drawImage(st.el, x+st.tx*ratio, y+st.ty*ratio, st.iw*S*ratio, st.ih*S*ratio); c.restore();
-    c.fillStyle='rgba(200,29,116,.92)';c.fillRect(x,y,TW,42);c.fillStyle='#fff';c.font='bold 21px sans-serif';c.textAlign='center';c.fillText(label,x+TW/2,y+29);
-    c.fillStyle='rgba(0,0,0,.55)';c.fillRect(x,y+TH-36,TW,36);c.fillStyle='#fff';c.font='16px sans-serif';c.fillText(dt,x+TW/2,y+TH-12);
-    c.strokeStyle='#e6e6ea';c.lineWidth=1;c.strokeRect(x+0.5,y+0.5,TW,TH);
+  function rr(x,y,w,hh,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+hh,r);c.arcTo(x+w,y+hh,x,y+hh,r);c.arcTo(x,y+hh,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
+  var nm=((meta.code||'').trim());
+  // 제목 2줄
+  c.textAlign='center';c.fillStyle='#1a1a1a';c.font='bold 40px -apple-system,sans-serif';
+  c.fillText('개인의 얼굴형과 이목구비 구조에 맞춘',W/2,82);
+  c.fillText('무통증 비스포크 관리',W/2,134);
+  // 부제(보정 안 함)
+  c.fillStyle='#8b7ff0';c.font='bold 20px -apple-system,sans-serif';
+  c.fillText('모든 사진은 보정되지 않았으며 같은 조건과 같은 각도에서 촬영 되었습니다.',W/2,182);
+  // 성함
+  if(nm){ c.fillStyle='#aaa';c.font='17px -apple-system,sans-serif';c.fillText(nm+' 님',W/2,214); }
+  function tile(w,label,x){ var st=_baState[w],y=TOP,S=st.base*st.zoom;
+    c.save();rr(x,y,TW,TH,20);c.clip();
+    c.fillStyle='#000';c.fillRect(x,y,TW,TH);
+    c.drawImage(st.el, x+st.tx*ratio, y+st.ty*ratio, st.iw*S*ratio, st.ih*S*ratio);
+    c.restore();
+    c.textAlign='left';c.fillStyle='#fff';c.font='bold 25px -apple-system,sans-serif';
+    c.shadowColor='rgba(0,0,0,.5)';c.shadowBlur=6;c.fillText(label,x+24,y+46);c.shadowBlur=0;
   }
-  tile('before','BEFORE',(_baState.before&&_baState.before.dt)||'',PAD);
-  tile('after','AFTER',(_baState.after&&_baState.after.dt)||'',PAD+TW+GAP);
-  c.fillStyle='#bbb';c.font='13px sans-serif';c.textAlign='center';c.fillText('SONEED 얼굴윤곽 교정',W/2,H-20);
+  tile('before','Before',PAD);
+  tile('after','After',PAD+TW+GAP);
+  // 하단 SONEED 로고
+  c.textAlign='center';c.fillStyle='#999';c.font='11px -apple-system,sans-serif';c.fillText('얼 굴 윤 곽',W/2,H-56);
+  c.fillStyle='#555';c.font='bold 30px Georgia,serif';c.fillText('SONEED',W/2,H-26);
   var url=cv.toDataURL('image/jpeg',0.92); window._baLastURL=url;
   baModal().style.display='none';
   var o=document.getElementById('photoZoom');if(!o){o=document.createElement('div');o.id='photoZoom';o.onclick=function(){o.style.display='none';};document.body.appendChild(o);}
