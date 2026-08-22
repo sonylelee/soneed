@@ -303,7 +303,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v177 (2026-08-22)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v178 (2026-08-22)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -3366,10 +3366,11 @@ var _method=$("fp_method"); if(_method)_method.onclick=function(){
   $("fp_method_out").textContent=out.length?("리세팅가이드 (촉진 전 참고 · 움직인 순서대로)\n\n"+out.join("\n")):"조정된 슬라이더가 없습니다.";
   // ① 리세팅가이드 옆에 정면 사진 표시
   try{
-    var pf=(typeof form!=="undefined"&&form)?form.photo_front:null;
+    var pf=(typeof form!=="undefined"&&form&&form.photo_front)?form.photo_front:null;
+    if(!pf&&typeof origImg!=="undefined"&&origImg&&origImg.src)pf=origImg.src;   // 3D가 불러온 정면 사진 사용
     var box=document.getElementById("fp_facePhoto");
     if(!box){ box=document.createElement("div"); box.id="fp_facePhoto"; box.style.cssText="text-align:center;margin:10px 0"; var mo=$("fp_method_out"); if(mo&&mo.parentNode)mo.parentNode.insertBefore(box,mo); }
-    box.innerHTML=pf?('<div style="font-size:12px;color:#888;margin-bottom:4px">정면</div><img src="'+pf+'" style="max-width:200px;width:60%;border-radius:8px">'):'';
+    box.innerHTML=pf?('<div style="font-size:12px;color:#888;margin:4px 0">정면 사진</div><img src="'+pf+'" style="max-width:220px;width:70%;border-radius:8px;border:1px solid #eee">'):'<div style="font-size:12px;color:#c98a00;padding:6px">정면 사진이 없어요 (사진 슬롯에 넣거나 [정면사진 불러오기])</div>';
   }catch(e){}
   // ② 리세팅가이드 = 차트 자동 저장 (맨 아래 저장 안 눌러도 됨)
   try{
