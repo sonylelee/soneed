@@ -303,7 +303,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v191 (2026-08-22)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v192 (2026-08-22)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -416,6 +416,7 @@ h2.section,.logo{letter-spacing:-.01em}
         <button class="btn ghost" onclick="exportCSV()">CSV 내보내기 (엑셀)</button>
         <button class="btn ghost" id="syncBtn" onclick="loadAll()" style="display:none">↻ 최신 불러오기</button>
         <button class="btn ghost" id="thumbBtn" onclick="backfillThumbs()">목록 썸네일 일괄 생성</button>
+        <button class="btn ghost" id="migBtn" onclick="migratePhotos()" style="background:#fbeef5;color:#a11258;border:1px solid #f0cfe0">📦 사진 새 구조로 이사(1회)</button>
       </div>
       <div class="subtle" style="margin-top:8px">JSON 백업엔 사진까지 포함됩니다(전체 복원용). CSV는 표 데이터만(사진 제외) 나와서 엑셀·통계 분석에 씁니다.<br>썸네일 생성: 기존 기록도 목록에서 작은 사진이 보이게 합니다(1회, 와이파이 권장).</div>
     </div>
@@ -3110,6 +3111,27 @@ async function exportJSON(){if(!records.length){toast('내보낼 기록이 없�
     catch(e){ toast('전체 데이터 로드 실패: '+(e.message||e)); return; }
   }
   download(`soneed_backup_${ts()}.json`,JSON.stringify(data),'application/json');toast(data.length+'건 백업 완료');}
+async function migratePhotos(){
+  if(mode!=='cloud'){toast('공용 DB 로그인 상태에서만 가능해요');return;}
+  if(!confirm('기존 기록의 사진을 새 구조(photos 칸)로 이사합니다.\n\n⚠️ 먼저 JSON 백업을 하셨는지 확인하세요.\n계속할까요?'))return;
+  var btn=document.getElementById('migBtn'); if(btn)btn.disabled=true;
+  progShow('사진 이사 준비');
+  try{
+    var r=await fetch(sbBase()+'records?select=id&order=updated_at.desc',{headers:sbHeaders()});
+    if(!r.ok)throw new Error('목록 조회 '+r.status);
+    var ids=(await r.json()).map(function(x){return x.id;});
+    var done=0,fail=0,total=ids.length;
+    for(var i=0;i<total;i++){
+      progSet(i,total,'이사 중… 실패 '+fail);
+      try{ var rec=await fetchFull(ids[i]); await cloudSaveRecord(rec); done++; }
+      catch(e){ fail++; }
+    }
+    progDone('사진 이사 완료 · 성공 '+done+' / 실패 '+fail+' (전체 '+total+')', fail>0, true);
+    toast('사진 이사 완료: 성공 '+done+' · 실패 '+fail);
+    await loadAll();
+  }catch(e){ progDone('이사 실패: '+(e.message||e), true, true); }
+  if(btn)btn.disabled=false;
+}
 async function backfillThumbs(){
   if(mode!=='cloud'){toast('공용 DB(로그인) 상태에서만 가능합니다');return;}
   if(!confirm('기존 기록에 목록용 썸네일을 만듭니다.\n사진을 다시 올리므로 시간이 걸려요(와이파이 권장). 진행할까요?'))return;
