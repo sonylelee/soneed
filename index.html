@@ -303,7 +303,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v199 (2026-08-23)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v200 (2026-08-23)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -323,12 +323,13 @@ h2.section,.logo{letter-spacing:-.01em}
       <button class="btn ghost" onclick="clearFormConfirm()">새로 작성</button>
     </div>
     <div id="autoMsg"></div>
-    <div id="faceResult"></div>
     <div id="etabBar" style="display:flex;gap:0;margin:8px 2px 14px;border-bottom:2px solid var(--line)">
       <button class="etab on" data-t="1" onclick="showEntryTab(1)">코드분석·기본정보</button>
       <button class="etab" data-t="2" onclick="showEntryTab(2)">심화차트·3D</button>
       <button class="etab" data-t="3" onclick="showEntryTab(3)">비포·애프터 관리</button>
     </div>
+    <div id="faceResult"></div>
+    <div id="entrySaveBar" style="margin:0 2px 12px"><button class="btn primary" style="width:100%" onclick="saveRecord()">💾 기록 저장</button></div>
     <div class="card pad" id="fcodeCard" style="border:2px solid #7c3aed">
       <h2 class="section" style="margin-top:0">안면 코드 <span class="tag all">빠른 판독 · 첫 촉진용</span></h2>
       <div class="subtle" style="margin:-4px 0 8px;font-size:12px">AI가 타입~콧볼 예측 · <b>오른마루</b>는 촉진 후 직접 선택</div>
@@ -1635,6 +1636,24 @@ function _todayPick(which){
   inp.onchange=function(e){ var f=e.target.files&&e.target.files[0]; if(!f)return; var rd=new FileReader(); rd.onload=function(){ window._todayShot[which]=rd.result; _renderTodayModal(); }; rd.readAsDataURL(f); e.target.value=''; };
   inp.click();
 }
+function _todayPickMulti(angle){
+  var inp=document.getElementById('todayFileMulti');
+  if(!inp){ inp=document.createElement('input'); inp.type='file'; inp.accept='image/*'; inp.multiple=true; inp.id='todayFileMulti'; inp.style.display='none'; document.body.appendChild(inp); }
+  inp.onchange=function(e){
+    var files=Array.prototype.slice.call(e.target.files||[]);
+    if(!files.length)return;
+    var pick=files.slice(0,2), results=[], done=0;
+    pick.forEach(function(f,idx){ var rd=new FileReader(); rd.onload=function(){ results[idx]=rd.result; done++;
+      if(done>=pick.length){
+        if(results[0])window._todayShot['before_'+angle]=results[0];
+        if(results[1])window._todayShot['photo_'+angle]=results[1];
+        _renderTodayModal();
+      }
+    }; rd.readAsDataURL(f); });
+    e.target.value='';
+  };
+  inp.click();
+}
 function _renderTodayModal(){
   var o=document.getElementById('todayBAOv');
   if(!o){ o=document.createElement('div'); o.id='todayBAOv'; o.style.cssText='position:fixed;inset:0;z-index:100060;background:rgba(20,18,26,.7);display:flex;align-items:center;justify-content:center;padding:14px'; o.onclick=function(e){if(e.target===o)o.style.display='none';}; document.body.appendChild(o); }
@@ -1656,7 +1675,7 @@ function _renderTodayModal(){
     +'<div style="padding:14px 16px;border-bottom:1px solid #eee;display:flex;align-items:center"><b style="font-size:16px">오늘의 비포/애프터</b><button onclick="document.getElementById(\'todayBAOv\').style.display=\'none\'" style="margin-left:auto;background:none;border:0;font-size:22px;color:#888;cursor:pointer">×</button></div>'
     +'<div style="display:flex;border-bottom:1px solid #eee">'+tabs+'</div>'
     +'<div style="padding:16px;display:flex;gap:12px">'+slot('before_','BEFORE (전)','#888')+slot('photo_','AFTER (후)','#C81D74')+'</div>'
-    +'<div style="padding:0 16px 12px;font-size:11.5px;color:#999;text-align:center">각도(정면·고개든·고개숙인)별로 전/후 사진을 넣으세요</div>'
+    +'<div style="padding:6px 16px 4px"><button onclick="_todayPickMulti(\''+a+'\')" style="width:100%;padding:10px;border:1px solid #C81D74;border-radius:8px;background:#fff;color:#C81D74;font-weight:700;font-size:13px;cursor:pointer">📷 이 각도 2장 한번에 (비포+애프터)</button></div>'+'<div style="padding:0 16px 12px;font-size:11.5px;color:#999;text-align:center">각도(정면·고개든·고개숙인)별로 전/후 사진을 넣으세요</div>'
     +'<div style="padding:0 16px 16px"><button onclick="_todaySave()" style="width:100%;padding:13px;border:0;border-radius:8px;background:#C81D74;color:#fff;font-weight:800;font-size:15px;cursor:pointer">저장 · 탭3에 회차 추가</button></div>'
     +'<input type="file" id="todayFile" accept="image/*" style="display:none">'
     +'</div>';
@@ -2824,6 +2843,7 @@ function showEntryTab(n){
     el.style.display=(el.getAttribute('data-etab')===String(n))?'':'none';
   });
   document.querySelectorAll('#etabBar .etab').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-t')===String(n)); });
+  var _fr=document.getElementById("faceResult"); if(_fr)_fr.innerHTML="";  // 탭 전환 시 이전 AI 분석 결과 정리(탭마다 안 섞이게)
   try{window.scrollTo(0,0);}catch(e){}
 }
 function showView(v){
