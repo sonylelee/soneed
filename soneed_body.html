@@ -100,7 +100,7 @@ h2.sec,.logo{letter-spacing:-.02em}
 <body>
 <header>
   <div class="logo">SONEED 바디 · 오리지널</div>
-  <div class="sub">키머슬(짧아진 근육) 분석 · v7.7 · 촉진 전 초안</div>
+  <div class="sub">키머슬(짧아진 근육) 분석 · v7.9 · 촉진 전 초안</div>
 </header>
 <div class="wrap">
   <div class="topnav"><button id="navAnalyze" class="on" onclick="showView('analyze')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>분석</button><button id="navRecords" onclick="showView('records')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>고객 기록</button></div>
@@ -543,8 +543,8 @@ function _bindThoDrag(){
   });
 }
 function _bodyLines(side){
-  var L='#ffd21a', SW=1.5;
-  var C_NECK='#4fc3f7', C_THO='#66bb6a', C_LUM='#ff9e57';   // 경추=하늘 흉추=초록 요추=주황
+  var L='#ffea00', SW=2.4;
+  var C_NECK='#00e5ff', C_THO='#00ff6a', C_LUM='#ff5e00';   // 경추=하늘 흉추=초록 요추=주황
   function ownScreenLeft(own){ var r=(own==='오른쪽'); return side==='front'? r : !r; }
   function hi(base){ if(sel.has(base+'오른쪽'))return '오른쪽'; if(sel.has(base+'왼쪽'))return '왼쪽'; return null; }
   var out='';
@@ -553,18 +553,18 @@ function _bodyLines(side){
   var hiS=hi('높은어깨'), yl=shY, yr=shY;
   if(hiS){ if(ownScreenLeft(hiS))yl-=4.5; else yr-=4.5; }
   out+='<line x1="'+shL+'" y1="'+yl+'" x2="'+shR+'" y2="'+yr+'" stroke="'+L+'" stroke-width="'+SW+'" stroke-linecap="round"/>';
-  out+='<text x="'+((shL+shR)/2)+'" y="'+(Math.min(yl,yr)-2.5)+'" fill="'+L+'" font-size="4.2" text-anchor="middle" font-weight="700">어깨</text>';
+  out+='<text x="'+((shL+shR)/2)+'" y="'+(Math.min(yl,yr)-2.5)+'" fill="'+L+'" font-size="4.6" text-anchor="middle" font-weight="900" stroke="#000" stroke-width="0.6" paint-order="stroke">어깨</text>';
   // 골반선
   var hiH=hi('높은골반'), hyl=hpY, hyr=hpY;
   if(hiH){ if(ownScreenLeft(hiH))hyl-=4.5; else hyr-=4.5; }
   out+='<line x1="'+hpL+'" y1="'+hyl+'" x2="'+hpR+'" y2="'+hyr+'" stroke="'+L+'" stroke-width="'+SW+'" stroke-linecap="round"/>';
-  out+='<text x="50" y="'+(Math.min(hyl,hyr)-2.5)+'" fill="'+L+'" font-size="4.2" text-anchor="middle" font-weight="700">골반</text>';
+  out+='<text x="50" y="'+(Math.min(hyl,hyr)-2.5)+'" fill="'+L+'" font-size="4.6" text-anchor="middle" font-weight="900" stroke="#000" stroke-width="0.6" paint-order="stroke">골반</text>';
   // 다리선
   function leg(own){
-    var sl=ownScreenLeft(own); var hx=sl?43:57, kx=sl?43.5:56.5, ax=sl?44:56;
-    if(sel.has('엉덩관절모음'+own))kx+=sl?3.5:-3.5;
-    if(sel.has('엉덩관절벌림'+own))kx+=sl?-3.5:3.5;
-    return '<polyline points="'+hx+',78 '+kx+','+kY+' '+ax+','+aY+'" fill="none" stroke="'+L+'" stroke-width="'+SW+'" stroke-linecap="round" stroke-linejoin="round"/>';
+    var sl=ownScreenLeft(own); var hx=sl?43:57, ax=sl?44:56;
+    if(sel.has('엉덩관절모음'+own))ax+=sl?4:-4;
+    if(sel.has('엉덩관절벌림'+own))ax+=sl?-4:4;
+    return '<line x1="'+hx+'" y1="78" x2="'+ax+'" y2="'+aY+'" stroke="'+L+'" stroke-width="'+SW+'" stroke-linecap="round"/>';
   }
   out+=leg('오른쪽')+leg('왼쪽');
   // 척추(뒷모습만): 경추·흉추·요추 색 분리
@@ -574,13 +574,13 @@ function _bodyLines(side){
     var tho=(sel.has('흉추볼록오른쪽')||sel.has('상부흉추볼록오른쪽')||sel.has('하부흉추볼록오른쪽'))?3:((sel.has('흉추볼록왼쪽')||sel.has('상부흉추볼록왼쪽')||sel.has('하부흉추볼록왼쪽'))?-3:0);
     var lum=sel.has('요추볼록오른쪽')?3:(sel.has('요추볼록왼쪽')?-3:0);
     var thoY=(typeof _thoConv!=='undefined'&&_thoConv)?_thoConv:44;   // 흉추 볼록 세로위치(드래그)
-    out+='<path d="M '+sx+' 22 Q '+(sx+neck)+' 27 '+sx+' 32" fill="none" stroke="'+C_NECK+'" stroke-width="1.8" stroke-linecap="round"/>';
-    out+='<path d="M '+sx+' 32 Q '+(sx+tho)+' '+thoY+' '+sx+' 56" fill="none" stroke="'+C_THO+'" stroke-width="1.8" stroke-linecap="round"/>';
-    out+='<path d="M '+sx+' 56 Q '+(sx+lum)+' 61 '+sx+' 66" fill="none" stroke="'+C_LUM+'" stroke-width="1.8" stroke-linecap="round"/>';
+    out+='<path d="M '+sx+' 22 Q '+(sx+neck)+' 27 '+sx+' 32" fill="none" stroke="'+C_NECK+'" stroke-width="2.6" stroke-linecap="round"/>';
+    out+='<path d="M '+sx+' 32 Q '+(sx+tho)+' '+thoY+' '+sx+' 56" fill="none" stroke="'+C_THO+'" stroke-width="2.6" stroke-linecap="round"/>';
+    out+='<path d="M '+sx+' 56 Q '+(sx+lum)+' 61 '+sx+' 66" fill="none" stroke="'+C_LUM+'" stroke-width="2.6" stroke-linecap="round"/>';
     out+='<circle id="thoHandle_'+side+'" cx="'+(sx+tho)+'" cy="'+thoY+'" r="3" fill="'+C_THO+'" stroke="#fff" stroke-width="1" style="cursor:ns-resize;pointer-events:all"/>';
-    out+='<text x="'+(sx+6)+'" y="28" fill="'+C_NECK+'" font-size="3.6" font-weight="700">경추</text>';
-    out+='<text x="'+(sx+7)+'" y="44" fill="'+C_THO+'" font-size="3.6" font-weight="700">흉추</text>';
-    out+='<text x="'+(sx+7)+'" y="62" fill="'+C_LUM+'" font-size="3.6" font-weight="700">요추</text>';
+    out+='<text x="'+(sx+6)+'" y="28" fill="'+C_NECK+'" font-size="4" font-weight="900" stroke="#000" stroke-width="0.5" paint-order="stroke">경추</text>';
+    out+='<text x="'+(sx+7)+'" y="44" fill="'+C_THO+'" font-size="4" font-weight="900" stroke="#000" stroke-width="0.5" paint-order="stroke">흉추</text>';
+    out+='<text x="'+(sx+7)+'" y="62" fill="'+C_LUM+'" font-size="4" font-weight="900" stroke="#000" stroke-width="0.5" paint-order="stroke">요추</text>';
   }
   return out;
 }
