@@ -301,7 +301,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v164 (2026-08-20)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v165 (2026-08-22)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -658,7 +658,8 @@ async function subscribePush(reg){
     if(!authEmail()){ toast('로그인이 필요해요'); throw new Error('no login'); }
     var sub=await reg.pushManager.getSubscription();
     if(!sub){ sub=await reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey:_u8FromB64u(VAPID_PUB) }); }
-    var res=await fetch(PUSH_URL+'/subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:authEmail(),sub:sub.toJSON()})});
+    var ua=navigator.userAgent||''; var dev=/iPhone|iPad|iPod/i.test(ua)?'아이폰':(/Android/i.test(ua)?'안드로이드':(/Macintosh|Mac OS/i.test(ua)?'맥':(/Windows/i.test(ua)?'PC':'기타')));
+    var res=await fetch(PUSH_URL+'/subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:authEmail(),sub:sub.toJSON(),device:dev})});
     var jt=await res.text();
     if(!res.ok){ throw new Error('서버 저장 실패 '+res.status+': '+jt.slice(0,120)); }
     if(false){}
@@ -868,20 +869,23 @@ async function loadPushWho(){
   try{
     var r=await fetch(PUSH_URL+'/who',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
     var j=await r.json();
-    if(!j||!j.ok){ box.textContent='조회 실패: '+((j&&j.error)||r.status); return; }
-    var subscribed={}; (j.emails||[]).forEach(function(x){ subscribed[(x.email||'').toLowerCase()]=x.last; });
-    // 전체 관리사 명단(STAFF_NAMES) 기준으로 켬/안켬 표시
+    if(!j||!j.ok){ box.textContent='조회 실패: '+((j&&j.error)||r.status)+' · Worker 재배포(/who) 필요할 수 있어요'; return; }
+    var sub={}; (j.emails||[]).forEach(function(x){ sub[(x.email||'').toLowerCase()]={devices:x.devices||[],last:x.last}; });
     var names=(typeof STAFF_NAMES!=='undefined')?STAFF_NAMES:{};
+    var on=0;
     var rows=Object.keys(names).map(function(em){
-      var on=subscribed[em.toLowerCase()]; var nm=names[em];
-      var when=on?(' <span style="color:#999;font-size:11px">'+String(on).slice(0,10)+'</span>'):'';
-      return '<div style="display:flex;align-items:center;gap:8px;padding:7px 4px;border-bottom:1px solid #f0f0f4"><span style="flex:1;font-weight:600">'+nm+' <span style="color:#bbb;font-size:11px">'+em+'</span></span><span style="font-weight:800;color:'+(on?'#1f9d55':'#c02')+'">'+(on?'알림 켬':'꺼짐')+'</span>'+when+'</div>';
+      var s=sub[em.toLowerCase()]; var nm=names[em];
+      var isOn=!!s; if(isOn)on++;
+      var dev=(s&&s.devices&&s.devices.length)?(' <span style="color:#888;font-size:11px">'+s.devices.join('·')+'</span>'):'';
+      var when=(s&&s.last)?(' <span style="color:#bbb;font-size:11px">'+String(s.last).slice(0,10)+'</span>'):'';
+      return '<div style="display:flex;align-items:center;gap:8px;padding:8px 4px;border-bottom:1px solid #f0f0f4">'
+        +'<span style="flex:1;font-weight:700">'+nm+'</span>'
+        +'<span style="font-weight:800;color:'+(isOn?'#1f9d55':'#c02')+'">'+(isOn?'알림 켬':'꺼짐')+'</span>'+dev+when+'</div>';
     });
-    // 명단에 없는 구독자(기타)
-    var extra=(j.emails||[]).filter(function(x){ return !names[(x.email||'')] && !Object.keys(names).some(function(k){return k.toLowerCase()===(x.email||'').toLowerCase();}); });
-    var on=Object.keys(names).filter(function(em){return subscribed[em.toLowerCase()];}).length;
-    box.innerHTML='<div style="font-size:12.5px;color:#666;margin-bottom:6px">명단 '+Object.keys(names).length+'명 중 <b style="color:#1f9d55">'+on+'명</b> 알림 켬 · 전체 구독 '+j.count+'건</div>'+rows.join('')
-      +(extra.length?('<div style="font-size:11.5px;color:#999;margin-top:8px">기타 구독: '+extra.map(function(x){return x.email;}).join(', ')+'</div>'):'');
+    // 명단에 없는 구독자
+    var extra=(j.emails||[]).filter(function(x){ var e=(x.email||'').toLowerCase(); return !Object.keys(names).some(function(k){return k.toLowerCase()===e;}); });
+    box.innerHTML='<div style="font-size:13px;color:#666;margin-bottom:8px">명단 '+Object.keys(names).length+'명 중 <b style="color:#1f9d55">'+on+'명</b> 알림 켬</div>'+rows.join('')
+      +(extra.length?('<div style="font-size:11.5px;color:#999;margin-top:10px">기타 구독: '+extra.map(function(x){return x.email+(x.devices&&x.devices.length?('('+x.devices.join('·')+')'):'');}).join(', ')+'</div>'):'');
   }catch(e){ box.textContent='조회 실패: '+(e&&e.message||e); }
 }
 async function renderAppCustomers(){
