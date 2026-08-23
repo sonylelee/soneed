@@ -303,7 +303,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v214 (2026-08-23)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v215 (2026-08-23)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -480,6 +480,11 @@ h2.section,.logo{letter-spacing:-.01em}
     <div id="recList" class="recgrid"></div>
   </section>
   <section id="view-admin" style="display:none">
+    <div class="card pad" style="margin-bottom:16px;border:2px solid #0e9f6e">
+      <h2 class="section" style="margin-top:0">AI 정확도 <span class="subtle" style="text-transform:none;letter-spacing:0;font-weight:600">AI 초안 vs 최종 저장 · 항목별 일치율</span></h2>
+      <button class="btn ghost" style="font-size:12.5px;padding:6px 12px" onclick="aiAccuracyReport()">계산하기</button>
+      <div id="aiAccOut" style="margin-top:10px" class="subtle">[계산하기]를 누르면 전체 기록에서 AI가 준 값과 최종 저장값의 항목별 일치율을 집계합니다.</div>
+    </div>
     <div class="card pad" style="margin-bottom:16px;border:2px solid #1f72b0">
       <h2 class="section" style="margin-top:0">폰 알림 켠 사람 <span class="subtle" style="text-transform:none;letter-spacing:0;font-weight:600">누가 알림을 받고 있는지 확인</span></h2>
       <button class="btn ghost" style="font-size:12.5px;padding:6px 12px" onclick="loadPushWho()">새로고침</button>
@@ -913,6 +918,33 @@ async function loadPushWho(){
       +(extra.length?('<div style="font-size:11.5px;color:#999;margin-top:10px">기타 구독: '+extra.map(function(x){return x.email+(x.devices&&x.devices.length?('('+x.devices.join('·')+')'):'');}).join(', ')+'</div>'):'');
   }catch(e){ box.textContent='조회 실패: '+(e&&e.message||e); }
 }
+function _sameVal(a,b){ if(Array.isArray(a)||Array.isArray(b)){ var sa=(Array.isArray(a)?a:[a]).slice().sort().join(','); var sb=(Array.isArray(b)?b:[b]).slice().sort().join(','); return sa===sb; } return String(a==null?'':a)===String(b==null?'':b); }
+async function aiAccuracyReport(){
+  var out=document.getElementById('aiAccOut'); if(out)out.textContent='집계 중…';
+  try{
+    var r=await fetch(sbBase()+'records?select=id,data&order=updated_at.desc',{headers:sbHeaders()});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    var rows=await r.json();
+    var stats={}, recAI=0;
+    function bump(k,ai,fin){ if(ai==null||ai==='')return; if(!stats[k])stats[k]={total:0,match:0}; stats[k].total++; if(_sameVal(ai,fin))stats[k].match++; }
+    rows.forEach(function(x){ var d=x.data||{}; var ai=d._ai;
+      if(ai&&typeof ai==='object'){ recAI++; Object.keys(ai).forEach(function(k){ bump(k,ai[k],d[k]); }); }
+      var aifc=d._aiFcode; if(aifc&&typeof aifc==='object'&&d.fcode){ ['t','clock','nose','cheek','eye','ala'].forEach(function(fk){ bump('코드·'+fk, aifc[fk], d.fcode[fk]); }); }
+    });
+    var keys=Object.keys(stats).sort(function(a,b){ return (stats[a].match/stats[a].total)-(stats[b].match/stats[b].total); });
+    if(!keys.length){ if(out)out.innerHTML='<div style="color:#c98a00">AI 원본이 저장된 기록이 없어요. (심화 AI 분석·코드분석 돌린 뒤 저장한 기록부터 집계돼요)</div>'; return; }
+    var CODEK={t:'코드·타입',clock:'코드·후두골',nose:'코드·코',cheek:'코드·광대',eye:'코드·눈',ala:'코드·콧볼'};
+    var html='<div style="font-size:12px;color:#888;margin-bottom:8px">AI 원본이 있는 기록 '+recAI+'건 기준 · 일치율 낮은 순(AI가 자주 틀리는 항목)</div>';
+    html+='<table style="width:100%;border-collapse:collapse;font-size:13px"><tr style="text-align:left;color:#71717a"><th style="padding:5px 8px">항목</th><th>AI 일치</th><th>건수</th></tr>';
+    keys.forEach(function(k){ var s=stats[k], pct=Math.round(s.match/s.total*100);
+      var label=(FMAP[k]&&FMAP[k].label)||CODEK[k.replace('코드·','')]||k;
+      var col=pct>=60?'#0e9f6e':(pct>=40?'#c98a00':'#e02424');
+      html+='<tr style="border-top:1px solid #eee"><td style="padding:5px 8px;font-weight:700">'+_esc(label)+'</td><td style="color:'+col+';font-weight:800">'+pct+'%</td><td style="color:#999">'+s.match+'/'+s.total+'</td></tr>';
+    });
+    html+='</table>';
+    if(out)out.innerHTML=html;
+  }catch(e){ if(out)out.textContent='집계 실패: '+(e&&e.message||e); }
+}
 async function renderAppCustomers(){
   if(!isAdmin())return; var box=document.getElementById('appCustList'); if(!box||_appCustBusy)return; _appCustBusy=true;
   try{
@@ -1327,7 +1359,7 @@ function applyFcodeFromAI(parsed){
   var fc=parsed&&(parsed['안면코드']||parsed['안면 코드']);if(!fc||typeof fc!=='object')return false;
   var map={타입:'t',후두골:'clock',눈코밀림:'nose',광대전면:'cheek',광대올라옴:'cheek',눈높은쪽:'eye',콧볼올라감:'ala'};
   if(!form.fcode)form.fcode={};var got=false;
-  for(var kk in map){var nv=_fcNorm(map[kk],fc[kk]);if(nv){form.fcode[map[kk]]=nv;got=true;}}
+  for(var kk in map){var nv=_fcNorm(map[kk],fc[kk]);if(nv){form.fcode[map[kk]]=nv;if(!form._aiFcode)form._aiFcode={};form._aiFcode[map[kk]]=nv;got=true;}}
   /* ★ 코(예각)와 눈(둔각)은 같은 각의 반대편 → 항상 서로 반대. AI가 같게/모순되게 줘도 눈을 코의 반대로 강제(코=측정 기반 우선, 중립은 중립). */
   if(form.fcode.nose){var _op=function(v){return v==='왼'?'오':(v==='오'?'왼':'중립');};form.fcode.eye=_op(form.fcode.nose);}
   if(got)form.face_code=fcodeStr(form.fcode)||null;
