@@ -303,7 +303,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v213 (2026-08-23)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v214 (2026-08-23)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -1281,6 +1281,7 @@ function renderForm(){
   document.getElementById('photos').innerHTML=PHOTO_SLOTS.map(([s,ko])=>`<div class="pslot"><div class="photo-drop" id="drop_${s}" onclick="pickPhoto('${s}')"><div class="ph">${ko}<br><small>클릭</small></div></div><input type="file" accept="image/*,.heic,.heif" id="pin_${s}" style="display:none" onchange="onPhoto('${s}',event)"><button type="button" class="mini-cam" onclick="camMain('${s}')">초회차(원본) 촬영</button><label>${ko}</label></div>`).join('');
   renderAfters();
   renderFcode();
+  try{ if(typeof initEntryTabs==='function')initEntryTabs(); }catch(e){}
 }
 function pickSeg(k,v,btn){const box=btn.parentElement,already=form[k]===v;box.querySelectorAll('button').forEach(b=>b.classList.remove('on'));if(already)form[k]=null;else{form[k]=v;btn.classList.add('on');}markOk(k,btn);syncChartToCode(k);updateValidation();}
 /* ★ 코드 ↔ 차트 양방향 연동: 타입·후두골·두께 3개만 */
@@ -3497,7 +3498,7 @@ function fpShowImg(url){
   o.innerHTML='<div style="color:#fff;font-weight:800;font-size:15px">상담용 전 · 후 한 장 <span style="color:#9aa;font-weight:600;font-size:12px">(예상 · 참고용)</span></div>'
     +'<img src="'+url+'" style="max-width:96%;max-height:70vh;border-radius:10px;box-shadow:0 10px 40px rgba(0,0,0,.6)">'
     +'<div style="display:flex;gap:10px"><a href="'+url+'" download="soneed_before_after.jpg" class="btn primary" style="text-decoration:none">사진 저장</a>'
-    +'<button class="btn ghost" style="color:#fff;border-color:#666" onclick="document.getElementById(\'fpImgOv\').style.display=\'none\'">닫기</button></div>';
+    +'<button style="background:#3a3b42;color:#fff;border:1px solid #666;border-radius:8px;padding:9px 20px;font-weight:700;font-size:14px;cursor:pointer" onclick="document.getElementById(\'fpImgOv\').style.display=\'none\'">닫기</button></div>';
 }
 var _reset=$("fp_reset"); if(_reset)_reset.onclick=function(){ ["fp_amp","fp_comp","fp_draw","fp_roll","fp_ham","fp_nostR","fp_nostL","fp_tm","fp_mid"].forEach(function(id){$(id).value=0;}); $("fp_tilt").value=10; _fpOrder=[]; $("fp_method_out").textContent=""; fpRender(0); };
 var _dots=$("fp_dots"); if(_dots)_dots.onclick=function(){ showDots=!showDots; _dots.textContent="랜드마크 "+(showDots?"켬":"끔"); _fpDrawSrc(); fpRender(num("fp_amp")); };
