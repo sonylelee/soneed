@@ -303,7 +303,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v204 (2026-08-23)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v207 (2026-08-23)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -1623,8 +1623,8 @@ function _todayAddPhotos(){
   inp.onchange=function(e){
     var files=Array.prototype.slice.call(e.target.files||[]); if(!files.length)return;
     if(!Array.isArray(window._todayPool))window._todayPool=[];
-    var done=0;
-    files.forEach(function(f){ var rd=new FileReader(); rd.onload=function(){ window._todayPool.push(rd.result); done++; if(done>=files.length)_renderTodayModal(); }; rd.readAsDataURL(f); });
+    var done=0, n=files.length;
+    files.forEach(function(f){ resizeToDataURL(f,1280,0.85,function(d){ window._todayPool.push(d); done++; if(done>=n)_renderTodayModal(); }); });
     e.target.value='';
   };
   inp.click();
@@ -1685,6 +1685,7 @@ function _renderTodayModal(){
   var o=document.getElementById('todayBAOv');
   if(!o){ o=document.createElement('div'); o.id='todayBAOv'; o.style.cssText='position:fixed;inset:0;z-index:100060;background:rgba(20,18,26,.7);display:flex;align-items:center;justify-content:center;padding:14px'; o.onclick=function(e){if(e.target===o)o.style.display='none';}; document.body.appendChild(o); }
   var a=window._todayAngle||'front', st=window._todayShot||{};
+  var _prevScroll=(function(){var s=document.querySelector('#todayBAOv .tdStrip');return s?s.scrollLeft:0;})();
   var angles=[['front','정면'],['up','고개 든'],['down','고개 숙인']];
   if(!window._todayXf)window._todayXf={}; if(!window._todayPool)window._todayPool={};
   function slot(pfx,label,color){ var key=pfx+a, src=st[key]; var which=(pfx==='before_')?'before':'after';
@@ -1710,7 +1711,7 @@ function _renderTodayModal(){
     +poolHTML
     +'<div style="padding:0 16px 16px"><button onclick="_todaySave()" style="width:100%;padding:13px;border:0;border-radius:8px;background:#C81D74;color:#fff;font-weight:800;font-size:15px;cursor:pointer">저장 · 탭3에 회차 추가</button></div>'
     +'</div>';
-  o.style.display='flex'; setTimeout(function(){ _todayBindDrag(); _todayBindDnd(); },30);
+  o.style.display='flex'; setTimeout(function(){ _todayBindDrag(); _todayBindDnd(); var s=document.querySelector('#todayBAOv .tdStrip'); if(s)s.scrollLeft=_prevScroll; },30);
 }
 function _todayZoom(key,v){ if(!window._todayXf[key])window._todayXf[key]={z:1,x:0,y:0}; window._todayXf[key].z=parseFloat(v); _todayApply(key); }
 function _todayApply(key){ var fr=document.querySelector('.tdFrame[data-key="'+key+'"]'); if(!fr)return; var img=fr.querySelector('img'); var xf=window._todayXf[key]||{z:1,x:0,y:0}; if(img)img.style.transform='translate(-50%,-50%) translate('+xf.x+'px,'+xf.y+'px) scale('+xf.z+')'; }
@@ -1733,8 +1734,9 @@ function _todaySave(){
   var d=new Date(),ds=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
   form.afters.unshift(Object.assign({session:(form.afters.length+1)+'회',date:ds}, st));
   if(typeof renderAfters==='function')renderAfters();
-  if(typeof showEntryTab==='function')showEntryTab(3);
   if(typeof saveRecord==='function')saveRecord();
+  try{ if(typeof initEntryTabs==='function')initEntryTabs(); }catch(e){}   // 저장 후 탭 배정 재보장(새 차트 대비)
+  if(typeof showEntryTab==='function')showEntryTab(3);
   var o=document.getElementById('todayBAOv'); if(o)o.style.display='none';
   toast('저장됨 · 탭3 비포/애프터 관리에 추가');
 }
