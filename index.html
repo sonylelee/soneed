@@ -303,7 +303,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v217 (2026-08-24)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v218 (2026-08-24)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -1204,6 +1204,32 @@ async function loadMore(){
     _saveRecCache(records); sortRecs(); refreshAll();
   }catch(e){ var m2=document.getElementById('recMoreBtn'); if(m2){m2.disabled=false;m2.textContent='더 보기 (다시 시도)';} }
 }
+/* ===== 사진 Storage(3단계): 사진은 Supabase Storage(photos 버킷)에, DB엔 경로만. 옛 base64도 하위호환 ===== */
+function _stBase(){ return cfg.url.replace(/\/+$/,'')+'/storage/v1/object/photos/'; }
+function _b64ToBlob(durl){ var p=durl.split(','), mime=((p[0].match(/:(.*?);/))||[])[1]||'image/jpeg', bin=atob(p[1]); var arr=new Uint8Array(bin.length); for(var i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i); return new Blob([arr],{type:mime}); }
+async function _stUpload(path, durl){
+  var r=await fetch(_stBase()+path, {method:'POST', headers:{apikey:cfg.key, Authorization:'Bearer '+(authTok||cfg.key), 'x-upsert':'true'}, body:_b64ToBlob(durl)});
+  if(!r.ok) throw new Error('storage up '+r.status+' '+await r.text());
+}
+async function _stDownload(path){
+  var r=await fetch(_stBase()+path, {headers:{apikey:cfg.key, Authorization:'Bearer '+(authTok||cfg.key)}});
+  if(!r.ok) throw new Error('storage dl '+r.status);
+  var blob=await r.blob();
+  return await new Promise(function(res,rej){ var fr=new FileReader(); fr.onload=function(){res(fr.result);}; fr.onerror=rej; fr.readAsDataURL(blob); });
+}
+async function _uploadRecPhotos(recId, photos){
+  var out={};
+  async function up(key,val){ if(!val||typeof val!=='string')return val; if(val.indexOf('data:')!==0)return val; var path=recId+'/'+key+'.jpg'; await _stUpload(path,val); return path; }
+  for(var k of ['photo_front','photo_up','photo_down']){ if(photos[k]!=null)out[k]=await up(k,photos[k]); }
+  if(photos.afters){ out.afters={}; for(var aid in photos.afters){ var pa=photos.afters[aid], po={}; for(var pk in pa){ po[pk]=await up('after_'+aid+'_'+pk, pa[pk]); } out.afters[aid]=po; } }
+  return out;
+}
+async function _downloadRecPhotos(rec){
+  async function dl(val){ if(!val||typeof val!=='string')return val; if(val.indexOf('data:')===0)return val; try{ return await _stDownload(val); }catch(e){ return val; } }
+  for(var k of ['photo_front','photo_up','photo_down']){ if(rec[k])rec[k]=await dl(rec[k]); }
+  if(Array.isArray(rec.afters)){ for(var a of rec.afters){ if(!a)continue; for(var pk of ['photo_front','photo_up','photo_down','before_front','before_up','before_down']){ if(a[pk])a[pk]=await dl(a[pk]); } } }
+  return rec;
+}
 /* ===== 사진 분리(2단계): 사진은 records.photos 컬럼에, 나머지는 data에. 옛 기록(data에 사진)도 계속 읽힘 ===== */
 var PHOTO_KEYS_MAIN=['photo_front','photo_up','photo_down'];
 var PHOTO_KEYS_AFTER=['photo_front','photo_up','photo_down','before_front','before_up','before_down'];
@@ -1225,7 +1251,9 @@ async function fetchFull(id){
   var r=await fetch(sbBase()+'records?id=eq.'+encodeURIComponent(id)+'&select=data,photos',{headers:sbHeaders()});
   if(!r.ok){ if(r.status===400){ /* photos 컬럼 없는 구버전 DB 폴백 */ var r0=await fetch(sbBase()+'records?id=eq.'+encodeURIComponent(id)+'&select=data',{headers:sbHeaders()}); if(!r0.ok)throw new Error('HTTP '+r0.status); var j0=await r0.json(); if(!j0.length)throw new Error('기록을 찾지 못했어요'); return Object.assign({},j0[0].data,{id:id}); } throw new Error('HTTP '+r.status); }
   var j=await r.json(); if(!j.length) throw new Error('기록을 찾지 못했어요');
-  return _mergePhotos(j[0].data, j[0].photos, id);
+  var rec=_mergePhotos(j[0].data, j[0].photos, id);
+  try{ await _downloadRecPhotos(rec); }catch(e){}   // 경로면 Storage에서 base64로 채움(옛 base64는 그대로)
+  return rec;
 }
 async function cloudPutPhotos(id,photosObj){
   const r=await fetch(sbBase()+'records?id=eq.'+encodeURIComponent(String(id)),{method:'PATCH',headers:sbHeaders({Prefer:'return=minimal'}),body:JSON.stringify({photos:photosObj,updated_at:new Date().toISOString()})});
@@ -1236,11 +1264,13 @@ async function cloudSaveRecord(rec){
   if(Array.isArray(rec.afters))rec.afters.forEach(function(a){if(a&&!a.id)a.id=newId();});   // 회차 id 보장(사진 매칭 키)
   var sp=_splitPhotos(rec);
   var n=sp.photos?Object.keys(sp.photos).length:0;
-  await cloudPut(rec.id, sp.core);                 // 1) 사진 제외 기본정보 먼저
-  try{ await cloudPutPhotos(rec.id, sp.photos||{}); }   // 2) 사진은 photos 컬럼에 별도 저장
-  catch(e){
+  await cloudPut(rec.id, sp.core);                 // 1) 기본정보 먼저(records 존재해야 Storage RLS 통과)
+  try{
+    var pathMap=await _uploadRecPhotos(rec.id, sp.photos||{});   // 2) 사진 → Storage 업로드 → 경로
+    await cloudPutPhotos(rec.id, pathMap);                        // 3) DB엔 경로만 저장(가벼움)
+  }catch(e){
     if(n>0){
-      // ★ 사진 저장 실패 → 유실 방지: 사진을 data에 되살려 통째로 저장(구조는 무거워지지만 사진은 절대 안 잃음)
+      // ★ Storage 실패 → 유실 방지: 사진을 data에 되살려 통째로 저장
       try{ await cloudPut(rec.id, rec); }catch(e2){}
       throw {photoOnly:true,message:e.message};
     }
