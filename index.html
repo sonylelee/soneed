@@ -303,7 +303,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v215 (2026-08-23)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v217 (2026-08-24)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -1235,10 +1235,16 @@ async function cloudPut(id,dataObj){if(authEmail()){try{if(!dataObj.savedBy)data
 async function cloudSaveRecord(rec){
   if(Array.isArray(rec.afters))rec.afters.forEach(function(a){if(a&&!a.id)a.id=newId();});   // 회차 id 보장(사진 매칭 키)
   var sp=_splitPhotos(rec);
-  await cloudPut(rec.id, sp.core);                 // 1) 사진 제외 기본정보 먼저(작고 안전, photos 컬럼은 유지)
   var n=sp.photos?Object.keys(sp.photos).length:0;
-  try{ await cloudPutPhotos(rec.id, sp.photos||{}); }   // 2) 사진은 photos 컬럼에 별도 저장(삭제 반영 위해 비어도 저장)
-  catch(e){ if(n>0) throw {photoOnly:true,message:e.message}; }
+  await cloudPut(rec.id, sp.core);                 // 1) 사진 제외 기본정보 먼저
+  try{ await cloudPutPhotos(rec.id, sp.photos||{}); }   // 2) 사진은 photos 컬럼에 별도 저장
+  catch(e){
+    if(n>0){
+      // ★ 사진 저장 실패 → 유실 방지: 사진을 data에 되살려 통째로 저장(구조는 무거워지지만 사진은 절대 안 잃음)
+      try{ await cloudPut(rec.id, rec); }catch(e2){}
+      throw {photoOnly:true,message:e.message};
+    }
+  }
 }
 async function cloudDelete(id){const r=await fetch(sbBase()+'records?id=eq.'+encodeURIComponent(String(id)),{method:'DELETE',headers:sbHeaders({Prefer:'return=minimal'})});if(!r.ok)throw new Error('HTTP '+r.status);}
 
@@ -3078,7 +3084,7 @@ async function exportJSON(){if(!records.length){toast('내보낼 기록이 없�
   var data=records;
   if(mode==='cloud' && records.some(r=>r._light)){
     toast('전체 데이터(사진 포함) 준비 중…');
-    try{ const r=await fetch(sbBase()+'records?select=id,data&order=updated_at.desc',{headers:sbHeaders()}); if(!r.ok)throw new Error('HTTP '+r.status); const rows=await r.json(); data=rows.map(x=>Object.assign({},x.data,{id:x.id})); }
+    try{ const r=await fetch(sbBase()+'records?select=id,data,photos&order=updated_at.desc',{headers:sbHeaders()}); if(!r.ok)throw new Error('HTTP '+r.status); const rows=await r.json(); data=rows.map(x=>_mergePhotos(x.data,x.photos,x.id)); }   // ★ photos(사진)까지 병합해 백업(사진 유실 방지)
     catch(e){ toast('전체 데이터 로드 실패: '+(e.message||e)); return; }
   }
   download(`soneed_backup_${ts()}.json`,JSON.stringify(data),'application/json');toast(data.length+'건 백업 완료');}
