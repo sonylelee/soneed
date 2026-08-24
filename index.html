@@ -303,7 +303,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v219 (2026-08-24)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v220 (2026-08-24)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -1311,12 +1311,12 @@ async function loadAll(){
         progDone((cached&&cached.length)?'DB 지연 · 저장된 목록 표시 중':'불러오기 실패: '+(e.message||e),true);
       }
     }
-    sortRecs();refreshAll();loadSolutions();
+    sortRecs();refreshAll();loadSolutions();try{refreshUnread();}catch(e){}
   }else{
     records=[];progShow('이 기기에서 불러오는 중');
     try{const keys=await storeList();const vals=await Promise.all(keys.map(k=>storeGet(k)));for(const v of vals){if(!v)continue;try{records.push(JSON.parse(v));}catch(e){}}progDone(records.length+'건 · 이 기기');}
     catch(e){progDone('불러오기 실패: '+(e.message||e),true);}
-    sortRecs();refreshAll();loadSolutions();
+    sortRecs();refreshAll();loadSolutions();try{refreshUnread();}catch(e){}
   }
 }
 
@@ -2762,65 +2762,53 @@ function _notifSeen(){try{return JSON.parse(localStorage.getItem('soneed_notifSe
 function _notifSave(o){try{localStorage.setItem('soneed_notifSeen',JSON.stringify(o));}catch(e){}}
 /* 각 기록에서 '내가 마지막 본 시각(rec별)' 이후의 남의 활동을 수집. 원장=선생님 코멘트 / 선생님=원장 코멘트+컨펌 */
 function collectNotifs(){
-  var me=(typeof authEmail==='function'&&authEmail())||''; if(!me)return [];
-  var admin=(typeof isAdmin==='function'&&isAdmin());
   var out=[];
   (records||[]).forEach(function(r){
-    var u=unreadCount(r); if(u<=0)return;
-    // 상대 코멘트만 뽑아 마지막 u개를 '안읽음'으로
-    var cms=r.comments; if(typeof cms==='string'){ try{cms=JSON.parse(cms);}catch(e){cms=[];} }
-    var mine=(cms||[]).filter(function(c){
-      if(!c||c.by===me)return false;
-      var cAdmin=(typeof ADMIN_EMAILS!=='undefined'&&ADMIN_EMAILS.indexOf((c.by||'').toLowerCase())>=0);
-      if(admin&&cAdmin)return false; if(!admin&&!cAdmin)return false; return true;
-    });
-    var items=mine.slice(-u).map(function(c){return {type:'comment',by:c.by,text:c.text,at:c.at};});
-    if(items.length){ out.push({rec:r,items:items,latest:(items[items.length-1].at||''),count:u}); }
+    var info=_unreadMap[r.id]; var cu=(info&&info.unread)||0; var conf=_confirmUnread(r)?1:0;
+    var total=cu+conf; if(total<=0)return;
+    var items=[];
+    if(cu&&info){ items.push({type:'comment',by:info.last_by,text:info.last_txt,at:info.last_at}); }
+    if(conf){ items.push({type:'confirm',by:(r.confirmedBy||''),text:'',at:(r.confirmedAt||'')}); }
+    out.push({rec:r,items:items,latest:(info&&info.last_at)||(r.confirmedAt||''),count:total});
   });
   out.sort(function(a,b){return (b.latest||'').localeCompare(a.latest||'');});
   return out;
 }
 function renderNotif(){
-  var ns=collectNotifs(), total=ns.reduce(function(s,x){return s+x.items.length;},0);
+  var ns=collectNotifs(), total=ns.reduce(function(s,x){return s+x.count;},0);
   var dot=document.getElementById('notifDot'); if(dot){ dot.style.display=total?'':'none'; dot.textContent=total; }
   var wrap=document.getElementById('notifBarWrap'); if(!wrap)return; var bar=document.getElementById('notifBar'); if(!bar){bar=document.createElement('div');bar.id='notifBar';bar.style.display='none';wrap.appendChild(bar);}
   if(!ns.length){ bar.style.display='none'; bar.innerHTML=''; return; }
   bar.style.display='';
   bar.innerHTML='<div style="background:#fff5f8;border:1px solid #f3c9dd;border-radius:12px;padding:12px 14px;margin:0 2px 14px"><div style="font-weight:800;font-size:13.5px;color:#C81D74;margin-bottom:8px">새 알림 '+total+'건 <span onclick="markAllNotifSeen()" style="float:right;font-size:12px;color:#999;cursor:pointer;font-weight:600">모두 읽음</span></div>'
-    +ns.map(function(x){var it=x.items[x.items.length-1];var msg=it.type==="confirm"?"원장 컨펌 완료":(_who(it.by)+": "+(it.text||"").slice(0,40));return '<div onclick="openFromNotif(\''+x.rec.id+'\')" style="cursor:pointer;padding:8px 10px;border-radius:8px;background:#fff;border:1px solid #f0e0e8;margin-bottom:6px;display:flex;gap:8px;align-items:center"><b style="font-size:13px">'+((x.rec.code||"무제"))+'</b><span style="font-size:12.5px;color:#555;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+msg.replace(/</g,"&lt;")+'</span><span style="font-size:11px;color:#c02;font-weight:800">'+x.items.length+'</span></div>';}).join('')
+    +ns.map(function(x){var it=x.items[x.items.length-1];var msg=it.type==="confirm"?"원장 컨펌 완료":(_who(it.by)+": "+(it.text||"").slice(0,40));return '<div onclick="openFromNotif(\''+x.rec.id+'\')" style="cursor:pointer;padding:8px 10px;border-radius:8px;background:#fff;border:1px solid #f0e0e8;margin-bottom:6px;display:flex;gap:8px;align-items:center"><b style="font-size:13px">'+((x.rec.code||"무제"))+'</b><span style="font-size:12.5px;color:#555;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+msg.replace(/</g,"&lt;")+'</span><span style="font-size:11px;color:#c02;font-weight:800">'+x.count+'</span></div>';}).join('')
     +'</div>';
   // 앱 열렸을 때 폰/데스크톱 알림(권한 있으면)
   try{ if(window._notifPushKey!==total+':'+((ns[0]&&ns[0].latest)||'') && typeof Notification!=='undefined' && Notification.permission==='granted' && total>0){ window._notifPushKey=total+':'+((ns[0]&&ns[0].latest)||''); new Notification('SONEED 새 알림 '+total+'건',{body:(ns[0].rec.code||'무제')+' 외',tag:'soneed-notif'}); } }catch(e){}
 }
-function _relevantCount(r){   /* 상대(남)가 남긴 코멘트 수 — 원장=선생님 코멘트 / 선생님=원장 코멘트 (시계 무관, 개수 기준) */
-  var me=(typeof authEmail==='function'&&authEmail())||''; if(!me||!r)return 0;
-  var admin=(typeof isAdmin==='function'&&isAdmin());
-  var cms=r.comments; if(typeof cms==='string'){ try{cms=JSON.parse(cms);}catch(e){cms=[];} }
-  var n=0;
-  (cms||[]).forEach(function(c){
-    if(!c||c.by===me)return;
-    var cAdmin=(typeof ADMIN_EMAILS!=='undefined'&&ADMIN_EMAILS.indexOf((c.by||'').toLowerCase())>=0);
-    if(admin&&cAdmin)return; if(!admin&&!cAdmin)return;
-    n++;
-  });
-  // 선생님: 본인 기록에 원장 컨펌되면 안읽음 1 (열면 사라짐)
-  if(!admin&&r.confirmedBy&&(r.savedBy||'').toLowerCase()===me.toLowerCase()&&(r.confirmedBy||'').toLowerCase()!==me.toLowerCase())n++;
-  return n;
+var _unreadMap={};
+async function refreshUnread(){
+  try{ if(mode==='cloud'&&authTok){
+    var r=await fetch(sbBase()+'rpc/my_unread',{method:'POST',headers:sbHeaders(),body:'{}'});
+    if(r.ok){ var m={}; (await r.json()||[]).forEach(function(x){ m[x.record_id]={unread:x.unread||0,last_at:x.last_at,last_by:x.last_by,last_txt:x.last_txt}; }); _unreadMap=m; }
+  } }catch(e){}
+  try{renderNotif();}catch(e){} try{ if(typeof renderRecList==='function')renderRecList(); }catch(e){}
 }
-function unreadCount(r){
-  try{
-    if(!r)return 0;
-    var seen=_notifSeen(); var seenN=seen[r.id]; if(typeof seenN!=='number')seenN=0;
-    var n=_relevantCount(r)-seenN;
-    return n>0?n:0;
-  }catch(e){ return 0; }
+function _confirmUnread(r){
+  try{ var me=(authEmail()||'').toLowerCase(); if(!me||!r||isAdmin())return false;
+    if(r.confirmedBy&&(r.savedBy||'').toLowerCase()===me&&(r.confirmedBy||'').toLowerCase()!==me){ var s=_notifSeen(); return !s['cf_'+r.id]; }
+  }catch(e){} return false;
 }
-function markNotifSeen(recId){
-  try{ var rr=(records||[]).find(function(x){return String(x.id)===String(recId);}); if(rr){ var s=_notifSeen(); s[recId]=_relevantCount(rr); _notifSave(s); if(typeof renderNotif==='function')renderNotif(); return; } }catch(e){}
-  _markNotifSeenOld(recId);
+function unreadCount(r){ if(!r)return 0; var n=(_unreadMap[r.id]&&_unreadMap[r.id].unread)||0; if(_confirmUnread(r))n++; return n; }
+function markNotifSeen(recId){ try{ var s=_notifSeen(); s['cf_'+recId]=new Date().toISOString(); _notifSave(s); }catch(e){} setTimeout(function(){try{refreshUnread();}catch(e){}},400); }
+async function markAllNotifSeen(){
+  try{ var s=_notifSeen(); (records||[]).forEach(function(r){ if(_confirmUnread(r))s['cf_'+r.id]=new Date().toISOString(); }); _notifSave(s); }catch(e){}
+  try{ var me=(authEmail()||'').toLowerCase(); var now=new Date().toISOString(); var ids=Object.keys(_unreadMap);
+    for(var i=0;i<ids.length;i++){ try{ await fetch(sbBase()+'record_reads',{method:'POST',headers:sbHeaders({Prefer:'resolution=merge-duplicates,return=minimal'}),body:JSON.stringify({record_id:ids[i],user_email:me,read_at:now})}); }catch(e){} }
+  }catch(e){}
+  refreshUnread(); toast('모든 알림을 읽음 처리했어요');
 }
-function _markNotifSeenOld(recId){ var s=_notifSeen(); s[recId]=new Date().toISOString(); _notifSave(s); renderNotif(); }
-function markAllNotifSeen(){ var s=_notifSeen(); (records||[]).forEach(function(r){s[r.id]=new Date().toISOString();}); _notifSave(s); renderNotif(); toast('모든 알림을 읽음 처리했어요'); }
+setInterval(function(){ try{ if(mode==='cloud'&&authTok)refreshUnread(); }catch(e){} }, 20000);
 function openFromNotif(id){ markNotifSeen(id); editRecord(id); setTimeout(function(){openComments();},350); }
 function _who(em){ if(!em)return ''; var e=(em||'').toLowerCase(); if(STAFF_NAMES[e])return STAFF_NAMES[e]; if(em===authEmail())return '나'; return em.split('@')[0]; }
 function renderConfirmUI(){
@@ -2854,8 +2842,9 @@ function openComments(){
    +'<div id="cmtList" style="flex:1;overflow:auto;padding:14px 16px;background:#faf9fb"></div>'
    +'<div style="padding:10px 12px;border-top:1px solid #eee;display:flex;gap:8px"><input id="cmtInput" placeholder="코멘트를 남기세요…" onkeydown="if(event.key===\'Enter\'&&!event.isComposing&&event.keyCode!==229)addComment()" style="flex:1;padding:11px 13px;border:1px solid #ddd;border-radius:10px;font-size:16px"><button class="btn primary" style="padding:11px 16px" onclick="addComment()">등록</button></div>'
    +'</div>';
-  _markRead();
-  renderComments(); o.style.display='flex'; if(currentId)markNotifSeen(currentId);
+  o.style.display='flex';
+  var _cid=currentId;
+  _cmtLoad(_cid).then(function(){ if(currentId===_cid){ renderComments(); _markRead(); markNotifSeen(_cid); } });
   setTimeout(function(){var el=document.getElementById('cmtInput');if(el)el.focus();},100);
   _cmtStartPoll();
 }
@@ -2870,15 +2859,26 @@ function _cmtStartPoll(){
     _cmtRefresh(_cmtPollId);
   }, 1200);
 }
+async function _cmtLoad(id){
+  try{
+    var r=await fetch(sbBase()+'record_comments?record_id=eq.'+encodeURIComponent(id)+'&select=id,by_email,txt,at&order=at.asc',{headers:sbHeaders()});
+    if(r.ok){ form.comments=(await r.json()).map(function(x){return {id:x.id,by:x.by_email,text:x.txt,at:x.at};}); }
+    var r2=await fetch(sbBase()+'record_reads?record_id=eq.'+encodeURIComponent(id)+'&select=user_email,read_at',{headers:sbHeaders()});
+    if(r2.ok){ form.reads={}; (await r2.json()).forEach(function(x){form.reads[(x.user_email||'').toLowerCase()]=x.read_at;}); }
+    _cmtLastSig=JSON.stringify((form.comments||[]).map(function(c){return c.id;}))+JSON.stringify(form.reads||{});
+  }catch(e){}
+}
 async function _cmtRefresh(id){
   try{
-    var r=await fetch(sbBase()+'records?id=eq.'+encodeURIComponent(id)+'&select=data->comments,data->reads',{headers:sbHeaders()});
-    if(!r.ok)return; var j=await r.json(); if(!j||!j[0])return;
-    var incoming=j[0].comments||[]; if(j[0].reads)form.reads=j[0].reads; var sig=JSON.stringify(incoming)+JSON.stringify(j[0].reads||{});
-    if(sig===_cmtLastSig)return;                         // 변화 없음
-    // 내가 방금 친 미저장분 유실 방지: 서버 것 기준으로 교체(저장은 즉시 되므로 안전)
-    _cmtLastSig=sig; form.comments=incoming;
-    if(currentId===id){ renderComments(); renderConfirmUI(); markNotifSeen(id); }
+    var r=await fetch(sbBase()+'record_comments?record_id=eq.'+encodeURIComponent(id)+'&select=id,by_email,txt,at&order=at.asc',{headers:sbHeaders()});
+    if(!r.ok)return; var rows=await r.json();
+    var r2=await fetch(sbBase()+'record_reads?record_id=eq.'+encodeURIComponent(id)+'&select=user_email,read_at',{headers:sbHeaders()});
+    var reads={}; if(r2.ok){ (await r2.json()).forEach(function(x){reads[(x.user_email||'').toLowerCase()]=x.read_at;}); }
+    var incoming=rows.map(function(x){return {id:x.id,by:x.by_email,text:x.txt,at:x.at};});
+    var sig=JSON.stringify(incoming.map(function(c){return c.id;}))+JSON.stringify(reads);
+    if(sig===_cmtLastSig)return;
+    _cmtLastSig=sig;
+    if(currentId===id){ form.comments=incoming; form.reads=reads; renderComments(); }
   }catch(e){}
 }
 function _otherParty(){
@@ -2886,10 +2886,10 @@ function _otherParty(){
   if(admin) return (form.savedBy||'').toLowerCase();
   return (typeof ADMIN_EMAIL!=='undefined'?ADMIN_EMAIL:'soni0025@naver.com').toLowerCase();
 }
-function _markRead(){
-  try{ if(!form.reads)form.reads={}; var me=(authEmail()||'').toLowerCase(); if(!me)return;
-    form.reads[me]=new Date().toISOString();
-    if(typeof saveRecord==='function')saveRecord();
+async function _markRead(){
+  try{ var me=(authEmail()||'').toLowerCase(); if(!me||!currentId||mode!=='cloud')return;
+    var now=new Date().toISOString(); if(!form.reads)form.reads={}; form.reads[me]=now;
+    await fetch(sbBase()+'record_reads',{method:'POST',headers:sbHeaders({Prefer:'resolution=merge-duplicates,return=minimal'}),body:JSON.stringify({record_id:String(currentId),user_email:me,read_at:now})});
   }catch(e){}
 }
 function _fmtWhen(iso){
@@ -2919,24 +2919,28 @@ function renderComments(){
   }).join('');
   box.scrollTop=box.scrollHeight;
 }
-function addComment(){
+async function addComment(){
   var el=document.getElementById('cmtInput'); if(!el)return; var t=(el.value||'').trim(); if(!t)return;
-  if(!form.comments)form.comments=[];
-  form.comments.push({by:authEmail(),text:t,at:new Date().toISOString()});
-  el.value=''; renderComments(); renderConfirmUI();
-  if(typeof saveRecord==='function')saveRecord();
-  _cmtLastSig=JSON.stringify(form.comments||[]);
-  try{ var nm=(form.code||'고객'); var me=authEmail();
-    if(isAdmin()){ if(form.savedBy&&form.savedBy!==me) sendPushTo(form.savedBy,'원장 코멘트 · '+nm, t.slice(0,50), null, currentId); }
-    else { sendPushTo('admin','새 코멘트 · '+nm, _who(me)+': '+t.slice(0,50), me, currentId); }
+  var me=authEmail(); if(!me){toast('로그인 후 이용하세요');return;} var rid=currentId; if(!rid){toast('기록을 먼저 여세요');return;}
+  el.value='';
+  try{
+    var r=await fetch(sbBase()+'record_comments',{method:'POST',headers:sbHeaders({Prefer:'return=representation'}),body:JSON.stringify({record_id:String(rid),by_email:me,txt:t})});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    var row=(await r.json())[0]; if(!form.comments)form.comments=[]; form.comments.push({id:row.id,by:row.by_email,text:row.txt,at:row.at});
+    _cmtLastSig=''; renderComments(); renderConfirmUI();
+  }catch(e){ el.value=t; toast('전송 실패: '+((e&&e.message)||e)); return; }
+  try{ var nm=(form.code||'고객');
+    if(isAdmin()){ if(form.savedBy&&form.savedBy!==me) sendPushTo(form.savedBy,'원장 코멘트 · '+nm, t.slice(0,50), null, rid); }
+    else { sendPushTo('admin','새 코멘트 · '+nm, _who(me)+': '+t.slice(0,50), me, rid); }
   }catch(e){}
 }
-function delComment(i){
-  var arr=form.comments||[]; if(!arr[i])return;
-  if(arr[i].by!==authEmail()){toast('본인 코멘트만 삭제할 수 있어요');return;}
+async function delComment(i){
+  var arr=form.comments||[]; var c=arr[i]; if(!c)return;
+  if(c.by!==authEmail()){toast('본인 코멘트만 삭제할 수 있어요');return;}
   if(!confirm('이 코멘트를 삭제할까요?'))return;
-  arr.splice(i,1); renderComments(); renderConfirmUI();
-  if(typeof saveRecord==='function')saveRecord();
+  try{ if(c.id!=null){ var r=await fetch(sbBase()+'record_comments?id=eq.'+encodeURIComponent(c.id),{method:'DELETE',headers:sbHeaders({Prefer:'return=minimal'})}); if(!r.ok)throw new Error('HTTP '+r.status); } }
+  catch(e){ toast('삭제 실패: '+((e&&e.message)||e)); return; }
+  arr.splice(i,1); _cmtLastSig=''; renderComments(); renderConfirmUI();
 }
 async function editRecord(id){var r=records.find(x=>String(x.id)===String(id));if(!r)return;
   _reportScroll=window.scrollY||document.documentElement.scrollTop||0;_restoreReport=true;
@@ -3016,7 +3020,7 @@ function showView(v){
   document.getElementById('view-entry').style.display=v==='entry'?'':'none';
   if(v==='entry')setTimeout(function(){try{initEntryTabs();}catch(e){}},20);
   document.getElementById('view-data').style.display=v==='data'?'':'none';
-  if(v==='data'){ try{ if(typeof loadAll==='function'&&mode==='cloud')loadAll(); }catch(e){} try{ if(typeof Notification!=='undefined'&&Notification.permission==='default')Notification.requestPermission(); }catch(e){} setTimeout(function(){try{renderNotif();}catch(e){}},60); }
+  if(v==='data'){ try{ if(typeof loadAll==='function'&&mode==='cloud')loadAll(); }catch(e){} try{ if(typeof Notification!=='undefined'&&Notification.permission==='default')Notification.requestPermission(); }catch(e){} setTimeout(function(){try{refreshUnread();}catch(e){}},60); }
   var va=document.getElementById('view-admin'); if(va)va.style.display=v==='admin'?'':'none';
   var vac=document.getElementById('view-academy'); if(vac)vac.style.display=v==='academy'?'':'none';
   document.getElementById('tabEntry').classList.toggle('on',v==='entry');
