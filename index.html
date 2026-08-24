@@ -303,7 +303,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v218 (2026-08-24)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v219 (2026-08-24)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -480,6 +480,11 @@ h2.section,.logo{letter-spacing:-.01em}
     <div id="recList" class="recgrid"></div>
   </section>
   <section id="view-admin" style="display:none">
+    <div class="card pad" style="margin-bottom:16px;border:2px solid #c0392b">
+      <h2 class="section" style="margin-top:0">🗑 휴지통 <span class="subtle" style="text-transform:none;letter-spacing:0;font-weight:600">삭제된 기록 복원 · 영구삭제(대표)</span></h2>
+      <button class="btn ghost" style="font-size:12.5px;padding:6px 12px" onclick="renderFaceTrash()">새로고침</button>
+      <div id="faceTrashBox" style="margin-top:10px" class="subtle">[새로고침]을 눌러 확인하세요.</div>
+    </div>
     <div class="card pad" style="margin-bottom:16px;border:2px solid #0e9f6e">
       <h2 class="section" style="margin-top:0">AI 정확도 <span class="subtle" style="text-transform:none;letter-spacing:0;font-weight:600">AI 초안 vs 최종 저장 · 항목별 일치율</span></h2>
       <button class="btn ghost" style="font-size:12.5px;padding:6px 12px" onclick="aiAccuracyReport()">계산하기</button>
@@ -1180,7 +1185,7 @@ async function cloudLoad(offset,limit){
   var sel=('id,updated_at,'+lk.map(function(k){return k+':data->'+k;}).join(',')).replace(/>/g,'%3E');
   var _ctl=new AbortController(), _to=setTimeout(function(){_ctl.abort();},15000);
   try{
-    const r=await fetch(sbBase()+'records?select='+sel+'&order=updated_at.desc&offset='+offset+'&limit='+limit,{headers:sbHeaders(),signal:_ctl.signal});
+    const r=await fetch(sbBase()+'records?select='+sel+'&deleted_at=is.null&order=updated_at.desc&offset='+offset+'&limit='+limit,{headers:sbHeaders(),signal:_ctl.signal});
     clearTimeout(_to);
     if(r.status===401||r.status===403){openLogin();throw new Error('auth');}
     if(!r.ok) throw new Error('목록 '+r.status+' '+await r.text());
@@ -1277,6 +1282,8 @@ async function cloudSaveRecord(rec){
   }
 }
 async function cloudDelete(id){const r=await fetch(sbBase()+'records?id=eq.'+encodeURIComponent(String(id)),{method:'DELETE',headers:sbHeaders({Prefer:'return=minimal'})});if(!r.ok)throw new Error('HTTP '+r.status);}
+async function cloudSoftDelete(id){const r=await fetch(sbBase()+'records?id=eq.'+encodeURIComponent(String(id)),{method:'PATCH',headers:sbHeaders({Prefer:'return=minimal'}),body:JSON.stringify({deleted_at:new Date().toISOString()})});if(!r.ok)throw new Error('HTTP '+r.status);}
+async function cloudRestore(id){const r=await fetch(sbBase()+'records?id=eq.'+encodeURIComponent(String(id)),{method:'PATCH',headers:sbHeaders({Prefer:'return=minimal'}),body:JSON.stringify({deleted_at:null})});if(!r.ok)throw new Error('HTTP '+r.status);}
 
 async function persistRecord(rec){if(mode==='cloud')await cloudSaveRecord(rec);else await storeSet('rec:'+rec.id,JSON.stringify(rec));}
 async function removeRecord(id){if(mode==='cloud')await cloudDelete(id);else await storeDel('rec:'+id);}
@@ -2938,16 +2945,22 @@ async function editRecord(id){var r=records.find(x=>String(x.id)===String(id));i
   try{ markNotifSeen(id); }catch(e){}
   form=Object.assign({},r);currentId=r.id;autoFilled={};renderForm();applyFormToUI();document.getElementById('editState').textContent=(r.code||'무제')+' · 편집 중';document.getElementById('delBtn').style.display='';document.getElementById('autoMsg').innerHTML='';const _fr2=document.getElementById('faceResult');if(_fr2)_fr2.innerHTML='';renderConfirmUI();showView('entry');}
 async function deleteCurrent(){
-  if(!currentId)return; if(!confirm('이 기록을 삭제할까요?'))return;
+  if(!currentId)return; if(!confirm('이 기록을 휴지통으로 보낼까요? (5분 내 실행취소 가능)'))return;
   var delId=currentId, backup=null;
   try{ backup=await fetchFull(delId); }catch(e){}
-  try{ await removeRecord(delId); }catch(e){toast('삭제 실패: '+e.message);return;}
+  try{
+    if(mode==='cloud') await cloudSoftDelete(delId);   /* ★ 소프트삭제(휴지통) */
+    else await removeRecord(delId);                    /* 로컬(오프라인)은 기존 삭제 */
+  }catch(e){ toast('삭제 실패: '+((e&&e.message)||e)); return; }
   records=records.filter(r=>String(r.id)!==String(delId)); clearForm(); refreshAll();
   try{ if(mode==='cloud')_saveRecCache(records); }catch(e){}
-  showUndo('기록을 삭제했어요', async function(){
-    if(!backup){ toast('되돌릴 데이터가 없어요'); return; }
-    try{ await persistRecord(backup); if(!records.some(r=>String(r.id)===String(backup.id)))records.push(backup); sortRecs(); refreshAll(); try{if(mode==='cloud')_saveRecCache(records);}catch(e){} toast('복원했어요'); }
-    catch(e){ toast('복원 실패: '+(e&&e.message||e)); }
+  showUndo(mode==='cloud'?'휴지통으로 보냈어요 (5분 내 실행취소)':'기록을 삭제했어요', async function(){
+    try{
+      if(mode==='cloud') await cloudRestore(delId);    /* ★ 복원 */
+      else { if(!backup){toast('되돌릴 데이터가 없어요');return;} await persistRecord(backup); }
+      if(backup && !records.some(r=>String(r.id)===String(backup.id))){ records.push(backup); sortRecs(); }
+      refreshAll(); try{if(mode==='cloud')_saveRecCache(records);}catch(e){} toast('복원했어요');
+    }catch(e){ toast('복원 실패: '+((e&&e.message)||e)); }
   });
 }
 function clearFormConfirm(){var has=form&&Object.keys(form).some(function(k){var v=form[k];return v!=null&&v!==''&&!(Array.isArray(v)&&!v.length);});if(has&&!confirm('현재 화면에 입력한 내용이 지워지고 새 기록을 작성합니다.\n(이미 저장한 기록은 목록에 그대로 남아요)\n계속할까요?'))return;clearForm();}
@@ -3013,7 +3026,7 @@ function showView(v){
   if(v==='data'){renderRecList();renderCrosstab();
     if(_restoreReport){var _y=_reportScroll;_restoreReport=false;requestAnimationFrame(function(){window.scrollTo(0,_y);setTimeout(function(){window.scrollTo(0,_y);},60);});}
   }
-  if(v==='admin'){renderStats();renderIncomingLeads();renderAppCustomers();renderSolAdmin();}
+  if(v==='admin'){renderStats();renderIncomingLeads();renderAppCustomers();renderSolAdmin();renderFaceTrash();}
   if(v==='academy'){renderAcademyApps();}
 }
 
@@ -3204,6 +3217,31 @@ function exportCSV(){if(!records.length){toast('내보낼 기록이 없습니다
 function refreshAll(){document.getElementById('totalCount').textContent=records.length;renderConds();renderRecList();renderCrosstab();}
 let toastT;function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),1800);}
 var _undoT;
+async function renderFaceTrash(){
+  if(!isAdmin())return;
+  var box=document.getElementById('faceTrashBox'); if(!box)return;
+  box.textContent='불러오는 중…'; var rows;
+  try{
+    var r=await fetch(sbBase()+'records?select=id,data,deleted_at&deleted_at=not.is.null&order=deleted_at.desc',{headers:sbHeaders()});
+    if(!r.ok)throw new Error('HTTP '+r.status); rows=await r.json();
+  }catch(e){ box.textContent='휴지통 불러오기 실패: '+((e&&e.message)||e); return; }
+  if(!rows.length){ box.textContent='휴지통이 비어 있어요.'; return; }
+  box.innerHTML=rows.map(function(x){ var d=x.data||{}; var nm=(d.code||d.name||'(무제)'); var del=String(x.deleted_at||'').replace('T',' ').slice(0,16);
+    return '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #eee"><div style="flex:1;min-width:0"><b>'+_esc(nm)+'</b> <span class="subtle" style="font-size:12px">삭제: '+_esc(del)+'</span></div><button class="btn ghost" style="font-size:12px;padding:5px 10px" data-fact="restore" data-id="'+_esc(String(x.id))+'">복원</button><button class="btn" style="font-size:12px;padding:5px 10px;background:#c0392b;color:#fff;border-color:#c0392b" data-fact="purge" data-id="'+_esc(String(x.id))+'">영구삭제</button></div>';
+  }).join('');
+  if(!box._bound){ box._bound=true; box.addEventListener('click',function(e){ var b=e.target.closest('[data-fact]'); if(!b)return; var id=b.getAttribute('data-id'),act=b.getAttribute('data-fact'); if(act==='restore')faceRestore(id); else if(act==='purge')facePurge(id); }); }
+}
+async function faceRestore(id){
+  try{ await cloudRestore(id); }catch(e){ toast('복원 실패: '+((e&&e.message)||e)); return; }
+  toast('복원했어요'); renderFaceTrash();
+  try{ var fresh=await cloudLoad(0,_PAGE); records=fresh; _recOff=fresh.length; _recEnd=fresh.length<_PAGE; _saveRecCache(records); sortRecs(); refreshAll(); }catch(e){}
+}
+async function facePurge(id){
+  if(!isAdmin()){ toast('영구삭제는 대표만 가능합니다'); return; }
+  if(!confirm('영구 삭제할까요? 되돌릴 수 없습니다.'))return;
+  try{ await cloudDelete(id); }catch(e){ toast('영구삭제 실패: '+((e&&e.message)||e)); return; }
+  toast('영구 삭제됨'); renderFaceTrash();
+}
 function showUndo(msg,undoFn){
   var b=document.getElementById('undoBar');
   if(!b){ b=document.createElement('div'); b.id='undoBar'; b.style.cssText='position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:100090;display:flex;align-items:center;gap:14px;background:#23242a;color:#fff;padding:12px 18px;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.35);font-size:13.5px;white-space:nowrap;max-width:94vw'; document.body.appendChild(b); }
