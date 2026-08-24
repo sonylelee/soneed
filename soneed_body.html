@@ -934,18 +934,11 @@ async function renderAdminTrash(){
   }).join('');
   if(!box._bound){ box._bound=true; box.addEventListener('click',function(e){ var b=e.target.closest('[data-act]'); if(!b)return; var id=b.getAttribute('data-id'),act=b.getAttribute('data-act'); if(act==='restore')restoreRecord(id); else if(act==='purge')purgeRecord(id); }); }
 }
-async function renderAdminStaff(){
+function renderAdminStaff(){
   var box=document.getElementById('adminStaff'); if(!box)return;
-  box.innerHTML='<div class="muted">불러오는 중…</div>';
-  try{
-    var r=await fetch(SB_URL+'/rest/v1/rpc/admin_body_users',{method:'POST',headers:_sbH(),body:'{}'});
-    if(!r.ok)throw new Error('HTTP '+r.status);
-    var arr=await r.json();
-    if(!arr||!arr.length){ box.innerHTML='<div class="muted">등록된 계정이 없어요.</div>'; return; }
-    box.innerHTML=arr.map(function(u){ var role=(u.role==='admin'?'대표':(u.role==='manager'?'관리직원':'직원'));
-      return '<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line);font-size:13.5px"><span>'+_esc(u.email||'')+'</span><span class="muted">'+_esc(role)+'</span></div>';
-    }).join('');
-  }catch(e){ box.innerHTML='<div class="muted">직원 목록 RPC(admin_body_users)가 아직 없어요. DB 셋업 때 추가됩니다.</div>'; }
+  // ★ 보안: 직원 생성·목록·비번재설정을 브라우저에서 관리자 키로 직접 호출하지 않음(일시 비활성화).
+  //   추후 Supabase Edge Function(서버에서 access token 검증 + app_metadata.role=admin 확인)으로만 연동.
+  box.innerHTML='<div class="muted">직원 <b>생성·목록·비밀번호 재설정</b>은 보안을 위해 <b>별도 서버(Supabase Edge Function)</b>로만 처리하도록 준비 중입니다.<br>브라우저에서 관리자 키로 직접 호출하지 않습니다. <span style="color:#c08">(현재 일시 비활성화)</span></div>';
 }
 /* 예전 로컬 기록(sbody_records) 관련 코드는 운영본에서 제거됨. 복구는 soneed_body_로컬복구_붙여넣기전용.html 로만. */
 (function(){var d=new Date(),t=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);var e=document.getElementById('recDate');if(e&&!e.value)e.value=t;})();
