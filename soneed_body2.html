@@ -907,7 +907,7 @@ init().catch(function(e){console.warn('pose init',e);});
         (res||[]).forEach(function(x){
           if(x.score===0)return; var tg=MAP[x.name]; if(!tg)return;
           var short=x.score>0;
-          tg.forEach(function(nn){ var arr=nodes[nn]; if(!arr)return; arr.forEach(function(o){ var m=o.material; var t=Math.min(1,Math.abs(x.pct)/100), hue=short?0.0:0.61; m.color.setHSL(hue,1,0.55-0.13*t); if(m.emissive){m.emissive.setHSL(hue,1,0.5);m.emissiveIntensity=0.6+0.7*t;} m.roughness=0.35; m.transparent=false; m.opacity=1; m.depthWrite=true; colored[o.id]=1; }); });
+          tg.forEach(function(nn){ var arr=nodes[nn]; if(!arr)return; arr.forEach(function(o){ var m=o.material; var t=Math.min(1,Math.abs(x.pct)/100), hue=short?0.0:0.61; m.color.setHSL(hue,1,0.5-0.16*t); if(m.emissive){m.emissive.setHSL(hue,1,0.5);m.emissiveIntensity=0.16+0.22*t;} m.roughness=0.5; m.transparent=false; m.opacity=1; m.depthWrite=true; colored[o.id]=1; }); });
         });
         applyVis();
       };
