@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beauty OS Bible · SONEED</title>
+<link rel="icon" type="image/png" href="soneed-face-icon-512.png"><link rel="apple-touch-icon" href="soneed-face-icon-180.png">
+<meta name="robots" content="noindex">
+<style>
+  :root{
+    --paper:#F8F6F3; --raised:#FFFFFF; --ink:#1A1A1F; --ink-soft:#4A4650; --muted:#7E7A84;
+    --line:#E7E2DC; --line-soft:#EFEAE4; --accent:#C4185C; --accent-soft:#F8E6ED;
+    --navy:#26307A; --navy-soft:#EAECF6; --gold:#9A6A1E; --lock:#8A5A66; --lock-soft:#F4E9EC;
+    --font:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,-apple-system,sans-serif;
+    --mono:'SFMono-Regular',ui-monospace,Menlo,Consolas,monospace;
+    --sb:270px; --readw:760px;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --paper:#101014; --raised:#17171D; --ink:#ECE9EF; --ink-soft:#B4AFBB; --muted:#847F8C;
+    --line:#26242D; --line-soft:#1E1D25; --accent:#F0468A; --accent-soft:#2A1620;
+    --navy:#9FB0EC; --navy-soft:#191C2C; --gold:#D6A24E; --lock:#D98CA0; --lock-soft:#241820;
+  }}
+  :root[data-theme="light"]{--paper:#F8F6F3;--raised:#FFFFFF;--ink:#1A1A1F;--ink-soft:#4A4650;--muted:#7E7A84;--line:#E7E2DC;--line-soft:#EFEAE4;--accent:#C4185C;--accent-soft:#F8E6ED;--navy:#26307A;--navy-soft:#EAECF6;--gold:#9A6A1E;--lock:#8A5A66;--lock-soft:#F4E9EC;}
+  :root[data-theme="dark"]{--paper:#101014;--raised:#17171D;--ink:#ECE9EF;--ink-soft:#B4AFBB;--muted:#847F8C;--line:#26242D;--line-soft:#1E1D25;--accent:#F0468A;--accent-soft:#2A1620;--navy:#9FB0EC;--navy-soft:#191C2C;--gold:#D6A24E;--lock:#D98CA0;--lock-soft:#241820;}
+
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font);
+    font-size:16px;line-height:1.75;word-break:keep-all;overflow-wrap:break-word;-webkit-font-smoothing:antialiased}
+  a{color:inherit}
+
+  /* top bar */
+  .top{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:16px;height:56px;padding:0 20px;
+    background:color-mix(in srgb,var(--paper) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .brand{font-weight:800;letter-spacing:.02em;font-size:15px;display:flex;align-items:center;gap:9px}
+  .brand .dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+  .brand small{color:var(--muted);font-weight:600;letter-spacing:.14em;text-transform:uppercase;font-size:10.5px}
+  .top .sp{flex:1}
+  .tier{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:var(--raised)}
+  .tier button{border:0;background:transparent;color:var(--muted);font-weight:800;font-size:12.5px;padding:7px 14px;cursor:pointer;font-family:inherit}
+  .tier button.on{background:var(--accent);color:#fff}
+  .iconbtn{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--raised);color:var(--ink-soft);cursor:pointer;font-size:15px}
+  .menubtn{display:none}
+
+  .layout{display:flex;align-items:flex-start;max-width:1240px;margin:0 auto}
+  /* sidebar */
+  aside{position:sticky;top:56px;height:calc(100vh - 56px);width:var(--sb);flex:none;overflow-y:auto;
+    padding:26px 14px 60px 22px;border-right:1px solid var(--line-soft)}
+  aside .part{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);
+    margin:22px 8px 8px}
+  aside .part:first-child{margin-top:0}
+  aside a{display:block;text-decoration:none;color:var(--ink-soft);font-size:13.5px;line-height:1.4;
+    padding:6px 10px;border-radius:8px;font-weight:500}
+  aside a:hover{background:var(--line-soft);color:var(--ink)}
+  aside a.active{background:var(--accent-soft);color:var(--accent);font-weight:700}
+  aside a .num{color:var(--muted);font-variant-numeric:tabular-nums;font-size:11.5px;margin-right:7px}
+  aside a.lk::after{content:"🔒";font-size:10px;margin-left:6px;opacity:.7}
+
+  main{flex:1;min-width:0;padding:44px 40px 120px}
+  .doc{max-width:var(--readw);margin:0 auto}
+  .eyebrow{font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:12px}
+  h1{font-size:clamp(30px,5vw,46px);font-weight:800;letter-spacing:-.02em;line-height:1.08;margin:0 0 16px}
+  h2.part-title{font-size:13px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--navy);
+    margin:70px 0 6px;padding-top:26px;border-top:1px solid var(--line)}
+  h3{font-size:clamp(22px,3.2vw,28px);font-weight:800;letter-spacing:-.01em;margin:14px 0 8px;scroll-margin-top:72px}
+  h3 .ch{color:var(--muted);font-variant-numeric:tabular-nums;font-weight:800;margin-right:10px}
+  p{margin:0 0 1em;color:var(--ink-soft)}
+  p.lead{font-size:19px;color:var(--ink);line-height:1.6}
+  b,strong{color:var(--ink);font-weight:700}
+  .purpose{font-size:14.5px;color:var(--muted);font-style:italic;margin:0 0 14px}
+  ul.pts{list-style:none;padding:0;margin:0 0 14px;display:grid;gap:9px}
+  ul.pts li{display:flex;gap:11px;font-size:15px;line-height:1.55;color:var(--ink-soft)}
+  ul.pts li::before{content:"";flex:none;width:6px;height:6px;border-radius:2px;background:var(--accent);margin-top:9px;transform:rotate(45deg)}
+  .callout{border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 12px 12px 0;padding:16px 18px;margin:16px 0;font-size:15px;line-height:1.6}
+  .callout b{color:var(--accent)}
+  .stub{border:1px dashed var(--line);border-radius:12px;padding:14px 18px;color:var(--muted);font-size:14px;background:var(--raised)}
+  .term{border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:10px 0;background:var(--raised)}
+  .term .t{font-weight:800;color:var(--ink)}
+  .term .d{font-size:14.5px;color:var(--ink-soft);margin-top:4px}
+  code{font-family:var(--mono);font-size:.9em;background:var(--line-soft);padding:1px 6px;border-radius:5px;color:var(--ink)}
+
+  /* lock (engine) */
+  section.locked{position:relative}
+  body[data-tier="edu"] section.locked{display:none}
+  .lockchip{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;color:var(--lock);
+    background:var(--lock-soft);border:1px solid color-mix(in srgb,var(--lock) 35%,transparent);border-radius:999px;padding:3px 11px;margin-bottom:10px}
+  .edu-note{display:none}
+  body[data-tier="edu"] .edu-note{display:block}
+  .edu-note{border:1px dashed var(--lock);border-radius:12px;padding:18px 20px;color:var(--lock);background:var(--lock-soft);font-size:14.5px;margin:24px 0}
+
+  .status{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.03em;padding:2px 9px;border-radius:999px;margin-left:10px;vertical-align:middle}
+  .status.draft{background:var(--navy-soft);color:var(--navy)} .status.stub{background:var(--line-soft);color:var(--muted)}
+
+  footer{border-top:1px solid var(--line);margin-top:60px;padding-top:22px;color:var(--muted);font-size:12.5px}
+
+  @media(max-width:900px){
+    aside{position:fixed;left:0;top:56px;z-index:35;background:var(--paper);transform:translateX(-100%);transition:transform .25s;box-shadow:6px 0 24px rgba(0,0,0,.12)}
+    body.nav-open aside{transform:none}
+    .menubtn{display:flex;align-items:center;justify-content:center}
+    main{padding:32px 22px 100px}
+  }
+</style>
+</head>
+<body data-tier="full">
+
+<div class="top">
+  <button class="iconbtn menubtn" id="menuBtn" aria-label="목차">☰</button>
+  <div class="brand"><span class="dot"></span> Beauty&nbsp;OS&nbsp;Bible <small>SONEED Standard</small></div>
+  <div class="sp"></div>
+  <div class="tier" role="group" aria-label="등급">
+    <button id="tierFull" class="on" onclick="setTier('full')">전체판</button>
+    <button id="tierEdu" onclick="setTier('edu')">교육판</button>
+  </div>
+  <button class="iconbtn" id="themeBtn" aria-label="테마">◐</button>
+</div>
+
+<div class="layout">
+  <aside id="sidebar">
+    <div class="part">Part 0 · Foundation</div>
+    <a href="#c0"><span class="num">00</span>서문 · 비전</a>
+    <a href="#c1"><span class="num">01</span>핵심 철학</a>
+    <a href="#c2"><span class="num">02</span>대원칙</a>
+    <div class="part">Part 1 · Language</div>
+    <a href="#c3"><span class="num">03</span>좌우 규약</a>
+    <a href="#c4"><span class="num">04</span>용어 사전</a>
+    <a href="#c5"><span class="num">05</span>뼈 · 랜드마크 지도</a>
+    <div class="part">Part 2 · Analysis Standard</div>
+    <a href="#c6"><span class="num">06</span>촬영 표준</a>
+    <a href="#c7"><span class="num">07</span>왜곡 원리</a>
+    <a href="#c8"><span class="num">08</span>진단 차트 판독 기준</a>
+    <a href="#c9"><span class="num">09</span>안면 코드 시스템</a>
+    <a href="#c10"><span class="num">10</span>측정 기술 기준</a>
+    <div class="part">Part 3 · The Engine</div>
+    <a href="#c11" class="lk"><span class="num">11</span>스파이럴 원리</a>
+    <a href="#c12" class="lk"><span class="num">12</span>도출 체계</a>
+    <a href="#c13" class="lk"><span class="num">13</span>규칙 생성·검증</a>
+    <div class="part">Part 4 · Design & Solution</div>
+    <a href="#c14"><span class="num">14</span>코드 → 리세팅가이드</a>
+    <a href="#c15"><span class="num">15</span>동작 언어</a>
+    <a href="#c16"><span class="num">16</span>얼굴 디자인</a>
+    <div class="part">Part 5 · Education</div>
+    <a href="#c17"><span class="num">17</span>교육 철학</a>
+    <a href="#c18"><span class="num">18</span>레벨 체계</a>
+    <a href="#c19"><span class="num">19</span>무엇을 가르치고 감추는가</a>
+    <div class="part">Part 6 · Brand & System</div>
+    <a href="#c20"><span class="num">20</span>브랜드 정의</a>
+    <a href="#c21"><span class="num">21</span>표기 관례</a>
+    <div class="part">Part 7 · Governance</div>
+    <a href="#c22"><span class="num">22</span>데이터 · 개인정보</a>
+    <a href="#c23"><span class="num">23</span>표준 버전 관리</a>
+  </aside>
+
+  <main>
+    <div class="doc">
+      <div class="eyebrow">SONEED · The Standard of Reading Faces</div>
+      <h1>Beauty OS Bible</h1>
+      <p class="lead">SONEED가 누구를 교육하든, 어느 지점을 열든, 어떤 나라에 진출하든 <b>흔들리지 않는 하나의 언어</b>를 위한 표준 문서.</p>
+      <div class="callout">이 문서는 <b>두 등급</b>으로 운영된다. <b>전체판</b>은 원리(엔진)를 포함한 내부 정본이며, <b>교육판</b>은 엔진을 제외한 교육·배포용이다. 상단에서 등급을 전환할 수 있다. <br>※ 🔒 표시 장은 전체판 전용이며, 무단 전파를 금한다.</div>
+
+      <!-- PART 0 -->
+      <h2 class="part-title">Part 0 · Foundation</h2>
+
+      <section id="c0"><h3><span class="ch">00</span>서문 · 비전<span class="status draft">초안</span></h3>
+        <p class="purpose">왜 Beauty OS가 존재하는가.</p>
+        <p>미용·에스테틱 업계에는 얼굴 구조를 평가하는 <b>공통 기준이 없다.</b> 관리사마다 진단이 다르고, 기록이 다르고, 결과가 데이터로 남지 않는다. SONEED는 얼굴을 <b>데이터로 읽는 표준</b>을 만든다. Beauty OS는 그 표준의 이름이며, 페이스리세팅은 그 표준이 손끝에서 구현된 기술이다.</p>
+        <ul class="pts">
+          <li>애플에 HIG, 구글에 Material이 있듯 — SONEED에는 <b>Beauty OS Bible</b>이 있다.</li>
+          <li>이 문서가 완성되면, 표준은 사람·지점·국가에 상관없이 동일하게 전달된다.</li>
+          <li>사업체·앱은 복제될 수 있으나, <b>표준을 소유한 회사는 복제되지 않는다.</b></li>
+        </ul>
+      </section>
+
+      <section id="c1"><h3><span class="ch">01</span>핵심 철학<span class="status draft">초안</span></h3>
+        <p class="purpose">SONEED가 얼굴을 대하는 태도.</p>
+        <ul class="pts">
+          <li><b>관리가 아니라 해석.</b> 우리는 얼굴을 관리하지 않는다. 얼굴을 읽고 해석한다.</li>
+          <li><b>표면이 아니라 구조.</b> 피부가 아니라 두개골 회전·후두골 위치·안면 비대칭 등 구조를 다룬다.</li>
+          <li><b>사진은 가설, 촉진은 검증.</b> 사진 분석은 '촉진 전 초안'이며, 최종은 언제나 손으로 확인한다.</li>
+          <li><b>기술이 아니라 판독.</b> 결과를 가르는 것은 손의 힘이 아니라 정확한 분석이다.</li>
+          <li><b>Every Face Has Data.</b> 모든 얼굴은 좌우 비대칭·각도·회전·볼륨·레이어로 읽힌다.</li>
+        </ul>
+      </section>
+
+      <section id="c2"><h3><span class="ch">02</span>대원칙<span class="status draft">초안</span></h3>
+        <p class="purpose">모든 판독·시술을 관통하는 상위 규칙.</p>
+        <ul class="pts">
+          <li><b>스파이럴 원리</b> — 두개골이 나선으로 돌며 한쪽이 압축된다. 그것이 '타입'이자 '회전'이다. (원리 상세는 🔒 Part 3)</li>
+          <li><b>두께 = 부피</b> — 거리 항목은 직선거리가 아니라 두께로 읽는다. 부피가 살아있는 쪽이 길다.</li>
+          <li><b>상관 ≠ 규칙</b> — 패턴이 보여도 데이터로 검증되기 전엔 규칙으로 못 박지 않는다.</li>
+          <li><b>좌우는 본인 기준</b> — 모든 L/R은 고객 본인 기준. (상세는 Ch.03)</li>
+        </ul>
+      </section>
+
+      <!-- PART 1 -->
+      <h2 class="part-title">Part 1 · Language</h2>
+
+      <section id="c3"><h3><span class="ch">03</span>좌우 규약<span class="status draft">초안</span></h3>
+        <p class="purpose">모든 오류의 근원 — 반드시 하나의 약속으로.</p>
+        <p>정면·고개 든·고개 숙인 사진 <b>모두: 화면(이미지) 왼쪽 = 본인 오른쪽 / 화면 오른쪽 = 본인 왼쪽.</b> 단 이는 '마주 보고 찍은 일반 카메라' 기준이며, 셀카(거울 모드)는 반대다.</p>
+        <div class="callout">측정값은 <b>코드가 이미 '본인 기준'으로 변환</b>해서 제공한다. 재반전 금지 — 두 번 뒤집으면 전부 반대가 된다.</div>
+      </section>
+
+      <section id="c4"><h3><span class="ch">04</span>용어 사전<span class="status draft">집필 중</span></h3>
+        <p class="purpose">SONEED가 쓰는 모든 용어의 단일 정의. 각 용어 = 정의 · 랜드마크 · 판독법.</p>
+        <div class="term"><div class="t">타입 (A / B)</div><div class="d">얼굴 좌우 중 전체적으로 더 작아 보이는(압축된) 쪽. A = 우측 압축 / B = 좌측 압축.</div></div>
+        <div class="term"><div class="t">투구 기울기 · 투구 회전</div><div class="d">기울기 = 좌우 눈동자 높이차로 기운 쪽. 회전 = 정면에서 더 보이는 귀 쪽(본인 오른귀 보이면 R).</div></div>
+        <div class="term"><div class="t">후두골 중심부 시간 (5 / 6 / 7시)</div><div class="d">고개 든 사진의 좌우 귀 높이차. 본인 오른귀 더 아래 = 7시 / 대칭 = 6시 / 왼귀 더 아래 = 5시.</div></div>
+        <div class="term"><div class="t">햄버거 시프트</div><div class="d">두개골을 햄버거에 비유 — 안면부(윗빵)와 두상부(아래빵)의 좌우 쏠림(평행이동) 차이. 2층 = 광대, 3층 = 이마.</div></div>
+        <div class="term"><div class="t">안면 코드</div><div class="d">얼굴을 7자리로 요약: 타입·후두골·코방향·광대 전면레벨·눈높이·콧볼·오른마루. 예) <code>A7-왼오오오-T</code>. (상세 Ch.09)</div></div>
+        <div class="stub" style="margin-top:12px">▸ 추가 예정: 럭비프레스 · CA위치 · 워터슬라이드 · 전후방경사 · 측면함유량 · 유양돌기 · 템포럴 아치 · 마루뼈 … (전 용어 정본화)</div>
+      </section>
+
+      <section id="c5"><h3><span class="ch">05</span>뼈 · 랜드마크 지도<span class="status stub">스텁</span></h3>
+        <p class="purpose">판독에 쓰는 뼈 지점과 MediaPipe 랜드마크 인덱스의 단일 지도.</p>
+        <div class="stub">마루뼈 · 이마뼈 랜드마크 · 유양돌기 · 템포럴 아치 · 후두골 중심부 · 턱관절의 정의 + 홍채(468/473)·눈 안쪽끝(133/362)·귀앞점(127/356)·코끝(1)·턱끝(152)·이마(10) 인덱스 지도 — 도해와 함께 정리 예정.</div>
+      </section>
+
+      <!-- PART 2 -->
+      <h2 class="part-title">Part 2 · Analysis Standard</h2>
+
+      <section id="c6"><h3><span class="ch">06</span>촬영 표준<span class="status draft">초안</span></h3>
+        <p class="purpose">비교가 성립하려면 조건이 같아야 한다.</p>
+        <ul class="pts">
+          <li>같은 각도 — 카메라 높이·거리·정면 각도 동일</li>
+          <li>같은 장소·조명 — 그림자·하이라이트가 굴곡을 다르게 보이게 한다</li>
+          <li>같은 시간대 — 창밖 밝기(자연광)까지 동일</li>
+          <li>같은 고개 숙임 정도 — <b>귀 라인 대비 눈의 높이</b>가 같은 사진끼리 비교(같으면 같은 고개 각도)</li>
+        </ul>
+      </section>
+
+      <section id="c7"><h3><span class="ch">07</span>왜곡 원리<span class="status draft">초안</span></h3>
+        <p class="purpose">같은 얼굴도 조건이 다르면 다르게 보인다.</p>
+        <ul class="pts">
+          <li>좌우 반전 — 화면 왼쪽 = 본인 오른쪽</li>
+          <li>원근 왜곡 — 카메라에 가까운 부위가 커 보인다(코·돌출부, 튀어나온 눈)</li>
+          <li>회전 왜곡 — 얼굴이 돌아가 있으면 정면 좌우 크기·함유량이 실제와 다르다</li>
+          <li>조건 왜곡 — 각도·조명·고개에 따라 굴곡·그림자가 달라진다 → 단일 사진 맹신 금지</li>
+        </ul>
+      </section>
+
+      <section id="c8"><h3><span class="ch">08</span>진단 차트 판독 기준<span class="status stub">스텁</span></h3>
+        <p class="purpose">2D · 좌우 · 회전 전 항목의 정본 판독 기준(랜드마크·기준선·사용 사진·체크 방향).</p>
+        <div class="stub">CLAUDE.md §3·§4·§13의 항목별 기준을 정본화 예정. 모든 거리/두께 = '긴 쪽에 체크'. 판독 불가 항목(이마뼈>마루 등)은 촉진 필수로 명시.</div>
+      </section>
+
+      <section id="c9"><h3><span class="ch">09</span>안면 코드 시스템<span class="status draft">집필 중</span></h3>
+        <p class="purpose">얼굴을 7자리로 읽는 빠른 판독 체계.</p>
+        <p><code>{타입}{후두골}-{코}{광대}{눈}{콧볼}-{오른마루}</code></p>
+        <ul class="pts">
+          <li>코 방향 = 눈>코 <b>예각인 쪽</b> · 눈 높이 = 눈>코 <b>둔각인 쪽</b> → 둘은 <b>항상 반대</b>(같으면 오류)</li>
+          <li>광대 전면레벨 = 더 앞으로 나온 광대 쪽</li>
+          <li>오른마루 두께 = T(두꺼움)/F(얇음), 관리사 촉진 입력</li>
+          <li>제약(코≠눈)으로 총 경우의 수 = <b>96</b> (제약 없을 시 192)</li>
+        </ul>
+      </section>
+
+      <section id="c10"><h3><span class="ch">10</span>측정 기술 기준<span class="status stub">스텁</span></h3>
+        <p class="purpose">MediaPipe 좌표 계산의 정확한 정의와 임계값.</p>
+        <div class="stub">눈선 기울기 보정 · 코방향(눈동자선 90도 수직 대비) · 후두골 시간(귀앞점+눈선 보정) · 임계값 표(기울기 0.15% / 회전 0.5% / 얼굴형 80·86% …) 정본화 예정.</div>
+      </section>
+
+      <!-- PART 3 — ENGINE (locked) -->
+      <h2 class="part-title">Part 3 · The Engine <span style="color:var(--lock)">🔒</span></h2>
+      <div class="edu-note">🔒 <b>Part 3 (엔진)</b>은 전체판 전용입니다. 원리·도출·규칙생성 방법론은 SONEED의 핵심 IP로, 교육판에서는 제공되지 않습니다.</div>
+
+      <section id="c11" class="locked"><span class="lockchip">🔒 전체판 전용</span><h3><span class="ch">11</span>스파이럴 원리<span class="status draft">초안</span></h3>
+        <p class="purpose">얼굴이 왜 그렇게 되는가 — 모든 도출의 뿌리.</p>
+        <p>두개골이 나선(스파이럴)으로 회전하며 한쪽이 압축된다. 그 압축이 <b>타입</b>으로 나타나므로 <b>타입 = 회전</b>(상관이 아니라 인과). <b>A타입 → 회전 R / B타입 → 회전 L.</b> 후두골 시간과 어긋나도(7시+A 등) 회전은 타입을 따른다.</p>
+      </section>
+      <section id="c12" class="locked"><span class="lockchip">🔒 전체판 전용</span><h3><span class="ch">12</span>도출 체계<span class="status stub">스텁</span></h3>
+        <p class="purpose">하나를 보면 다른 것을 안다 — 항목 간 인과 매핑.</p>
+        <div class="stub">타입↔회전 · 후두골시간↔후두라인 · 시프트↔마루두께 · 마루대비 회전 정합성 · 턱 독단 예외 등 도출 규칙 정본화 (내부 전용).</div>
+      </section>
+      <section id="c13" class="locked"><span class="lockchip">🔒 전체판 전용</span><h3><span class="ch">13</span>규칙 생성·검증<span class="status stub">스텁</span></h3>
+        <p class="purpose">데이터로 표준을 만들고 폐기하는 방법론.</p>
+        <div class="stub">상관관계 → 일치율 검증 → 규칙 채택/약화/폐기(예: 워터슬라이드=럭비프레스 상관 폐기). AI 오차추적으로 항목별 정확도 정량화. 이 메타-방법론이 표준을 확장하는 능력의 원천.</div>
+      </section>
+
+      <!-- PART 4 -->
+      <h2 class="part-title">Part 4 · Design & Solution</h2>
+      <section id="c14"><h3><span class="ch">14</span>코드 → 리세팅가이드<span class="status draft">집필 중</span></h3>
+        <p class="purpose">안면 코드에서 시술 동작을 자리별로 쌓는 규칙(합성).</p>
+        <div class="stub">타입·후두골(+C0 바운스)·①코방향(햄버거시프트+회전 병기·보류·드로잉)·③눈높이(콧볼/코방향 조건·크로스프레싱)·④콧볼·오른마루(T/F×시간)·특수조합(B7·A5) — 앱 composeSolution과 항상 동기. 규칙 상세는 CLAUDE.md §17-2 정본화 예정.</div>
+      </section>
+      <section id="c15"><h3><span class="ch">15</span>동작 언어<span class="status stub">스텁</span></h3>
+        <p class="purpose">스프레딩·프레싱·드로잉·문어·필러링·햄버거시프트 등 동작의 정의와 효과.</p>
+        <div class="stub">동작명 · (영문) · 효과 · 힘/방향/압 기준으로 사전화 예정.</div>
+      </section>
+      <section id="c16"><h3><span class="ch">16</span>얼굴 디자인<span class="status stub">스텁</span></h3>
+        <p class="purpose">비대칭 교정을 넘어 인상을 설계한다.</p>
+        <div class="stub">전후방경사 · 예쁜 얼굴의 정의 · 층별 원근으로 인상 바꾸기 · 결과 고정 프로토콜.</div>
+      </section>
+
+      <!-- PART 5 -->
+      <h2 class="part-title">Part 5 · Education</h2>
+      <section id="c17"><h3><span class="ch">17</span>교육 철학<span class="status draft">초안</span></h3>
+        <p class="lead" style="font-size:17px">얼굴을 외우지 마세요. 얼굴을 읽으세요.</p>
+        <p>기술을 나열하는 교육이 아니라, 얼굴을 <b>읽는 눈</b>을 기르는 교육. 좋은 관리는 좋은 손이 아니라 정확한 분석에서 시작된다.</p>
+      </section>
+      <section id="c18"><h3><span class="ch">18</span>레벨 체계<span class="status draft">초안</span></h3>
+        <p class="purpose">읽기에서 시작해 교육자까지.</p>
+        <ul class="pts">
+          <li><b>Level 1 · READ</b> — 얼굴 읽기 (심플 차트: 2D+좌우, 회전 제외)</li>
+          <li><b>Level 2 · RESET</b> — 변화 만들기 (안면 코드 → 솔루션)</li>
+          <li><b>Level 3 · DESIGN</b> — 얼굴 설계 (전체 차트·전후방경사·인상)</li>
+          <li><b>Level 4 · MASTER</b> — 교육자</li>
+        </ul>
+      </section>
+      <section id="c19"><h3><span class="ch">19</span>무엇을 가르치고 무엇을 감추는가<span class="status draft">초안</span></h3>
+        <p class="purpose">레시피는 주되, 엔진은 감춘다 — IP 보호의 원칙.</p>
+        <div class="callout"><b>리트머스:</b> "이걸 배우면 학생이 내 시스템을 처음부터 다시 만들 수 있나?" → 예면 <b>엔진(감추기)</b>, 아니면 <b>레시피(가르치기)</b>.</div>
+        <ul class="pts">
+          <li>가르친다: 관찰(읽기) · 코드 산출 · 코드별 정해진 동작 실행(앱 카드) · 촉진 · 촬영/왜곡</li>
+          <li>감춘다(🔒): 스파이럴 인과 · 도출 논리 · 규칙 생성 방법론</li>
+          <li>앱이 방패 — 관리사는 카드가 주는 답만 실행하니, '왜'를 몰라도 일이 된다.</li>
+        </ul>
+      </section>
+
+      <!-- PART 6 -->
+      <h2 class="part-title">Part 6 · Brand & System</h2>
+      <section id="c20"><h3><span class="ch">20</span>브랜드 정의<span class="status draft">초안</span></h3>
+        <p class="purpose">SONEED · Beauty OS · 페이스리세팅의 단일 정의.</p>
+        <ul class="pts">
+          <li><b>페이스리세팅</b> = 건식의 적은 압으로 아프지 않게 얼굴의 부피·균형을 바로잡는다. 시술이 아니라 케어. 30분·무다운타임.</li>
+          <li><b>Beauty OS</b> = 얼굴을 데이터로 분석하는 표준 시스템(Face OS는 그 첫 모듈).</li>
+        </ul>
+      </section>
+      <section id="c21"><h3><span class="ch">21</span>표기 관례<span class="status stub">스텁</span></h3>
+        <p class="purpose">값·확신도·기호의 통일.</p>
+        <div class="stub">L/R(본인 기준) · 확신도(높음/중/낮음/촉진) · ★촉진 필수 · ⟳회전영향 · 럭비프레스 복수선택 등.</div>
+      </section>
+
+      <!-- PART 7 -->
+      <h2 class="part-title">Part 7 · Governance</h2>
+      <section id="c22"><h3><span class="ch">22</span>데이터 · 개인정보<span class="status stub">스텁</span></h3>
+        <p class="purpose">얼굴 = 생체정보(민감정보). 목적별 동의가 원칙.</p>
+        <div class="stub">시술/AI개발/홍보/교육 목적별 분리 동의 · 기존 데이터 소급 동의 검토 · 접근통제 · 처리방침. (전문가 검토 필요)</div>
+      </section>
+      <section id="c23"><h3><span class="ch">23</span>표준 버전 관리<span class="status stub">스텁</span></h3>
+        <p class="purpose">표준이 흔들리지 않게 갱신하는 절차.</p>
+        <div class="stub">개정은 대표 확정 하에 · 앱 composeSolution ↔ 본 Bible ↔ 교육 PPT 3자 동기 · 버전/일자 기록.</div>
+      </section>
+
+      <footer>Beauty OS Bible · SONEED Standard · v0.1 (스켈레톤) · 내부 문서 — 무단 전파 금지</footer>
+    </div>
+  </main>
+</div>
+
+<script>
+  var root=document.documentElement, body=document.body;
+  /* theme */
+  try{var t=localStorage.getItem('bible_theme'); if(t)root.setAttribute('data-theme',t);}catch(e){}
+  document.getElementById('themeBtn').onclick=function(){
+    var cur=root.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+    var nx=cur==='dark'?'light':'dark'; root.setAttribute('data-theme',nx);
+    try{localStorage.setItem('bible_theme',nx);}catch(e){}
+  };
+  /* tier */
+  function setTier(t){
+    body.setAttribute('data-tier',t);
+    document.getElementById('tierFull').classList.toggle('on',t==='full');
+    document.getElementById('tierEdu').classList.toggle('on',t==='edu');
+    document.querySelectorAll('aside a.lk').forEach(function(a){a.style.display=(t==='edu')?'none':'block';});
+    try{localStorage.setItem('bible_tier',t);}catch(e){}
+  }
+  window.setTier=setTier;
+  try{var st=localStorage.getItem('bible_tier'); if(st)setTier(st);}catch(e){}
+  /* mobile nav */
+  document.getElementById('menuBtn').onclick=function(){body.classList.toggle('nav-open');};
+  document.querySelectorAll('aside a').forEach(function(a){a.addEventListener('click',function(){body.classList.remove('nav-open');});});
+  /* active nav on scroll */
+  var links=[].slice.call(document.querySelectorAll('aside a[href^="#"]'));
+  var map={}; links.forEach(function(a){var id=a.getAttribute('href').slice(1);var s=document.getElementById(id);if(s)map[id]=a;});
+  var obs=new IntersectionObserver(function(es){es.forEach(function(e){ if(e.isIntersecting){ links.forEach(function(l){l.classList.remove('active');}); var a=map[e.target.id]; if(a)a.classList.add('active'); } });},{rootMargin:'-60px 0px -70% 0px'});
+  Object.keys(map).forEach(function(id){var s=document.getElementById(id); if(s)obs.observe(s);});
+</script>
+</body>
+</html>
