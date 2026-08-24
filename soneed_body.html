@@ -259,7 +259,7 @@ function resizeImg(file,max,q,cb){
 /* ---------- 자세 체크리스트 ---------- */
 function sideLabel(f){return f;}
 var EXMEMBERS={};
-var SP_POSE=['과하게펴진어깨1','과하게펴진어깨2','둥근어깨1','둥근어깨2'];
+var SP_POSE=['과하게펴진어깨1','과하게펴진어깨2','둥근어깨1','둥근어깨2'];var SP_LABEL={'과하게펴진어깨1':'펴짐+붙은어깨뼈','과하게펴진어깨2':'펴짐+굳은어깨뼈','둥근어깨1':'말림+벌어진어깨뼈','둥근어깨2':'말림+들뜬어깨뼈'};
 function _lb(f){var L=lvl[f]||0;return L>=2?' <b class="lvb">'+(L===2?'2':'3')+'</b>':'';}
 var ANTAG=['손바닥쪽굽힘','손등쪽굽힘','발바닥쪽굽힘','발등쪽굽힘','안쪽돌림','바깥쪽돌림','바깥돌림','벌림','모음','앞기울임','뒤기울임','굽힘','폄'];
 var AX2={'높은어깨':['어깨높이','높음'],'낮은어깨':['어깨높이','낮음'],'상방회전':['어깨뼈회전','상방'],'하방회전':['어깨뼈회전','하방'],'어깨뼈전방경사':['어깨뼈경사','전방'],'어깨뼈후방경사':['어깨뼈경사','후방'],'gh관절벌어짐':['어깨관절','벌림'],'gh관절좁아짐':['어깨관절','모음']};
@@ -278,7 +278,7 @@ function _classify(f){
   else if(f.slice(-2)==='왼쪽'){side='왼쪽';base=f.slice(0,-2);}
   else return null;
   var sk=side;
-  for(i=0;i<SP_POSE.length;i++){ if(base.indexOf(SP_POSE[i])===0)return {gid:'shpose_'+side,glabel:sk+' 어깨뼈',olabel:SP_POSE[i].replace('어깨','')}; }
+  for(i=0;i<SP_POSE.length;i++){ if(base.indexOf(SP_POSE[i])===0)return {gid:'shpose_'+side,glabel:sk+' 어깨뼈',olabel:(SP_LABEL[SP_POSE[i]]||SP_POSE[i].replace('어깨',''))}; }
   if(base.indexOf('어깨뼈상각모음')===0||base.indexOf('어깨뼈상각벌림')===0)return {gid:'scap_'+side,glabel:sk+' 어깨뼈상각',olabel:(base.indexOf('모음')>=0?'모음':'벌림')};
   if(base==='최대어깨관절벌림방해'||base==='어깨관절최대굴곡방해')return {gid:'maxsh_'+side,glabel:sk+' 어깨관절 최대 가동시',olabel:(base.indexOf('벌림')>=0?'벌림':'굴곡'),multi:true};
   if(base==='견봉하공간좁아짐')return {gid:'subacromial',glabel:'견봉하공간 좁아짐',olabel:side,multi:true}; if(base.indexOf('gh관절')===0)return {hide:true};
