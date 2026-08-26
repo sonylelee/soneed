@@ -303,7 +303,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v220 (2026-08-24)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v221 (2026-08-24)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -1749,7 +1749,7 @@ function _todayPickMulti(angle){
 }
 function _renderTodayModal(){
   var o=document.getElementById('todayBAOv');
-  if(!o){ o=document.createElement('div'); o.id='todayBAOv'; o.style.cssText='position:fixed;inset:0;z-index:100060;background:rgba(20,18,26,.7);display:flex;align-items:center;justify-content:center;padding:14px'; o.onclick=function(e){if(e.target===o)o.style.display='none';}; document.body.appendChild(o); }
+  if(!o){ o=document.createElement('div'); o.id='todayBAOv'; o.style.cssText='position:fixed;inset:0;z-index:100060;background:rgba(20,18,26,.7);display:flex;align-items:center;justify-content:center;padding:14px'; o.addEventListener('pointerdown',function(e){o._downT=e.target;}); o.onclick=function(e){if(e.target===o&&o._downT===o)o.style.display='none';}; document.body.appendChild(o); }
   var a=window._todayAngle||'front', st=window._todayShot||{};
   var _prevScroll=(function(){var s=document.querySelector('#todayBAOv .tdStrip');return s?s.scrollLeft:0;})();
   var angles=[['front','정면'],['up','고개 든'],['down','고개 숙인']];
@@ -2344,7 +2344,7 @@ async function showBAImprove(i){
   html+='<div class="ba-note"><b>핵심 대칭 개선률</b>은 <b>자세(고개 각도)에 강한 지표(눈 기울기·콧볼·후두골)</b>만으로 계산해요 — 실제 관리 효과가 왜곡 없이 잡힙니다. <b>코 편차·회전</b>은 애프터 사진 고개 각도에 크게 흔들려 <b>참고</b>로만 뒀어요(실제 교정일 수도, 자세 차이일 수도 — 촉진으로 판단). 겹쳐 촬영(비포 오버레이)하면 더 정확해요. 숫자=비대칭 크기(0=대칭).</div>';
   html+='<button class="btn primary" style="width:100%;margin-top:12px" onclick="document.getElementById(\'baOv\').style.display=\'none\'">닫기</button></div>';
   var o=document.getElementById('baOv');
-  if(!o){o=document.createElement('div');o.id='baOv';o.onclick=function(e){if(e.target===o){_cmtStopPoll();o.style.display='none';}};document.body.appendChild(o);}
+  if(!o){o=document.createElement('div');o.id='baOv';o.addEventListener('pointerdown',function(e){o._downT=e.target;});o.onclick=function(e){if(e.target===o&&o._downT===o){_cmtStopPoll();o.style.display='none';}};document.body.appendChild(o);}
   o.innerHTML=html;o.style.display='flex';
 }
 window.addEventListener('resize',positionStickyThumbs);
@@ -2836,7 +2836,7 @@ function toggleConfirm(){
 function openComments(){
   if(!(typeof authEmail==='function'&&authEmail())){toast('로그인 후 코멘트를 남길 수 있어요');return;}
   var o=document.getElementById('cmtOv');
-  if(!o){o=document.createElement('div');o.id='cmtOv';o.style.cssText='position:fixed;inset:0;z-index:100002;background:rgba(20,18,26,.55);display:flex;align-items:flex-end;justify-content:center';o.onclick=function(e){if(e.target===o)o.style.display='none';};document.body.appendChild(o);}
+  if(!o){o=document.createElement('div');o.id='cmtOv';o.style.cssText='position:fixed;inset:0;z-index:100002;background:rgba(20,18,26,.55);display:flex;align-items:flex-end;justify-content:center';o.addEventListener('pointerdown',function(e){o._downT=e.target;});o.onclick=function(e){if(e.target===o&&o._downT===o)o.style.display='none';};document.body.appendChild(o);}
   o.innerHTML='<div style="background:#fff;width:100%;max-width:520px;border-radius:16px 16px 0 0;max-height:82vh;display:flex;flex-direction:column;overflow:hidden">'
    +'<div style="padding:14px 16px;border-bottom:1px solid #eee;display:flex;align-items:center;gap:8px"><b style="font-size:15px">코멘트 · 대화</b><span style="font-size:12px;color:#999">'+((form.code||'무제'))+'</span><button onclick="_cmtStopPoll();document.getElementById(\'cmtOv\').style.display=\'none\'" style="margin-left:auto;background:none;border:0;font-size:20px;color:#888;cursor:pointer">×</button></div>'
    +'<div id="cmtList" style="flex:1;overflow:auto;padding:14px 16px;background:#faf9fb"></div>'
@@ -3603,7 +3603,7 @@ function fpSideBySide(){                                  // 원본|미리보기
 }
 function fpShowImg(url){
   var o=document.getElementById("fpImgOv");
-  if(!o){ o=document.createElement("div"); o.id="fpImgOv"; o.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px;gap:12px"; o.onclick=function(e){ if(e.target===o)o.style.display="none"; }; document.body.appendChild(o); }
+  if(!o){ o=document.createElement("div"); o.id="fpImgOv"; o.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px;gap:12px"; o.addEventListener("pointerdown",function(e){o._downT=e.target;}); o.onclick=function(e){ if(e.target===o&&o._downT===o)o.style.display="none"; }; document.body.appendChild(o); }
   o.style.display="flex";
   o.innerHTML='<div style="color:#fff;font-weight:800;font-size:15px">상담용 전 · 후 한 장 <span style="color:#9aa;font-weight:600;font-size:12px">(예상 · 참고용)</span></div>'
     +'<img src="'+url+'" style="max-width:96%;max-height:70vh;border-radius:10px;box-shadow:0 10px 40px rgba(0,0,0,.6)">'
