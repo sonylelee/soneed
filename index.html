@@ -303,7 +303,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v221 (2026-08-24)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v222 (2026-08-24)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -1985,10 +1985,10 @@ function delAfter(id){
   showUndo('회차를 삭제했어요', function(){ if(removed&&Array.isArray(form.afters)){ form.afters.splice(Math.min(idx<0?0:idx,form.afters.length),0,removed); renderAfters(); toast('복원했어요'); } });
 }
 var _afterOneTarget=null;
-function afterRetake(i,s){var a=form.afters&&form.afters[i];if(!a)return;if(typeof camSupported==='function'&&!camSupported()){afterPickOne(i,s);return;}var pr=(PHOTO_SLOTS.filter(function(p){return p[0]===s;})[0]||[s,s]),ko=pr[1];openCamSeq([{slot:s,ko:ko+'(애프터)',ref:function(){return a['photo_'+s]||form['photo_'+s]||null;},assign:function(d){a['photo_'+s]=d;renderAfters();}}]);}
+function afterRetake(i,s){var a=form.afters&&form.afters[i];if(!a)return;if(typeof camSupported==='function'&&!camSupported()){afterPickOne(i,s);return;}var bs=s.replace(/^(before_|photo_)/,'');var pr=(PHOTO_SLOTS.filter(function(p){return p[0]===bs;})[0]||[bs,bs]),ko=pr[1];openCamSeq([{slot:s,ko:ko+'(애프터)',ref:function(){return a[s]||form[s]||null;},assign:function(d){a[s]=d;renderAfters();}}]);}
 function afterPickOne(i,s){_afterOneTarget={i:i,s:s};var el=document.getElementById('afterOneInput');if(el)el.click();}
-function afterOnePicked(e){var t=_afterOneTarget;_afterOneTarget=null;var f=e.target.files&&e.target.files[0];try{e.target.value='';}catch(_){}if(!t||!f)return;var a=form.afters&&form.afters[t.i];if(!a)return;resizeToDataURL(f,1280,0.85,function(d){a['photo_'+t.s]=d;renderAfters();toast('사진 교체됨 · 저장하면 반영');});}
-function afterClearPhoto(i,s){var a=form.afters&&form.afters[i];if(!a)return;if(!confirm('이 사진을 지울까요?'))return;delete a['photo_'+s];renderAfters();toast('사진 삭제됨 · 저장하면 반영');}
+function afterOnePicked(e){var t=_afterOneTarget;_afterOneTarget=null;var f=e.target.files&&e.target.files[0];try{e.target.value='';}catch(_){}if(!t||!f)return;var a=form.afters&&form.afters[t.i];if(!a)return;resizeToDataURL(f,1280,0.85,function(d){a[t.s]=d;renderAfters();toast('사진 교체됨 · 저장하면 반영');});}
+function afterClearPhoto(i,s){var a=form.afters&&form.afters[i];if(!a)return;if(!confirm('이 사진을 지울까요?'))return;delete a[s];renderAfters();toast('사진 삭제됨 · 저장하면 반영');}
 function renderAfterCompare(){
   var box=document.getElementById('afterCompare'); if(!box) return;
   var afters=Array.isArray(form.afters)?form.afters:[];
