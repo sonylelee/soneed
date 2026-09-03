@@ -147,6 +147,20 @@
   .selnote{font-size:.78rem;color:var(--muted);margin-top:12px}
   .backbar{border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:5px;padding:9px 13px;font-size:.82rem;font-weight:700;cursor:pointer;margin-bottom:10px;width:100%;text-align:left}
   .backbar b{color:var(--accent)}
+  /* 지점 색 구분 (압구정=초록 / 동탄=기본 하양) */
+  body[data-branch="압구정점"]{ --btint:60,140,92; }
+  body[data-branch="압구정점"] header{ background:rgba(var(--btint),.15); border-bottom:2px solid rgba(var(--btint),.65); }
+  body[data-branch="압구정점"] .brand .dot{ background:rgb(var(--btint)); }
+  body[data-branch="압구정점"] .backbar{ background:rgba(var(--btint),.18); border-color:rgba(var(--btint),.5); color:var(--ink); font-weight:800; }
+  body[data-branch="압구정점"] .backbar b{ color:rgb(var(--btint)); }
+  body[data-branch="압구정점"] .fab{ background:rgb(var(--btint)); }
+  body[data-branch="압구정점"] .metric.a{ border-top-color:rgb(var(--btint)); }
+  body[data-branch="압구정점"] .metric.a .v{ color:rgb(var(--btint)); }
+  body[data-branch="압구정점"] .tchip.visit{ background:rgba(var(--btint),.16); }
+  body[data-branch="압구정점"] .tchip.visit .vv{ color:rgb(var(--btint)); }
+  body[data-branch="압구정점"] .pill.pl{ background:rgba(var(--btint),.16); color:rgb(var(--btint)); }
+  body[data-branch="압구정점"] .daygroup .cnt{ color:rgb(var(--btint)); }
+  body[data-branch="압구정점"] .selcard:active{ border-color:rgb(var(--btint)); }
 </style>
 </head>
 <body>
@@ -271,8 +285,8 @@ $("themeBtn").onclick=()=>{ const cur=document.documentElement.getAttribute("dat
 function selectBranch(b){ STATE.branch=b; STATE.unlocked[b]=false; STATE.view="branch"; render(); }
 function backToSelect(){ STATE.view="select"; STATE.unlocked={"압구정점":false,"동탄본점":false}; STATE.search=""; render(); }
 function render(){
-  if(STATE.view==="select"){ $("fab").style.display="none"; renderSelect(); return; }
-  const b=STATE.branch;
+  if(STATE.view==="select"){ document.body.removeAttribute("data-branch"); $("fab").style.display="none"; renderSelect(); return; }
+  const b=STATE.branch; document.body.setAttribute("data-branch", b);
   if(!STATE.unlocked[b]){ $("fab").style.display="none"; renderGate(b); return; }
   $("fab").style.display="flex";
   renderList(b);
@@ -435,16 +449,19 @@ function exportCSV(){
   const b=STATE.branch; const rows=getData(b);
   // 구글시트와 동일한 열 순서/이름
   const head=["예약순","성함","가입상품","네이버페이 결제완료액","배정 리셋터","예약일자","방문일자","연락처","비고","가입횟수","총 결제금액(수정금지)","15%","잔액","미니쉬","페이","네이버페이 수수료","정수영","김현주","신대성","페이합산"];
-  const lines=[head.join(",")];
+  const esc=s=>String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  let h='<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="utf-8"><style>table{border-collapse:collapse}td,th{mso-number-format:"\\@";border:1px solid #ccc;padding:3px 7px;font-size:11pt;white-space:nowrap}th{background:#eee;font-weight:bold}</style></head><body><table>';
+  h+='<tr>'+head.map(x=>'<th>'+esc(x)+'</th>').join("")+'</tr>';
   rows.slice().sort((a,c)=>(a.visit||"")<(c.visit||"")?-1:((a.visit||"")>(c.visit||"")?1:0)).forEach(r=>{
     const cc=calc(r.paid);
     let bigo=(r.memo||"").replace(/\n/g," ");
     if(r.status==="취소" && !/취소/.test(bigo)) bigo=("취소 "+bigo).trim();
     const row=[ r.ord||"", r.name||"", r.pkg||"", r.paid||0, r.reset||"", exportDT(r.reserve), exportDT(r.visit), r.phone||"", bigo, r.sess||pkgSess(r.pkg), cc.total, cc.intro, cc.bal, cc.minish, "", cc.fee, "", "", "", "" ];
-    lines.push(row.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(","));
+    h+='<tr>'+row.map(c=>'<td>'+esc(c)+'</td>').join("")+'</tr>';
   });
-  const blob=new Blob(["﻿"+lines.join("\r\n")],{type:"text/csv;charset=utf-8"});
-  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="네고예약_"+b+"_"+(new Date().toISOString().slice(0,10))+".csv"; a.click();
+  h+='</table></body></html>';
+  const blob=new Blob(['﻿'+h],{type:"application/vnd.ms-excel;charset=utf-8"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="네고예약_"+b+"_"+(new Date().toISOString().slice(0,10))+".xls"; a.click();
 }
 
 function escHtml(s){ return String(s==null?"":s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m])); }
