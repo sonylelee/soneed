@@ -136,6 +136,17 @@
   .dangerbtn{width:100%;border:1px solid var(--bad);background:transparent;color:var(--bad);border-radius:13px;padding:12px;font-size:.9rem;font-weight:700;cursor:pointer;margin-top:10px}
   .xbtn{border:none;background:var(--surface-2);color:var(--muted);border-radius:9px;width:32px;height:32px;font-size:16px;cursor:pointer}
   .hint{font-size:.72rem;color:var(--faint);margin-top:5px}
+  /* ---- 지점 선택 ---- */
+  .selwrap{max-width:420px;margin:5vh auto;text-align:center}
+  .seltitle{font-size:1.18rem;font-weight:800;margin-bottom:20px;letter-spacing:-.01em}
+  .selcard{display:flex;align-items:center;gap:14px;width:100%;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:12px;box-shadow:var(--shadow);cursor:pointer;transition:.12s}
+  .selcard:active{transform:scale(.99);border-color:var(--accent)}
+  .selcard .se{font-size:1.8rem}
+  .selcard .sn{font-size:1.12rem;font-weight:800;color:var(--ink)}
+  .selcard .sa{margin-left:auto;font-size:1.5rem;color:var(--faint)}
+  .selnote{font-size:.78rem;color:var(--muted);margin-top:12px}
+  .backbar{border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:11px;padding:9px 13px;font-size:.82rem;font-weight:700;cursor:pointer;margin-bottom:10px;width:100%;text-align:left}
+  .backbar b{color:var(--accent)}
 </style>
 </head>
 <body>
@@ -150,10 +161,7 @@
     <button class="iconbtn" id="adminBtn" title="관리자" onclick="openAdminPanel()">⚙️</button>
     <button class="iconbtn" id="themeBtn" title="테마">◐</button>
   </div>
-  <div class="tabs">
-    <button class="tab" data-branch="압구정점">압구정점<span class="lock" id="lk-압구정점">🔒</span></button>
-    <button class="tab" data-branch="동탄본점">동탄본점<span class="lock" id="lk-동탄본점">🔒</span></button>
-  </div>
+  <div style="height:8px"></div>
 </header>
 
 <div id="app"></div>
@@ -238,23 +246,29 @@ async function pushRec(b,rec){ try{ await fetch(SB_URL+"/rest/v1/gongu_reservati
 async function delRec(id){ try{ await fetch(SB_URL+"/rest/v1/gongu_reservations?id=eq."+encodeURIComponent(id),{method:"DELETE",headers:SB_H}); }catch(e){} }
 function refreshBranch(){ const b=STATE.branch; SYNC_STATE="…"; renderList(b); pullBranch(b).then(()=>{ if(STATE.unlocked[b]&&STATE.branch===b) renderList(b); }); }
 
-let STATE = { branch:"압구정점", unlocked:{"압구정점":false,"동탄본점":false}, search:"", sort:"visit", editId:null, status:"예정", pinBuf:"", pinMode:null };
+let STATE = { view:"select", branch:"압구정점", unlocked:{"압구정점":false,"동탄본점":false}, search:"", sort:"visit", editId:null, status:"예정", pinBuf:"", pinMode:null };
 
 // ---- theme ----
 (function(){ const t=localStorage.getItem("gongu_theme"); if(t) document.documentElement.setAttribute("data-theme",t); })();
 $("themeBtn").onclick=()=>{ const cur=document.documentElement.getAttribute("data-theme"); const nx=cur==="dark"?"light":(cur==="light"?"":"dark"); if(nx) document.documentElement.setAttribute("data-theme",nx); else document.documentElement.removeAttribute("data-theme"); localStorage.setItem("gongu_theme", nx|| (matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light")); };
 
-// ---- tabs ----
-document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{ const b=t.dataset.branch; STATE.branch=b; render(); });
-function setTabUI(){ document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("on", t.dataset.branch===STATE.branch)); BRANCHES.forEach(b=>{ const el=$("lk-"+b); if(el) el.textContent = STATE.unlocked[b] ? "🔓" : "🔒"; }); }
-
-// ---- render ----
+// ---- navigation: 지점 선택 → 비번 → 목록 ----
+function selectBranch(b){ STATE.branch=b; STATE.unlocked[b]=false; STATE.view="branch"; render(); }
+function backToSelect(){ STATE.view="select"; STATE.unlocked={"압구정점":false,"동탄본점":false}; STATE.search=""; render(); }
 function render(){
-  setTabUI();
+  if(STATE.view==="select"){ $("fab").style.display="none"; renderSelect(); return; }
   const b=STATE.branch;
   if(!STATE.unlocked[b]){ $("fab").style.display="none"; renderGate(b); return; }
   $("fab").style.display="flex";
   renderList(b);
+}
+function renderSelect(){
+  $("app").innerHTML='<div class="wrap"><div class="selwrap">'+
+    '<div class="seltitle">어느 지점이세요?</div>'+
+    '<button class="selcard" onclick="selectBranch(\'압구정점\')"><span class="se">💆‍♀️</span><span class="sn">압구정점</span><span class="sa">›</span></button>'+
+    '<button class="selcard" onclick="selectBranch(\'동탄본점\')"><span class="se">🎨</span><span class="sn">동탄본점</span><span class="sa">›</span></button>'+
+    '<div class="selnote">지점 비밀번호를 아는 사람만 들어갈 수 있어요.</div>'+
+  '</div></div>';
 }
 
 function renderGate(b){
@@ -263,6 +277,7 @@ function renderGate(b){
   STATE.pinBuf="";
   $("app").innerHTML =
     '<div class="gate">'+
+      '<button class="ghostbtn" onclick="backToSelect()" style="margin-bottom:14px">← 지점 다시 선택</button>'+
       '<div class="emo">'+(b==="압구정점"?"💆‍♀️":"🎨")+'</div>'+
       '<h2>'+b+'</h2>'+
       '<p>'+(has?"이 지점 비밀번호 4자리를 입력하세요":"이 지점에서 처음이에요. 사용할 비밀번호 4자리를 정하세요")+'</p>'+
@@ -305,6 +320,7 @@ function renderList(b){
   const totMin=live.reduce((s,r)=>s+calc(r.paid).minish,0);
   const totIntro=live.reduce((s,r)=>s+calc(r.paid).intro,0);
   let html='<div class="wrap">';
+  html+='<button class="backbar" onclick="backToSelect()">← 지점 다시 선택 &nbsp;·&nbsp; <b>현재: '+b+'</b></button>';
   html+='<div class="tools">'+
     '<div class="search">🔍<input id="searchInp" placeholder="이름·연락처·패키지 검색" value="'+escAttr(STATE.search)+'"></div>'+
     '<select class="sortsel" id="sortSel">'+
