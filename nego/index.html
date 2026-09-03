@@ -239,7 +239,7 @@
 <!-- 급여 정산 -->
 <div class="modal-bd" id="payModal">
   <div class="sheet">
-    <div class="sheet-h"><h3 id="payTitle">급여 정산</h3><button class="xbtn" onclick="closePay()">✕</button></div>
+    <div class="sheet-h"><h3 id="payTitle">정산</h3><button class="xbtn" onclick="closePay()">✕</button></div>
     <div class="sheet-b" id="payBody"></div>
   </div>
 </div>
@@ -274,17 +274,20 @@ let payAuthed={};
 function openPayroll(){
   const b=STATE.branch;
   if(!payAuthed[b]){
-    const p=prompt("🔒 "+b+" 급여 정산\n비밀번호를 입력하세요");
+    const p=prompt("🔒 "+b+" 정산\n비밀번호를 입력하세요");
     if(p===null) return;
     if(p!=="9092"){ alert("비밀번호가 달라요."); return; }
     payAuthed[b]=true;
   }
-  $("payTitle").textContent="💰 "+b+" 관리사 급여";
+  $("payTitle").textContent="💰 "+b+" 정산";
   const rows=getData(b).filter(r=>r.status!=="취소");
+  const totRev=rows.reduce((s,r)=>s+(+r.paid||0),0);
+  const mkt=Math.round(totRev*0.15);
   const by={}; rows.forEach(function(r){ const nm=r.reset||"⚠ 담당 미배정"; const s=paySessions(r.pkg,b)||0; (by[nm]=by[nm]||{cnt:0,sess:0}); by[nm].cnt++; by[nm].sess+=s; });
   const names=Object.keys(by).sort((a,c)=>by[c].sess-by[a].sess);
   let tot=0;
-  let html='';
+  let html='<div class="sumrow" style="margin-bottom:6px"><div class="metric a"><div class="k">결제 총액</div><div class="v tnum">'+won(totRev)+'</div></div><div class="metric"><div class="k">마케팅홍보수수료 (15%)</div><div class="v tnum">'+won(mkt)+'</div></div></div>'+
+    '<div class="note-inline" style="margin-bottom:14px">아래는 관리사별 급여 (회차당 6만원)</div>';
   if(!names.length){ html+='<div class="empty">예약이 없어요.</div>'; }
   else{
     html+='<table class="tt"><thead><tr><th style="text-align:left">관리사</th><th>담당</th><th>총 회차</th><th>급여</th></tr></thead><tbody>';
@@ -332,7 +335,7 @@ function refreshBranch(){ const b=STATE.branch; SYNC_STATE="…"; renderList(b);
 let STATE = { view:"select", branch:"압구정점", unlocked:{"압구정점":false,"동탄본점":false}, search:"", sort:"visit", filter:"all", freset:"", view2:((typeof window!=="undefined"&&window.innerWidth>=760)?"table":"card"), editId:null, status:"예정", pinBuf:"", pinMode:null };
 function toggleView2(){ STATE.view2=(STATE.view2==="table"?"card":"table"); renderList(STATE.branch); }
 function fmtShort(s){ if(!s) return "—"; const d=new Date(s); if(isNaN(d)) return s; return (d.getMonth()+1)+"/"+d.getDate()+" "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); }
-function isTodayR(r){ const s=r.visit||r.reserve; if(!s) return false; const d=new Date(s); if(isNaN(d)) return false; const n=new Date(); return d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth()&&d.getDate()===n.getDate(); }
+function isTodayR(r){ const s=r.visit; if(!s) return false; const d=new Date(s); if(isNaN(d)) return false; const n=new Date(); return d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth()&&d.getDate()===n.getDate(); }
 function setFilter(f){ STATE.filter=f; renderList(STATE.branch); }
 function markStatus(id,st){ const b=STATE.branch; const arr=getData(b); const i=arr.findIndex(x=>x.id===id); if(i<0) return; arr[i].status=(arr[i].status===st?"예정":st); setData(b,arr); pushRec(b,arr[i]); renderBody(b); }
 
@@ -411,7 +414,7 @@ function renderList(b){
       '<option value="name"'+(STATE.sort==="name"?" selected":"")+'>이름순</option>'+
     '</select>'+
     '<button class="ghostbtn" onclick="toggleView2()">'+(STATE.view2==="table"?"▦ 카드로":"☰ 표로")+'</button>'+
-    '<button class="ghostbtn" onclick="openPayroll()">💰 급여 정산</button>'+
+    '<button class="ghostbtn" onclick="openPayroll()">💰 정산</button>'+
     '<button class="ghostbtn" onclick="pickPhoto()">📷 사진 입력</button>'+
     '<button class="ghostbtn" onclick="openTemplates()">📋 안내문자</button>'+
     '<button class="ghostbtn" onclick="refreshBranch()" title="새로고침">🔄</button>'+
