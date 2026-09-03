@@ -189,7 +189,7 @@
 </header>
 
 <div id="app"></div>
-<input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none" onchange="onPhotoFile(this.files&&this.files[0])">
+<input type="file" id="photoInput" accept="image/*" style="display:none" onchange="onPhotoFile(this.files&&this.files[0])">
 <button class="fab" id="fab" style="display:none" onclick="openForm()">＋ 고객 추가</button>
 
 <!-- form modal -->
@@ -332,7 +332,7 @@ async function pushRec(b,rec){ try{ await fetch(SB_URL+"/rest/v1/gongu_reservati
 async function delRec(id){ try{ await fetch(SB_URL+"/rest/v1/gongu_reservations?id=eq."+encodeURIComponent(id),{method:"DELETE",headers:SB_H}); }catch(e){} }
 function refreshBranch(){ const b=STATE.branch; SYNC_STATE="…"; renderList(b); pullBranch(b).then(()=>{ if(STATE.unlocked[b]&&STATE.branch===b) renderList(b); }); }
 
-let STATE = { view:"select", branch:"압구정점", unlocked:{"압구정점":false,"동탄본점":false}, search:"", sort:"visit", filter:"all", freset:"", view2:((typeof window!=="undefined"&&window.innerWidth>=760)?"table":"card"), editId:null, status:"예정", pinBuf:"", pinMode:null };
+let STATE = { view:"select", branch:"압구정점", unlocked:{"압구정점":false,"동탄본점":false}, search:"", sort:"visit", filter:"all", freset:"", view2:"table", editId:null, status:"예정", pinBuf:"", pinMode:null };
 function toggleView2(){ STATE.view2=(STATE.view2==="table"?"card":"table"); renderList(STATE.branch); }
 function fmtShort(s){ if(!s) return "—"; const d=new Date(s); if(isNaN(d)) return s; return (d.getMonth()+1)+"/"+d.getDate()+" "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); }
 function isTodayR(r){ const s=r.visit; if(!s) return false; const d=new Date(s); if(isNaN(d)) return false; const n=new Date(); return d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth()&&d.getDate()===n.getDate(); }
@@ -384,6 +384,13 @@ function drawDots(){ const d=$("pinDots"); if(!d) return; d.innerHTML=""; for(le
 function pinKey(k){ if(k==="del"){ STATE.pinBuf=STATE.pinBuf.slice(0,-1); drawDots(); return; } if(STATE.pinBuf.length>=4) return; STATE.pinBuf+=k; drawDots(); if(STATE.pinBuf.length===4) setTimeout(submitPin,120); }
 function unlockBranch(b){ STATE.unlocked[b]=true; SYNC_STATE="…"; render(); pullBranch(b).then(()=>{ if(STATE.unlocked[b]&&STATE.branch===b) renderList(b); }); }
 function submitPin(){ const b=STATE.branch; if(STATE.pinMode==="create"){ setPw(b,STATE.pinBuf); unlockBranch(b); } else { if(STATE.pinBuf===getPw(b)){ unlockBranch(b); } else { $("pinErr").textContent="비밀번호가 달라요. 다시 입력해주세요."; STATE.pinBuf=""; drawDots(); } } }
+// 컴퓨터: 키보드로 비번 입력 (게이트 화면이 떠 있을 때만 작동)
+document.addEventListener("keydown",function(e){
+  if(!document.getElementById("pinDots")) return;
+  if(e.key>="0"&&e.key<="9"){ pinKey(e.key); e.preventDefault(); }
+  else if(e.key==="Backspace"){ pinKey("del"); e.preventDefault(); }
+  else if(e.key==="Enter"){ if(STATE.pinBuf.length===4) submitPin(); e.preventDefault(); }
+});
 // ---- 관리자(원장) : 이 비밀번호를 아는 사람만 지점 비번을 바꿀 수 있음 ----
 function getMaster(){ return CFG&&CFG.master; }
 function setMaster(m){ if(!CFG)CFG={}; CFG.master=m; pushConfig(); }
