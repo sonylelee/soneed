@@ -882,7 +882,7 @@ init().catch(function(e){console.warn('pose init',e);});
       window.BODY_resize3D=resize;
       window.addEventListener('resize',function(){if(ready)resize();});
       function resetMus(){allMus.forEach(function(o){var m=o.material;if(o.userData&&o.userData.base)m.color.copy(o.userData.base);else m.color.setHex(NEUTRAL);if(m.emissive){if(o.userData&&o.userData.base)m.emissive.copy(o.userData.base);else m.emissive.setHex(0);m.emissiveIntensity=0.14;}m.transparent=true;m.opacity=0.5;m.depthWrite=false;});}
-      function applyVis(){allMus.forEach(function(o){o.visible=hideNeutral?!(o.userData&&o.userData.sup):true;});}
+      function applyVis(){allMus.forEach(function(o){o.visible=hideNeutral?(!(o.userData&&o.userData.sup)||!!colored[o.id]):true;});}
       window.BODY_hideNeutral3D=function(b){hideNeutral=!!b;applyVis();};
       window.BODY_flat3D=function(){
         try{
@@ -909,6 +909,8 @@ init().catch(function(e){console.warn('pose init',e);});
           var short=x.score>0;
           tg.forEach(function(nn){ var arr=nodes[nn]; if(!arr)return; arr.forEach(function(o){ var m=o.material; var t=Math.min(1,Math.abs(x.pct)/100), hue=short?0.0:0.61; m.color.setHSL(hue,1,0.5-0.16*t); if(m.emissive){m.emissive.setHSL(hue,1,0.5);m.emissiveIntensity=0.16+0.22*t;} m.roughness=0.5; m.transparent=false; m.opacity=1; m.depthWrite=true; colored[o.id]=1; }); });
         });
+        var anyC=false; for(var _k in colored){anyC=true;break;}
+        if(anyC){ allMus.forEach(function(o){ if(!colored[o.id]){ var m=o.material; m.transparent=true; m.opacity=0.10; m.depthWrite=false; } }); }
         applyVis();
       };
       loader.load('skeleton.glb',function(g){ g.scene.traverse(function(o){if(o.isMesh)o.material=skelMat;}); scene.add(g.scene); },undefined,function(e){console.warn('skel',e);});
