@@ -270,20 +270,28 @@ const pkgBase = nm => (PKG_BASE[nm] != null ? PKG_BASE[nm] : pkgSess(nm));
 const PAY_PER = 60000; // 회차당 관리사 급여
 // 지점 규칙: 동탄=전체회차, 압구정=서비스 제외한 정가회차
 function paySessions(pkg, branch){ return branch==="동탄본점" ? pkgSess(pkg) : pkgBase(pkg); }
+let payAuthed={};
 function openPayroll(){
-  const b=STATE.branch; $("payTitle").textContent="💰 "+b+" 관리사 급여";
+  const b=STATE.branch;
+  if(!payAuthed[b]){
+    const p=prompt("🔒 "+b+" 급여 정산\n비밀번호를 입력하세요");
+    if(p===null) return;
+    if(p!=="9092"){ alert("비밀번호가 달라요."); return; }
+    payAuthed[b]=true;
+  }
+  $("payTitle").textContent="💰 "+b+" 관리사 급여";
   const rows=getData(b).filter(r=>r.status!=="취소");
   const by={}; rows.forEach(function(r){ const nm=r.reset||"⚠ 담당 미배정"; const s=paySessions(r.pkg,b)||0; (by[nm]=by[nm]||{cnt:0,sess:0}); by[nm].cnt++; by[nm].sess+=s; });
   const names=Object.keys(by).sort((a,c)=>by[c].sess-by[a].sess);
   let tot=0;
-  let html='<div class="note-inline" style="margin-bottom:12px">'+(b==="동탄본점"?"동탄: <b>전체 회차</b> × 6만원 (앞으로 할 관리 포함)":"압구정: <b>서비스(+N) 제외</b>한 정가 회차 × 6만원 (15+2→15회)")+'</div>';
+  let html='';
   if(!names.length){ html+='<div class="empty">예약이 없어요.</div>'; }
   else{
     html+='<table class="tt"><thead><tr><th style="text-align:left">관리사</th><th>담당</th><th>총 회차</th><th>급여</th></tr></thead><tbody>';
     names.forEach(function(nm){ const o=by[nm]; const pay=o.sess*PAY_PER; tot+=pay; html+='<tr><td style="text-align:left;font-weight:800">'+escHtml(nm)+'</td><td class="tnum">'+o.cnt+'건</td><td class="tnum">'+o.sess+'회</td><td class="tnum" style="font-weight:800">'+won(pay)+'</td></tr>'; });
     html+='</tbody></table>';
     html+='<div class="sumrow" style="margin-top:14px"><div class="metric a"><div class="k">총 지급액</div><div class="v tnum">'+won(tot)+'</div></div><div class="metric"><div class="k">회차당</div><div class="v tnum">₩60,000</div></div></div>';
-    html+='<div class="note-inline" style="margin-top:8px">※ 취소 건 제외 · 회차는 가입상품 기준(앞으로 할 관리 포함). "담당 미배정"은 관리사를 넣어주세요.</div>';
+    html+='<div class="note-inline" style="margin-top:8px">※ 취소 건 제외 · "담당 미배정"은 관리사를 넣어주세요.</div>';
   }
   $("payBody").innerHTML=html; $("payModal").classList.add("on");
 }
