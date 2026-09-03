@@ -114,7 +114,7 @@ h2.sec,.logo{letter-spacing:-.02em}
 </div>
 <header style="display:flex;align-items:center;justify-content:space-between">
   <div><div class="logo">SONEED 바디 · 오리지널</div>
-  <div class="sub">키머슬(짧아진 근육) 분석 · v8.2 · 촉진 전 초안</div></div>
+  <div class="sub">키머슬(짧아진 근육) 분석 · v8.3 · 촉진 전 초안</div></div>
   <div id="authInfo" style="display:none;align-items:center"></div>
 </header>
 <div class="wrap">
@@ -165,6 +165,7 @@ h2.sec,.logo{letter-spacing:-.02em}
   <div class="card">
     <h2 class="sec">2 · 자세 체크 <span class="muted" id="selCnt"></span></h2>
     <div class="hint">관찰·촉진한 자세 이상을 켜세요. <b>누를수록 정도가 세져요(약→중→강, 뱃지 2·3), 한 번 더 누르면 해제.</b> 손목·발목 같은 관절은 <b>좌우 각각</b> 선택돼요(양쪽 다 같은 방향 가능).=사진 자동판정.</div>
+    <div id="viewLockBanner" style="display:none;background:#2a2216;border:1px solid #6b5528;color:#ffb454;font-size:12.5px;padding:9px 11px;border-radius:8px;margin:6px 2px 10px;line-height:1.5">🔒 <b>읽기 전용</b> — 저장된 기록은 관리자만 수정할 수 있어요. <b>코멘트(날짜별 메모)</b>는 추가할 수 있습니다.</div>
     <div id="checklist"></div>
     <button class="btn ghost block" style="margin-top:8px" onclick="clearAll()">전체 해제</button>
   </div>
@@ -211,7 +212,7 @@ h2.sec,.logo{letter-spacing:-.02em}
   <div class="card">
     <h2 class="sec">6 · 차트 저장</h2>
     <div class="hint">맨 위 <b>고객 성함</b>으로 이 분석을 저장 → [고객 기록] 탭에서 불러오기. (클라우드 · 사진 제외)</div>
-    <button class="btn primary" style="width:100%" onclick="saveRecord()">이 분석 저장</button>
+    <button class="btn primary" id="saveBtn" style="width:100%" onclick="saveRecord()">이 분석 저장</button>
   </div>
 
   </div>
@@ -326,17 +327,17 @@ function renderChecklist(){
   }).join('');
   document.getElementById('selCnt').textContent=sel.size?('· '+sel.size+'개 선택'):''; try{renderAdvice();}catch(e){}
 }
-function pickEx(gid,f){var mem=EXMEMBERS[gid]||[],deg=!NECKSET[f]; if(sel.has(f)){ if(deg){var L=lvl[f]||1; if(L<2)lvl[f]=L+1; else {sel.delete(f);delete lvl[f];autoSet.delete(f);}} else {sel.delete(f);delete lvl[f];autoSet.delete(f);} } else {mem.forEach(function(m){sel.delete(m);delete lvl[m];autoSet.delete(m);}); sel.add(f);lvl[f]=1;} renderChecklist();}
+function pickEx(gid,f){if(_viewLock){toast('읽기 전용 · 코멘트만 가능');return;} var mem=EXMEMBERS[gid]||[],deg=!NECKSET[f]; if(sel.has(f)){ if(deg){var L=lvl[f]||1; if(L<2)lvl[f]=L+1; else {sel.delete(f);delete lvl[f];autoSet.delete(f);}} else {sel.delete(f);delete lvl[f];autoSet.delete(f);} } else {mem.forEach(function(m){sel.delete(m);delete lvl[m];autoSet.delete(m);}); sel.add(f);lvl[f]=1;} renderChecklist();}
 function esc(s){return s.replace(/'/g,"\\'");}
-function pickPelvisHigh(hf){
+function pickPelvisHigh(hf){if(_viewLock){toast('읽기 전용 · 코멘트만 가능');return;}
   var side=hf.slice(-3)==='오른쪽'?'오른쪽':'왼쪽', opp=(side==='오른쪽'?'왼쪽':'오른쪽');
   var lowOpp='낮은골반'+opp, highOpp='높은골반'+opp, lowSame='낮은골반'+side;
   if(sel.has(hf)){ var L=lvl[hf]||1; if(L<3){lvl[hf]=L+1;lvl[lowOpp]=L+1;} else {[hf,lowOpp].forEach(function(x){sel.delete(x);delete lvl[x];autoSet.delete(x);});} }
   else { [highOpp,lowSame,hf,lowOpp].forEach(function(x){sel.delete(x);delete lvl[x];autoSet.delete(x);}); sel.add(hf);lvl[hf]=1; sel.add(lowOpp);lvl[lowOpp]=1; }
   renderChecklist();
 }
-function toggle(f){var L=lvl[f]||0; if(!sel.has(f)){sel.add(f);lvl[f]=1;} else if(L<2){lvl[f]=L+1;} else {sel.delete(f);delete lvl[f];autoSet.delete(f);} renderChecklist(); if(f.indexOf('백니')===0){try{renderPhotos();}catch(e){}}}
-function clearAll(){sel.clear();autoSet.clear();lvl={};renderChecklist();toast('전체 해제됨');}
+function toggle(f){if(_viewLock){toast('읽기 전용 · 코멘트만 가능');return;} var L=lvl[f]||0; if(!sel.has(f)){sel.add(f);lvl[f]=1;} else if(L<2){lvl[f]=L+1;} else {sel.delete(f);delete lvl[f];autoSet.delete(f);} renderChecklist(); if(f.indexOf('백니')===0){try{renderPhotos();}catch(e){}}}
+function clearAll(){if(_viewLock){toast('읽기 전용 · 코멘트만 가능');return;} sel.clear();autoSet.clear();lvl={};renderChecklist();toast('전체 해제됨');}
 
 /* ---------- 엔진: 근육별 점수 ---------- */
 /* +조건 선택 = 짧아짐(+1), -조건 선택 = 늘어남(-1). 합산>0 = 짧아진 키머슬 */
@@ -458,14 +459,16 @@ var ADVICE=[
  {t:'발목 발등 굽힘 + 아치 높음', a:'[발목 발등 굽힘 + 아치 높음]\n- 앞정강근 이완이 필요해요.\n- 발등쪽 스트레칭 해주세요.'}
 ];
 function _adviceMatch(x){ if(x.allAny)return x.allAny.every(function(g){return g.some(function(f){return sel.has(f);});}); if(x.all)return x.all.every(function(f){return sel.has(f);}); if(x.any){var got=false; sel.forEach(function(f){ if(x.any.some(function(k){return f.indexOf(k)>=0;}))got=true; }); return got;} return false; }
+var _viewLock=false;
+function applyViewLock(){var lock=_viewLock;var cl=document.getElementById("checklist");if(cl){cl.style.opacity=lock?"0.55":"";cl.style.pointerEvents=lock?"none":"";}var bn=document.getElementById("viewLockBanner");if(bn)bn.style.display=lock?"":"none";["recName","recPhone","recAge","recRoute","recMemo","recProgram","recPrice","recGuide","recDate","recGender"].forEach(function(id){var e=document.getElementById(id);if(e){if(e.tagName==="SELECT")e.disabled=lock;else e.readOnly=lock;e.style.opacity=lock?"0.7":"";}});var sb=document.getElementById("saveBtn");if(sb)sb.textContent=lock?"💬 코멘트 저장":"이 분석 저장";}
 function newClient(){
   if(sel.size>0 && !confirm('현재 작성 중인 내용을 지우고 새로 작성할까요?'))return;
-  sel.clear(); autoSet.clear(); lvl={}; currentId=null;
+  sel.clear(); autoSet.clear(); lvl={}; currentId=null; _viewLock=false;
   ['recName','recPhone','recAge','recRoute','recMemo','recProgram','recPrice','recGuide','recDate'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
   var rg=document.getElementById('recGender'); if(rg)rg.value='';
   var d=new Date(),t=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); var rd=document.getElementById('recDate'); if(rd)rd.value=t;
   window._curMemos=[]; try{renderMemos();}catch(e){} try{renderChecklist();}catch(e){} var bv=document.getElementById('bodyview'); if(bv)bv.style.display='none'; var sg=document.getElementById('seg'); if(sg)sg.style.display='none';
-  try{renderAdvice();}catch(e){} window.scrollTo(0,0); toast('새 고객 작성');
+  try{renderAdvice();}catch(e){} window.scrollTo(0,0); try{applyViewLock();}catch(e){} toast('새 고객 작성');
 }
 function showClientGuide(){
   try{ if(sel.size>0 && typeof analyze==='function'){ var bv=document.getElementById('bodyview'); if(!bv||bv.style.display==='none'||!window._res){ analyze(); } else if(window.BODY_update3D){ window.BODY_update3D(window._res); } } }catch(e){}
@@ -780,7 +783,7 @@ async function saveRecord(){
     var r=await fetch(SB_URL+'/rest/v1/body_records',{method:'POST',headers:_sbH({Prefer:'resolution=merge-duplicates,return=minimal'}),body:JSON.stringify(Object.assign({updated_at:new Date().toISOString()},rec))});
     if(!r.ok)throw new Error('HTTP '+r.status);
   }catch(e){ toast('저장 실패, 다시 시도하세요 ('+((e&&e.message)||e)+')'); return; }  /* ★ 서버 실패 시 로컬 저장 안 함 */
-  document.getElementById('recName').value=''; currentId=null;
+  if(!_viewLock){document.getElementById('recName').value=''; currentId=null;}
   toast('저장됨: '+nm);
   renderRecords();
 }
@@ -820,7 +823,7 @@ function _paintRecords(){
   _bindRecList();
 }
 function loadRecord(id){
-  var r=(window._recCache||[]).filter(function(x){return x.id===id;})[0]; if(!r)return; currentId=id;
+  var r=(window._recCache||[]).filter(function(x){return x.id===id;})[0]; if(!r)return; currentId=id; _viewLock=!_isAdmin();
   var st=_recState(r);
   sel.clear(); autoSet.clear(); lvl={};
   Object.keys(st).forEach(function(fx){sel.add(fx);lvl[fx]=st[fx]||1;});
@@ -832,12 +835,13 @@ function loadRecord(id){
   sv('recProgram',dd.program); sv('recPrice',dd.price); sv('recDate',r.date); sv('recGuide',dd.guide);
   window._curMemos=(dd.memos||[]); _thoConv=(typeof dd.thoConv==='number'?dd.thoConv:45); try{renderMemos();}catch(e){}
   showView('analyze');
+  try{applyViewLock();}catch(e){}
   window.scrollTo(0,0);
   toast('불러옴: '+(r.name||''));
   // 기존 고객: 자동 분석 후 케어 가이드 카드 바로 열기
   setTimeout(function(){ try{ if(sel.size>0){ analyze(); setTimeout(function(){ try{showClientGuide();}catch(e){} }, 400); } }catch(e){} }, 200);
 }
-async function delRecord(id){
+async function delRecord(id){if(!_isAdmin()){toast('삭제는 관리자만 가능합니다');return;}
   if(!confirm('이 기록을 휴지통으로 보낼까요? (복원 가능)'))return;
   // ★ 실제 DELETE 아님 — soft delete(서버가 deleted_at=now(), deleted_by 강제). 영구삭제는 대표만.
   try{
