@@ -178,10 +178,10 @@
       <div class="fld"><label>성함</label><input id="f_name" placeholder="예: 김수정(9170)"></div>
       <div class="fld"><label>연락처</label><input id="f_phone" type="tel" inputmode="numeric" placeholder="010-0000-0000"></div>
       <div class="fld"><label>가입 패키지</label><select id="f_pkg" onchange="onPkg()"></select></div>
-      <div class="fld"><label>배정 리셋터</label><select id="f_reset"></select></div>
+      <div class="fld"><label>⭐ 배정 리셋터 (담당자 입력)</label><select id="f_reset"></select></div>
       <div class="two">
-        <div class="fld"><label>📅 예약일시</label><input id="f_reserve" type="datetime-local"></div>
-        <div class="fld"><label>📅 방문일시</label><input id="f_visit" type="datetime-local"></div>
+        <div class="fld"><label>📅 예약일시 (네이버)</label><input id="f_reserve" type="datetime-local"></div>
+        <div class="fld"><label>⭐ 방문 확정일시 (담당자 입력)</label><input id="f_visit" type="datetime-local"></div>
       </div>
       <div class="fld"><label>네이버페이 결제완료액 (원)</label><input id="f_paid" type="number" inputmode="numeric" placeholder="0" oninput="calcPreview()"><div class="hint" id="pkgHint"></div></div>
       <div class="calcbox" id="calcBox"></div>
@@ -228,8 +228,8 @@ function getPw(b){ return localStorage.getItem(PWK(b)); }
 function setPw(b,p){ localStorage.setItem(PWK(b), p); }
 
 // ---- 클라우드 동기화 (Supabase) : 여러 명이 각자 폰에서 같은 목록 ----
-const SB_URL="https://asfhmwhktrtbwgmlvrps.supabase.co";
-const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFzZmhtd2hrdHJ0YndnbWx2cnBzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4MzU1MjEsImV4cCI6MjEwMzQxMTUyMX0.WBE-pzBCvvsh9rTyPttO8YtxbUKSXoY8qQbC-uR1Uvc";
+const SB_URL="https://xzclowgorxhcbsfrrbop.supabase.co";
+const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh6Y2xvd2dvcnhoY2JzZnJyYm9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2MTg4MzIsImV4cCI6MjA5OTE5NDgzMn0.4BuAYPxlHOd3HwbKAkhcccNJAVjz6u9brnE4j9BWE6s";
 const SB_H={ apikey:SB_KEY, Authorization:"Bearer "+SB_KEY, "Content-Type":"application/json" };
 let SYNC_STATE="…"; // 표시용
 async function pullBranch(b){
@@ -349,9 +349,10 @@ function renderList(b){
       '<div class="top">'+(r.ord?'<span class="ord">#'+escHtml(r.ord)+'</span>':'')+'<span class="nm">'+escHtml(r.name||"(이름없음)")+'</span><span class="pill '+stcls+'">'+stlb+'</span></div>'+
       (r.pkg?'<div class="pkg">'+escHtml(r.pkg)+'</div>':'')+
       '<div class="times">'+
-        '<div class="tchip"><div class="lb">예약</div><div class="vv">'+fmtDT(r.reserve)+'</div></div>'+
-        '<div class="tchip visit"><div class="lb">방문</div><div class="vv">'+fmtDT(r.visit)+'</div></div>'+
+        '<div class="tchip"><div class="lb">예약(네이버)</div><div class="vv">'+fmtDT(r.reserve)+'</div></div>'+
+        '<div class="tchip visit"><div class="lb">방문확정</div><div class="vv">'+fmtDT(r.visit)+'</div></div>'+
       '</div>'+
+      ((!r.reset||!r.visit)?'<div style="font-size:.72rem;color:var(--warn);background:var(--warn-soft);border-radius:8px;padding:5px 9px;margin-bottom:8px;font-weight:700">⚠ '+((!r.reset&&!r.visit)?'담당자·방문확정 입력 필요':(!r.reset?'담당자 입력 필요':'방문확정일 입력 필요'))+'</div>':'')+
       '<div class="foot">'+
         (r.reset?'<span class="who">'+escHtml(r.reset)+'</span>':'')+
         (r.phone?'<a class="tel" href="tel:'+escAttr((r.phone||"").replace(/[^0-9]/g,""))+'" onclick="event.stopPropagation()">'+escHtml(r.phone)+'</a>':'')+
