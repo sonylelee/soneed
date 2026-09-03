@@ -147,6 +147,7 @@
       <div class="sub">소니드 × 미니쉬 · 얼굴윤곽</div>
     </div>
     <div class="spacer"></div>
+    <button class="iconbtn" id="adminBtn" title="관리자" onclick="openAdminPanel()">⚙️</button>
     <button class="iconbtn" id="themeBtn" title="테마">◐</button>
   </div>
   <div class="tabs">
@@ -199,37 +200,12 @@ const FEE_RATE = 0.030981;   // 네이버페이 수수료율(부가세 포함, �
 // 패키지 가격표 (시트 하단 표 기준) : [이름, 총결제금액, 가입횟수]
 const PROGRAMS = [
   ["— 선택 안 함 —",0,0],
-  ["페이스리세팅첫관리(-소개15%)",220000,1],
-  ["페이스리세팅5(-소개15%)",890000,5],
-  ["페이스리세팅10+1(-소개15%)",1510000,11],
-  ["페이스리세팅15+2(-소개15%)",2260000,17],
-  ["페이스리세팅10+1정상가(-소개15%)",1980000,11],
-  ["페이스리세팅첫관리",220000,1],
-  ["스마트윤곽첫관리",250000,1],
-  ["페이스리세팅5(정상가)",1020000,5],
-  ["페이스리세팅10(정상가)",1980000,10],
-  ["페이스리세팅15(정상가)",2640000,15],
-  ["페이스리세팅30(정상가)",4690000,30],
-  ["페이스리세팅10+1(정상가)",1980000,11],
-  ["페이스리세팅15+2(정상가)",2640000,17],
-  ["페이스리세팅30+3(정상가)",4690000,33],
-  ["스마트윤곽10(정상가)",2280000,10],
-  ["스마트윤곽15(정상가)",3240000,15],
-  ["스마트윤곽30(정상가)",5160000,30],
-  ["스마트윤곽10+1(정상가)",2280000,11],
-  ["스마트윤곽15+2(정상가)",3240000,17],
-  ["스마트윤곽30+3(정상가)",5160000,33],
-  ["원장페이스리세팅첫관리",300000,1],
-  ["원장스마트윤곽첫관리",330000,1],
-  ["원장페이스리세팅15",4050000,15],
-  ["원장페이스리세팅30",7290000,30],
-  ["원장스마트윤곽15",4320000,15],
-  ["원장스마트윤곽30",7776000,30],
-  ["페이스리세팅5(-소개10%)",1020000,5],
-  ["페이스리세팅10+1(-소개10%)",1980000,11],
-  ["페이스리세팅15+2(-소개10%)",2640000,17],
-  ["기존 고객님이관",0,1],
-  ["아직 관리전",0,0],
+  ["페이스리세팅 1회",220000,1],
+  ["페이스리세팅 5회",890000,5],
+  ["페이스리세팅 10+1회",1510000,11],
+  ["페이스리세팅 15+2회",2260000,17],
+  ["원장 1회",300000,1],
+  ["원장 단독 10+1회",2310000,11],
 ];
 const pkgPrice = nm => { const p=PROGRAMS.find(x=>x[0]===nm); return p?p[1]:0; };
 const pkgSess  = nm => { const p=PROGRAMS.find(x=>x[0]===nm); return p?p[2]:0; };
@@ -293,7 +269,6 @@ function renderGate(b){
       '<div class="pininput" id="pinDots"></div>'+
       '<div class="gateerr" id="pinErr"></div>'+
       '<div class="pad" id="pad"></div>'+
-      (has?'<div style="margin-top:16px"><button class="ghostbtn" onclick="resetPw(\''+b+'\')">비밀번호 잊음 / 초기화</button></div>':'')+
     '</div>';
   const pad=$("pad");
   ["1","2","3","4","5","6","7","8","9","blank","0","del"].forEach(k=>{ const btn=document.createElement("button"); if(k==="blank"){btn.className="blank";btn.disabled=true;} else { btn.textContent = k==="del"?"⌫":k; btn.onclick=()=>pinKey(k); } pad.appendChild(btn); });
@@ -303,7 +278,17 @@ function drawDots(){ const d=$("pinDots"); if(!d) return; d.innerHTML=""; for(le
 function pinKey(k){ if(k==="del"){ STATE.pinBuf=STATE.pinBuf.slice(0,-1); drawDots(); return; } if(STATE.pinBuf.length>=4) return; STATE.pinBuf+=k; drawDots(); if(STATE.pinBuf.length===4) setTimeout(submitPin,120); }
 function unlockBranch(b){ STATE.unlocked[b]=true; SYNC_STATE="…"; render(); pullBranch(b).then(()=>{ if(STATE.unlocked[b]&&STATE.branch===b) renderList(b); }); }
 function submitPin(){ const b=STATE.branch; if(STATE.pinMode==="create"){ setPw(b,STATE.pinBuf); unlockBranch(b); } else { if(STATE.pinBuf===getPw(b)){ unlockBranch(b); } else { $("pinErr").textContent="비밀번호가 달라요. 다시 입력해주세요."; STATE.pinBuf=""; drawDots(); } } }
-function resetPw(b){ if(confirm(b+" 비밀번호를 초기화할까요? (데이터는 그대로 남아요)")){ localStorage.removeItem(PWK(b)); render(); } }
+// ---- 관리자(원장) : 이 비밀번호를 아는 사람만 지점 비번을 바꿀 수 있음 ----
+function getMaster(){ return localStorage.getItem("gongu_master"); }
+function openAdminPanel(){
+  const m=getMaster();
+  if(!m){ const np=prompt("처음이에요. 관리자(원장) 비밀번호를 정하세요.\n이 비밀번호를 아는 사람만 지점 비밀번호를 바꿀 수 있어요."); if(np&&np.trim()){ localStorage.setItem("gongu_master",np.trim()); alert("관리자 비밀번호가 설정됐어요. 꼭 기억해두세요!"); } return; }
+  const ent=prompt("관리자(원장) 비밀번호를 입력하세요."); if(ent===null) return; if(ent!==m){ alert("관리자 비밀번호가 달라요."); return; }
+  const pick=prompt("무엇을 바꿀까요? 번호를 입력하세요.\n\n1) 압구정점 비밀번호 변경\n2) 동탄본점 비밀번호 변경\n3) 관리자 비밀번호 변경");
+  if(pick==="1"){ const p=prompt("압구정점 새 비밀번호 (4자리 숫자)"); if(p&&p.trim()){ setPw("압구정점",p.trim()); STATE.unlocked["압구정점"]=false; alert("압구정점 비밀번호를 바꿨어요."); render(); } }
+  else if(pick==="2"){ const p=prompt("동탄본점 새 비밀번호 (4자리 숫자)"); if(p&&p.trim()){ setPw("동탄본점",p.trim()); STATE.unlocked["동탄본점"]=false; alert("동탄본점 비밀번호를 바꿨어요."); render(); } }
+  else if(pick==="3"){ const p=prompt("관리자 새 비밀번호"); if(p&&p.trim()){ localStorage.setItem("gongu_master",p.trim()); alert("관리자 비밀번호를 바꿨어요."); } }
+}
 
 function fmtDT(s){ if(!s) return "—"; const d=new Date(s); if(isNaN(d)) return s; const wd=["일","월","화","수","목","금","토"][d.getDay()]; let h=d.getHours(); const mm=String(d.getMinutes()).padStart(2,"0"); const ap=h<12?"오전":"오후"; let h12=h%12; if(h12===0)h12=12; return (d.getMonth()+1)+"."+d.getDate()+"("+wd+") "+ap+" "+h12+":"+mm; }
 function dayKey(s){ if(!s) return "날짜 미정"; const d=new Date(s); if(isNaN(d)) return s; const wd=["일","월","화","수","목","금","토"][d.getDay()]; return (d.getMonth()+1)+"월 "+d.getDate()+"일 ("+wd+")"; }
@@ -387,7 +372,7 @@ function openForm(id){
   $("formModal").classList.add("on");
 }
 function closeForm(){ $("formModal").classList.remove("on"); }
-function onPkg(){ const nm=$("f_pkg").value; const pr=pkgPrice(nm); if(pr){ $("f_paid").value=pr; $("pkgHint").textContent="정가 "+won(pr)+" · "+pkgSess(nm)+"회 (필요시 결제액 직접 수정)"; } else $("pkgHint").textContent=""; calcPreview(); }
+function onPkg(){ const nm=$("f_pkg").value; const pr=pkgPrice(nm); if(pr){ $("f_paid").value=pr; $("pkgHint").textContent="네고가 "+won(pr)+" · "+pkgSess(nm)+"회 (필요시 결제액 직접 수정)"; } else $("pkgHint").textContent=""; calcPreview(); }
 function calcPreview(){ const c=calc($("f_paid").value); $("calcBox").innerHTML=
   '<div class="cr"><span>총 결제금액</span><b class="tnum">'+won(c.total)+'</b></div>'+
   '<div class="cr"><span>소개비 15%</span><b class="tnum">'+won(c.intro)+'</b></div>'+
@@ -428,6 +413,10 @@ function exportCSV(){
 
 function escHtml(s){ return String(s==null?"":s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m])); }
 function escAttr(s){ return escHtml(s); }
+
+// 기본 지점 비밀번호 (없을 때만 세팅) — 관리자(⚙️)에서 변경 가능
+if(!getPw("동탄본점")) setPw("동탄본점","1111");
+if(!getPw("압구정점")) setPw("압구정점","5555");
 
 render();
 </script>
