@@ -161,6 +161,16 @@
   body[data-branch="압구정점"] .pill.pl{ background:rgba(var(--btint),.16); color:rgb(var(--btint)); }
   body[data-branch="압구정점"] .daygroup .cnt{ color:rgb(var(--btint)); }
   body[data-branch="압구정점"] .selcard:active{ border-color:rgb(var(--btint)); }
+  /* ---- 표(한 줄) 보기 ---- */
+  .lt{width:100%;border-collapse:collapse;font-size:.82rem;min-width:600px}
+  .lt th,.lt td{border-bottom:1px solid var(--line);padding:8px 9px;text-align:left;white-space:nowrap}
+  .lt th{font-size:.68rem;color:var(--muted);font-weight:700;background:var(--surface-2);position:sticky;top:0}
+  .lt th.r,.lt td.r{text-align:right}
+  .lt td.nm{font-weight:800}
+  .lt td.warn{color:var(--bad);font-weight:800}
+  .lt tbody tr{cursor:pointer}
+  .lt tbody tr:hover{background:var(--surface-2)}
+  .lt .pill{margin-left:0;display:inline-block}
 </style>
 </head>
 <body>
@@ -311,7 +321,9 @@ async function pushRec(b,rec){ try{ await fetch(SB_URL+"/rest/v1/gongu_reservati
 async function delRec(id){ try{ await fetch(SB_URL+"/rest/v1/gongu_reservations?id=eq."+encodeURIComponent(id),{method:"DELETE",headers:SB_H}); }catch(e){} }
 function refreshBranch(){ const b=STATE.branch; SYNC_STATE="…"; renderList(b); pullBranch(b).then(()=>{ if(STATE.unlocked[b]&&STATE.branch===b) renderList(b); }); }
 
-let STATE = { view:"select", branch:"압구정점", unlocked:{"압구정점":false,"동탄본점":false}, search:"", sort:"visit", filter:"all", freset:"", editId:null, status:"예정", pinBuf:"", pinMode:null };
+let STATE = { view:"select", branch:"압구정점", unlocked:{"압구정점":false,"동탄본점":false}, search:"", sort:"visit", filter:"all", freset:"", view2:((typeof window!=="undefined"&&window.innerWidth>=760)?"table":"card"), editId:null, status:"예정", pinBuf:"", pinMode:null };
+function toggleView2(){ STATE.view2=(STATE.view2==="table"?"card":"table"); renderList(STATE.branch); }
+function fmtShort(s){ if(!s) return "—"; const d=new Date(s); if(isNaN(d)) return s; return (d.getMonth()+1)+"/"+d.getDate()+" "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); }
 function isTodayR(r){ const s=r.visit||r.reserve; if(!s) return false; const d=new Date(s); if(isNaN(d)) return false; const n=new Date(); return d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth()&&d.getDate()===n.getDate(); }
 function setFilter(f){ STATE.filter=f; renderList(STATE.branch); }
 function markStatus(id,st){ const b=STATE.branch; const arr=getData(b); const i=arr.findIndex(x=>x.id===id); if(i<0) return; arr[i].status=(arr[i].status===st?"예정":st); setData(b,arr); pushRec(b,arr[i]); renderBody(b); }
@@ -390,6 +402,7 @@ function renderList(b){
       '<option value="reserve"'+(STATE.sort==="reserve"?" selected":"")+'>예약일순</option>'+
       '<option value="name"'+(STATE.sort==="name"?" selected":"")+'>이름순</option>'+
     '</select>'+
+    '<button class="ghostbtn" onclick="toggleView2()">'+(STATE.view2==="table"?"▦ 카드로":"☰ 표로")+'</button>'+
     '<button class="ghostbtn" onclick="openPayroll()">💰 급여 정산</button>'+
     '<button class="ghostbtn" onclick="pickPhoto()">📷 사진 입력</button>'+
     '<button class="ghostbtn" onclick="openTemplates()">📋 안내문자</button>'+
@@ -428,6 +441,24 @@ function renderBody(b){
   const key = STATE.sort==="reserve" ? "reserve" : (STATE.sort==="name"?"name":"visit");
   rows=rows.slice().sort((a,c)=>{ if(key==="name") return (a.name||"").localeCompare(c.name||"","ko"); const av=a[key]||"", cv=c[key]||""; return av<cv?-1:(av>cv?1:0); });
   if(!rows.length){ box.innerHTML='<div class="empty"><span class="big">🗒️</span>'+(STATE.filter==="today"?"오늘 방문 예정이 없어요 :)":((q||STATE.freset)?"조건에 맞는 예약이 없어요":"아직 예약이 없어요.<br>오른쪽 아래 ＋ 로 추가해요."))+'</div>'; return; }
+  if(STATE.view2==="table"){
+    let th='<div style="overflow-x:auto"><table class="lt"><thead><tr><th>성함</th><th>연락처</th><th>상품</th><th>예약(네이버)</th><th>방문확정</th><th>담당</th><th class="r">금액</th><th>상태</th></tr></thead><tbody>';
+    rows.forEach(function(r){ const k=ckey(r), n=cCnt[k]||1;
+      const st=r.status==="구매확정"?"done":(r.status==="취소"?"cancel":"pl");
+      th+='<tr onclick="openForm(\''+r.id+'\')">'+
+        '<td class="nm">'+escHtml(r.name||"")+'</td>'+
+        '<td>'+escHtml(r.phone||"")+'</td>'+
+        '<td>'+escHtml((r.pkg||"").replace("페이스리세팅 ","").replace("원장 단독 ","원장"))+'</td>'+
+        '<td>'+fmtShort(r.reserve)+'</td>'+
+        '<td'+(!r.visit?' class="warn"':'')+'>'+(r.visit?fmtShort(r.visit):"⚠")+'</td>'+
+        '<td'+(!r.reset?' class="warn"':'')+'>'+escHtml(r.reset||"⚠")+'</td>'+
+        '<td class="r tnum">'+won(cTot[k]||r.paid)+(n>1?'<span style="color:var(--muted)"> ·'+n+'</span>':'')+'</td>'+
+        '<td><span class="pill '+st+'">'+(r.status||"예정")+'</span></td>'+
+      '</tr>';
+    });
+    th+='</tbody></table></div>';
+    box.innerHTML=th; return;
+  }
   let html=''; let lastDay=null;
   rows.forEach(r=>{
     const dk = STATE.sort==="name" ? null : dayKey(r[key]);
