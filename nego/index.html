@@ -202,7 +202,7 @@
       <div class="fld"><label>상태</label>
         <div class="segs" id="statusSeg">
           <div class="seg on" data-st="예정">예정</div>
-          <div class="seg" data-st="방문완료">방문완료</div>
+          <div class="seg" data-st="구매확정">구매확정</div>
           <div class="seg" data-st="취소">취소</div>
         </div>
       </div>
@@ -226,6 +226,14 @@
   </div>
 </div>
 
+<!-- 급여 정산 -->
+<div class="modal-bd" id="payModal">
+  <div class="sheet">
+    <div class="sheet-h"><h3 id="payTitle">급여 정산</h3><button class="xbtn" onclick="closePay()">✕</button></div>
+    <div class="sheet-b" id="payBody"></div>
+  </div>
+</div>
+
 <script>
 const $ = id => document.getElementById(id);
 const won = n => "₩" + (Math.round(n||0)).toLocaleString("ko-KR");
@@ -246,6 +254,30 @@ const PROGRAMS = [
 ];
 const pkgPrice = nm => { const p=PROGRAMS.find(x=>x[0]===nm); return p?p[1]:0; };
 const pkgSess  = nm => { const p=PROGRAMS.find(x=>x[0]===nm); return p?p[2]:0; };
+// 급여 정산용: 서비스(+N) 제외한 정가 회차
+const PKG_BASE = {"페이스리세팅 10+1회":10,"페이스리세팅 15+2회":15,"원장 단독 10+1회":10};
+const pkgBase = nm => (PKG_BASE[nm] != null ? PKG_BASE[nm] : pkgSess(nm));
+const PAY_PER = 60000; // 회차당 관리사 급여
+// 지점 규칙: 동탄=전체회차, 압구정=서비스 제외한 정가회차
+function paySessions(pkg, branch){ return branch==="동탄본점" ? pkgSess(pkg) : pkgBase(pkg); }
+function openPayroll(){
+  const b=STATE.branch; $("payTitle").textContent="💰 "+b+" 관리사 급여";
+  const rows=getData(b).filter(r=>r.status!=="취소");
+  const by={}; rows.forEach(function(r){ const nm=r.reset||"⚠ 담당 미배정"; const s=paySessions(r.pkg,b)||0; (by[nm]=by[nm]||{cnt:0,sess:0}); by[nm].cnt++; by[nm].sess+=s; });
+  const names=Object.keys(by).sort((a,c)=>by[c].sess-by[a].sess);
+  let tot=0;
+  let html='<div class="note-inline" style="margin-bottom:12px">'+(b==="동탄본점"?"동탄: <b>전체 회차</b> × 6만원 (앞으로 할 관리 포함)":"압구정: <b>서비스(+N) 제외</b>한 정가 회차 × 6만원 (15+2→15회)")+'</div>';
+  if(!names.length){ html+='<div class="empty">예약이 없어요.</div>'; }
+  else{
+    html+='<table class="tt"><thead><tr><th style="text-align:left">관리사</th><th>담당</th><th>총 회차</th><th>급여</th></tr></thead><tbody>';
+    names.forEach(function(nm){ const o=by[nm]; const pay=o.sess*PAY_PER; tot+=pay; html+='<tr><td style="text-align:left;font-weight:800">'+escHtml(nm)+'</td><td class="tnum">'+o.cnt+'건</td><td class="tnum">'+o.sess+'회</td><td class="tnum" style="font-weight:800">'+won(pay)+'</td></tr>'; });
+    html+='</tbody></table>';
+    html+='<div class="sumrow" style="margin-top:14px"><div class="metric a"><div class="k">총 지급액</div><div class="v tnum">'+won(tot)+'</div></div><div class="metric"><div class="k">회차당</div><div class="v tnum">₩60,000</div></div></div>';
+    html+='<div class="note-inline" style="margin-top:8px">※ 취소 건 제외 · 회차는 가입상품 기준(앞으로 할 관리 포함). "담당 미배정"은 관리사를 넣어주세요.</div>';
+  }
+  $("payBody").innerHTML=html; $("payModal").classList.add("on");
+}
+function closePay(){ $("payModal").classList.remove("on"); }
 function calc(total){ total=+total||0; const intro=Math.round(total*0.15); const bal=total-intro; const minish=Math.round(bal*0.4); const fee=Math.round(total*FEE_RATE); return {total,intro,bal,minish,fee}; }
 
 // ---- storage ----
@@ -253,14 +285,18 @@ const LSK = b => "gongu_data_"+b;
 const PWK = b => "gongu_pw_"+b;
 function getData(b){ try{ return JSON.parse(localStorage.getItem(LSK(b)))||[]; }catch(e){ return []; } }
 function setData(b,arr){ localStorage.setItem(LSK(b), JSON.stringify(arr)); }
-function getPw(b){ return localStorage.getItem(PWK(b)); }
-function setPw(b,p){ localStorage.setItem(PWK(b), p); }
+const DEFPW={"동탄본점":"1111","압구정점":"5555"};
+let CFG=null; // 클라우드 공유 설정(지점 비번·관리자 비번) — 모든 기기 동일
+function getPw(b){ return (CFG&&CFG["pw_"+b]) || DEFPW[b] || null; }
+function setPw(b,p){ if(!CFG)CFG={}; CFG["pw_"+b]=p; pushConfig(); }
 
 // ---- 클라우드 동기화 (Supabase) : 여러 명이 각자 폰에서 같은 목록 ----
 const SB_URL="https://xzclowgorxhcbsfrrbop.supabase.co";
 const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh6Y2xvd2dvcnhoY2JzZnJyYm9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2MTg4MzIsImV4cCI6MjA5OTE5NDgzMn0.4BuAYPxlHOd3HwbKAkhcccNJAVjz6u9brnE4j9BWE6s";
 const SB_H={ apikey:SB_KEY, Authorization:"Bearer "+SB_KEY, "Content-Type":"application/json" };
 let SYNC_STATE="…"; // 표시용
+async function pullConfig(){ try{ const r=await fetch(SB_URL+"/rest/v1/gongu_reservations?id=eq.__gongu_config&select=rec",{headers:SB_H}); if(r.ok){ const rows=await r.json(); CFG=(rows&&rows[0]&&rows[0].rec)||{}; } }catch(e){} if(!CFG)CFG={}; let seed=false; if(!CFG["pw_동탄본점"]){CFG["pw_동탄본점"]="1111";seed=true;} if(!CFG["pw_압구정점"]){CFG["pw_압구정점"]="5555";seed=true;} if(seed) pushConfig(); if(typeof render==="function"&&STATE&&STATE.view!=="select") render(); }
+async function pushConfig(){ try{ await fetch(SB_URL+"/rest/v1/gongu_reservations",{method:"POST",headers:Object.assign({Prefer:"resolution=merge-duplicates,return=minimal"},SB_H),body:JSON.stringify([{id:"__gongu_config",branch:"__config",rec:CFG,updated_at:new Date().toISOString()}])}); }catch(e){} }
 async function pullBranch(b){
   try{
     const r=await fetch(SB_URL+"/rest/v1/gongu_reservations?select=id,rec&branch=eq."+encodeURIComponent(b),{headers:SB_H});
@@ -275,7 +311,10 @@ async function pushRec(b,rec){ try{ await fetch(SB_URL+"/rest/v1/gongu_reservati
 async function delRec(id){ try{ await fetch(SB_URL+"/rest/v1/gongu_reservations?id=eq."+encodeURIComponent(id),{method:"DELETE",headers:SB_H}); }catch(e){} }
 function refreshBranch(){ const b=STATE.branch; SYNC_STATE="…"; renderList(b); pullBranch(b).then(()=>{ if(STATE.unlocked[b]&&STATE.branch===b) renderList(b); }); }
 
-let STATE = { view:"select", branch:"압구정점", unlocked:{"압구정점":false,"동탄본점":false}, search:"", sort:"visit", editId:null, status:"예정", pinBuf:"", pinMode:null };
+let STATE = { view:"select", branch:"압구정점", unlocked:{"압구정점":false,"동탄본점":false}, search:"", sort:"visit", filter:"all", freset:"", editId:null, status:"예정", pinBuf:"", pinMode:null };
+function isTodayR(r){ const s=r.visit||r.reserve; if(!s) return false; const d=new Date(s); if(isNaN(d)) return false; const n=new Date(); return d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth()&&d.getDate()===n.getDate(); }
+function setFilter(f){ STATE.filter=f; renderList(STATE.branch); }
+function markStatus(id,st){ const b=STATE.branch; const arr=getData(b); const i=arr.findIndex(x=>x.id===id); if(i<0) return; arr[i].status=(arr[i].status===st?"예정":st); setData(b,arr); pushRec(b,arr[i]); renderBody(b); }
 
 // ---- theme ----
 (function(){ const t=localStorage.getItem("gongu_theme"); if(t) document.documentElement.setAttribute("data-theme",t); })();
@@ -323,15 +362,16 @@ function pinKey(k){ if(k==="del"){ STATE.pinBuf=STATE.pinBuf.slice(0,-1); drawDo
 function unlockBranch(b){ STATE.unlocked[b]=true; SYNC_STATE="…"; render(); pullBranch(b).then(()=>{ if(STATE.unlocked[b]&&STATE.branch===b) renderList(b); }); }
 function submitPin(){ const b=STATE.branch; if(STATE.pinMode==="create"){ setPw(b,STATE.pinBuf); unlockBranch(b); } else { if(STATE.pinBuf===getPw(b)){ unlockBranch(b); } else { $("pinErr").textContent="비밀번호가 달라요. 다시 입력해주세요."; STATE.pinBuf=""; drawDots(); } } }
 // ---- 관리자(원장) : 이 비밀번호를 아는 사람만 지점 비번을 바꿀 수 있음 ----
-function getMaster(){ return localStorage.getItem("gongu_master"); }
+function getMaster(){ return CFG&&CFG.master; }
+function setMaster(m){ if(!CFG)CFG={}; CFG.master=m; pushConfig(); }
 function openAdminPanel(){
   const m=getMaster();
-  if(!m){ const np=prompt("처음이에요. 관리자(원장) 비밀번호를 정하세요.\n이 비밀번호를 아는 사람만 지점 비밀번호를 바꿀 수 있어요."); if(np&&np.trim()){ localStorage.setItem("gongu_master",np.trim()); alert("관리자 비밀번호가 설정됐어요. 꼭 기억해두세요!"); } return; }
+  if(!m){ const np=prompt("처음이에요. 관리자(원장) 비밀번호를 정하세요.\n이 비밀번호를 아는 사람만 지점 비밀번호를 바꿀 수 있어요."); if(np&&np.trim()){ setMaster(np.trim()); alert("관리자 비밀번호가 설정됐어요. 꼭 기억해두세요!"); } return; }
   const ent=prompt("관리자(원장) 비밀번호를 입력하세요."); if(ent===null) return; if(ent!==m){ alert("관리자 비밀번호가 달라요."); return; }
   const pick=prompt("무엇을 바꿀까요? 번호를 입력하세요.\n\n1) 압구정점 비밀번호 변경\n2) 동탄본점 비밀번호 변경\n3) 관리자 비밀번호 변경");
   if(pick==="1"){ const p=prompt("압구정점 새 비밀번호 (4자리 숫자)"); if(p&&p.trim()){ setPw("압구정점",p.trim()); STATE.unlocked["압구정점"]=false; alert("압구정점 비밀번호를 바꿨어요."); render(); } }
   else if(pick==="2"){ const p=prompt("동탄본점 새 비밀번호 (4자리 숫자)"); if(p&&p.trim()){ setPw("동탄본점",p.trim()); STATE.unlocked["동탄본점"]=false; alert("동탄본점 비밀번호를 바꿨어요."); render(); } }
-  else if(pick==="3"){ const p=prompt("관리자 새 비밀번호"); if(p&&p.trim()){ localStorage.setItem("gongu_master",p.trim()); alert("관리자 비밀번호를 바꿨어요."); } }
+  else if(pick==="3"){ const p=prompt("관리자 새 비밀번호"); if(p&&p.trim()){ setMaster(p.trim()); alert("관리자 비밀번호를 바꿨어요."); } }
 }
 
 function fmtDT(s){ if(!s) return "—"; const d=new Date(s); if(isNaN(d)) return s; const wd=["일","월","화","수","목","금","토"][d.getDay()]; let h=d.getHours(); const mm=String(d.getMinutes()).padStart(2,"0"); const ap=h<12?"오전":"오후"; let h12=h%12; if(h12===0)h12=12; return (d.getMonth()+1)+"."+d.getDate()+"("+wd+") "+ap+" "+h12+":"+mm; }
@@ -350,34 +390,49 @@ function renderList(b){
       '<option value="reserve"'+(STATE.sort==="reserve"?" selected":"")+'>예약일순</option>'+
       '<option value="name"'+(STATE.sort==="name"?" selected":"")+'>이름순</option>'+
     '</select>'+
+    '<button class="ghostbtn" onclick="openPayroll()">💰 급여 정산</button>'+
     '<button class="ghostbtn" onclick="pickPhoto()">📷 사진 입력</button>'+
     '<button class="ghostbtn" onclick="openTemplates()">📋 안내문자</button>'+
     '<button class="ghostbtn" onclick="refreshBranch()" title="새로고침">🔄</button>'+
     '<button class="ghostbtn" onclick="exportCSV()">⬇ 엑셀</button>'+
   '</div>';
+  const todayN=live.filter(isTodayR).length;
   html+='<div class="sumrow">'+
     '<div class="metric a"><div class="k">예약(취소제외)</div><div class="v tnum">'+live.length+'명</div></div>'+
-    '<div class="metric"><div class="k">총 결제</div><div class="v tnum">'+won(totPaid)+'</div></div>'+
+    '<div class="metric"><div class="k">📅 오늘 방문</div><div class="v tnum">'+todayN+'명</div></div>'+
+  '</div>';
+  html+='<div class="tools" style="margin-top:-2px">'+
+    '<div class="segs" style="flex:1.4">'+
+      '<div class="seg'+(STATE.filter==="all"?" on":"")+'" onclick="setFilter(\'all\')">전체</div>'+
+      '<div class="seg'+(STATE.filter==="today"?" on":"")+'" onclick="setFilter(\'today\')">📅 오늘 방문</div>'+
+    '</div>'+
+    '<select class="sortsel" id="resetSel"><option value="">담당 전체</option>'+resettersFor(b).map(x=>'<option value="'+escAttr(x)+'"'+(STATE.freset===x?" selected":"")+'>'+escHtml(x)+'</option>').join("")+'</select>'+
   '</div>';
   html+='<div id="listBody"></div></div>';
   $("app").innerHTML=html;
   const s=$("searchInp"); if(s) s.oninput=function(e){ STATE.search=e.target.value; renderBody(b); };
   const so=$("sortSel"); if(so) so.onchange=function(e){ STATE.sort=e.target.value; renderBody(b); };
+  const rs=$("resetSel"); if(rs) rs.onchange=function(e){ STATE.freset=e.target.value; renderBody(b); };
   renderBody(b);
 }
 function renderBody(b){
   const box=$("listBody"); if(!box) return;
   let rows=getData(b);
+  // 고객별(전화번호) 총액·건수 — 같은 고객의 예약금+차액 등을 합산
+  const ckey=x=>((x.phone||"").replace(/[^0-9]/g,"")||("nm:"+(x.name||"")));
+  const cTot={}, cCnt={}; getData(b).forEach(x=>{ const k=ckey(x); cTot[k]=(cTot[k]||0)+(+x.paid||0); cCnt[k]=(cCnt[k]||0)+1; });
   const q=STATE.search.trim().toLowerCase();
   if(q) rows=rows.filter(r=>((r.name||"")+(r.phone||"")+(r.pkg||"")+(r.reset||"")+(r.memo||"")).toLowerCase().includes(q));
+  if(STATE.filter==="today") rows=rows.filter(isTodayR);
+  if(STATE.freset) rows=rows.filter(r=>r.reset===STATE.freset);
   const key = STATE.sort==="reserve" ? "reserve" : (STATE.sort==="name"?"name":"visit");
   rows=rows.slice().sort((a,c)=>{ if(key==="name") return (a.name||"").localeCompare(c.name||"","ko"); const av=a[key]||"", cv=c[key]||""; return av<cv?-1:(av>cv?1:0); });
-  if(!rows.length){ box.innerHTML='<div class="empty"><span class="big">🗒️</span>'+(q?"검색 결과가 없어요":"아직 예약이 없어요.<br>오른쪽 아래 ＋ 로 추가해요.")+'</div>'; return; }
+  if(!rows.length){ box.innerHTML='<div class="empty"><span class="big">🗒️</span>'+(STATE.filter==="today"?"오늘 방문 예정이 없어요 :)":((q||STATE.freset)?"조건에 맞는 예약이 없어요":"아직 예약이 없어요.<br>오른쪽 아래 ＋ 로 추가해요."))+'</div>'; return; }
   let html=''; let lastDay=null;
   rows.forEach(r=>{
     const dk = STATE.sort==="name" ? null : dayKey(r[key]);
     if(dk && dk!==lastDay){ lastDay=dk; const cnt=rows.filter(x=>dayKey(x[key])===dk).length; html+='<div class="daygroup">'+dk+' <span class="cnt">'+cnt+'명</span></div>'; }
-    const stcls=r.status==="방문완료"?"done":(r.status==="취소"?"cancel":"pl");
+    const stcls=r.status==="구매확정"?"done":(r.status==="취소"?"cancel":"pl");
     const stlb=r.status||"예정";
     html+='<div class="card" onclick="openForm(\''+r.id+'\')">'+
       '<div class="top">'+(r.ord?'<span class="ord">#'+escHtml(r.ord)+'</span>':'')+'<span class="nm">'+escHtml(r.name||"(이름없음)")+'</span><span class="pill '+stcls+'">'+stlb+'</span></div>'+
@@ -390,7 +445,7 @@ function renderBody(b){
       '<div class="foot">'+
         (r.reset?'<span class="who">'+escHtml(r.reset)+'</span>':'')+
         (r.phone?'<a class="tel" href="tel:'+escAttr((r.phone||"").replace(/[^0-9]/g,""))+'" onclick="event.stopPropagation()">'+escHtml(r.phone)+'</a>':'')+
-        '<span class="amt tnum">'+won(r.paid)+'</span>'+
+        (function(){ var k=ckey(r), n=cCnt[k]||1; return '<span class="amt tnum">'+won(cTot[k]||r.paid)+(n>1?'<span style="font-weight:600;color:var(--muted);font-size:.8em"> ·합산 '+n+'건</span>':'')+'</span>'; })()+
       '</div>'+
       (r.memo?'<div class="memo">'+escHtml(r.memo)+'</div>':'')+
     '</div>';
@@ -467,9 +522,7 @@ function exportCSV(){
 function escHtml(s){ return String(s==null?"":s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m])); }
 function escAttr(s){ return escHtml(s); }
 
-// 기본 지점 비밀번호 (없을 때만 세팅) — 관리자(⚙️)에서 변경 가능
-if(!getPw("동탄본점")) setPw("동탄본점","1111");
-if(!getPw("압구정점")) setPw("압구정점","5555");
+// 지점 비밀번호는 클라우드에서 공유(pullConfig). 기본 동탄1111·압구정5555
 
 // ---- 안내문자 템플릿 ----
 const TPL_COMMON = { t:"③ 관리 후 안내 (공통)", x:`안녕하세요 소니드 얼굴윤곽 입니다.
@@ -607,6 +660,7 @@ async function onPhotoFile(file){
 }
 
 render();
+pullConfig();
 </script>
 </body>
 </html>
