@@ -303,7 +303,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v223 (2026-08-24)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v224 (2026-08-24)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -2970,7 +2970,7 @@ async function deleteCurrent(){
   });
 }
 function clearFormConfirm(){var has=form&&Object.keys(form).some(function(k){var v=form[k];return v!=null&&v!==''&&!(Array.isArray(v)&&!v.length);});if(has&&!confirm('현재 화면에 입력한 내용이 지워지고 새 기록을 작성합니다.\n(이미 저장한 기록은 목록에 그대로 남아요)\n계속할까요?'))return;clearForm();}
-/* ===== 개인정보·생체정보 동의서 (임시 서식 · 대표 확정 전) ===== */
+/* ===== 개인정보·생체정보 동의서 ===== */
 var _sigDraw=false,_sigDirty=false;
 function renderConsentBadge(){var el=document.getElementById('consentBadge');if(!el)return;var c=form&&form.consent;if(c&&c.agreed){el.innerHTML='<span style="color:#0e9f6e">✓ 동의 완료</span> <span style="color:#999;font-weight:600;font-size:11px">'+(c.at?String(c.at).slice(0,10):'')+'</span>';}else{el.innerHTML='<span style="color:#c0392b">● 미작성</span>';}}
 function _csChk(id,label,req,it){return '<label style="display:flex;gap:8px;align-items:flex-start;margin:8px 0;cursor:pointer"><input type="checkbox" id="'+id+'" '+(it[id]?'checked':'')+' style="margin-top:3px;width:18px;height:18px;flex:0 0 auto"><span>'+(req?'<b style="color:#c026d3">[필수]</b> ':'<span style="color:#888">[선택]</span> ')+label+'</span></label>';}
@@ -2985,11 +2985,10 @@ function openConsent(){
     +'<div style="font-size:12px;opacity:.9">SONEED</div><div style="font-size:18px;font-weight:900">개인정보·생체정보 수집·이용 동의서</div>'
     +'<button onclick="document.getElementById(\'consentOv\').style.display=\'none\'" style="position:absolute;top:12px;right:14px;background:rgba(255,255,255,.25);border:0;color:#fff;width:30px;height:30px;border-radius:50%;font-size:18px;cursor:pointer">×</button></div>'
     +'<div style="padding:16px 18px;font-size:13.5px;line-height:1.65;color:#333">'
-    +'<div style="background:#fff7e6;border:1px solid #ffe1a8;color:#8a6d00;font-size:11.5px;padding:8px 10px;border-radius:8px;margin-bottom:12px">※ <b>임시 서식</b>입니다. 실제 운영 전 대표님 확정 및 전문가(법무/노무) 검토가 필요합니다. 문구는 대표님이 수정하세요.</div>'
     +'<div style="font-weight:800;margin-bottom:4px">수집·이용 안내</div>'
     +'<div style="font-size:12.5px;color:#555;background:#faf7ff;border:1px solid #eee;border-radius:8px;padding:10px 12px;margin-bottom:12px">'
     +'• 수집 항목: 얼굴 사진 등 <b>생체정보</b>, 성함, 연락처<br>• 이용 목적: 얼굴윤곽 비대칭 분석 및 관리 서비스 제공<br>'
-    +'• 보유·이용 기간: <b>[회원 관리 종료 또는 동의 철회 시까지]</b> (관계 법령상 기간 포함)<br>'
+    +'• 보유·이용 기간: 수집일로부터 <b>10년</b> 또는 동의 철회 시까지 (전·후 비교·재방문 관리 목적, 관계 법령상 보존기간 포함)<br>'
     +'• 동의 거부 권리: 필수 항목에 동의하지 않으실 수 있으며, 이 경우 서비스 제공이 제한될 수 있습니다.</div>'
     +_csChk('collect','얼굴 사진 등 생체정보의 수집·이용에 동의합니다.',true,it)
     +_csChk('store','분석 결과 및 사진의 저장·보관에 동의합니다.',true,it)
