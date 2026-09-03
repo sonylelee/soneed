@@ -737,7 +737,7 @@ function _wipeSession(){
   updateAuthInfo();
 }
 function authLogout(){ _wipeSession(); var m=document.getElementById('gateMsg'); if(m)m.textContent=''; showGate(true); }
-function updateAuthInfo(){ var el=document.getElementById('authInfo'); var na=document.getElementById('navAdmin'); if(!el)return; if(authTok){ var em=authEmail()||''; el.innerHTML=''; var s1=document.createElement('span'); s1.textContent=em; s1.style.cssText='font-size:12px;color:#cbd0da;margin-right:8px'; var bp=document.createElement('button'); bp.textContent='비번변경'; bp.style.cssText='font-size:11px;padding:3px 8px;border:1px solid #444;border-radius:5px;background:#22252d;color:#e6e8ee;cursor:pointer;margin-right:6px'; bp.onclick=authChangePw; var b=document.createElement('button'); b.textContent='로그아웃'; b.style.cssText='font-size:11px;padding:3px 8px;border:1px solid #444;border-radius:5px;background:#22252d;color:#e6e8ee;cursor:pointer'; b.onclick=authLogout; el.appendChild(s1); el.appendChild(bp); el.appendChild(b); el.style.display='flex'; if(na)na.style.display=_isAdmin()?'':'none'; } else { el.innerHTML=''; el.style.display='none'; if(na)na.style.display='none'; } }
+function updateAuthInfo(){ var el=document.getElementById('authInfo'); var na=document.getElementById('navAdmin'); if(!el)return; if(authTok){ var em=authEmail()||''; el.innerHTML=''; var s1=document.createElement('span'); var _rl=_isAdmin()?'👑 관리자':(_isMgr()?'관리직원':'👁 읽기전용'); var _rc=_isAdmin()?'background:#2a5cff;color:#fff':'background:#4a3a12;color:#ffd479'; s1.innerHTML='접속: <b style="color:#fff">'+String(em).replace(/[<>&]/g,'')+'</b> <span style="font-size:10px;padding:2px 8px;border-radius:10px;font-weight:800;margin-left:2px;'+_rc+'">'+_rl+'</span>'; s1.style.cssText='font-size:12.5px;color:#cbd0da;margin-right:8px'; var bp=document.createElement('button'); bp.textContent='비번변경'; bp.style.cssText='font-size:11px;padding:3px 8px;border:1px solid #444;border-radius:5px;background:#22252d;color:#e6e8ee;cursor:pointer;margin-right:6px'; bp.onclick=authChangePw; var b=document.createElement('button'); b.textContent='로그아웃'; b.style.cssText='font-size:11px;padding:3px 8px;border:1px solid #444;border-radius:5px;background:#22252d;color:#e6e8ee;cursor:pointer'; b.onclick=authLogout; el.appendChild(s1); el.appendChild(bp); el.appendChild(b); el.style.display='flex'; if(na)na.style.display=_isAdmin()?'':'none'; } else { el.innerHTML=''; el.style.display='none'; if(na)na.style.display='none'; } }
 async function doLogin(){
   var e=(document.getElementById('gateEmail').value||'').trim(), p=document.getElementById('gatePw').value||'';
   var msg=document.getElementById('gateMsg'); if(!e||!p){msg.textContent='이메일·비밀번호를 입력하세요';return;} msg.textContent='로그인 중…';
@@ -862,8 +862,9 @@ function _bindRecList(){
 }
 /* ===== 역할 판단(JWT app_metadata) — 화면용. 실제 권한은 서버 RLS가 결정 ===== */
 function _jwtPayload(){ try{ var p=(authTok||'').split('.')[1]; if(!p)return {}; return JSON.parse(decodeURIComponent(escape(atob(p.replace(/-/g,'+').replace(/_/g,'/'))))); }catch(e){ return {}; } }
-function _isAdmin(){ var am=(_jwtPayload().app_metadata)||{}; return am.role==='admin'; }
-function _isMgr(){ var am=(_jwtPayload().app_metadata)||{}; return am.role==='manager'||am.role==='admin'; }
+var FORCE_VIEWER=[]; function _forcedViewer(){ return FORCE_VIEWER.indexOf(String(authEmail()||'').toLowerCase())>=0; }
+function _isAdmin(){ if(_forcedViewer())return false; var am=(_jwtPayload().app_metadata)||{}; return am.role==='admin'; }
+function _isMgr(){ if(_forcedViewer())return false; var am=(_jwtPayload().app_metadata)||{}; return am.role==='manager'||am.role==='admin'; }
 /* ===== 5분 실행취소 ===== */
 function _showUndoDelete(id){
   var bar=document.getElementById('undoBar');
