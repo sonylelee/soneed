@@ -165,6 +165,7 @@
 </header>
 
 <div id="app"></div>
+<input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none" onchange="onPhotoFile(this.files&&this.files[0])">
 <button class="fab" id="fab" style="display:none" onclick="openForm()">＋ 고객 추가</button>
 
 <!-- form modal -->
@@ -214,7 +215,9 @@
 <script>
 const $ = id => document.getElementById(id);
 const won = n => "₩" + (Math.round(n||0)).toLocaleString("ko-KR");
-const RESETTERS = ["정수영","김현주","신대성","이소니"];
+const RESETTERS_COMMON = ["신대성","이소니"]; // 양쪽 지점 공통
+const RESETTERS_BRANCH = { "동탄본점":["이수연","김려은","신경미"], "압구정점":["정수영","김현주"] };
+function resettersFor(b){ return (RESETTERS_BRANCH[b]||[]).concat(RESETTERS_COMMON); }
 const BRANCHES = ["압구정점","동탄본점"];
 const FEE_RATE = 0.030981;   // 네이버페이 수수료율(부가세 포함, 시트 기준)
 // 패키지 가격표 (시트 하단 표 기준) : [이름, 총결제금액, 가입횟수]
@@ -333,6 +336,7 @@ function renderList(b){
       '<option value="reserve"'+(STATE.sort==="reserve"?" selected":"")+'>예약일순</option>'+
       '<option value="name"'+(STATE.sort==="name"?" selected":"")+'>이름순</option>'+
     '</select>'+
+    '<button class="ghostbtn" onclick="pickPhoto()">📷 사진 입력</button>'+
     '<button class="ghostbtn" onclick="openTemplates()">📋 안내문자</button>'+
     '<button class="ghostbtn" onclick="refreshBranch()" title="새로고침">🔄</button>'+
     '<button class="ghostbtn" onclick="exportCSV()">⬇ 엑셀</button>'+
@@ -383,7 +387,7 @@ function renderBody(b){
 // ---- form ----
 function fillSelects(){
   const p=$("f_pkg"); p.innerHTML=PROGRAMS.map(x=>'<option value="'+escAttr(x[0])+'">'+escHtml(x[0])+(x[1]?" · "+won(x[1]):"")+'</option>').join("");
-  const r=$("f_reset"); r.innerHTML='<option value="">— 선택 —</option>'+RESETTERS.map(x=>'<option>'+x+'</option>').join("");
+  const r=$("f_reset"); r.innerHTML='<option value="">— 선택 —</option>'+resettersFor(STATE.branch).map(x=>'<option>'+x+'</option>').join("");
 }
 function setStatus(st){ STATE.status=st; document.querySelectorAll("#statusSeg .seg").forEach(s=>s.classList.toggle("on", s.dataset.st===st)); }
 document.querySelectorAll("#statusSeg .seg").forEach(s=>s.onclick=()=>setStatus(s.dataset.st));
@@ -561,6 +565,29 @@ function selTpl(i){ TPL_CUR=i; renderTpl(); }
 function fallbackCopy(txt,cb){ const ta=document.createElement("textarea"); ta.value=txt; ta.style.cssText="position:fixed;opacity:0"; document.body.appendChild(ta); ta.focus(); ta.select(); try{document.execCommand("copy");}catch(e){} document.body.removeChild(ta); cb&&cb(); }
 function copyTpl(){ const txt=TPL_LIST[TPL_CUR].x; const done=()=>toast("복사됐어요! 붙여넣기 하세요 :)"); if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(done,()=>fallbackCopy(txt,done)); } else fallbackCopy(txt,done); }
 function toast(msg){ let t=$("toastEl"); if(!t){ t=document.createElement("div"); t.id="toastEl"; t.style.cssText="position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#26313f;color:#fff;padding:12px 20px;border-radius:6px;font-size:.9rem;font-weight:700;z-index:9999;box-shadow:0 6px 18px rgba(0,0,0,.3);opacity:0;transition:.2s;max-width:88%;text-align:center;pointer-events:none"; document.body.appendChild(t); } t.textContent=msg; t.style.opacity="1"; clearTimeout(t._t); t._t=setTimeout(function(){ t.style.opacity="0"; },2200); }
+
+// ---- 📷 네이버 예약 캡처 → 자동 입력 ----
+const WORKER_URL = "https://soneed-nego-ocr.soni0025.workers.dev"; // ⚠ 워커 배포 후 이 주소로 맞추기
+function pickPhoto(){ const el=$("photoInput"); if(el){ el.value=""; el.click(); } }
+function fileToB64(file){ return new Promise(function(res,rej){ const r=new FileReader(); r.onload=function(){ res(String(r.result).split(",")[1]); }; r.onerror=rej; r.readAsDataURL(file); }); }
+async function onPhotoFile(file){
+  if(!file) return;
+  toast("사진 읽는 중… 잠시만요 ⏳");
+  try{
+    const b64=await fileToB64(file);
+    const r=await fetch(WORKER_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({image:b64,media_type:file.type||"image/png",branch:STATE.branch})});
+    const d=await r.json();
+    if(!d||d.error){ toast("사진을 못 읽었어요 — 직접 입력해주세요"); openForm(); return; }
+    openForm();
+    if(d.name) $("f_name").value=d.name;
+    if(d.phone) $("f_phone").value=d.phone;
+    if(d.reserve) $("f_reserve").value=d.reserve;
+    if(d.memo) $("f_memo").value=d.memo;
+    if(d.info){ STATE.editInfo=d.info; $("f_info").textContent=d.info; $("infoFld").style.display=""; }
+    if(d.pkg && PROGRAMS.some(function(p){return p[0]===d.pkg;})){ $("f_pkg").value=d.pkg; onPkg(); }
+    toast("불러왔어요! 담당자·방문확정 채우고 저장하세요 ✅");
+  }catch(e){ toast("사진 읽기 오류(워커 주소 확인) — 직접 입력해주세요"); openForm(); }
+}
 
 render();
 </script>
