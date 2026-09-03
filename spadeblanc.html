@@ -463,7 +463,7 @@ var ADVICE=[
  {t:'발목 발등 굽힘 + 아치 높음', a:'[발목 발등 굽힘 + 아치 높음]\n- 앞정강근 이완이 필요해요.\n- 발등쪽 스트레칭 해주세요.'}
 ];
 function _adviceMatch(x){ if(x.allAny)return x.allAny.every(function(g){return g.some(function(f){return sel.has(f);});}); if(x.all)return x.all.every(function(f){return sel.has(f);}); if(x.any){var got=false; sel.forEach(function(f){ if(x.any.some(function(k){return f.indexOf(k)>=0;}))got=true; }); return got;} return false; }
-var FORCE_VIEWER=['spadeblan@naver.com'];
+var FORCE_VIEWER=['spadeblanc@naver.com'];
 function _isVwr(){return FORCE_VIEWER.indexOf(String(authEmail()||'').toLowerCase())>=0;}
 var _viewLock=false;
 function applyViewLock(){var lock=_viewLock;var cl=document.getElementById("checklist");if(cl){cl.style.opacity=lock?"0.55":"";cl.style.pointerEvents=lock?"none":"";}var bn=document.getElementById("viewLockBanner");if(bn)bn.style.display=lock?"":"none";["recName","recPhone","recAge","recRoute","recMemo","recProgram","recPrice","recGuide","recDate","recGender"].forEach(function(id){var e=document.getElementById(id);if(e){if(e.tagName==="SELECT")e.disabled=lock;else e.readOnly=lock;e.style.opacity=lock?"0.7":"";}});var sb=document.getElementById("saveBtn");if(sb)sb.textContent=lock?"💬 코멘트 저장":"이 분석 저장";}
