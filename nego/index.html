@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>네고 이벤트 예약 · 소니드</title>
+<style>
+  :root{
+    --bg:#f5f3f0; --surface:#ffffff; --surface-2:#faf8f6; --line:#e7e1db; --line-2:#efeae5;
+    --ink:#26313f; --muted:#7c8794; --faint:#a7b0ba;
+    --accent:#b0567f; --accent-2:#8f3f65; --accent-soft:#f7e8ef;
+    --gold:#bd9a4e; --navy:#26313f;
+    --ok:#2f9e6f; --ok-soft:#e2f3ec; --warn:#c9863a; --warn-soft:#f8ecdc; --bad:#cf5b52; --bad-soft:#fbe7e4;
+    --shadow:0 6px 24px rgba(38,49,63,.08); --shadow-lg:0 16px 44px rgba(38,49,63,.16);
+    --r:14px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#171b20; --surface:#20262e; --surface-2:#252c35; --line:#333c47; --line-2:#2b333d;
+      --ink:#eef2f6; --muted:#9aa6b2; --faint:#6d7885;
+      --accent:#d888ac; --accent-2:#e6a3c1; --accent-soft:#3a2530;
+      --gold:#d8b56a; --navy:#e8edf2;
+      --ok:#4cc48c; --ok-soft:#173226; --warn:#e0a44e; --warn-soft:#33260f; --bad:#ef7d74; --bad-soft:#37211f;
+      --shadow:0 6px 24px rgba(0,0,0,.35); --shadow-lg:0 18px 48px rgba(0,0,0,.5);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#171b20; --surface:#20262e; --surface-2:#252c35; --line:#333c47; --line-2:#2b333d;
+    --ink:#eef2f6; --muted:#9aa6b2; --faint:#6d7885;
+    --accent:#d888ac; --accent-2:#e6a3c1; --accent-soft:#3a2530;
+    --gold:#d8b56a; --navy:#e8edf2; --ok:#4cc48c; --ok-soft:#173226; --warn:#e0a44e; --warn-soft:#33260f; --bad:#ef7d74; --bad-soft:#37211f;
+    --shadow:0 6px 24px rgba(0,0,0,.35); --shadow-lg:0 18px 48px rgba(0,0,0,.5);
+  }
+  :root[data-theme="light"]{
+    --bg:#f5f3f0; --surface:#ffffff; --surface-2:#faf8f6; --line:#e7e1db; --line-2:#efeae5;
+    --ink:#26313f; --muted:#7c8794; --faint:#a7b0ba;
+    --accent:#b0567f; --accent-2:#8f3f65; --accent-soft:#f7e8ef;
+    --ok:#2f9e6f; --ok-soft:#e2f3ec; --warn:#c9863a; --warn-soft:#f8ecdc; --bad:#cf5b52; --bad-soft:#fbe7e4;
+    --shadow:0 6px 24px rgba(38,49,63,.08); --shadow-lg:0 16px 44px rgba(38,49,63,.16);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Segoe UI",sans-serif;-webkit-text-size-adjust:100%;line-height:1.45;padding-bottom:env(safe-area-inset-bottom)}
+  .tnum{font-variant-numeric:tabular-nums}
+  /* ---- header ---- */
+  header{position:sticky;top:0;z-index:20;background:var(--surface);border-bottom:1px solid var(--line);padding:calc(env(safe-area-inset-top) + 10px) 14px 0}
+  .brand{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+  .brand .dot{width:30px;height:30px;border-radius:9px;background:linear-gradient(140deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:15px;flex:none}
+  .brand h1{font-size:1.02rem;margin:0;font-weight:800;letter-spacing:-.01em}
+  .brand .sub{font-size:.68rem;color:var(--muted);font-weight:600}
+  .brand .spacer{flex:1}
+  .iconbtn{border:1px solid var(--line);background:var(--surface-2);color:var(--muted);border-radius:9px;width:34px;height:34px;font-size:15px;cursor:pointer}
+  .tabs{display:flex;gap:6px}
+  .tab{flex:1;border:none;background:transparent;color:var(--muted);font-weight:700;font-size:.92rem;padding:11px 8px;cursor:pointer;border-bottom:2.5px solid transparent;position:relative;letter-spacing:-.01em}
+  .tab.on{color:var(--accent);border-bottom-color:var(--accent)}
+  .tab .lock{font-size:.7rem;opacity:.7;margin-left:3px}
+  /* ---- toolbar ---- */
+  .wrap{max-width:760px;margin:0 auto;padding:12px 14px 90px}
+  .tools{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+  .search{flex:1;min-width:150px;display:flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:9px 12px}
+  .search input{border:none;background:transparent;color:var(--ink);font-size:.9rem;width:100%;outline:none}
+  select.sortsel,.ghostbtn{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:11px;padding:9px 11px;font-size:.82rem;font-weight:600;cursor:pointer}
+  /* ---- summary ---- */
+  .sumrow{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+  .metric{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 11px;border-top:2.5px solid var(--gold)}
+  .metric .k{font-size:.66rem;color:var(--muted);font-weight:600}
+  .metric .v{font-size:1.0rem;font-weight:800;margin-top:2px;letter-spacing:-.02em}
+  .metric.a{border-top-color:var(--accent)}
+  @media(max-width:560px){ .sumrow{grid-template-columns:repeat(2,1fr)} }
+  /* ---- day group ---- */
+  .daygroup{font-size:.76rem;font-weight:800;color:var(--muted);margin:16px 4px 8px;display:flex;align-items:center;gap:8px}
+  .daygroup::after{content:"";flex:1;height:1px;background:var(--line)}
+  .daygroup .cnt{color:var(--accent);font-weight:700}
+  /* ---- card ---- */
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:13px 14px;margin-bottom:10px;cursor:pointer;transition:.12s}
+  .card:active{transform:scale(.995)}
+  .card .top{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+  .card .nm{font-weight:800;font-size:1.02rem;letter-spacing:-.01em}
+  .card .ord{font-size:.66rem;font-weight:700;color:var(--faint);background:var(--surface-2);border:1px solid var(--line);border-radius:20px;padding:1px 7px}
+  .pill{font-size:.66rem;font-weight:800;border-radius:20px;padding:2px 9px;margin-left:auto}
+  .pill.pl{background:var(--accent-soft);color:var(--accent-2)}
+  .pill.done{background:var(--ok-soft);color:var(--ok)}
+  .pill.cancel{background:var(--bad-soft);color:var(--bad)}
+  .card .pkg{font-size:.8rem;color:var(--muted);font-weight:600;margin-bottom:8px}
+  .card .times{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+  .tchip{flex:1;min-width:130px;background:var(--surface-2);border:1px solid var(--line-2);border-radius:10px;padding:7px 10px}
+  .tchip .lb{font-size:.6rem;color:var(--faint);font-weight:700;letter-spacing:.02em}
+  .tchip .vv{font-size:.86rem;font-weight:700;margin-top:1px;letter-spacing:-.01em}
+  .tchip.visit{background:var(--accent-soft);border-color:transparent}
+  .tchip.visit .vv{color:var(--accent-2)}
+  .card .foot{display:flex;align-items:center;gap:10px;font-size:.76rem;color:var(--muted);flex-wrap:wrap;border-top:1px dashed var(--line);padding-top:8px}
+  .card .foot .who{font-weight:700;color:var(--ink)}
+  .card .foot .amt{margin-left:auto;font-weight:800;color:var(--ink)}
+  .card .memo{font-size:.74rem;color:var(--warn);background:var(--warn-soft);border-radius:8px;padding:5px 9px;margin-top:8px;font-weight:600}
+  .card .tel{color:var(--accent-2);font-weight:700;text-decoration:none}
+  .empty{text-align:center;color:var(--muted);padding:56px 20px;font-weight:600}
+  .empty .big{font-size:2.4rem;display:block;margin-bottom:10px}
+  /* ---- FAB ---- */
+  .fab{position:fixed;right:calc(env(safe-area-inset-right) + 18px);bottom:calc(env(safe-area-inset-bottom) + 20px);z-index:25;background:linear-gradient(140deg,var(--accent),var(--accent-2));color:#fff;border:none;border-radius:18px;padding:15px 20px;font-size:.98rem;font-weight:800;box-shadow:var(--shadow-lg);cursor:pointer;display:flex;align-items:center;gap:7px}
+  /* ---- gate ---- */
+  .gate{max-width:380px;margin:8vh auto;padding:26px 22px;text-align:center}
+  .gate .emo{font-size:2.6rem}
+  .gate h2{font-size:1.25rem;margin:12px 0 4px}
+  .gate p{color:var(--muted);font-size:.86rem;margin:0 0 20px}
+  .pininput{display:flex;gap:9px;justify-content:center;margin-bottom:8px}
+  .pindot{width:15px;height:15px;border-radius:50%;border:2px solid var(--line);transition:.15s}
+  .pindot.on{background:var(--accent);border-color:var(--accent)}
+  .pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:280px;margin:16px auto 0}
+  .pad button{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:14px;padding:16px 0;font-size:1.3rem;font-weight:700;cursor:pointer}
+  .pad button:active{background:var(--accent-soft)}
+  .pad button.blank{border:none;background:transparent;cursor:default}
+  .gateerr{color:var(--bad);font-size:.82rem;font-weight:700;min-height:1.2em;margin-top:6px}
+  /* ---- modal ---- */
+  .modal-bd{position:fixed;inset:0;background:rgba(20,26,33,.5);z-index:40;display:none;align-items:flex-end;justify-content:center}
+  .modal-bd.on{display:flex}
+  .sheet{background:var(--surface);width:100%;max-width:620px;max-height:94vh;border-radius:20px 20px 0 0;overflow:auto;box-shadow:var(--shadow-lg);animation:up .22s ease}
+  @keyframes up{from{transform:translateY(30px);opacity:.6}to{transform:none;opacity:1}}
+  @media(min-width:620px){ .modal-bd{align-items:center} .sheet{border-radius:20px} }
+  .sheet-h{position:sticky;top:0;background:var(--surface);display:flex;align-items:center;gap:10px;padding:16px 18px 12px;border-bottom:1px solid var(--line);z-index:2}
+  .sheet-h h3{margin:0;font-size:1.06rem;font-weight:800;flex:1}
+  .sheet-b{padding:16px 18px 22px}
+  .fld{margin-bottom:14px}
+  .fld label{display:block;font-size:.74rem;font-weight:700;color:var(--muted);margin-bottom:5px;letter-spacing:.01em}
+  .fld input,.fld select,.fld textarea{width:100%;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);border-radius:11px;padding:12px 13px;font-size:.98rem;font-family:inherit;outline:none}
+  .fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--accent)}
+  .fld textarea{min-height:64px;resize:vertical}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .calcbox{background:var(--accent-soft);border-radius:12px;padding:12px 14px;margin:6px 0 16px}
+  .calcbox .cr{display:flex;justify-content:space-between;font-size:.84rem;padding:3px 0;color:var(--accent-2)}
+  .calcbox .cr b{font-weight:800}
+  .segs{display:flex;gap:7px}
+  .seg{flex:1;border:1px solid var(--line);background:var(--surface-2);color:var(--muted);border-radius:10px;padding:10px;font-weight:700;font-size:.85rem;cursor:pointer;text-align:center}
+  .seg.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .primary{width:100%;border:none;background:linear-gradient(140deg,var(--accent),var(--accent-2));color:#fff;border-radius:13px;padding:15px;font-size:1.02rem;font-weight:800;cursor:pointer;margin-top:4px}
+  .dangerbtn{width:100%;border:1px solid var(--bad);background:transparent;color:var(--bad);border-radius:13px;padding:12px;font-size:.9rem;font-weight:700;cursor:pointer;margin-top:10px}
+  .xbtn{border:none;background:var(--surface-2);color:var(--muted);border-radius:9px;width:32px;height:32px;font-size:16px;cursor:pointer}
+  .hint{font-size:.72rem;color:var(--faint);margin-top:5px}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="dot">S</div>
+    <div>
+      <h1>네고 이벤트 예약</h1>
+      <div class="sub">소니드 × 미니쉬 · 얼굴윤곽</div>
+    </div>
+    <div class="spacer"></div>
+    <button class="iconbtn" id="themeBtn" title="테마">◐</button>
+  </div>
+  <div class="tabs">
+    <button class="tab" data-branch="압구정점">압구정점<span class="lock" id="lk-압구정점">🔒</span></button>
+    <button class="tab" data-branch="동탄본점">동탄본점<span class="lock" id="lk-동탄본점">🔒</span></button>
+  </div>
+</header>
+
+<div id="app"></div>
+<button class="fab" id="fab" style="display:none" onclick="openForm()">＋ 고객 추가</button>
+
+<!-- form modal -->
+<div class="modal-bd" id="formModal">
+  <div class="sheet">
+    <div class="sheet-h">
+      <h3 id="formTitle">고객 추가</h3>
+      <button class="xbtn" onclick="closeForm()">✕</button>
+    </div>
+    <div class="sheet-b">
+      <div class="fld"><label>성함</label><input id="f_name" placeholder="예: 김수정(9170)"></div>
+      <div class="fld"><label>연락처</label><input id="f_phone" type="tel" inputmode="numeric" placeholder="010-0000-0000"></div>
+      <div class="fld"><label>가입 패키지</label><select id="f_pkg" onchange="onPkg()"></select></div>
+      <div class="fld"><label>배정 리셋터</label><select id="f_reset"></select></div>
+      <div class="two">
+        <div class="fld"><label>📅 예약일시</label><input id="f_reserve" type="datetime-local"></div>
+        <div class="fld"><label>📅 방문일시</label><input id="f_visit" type="datetime-local"></div>
+      </div>
+      <div class="fld"><label>네이버페이 결제완료액 (원)</label><input id="f_paid" type="number" inputmode="numeric" placeholder="0" oninput="calcPreview()"><div class="hint" id="pkgHint"></div></div>
+      <div class="calcbox" id="calcBox"></div>
+      <div class="fld"><label>상태</label>
+        <div class="segs" id="statusSeg">
+          <div class="seg on" data-st="예정">예정</div>
+          <div class="seg" data-st="방문완료">방문완료</div>
+          <div class="seg" data-st="취소">취소</div>
+        </div>
+      </div>
+      <div class="fld"><label>비고</label><textarea id="f_memo" placeholder="특이사항 (예: 당일취소 80%환불)"></textarea></div>
+      <button class="primary" onclick="saveForm()">저장</button>
+      <button class="dangerbtn" id="delBtn" style="display:none" onclick="delForm()">삭제</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const won = n => "₩" + (Math.round(n||0)).toLocaleString("ko-KR");
+const RESETTERS = ["정수영","김현주","신대성"];
+const BRANCHES = ["압구정점","동탄본점"];
+const FEE_RATE = 0.030981;   // 네이버페이 수수료율(부가세 포함, 시트 기준)
+// 패키지 가격표 (시트 하단 표 기준) : [이름, 총결제금액, 가입횟수]
+const PROGRAMS = [
+  ["— 선택 안 함 —",0,0],
+  ["페이스리세팅첫관리(-소개15%)",220000,1],
+  ["페이스리세팅5(-소개15%)",890000,5],
+  ["페이스리세팅10+1(-소개15%)",1510000,11],
+  ["페이스리세팅15+2(-소개15%)",2260000,17],
+  ["페이스리세팅10+1정상가(-소개15%)",1980000,11],
+  ["페이스리세팅첫관리",220000,1],
+  ["스마트윤곽첫관리",250000,1],
+  ["페이스리세팅5(정상가)",1020000,5],
+  ["페이스리세팅10(정상가)",1980000,10],
+  ["페이스리세팅15(정상가)",2640000,15],
+  ["페이스리세팅30(정상가)",4690000,30],
+  ["페이스리세팅10+1(정상가)",1980000,11],
+  ["페이스리세팅15+2(정상가)",2640000,17],
+  ["페이스리세팅30+3(정상가)",4690000,33],
+  ["스마트윤곽10(정상가)",2280000,10],
+  ["스마트윤곽15(정상가)",3240000,15],
+  ["스마트윤곽30(정상가)",5160000,30],
+  ["스마트윤곽10+1(정상가)",2280000,11],
+  ["스마트윤곽15+2(정상가)",3240000,17],
+  ["스마트윤곽30+3(정상가)",5160000,33],
+  ["원장페이스리세팅첫관리",300000,1],
+  ["원장스마트윤곽첫관리",330000,1],
+  ["원장페이스리세팅15",4050000,15],
+  ["원장페이스리세팅30",7290000,30],
+  ["원장스마트윤곽15",4320000,15],
+  ["원장스마트윤곽30",7776000,30],
+  ["페이스리세팅5(-소개10%)",1020000,5],
+  ["페이스리세팅10+1(-소개10%)",1980000,11],
+  ["페이스리세팅15+2(-소개10%)",2640000,17],
+  ["기존 고객님이관",0,1],
+  ["아직 관리전",0,0],
+];
+const pkgPrice = nm => { const p=PROGRAMS.find(x=>x[0]===nm); return p?p[1]:0; };
+const pkgSess  = nm => { const p=PROGRAMS.find(x=>x[0]===nm); return p?p[2]:0; };
+function calc(total){ total=+total||0; const intro=Math.round(total*0.15); const bal=total-intro; const minish=Math.round(bal*0.4); const fee=Math.round(total*FEE_RATE); return {total,intro,bal,minish,fee}; }
+
+// ---- storage ----
+const LSK = b => "gongu_data_"+b;
+const PWK = b => "gongu_pw_"+b;
+function getData(b){ try{ return JSON.parse(localStorage.getItem(LSK(b)))||[]; }catch(e){ return []; } }
+function setData(b,arr){ localStorage.setItem(LSK(b), JSON.stringify(arr)); }
+function getPw(b){ return localStorage.getItem(PWK(b)); }
+function setPw(b,p){ localStorage.setItem(PWK(b), p); }
+
+// ---- 클라우드 동기화 (Supabase) : 여러 명이 각자 폰에서 같은 목록 ----
+const SB_URL="https://asfhmwhktrtbwgmlvrps.supabase.co";
+const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFzZmhtd2hrdHJ0YndnbWx2cnBzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4MzU1MjEsImV4cCI6MjEwMzQxMTUyMX0.WBE-pzBCvvsh9rTyPttO8YtxbUKSXoY8qQbC-uR1Uvc";
+const SB_H={ apikey:SB_KEY, Authorization:"Bearer "+SB_KEY, "Content-Type":"application/json" };
+let SYNC_STATE="…"; // 표시용
+async function pullBranch(b){
+  try{
+    const r=await fetch(SB_URL+"/rest/v1/gongu_reservations?select=id,rec&branch=eq."+encodeURIComponent(b),{headers:SB_H});
+    if(!r.ok){ SYNC_STATE="로컬"; return false; }
+    const rows=await r.json(); const arr=(rows||[]).map(x=>x.rec).filter(Boolean);
+    const local=getData(b);
+    if(!arr.length && local.length){ for(const rec of local){ await pushRec(b,rec); } SYNC_STATE="동기화됨"; return true; } // 서버 비었고 로컬 있으면 최초 업로드
+    setData(b,arr); SYNC_STATE="동기화됨"; return true;
+  }catch(e){ SYNC_STATE="로컬"; return false; }
+}
+async function pushRec(b,rec){ try{ await fetch(SB_URL+"/rest/v1/gongu_reservations",{method:"POST",headers:Object.assign({Prefer:"resolution=merge-duplicates,return=minimal"},SB_H),body:JSON.stringify([{id:rec.id,branch:b,rec:rec,updated_at:new Date().toISOString()}])}); }catch(e){} }
+async function delRec(id){ try{ await fetch(SB_URL+"/rest/v1/gongu_reservations?id=eq."+encodeURIComponent(id),{method:"DELETE",headers:SB_H}); }catch(e){} }
+function refreshBranch(){ const b=STATE.branch; SYNC_STATE="…"; renderList(b); pullBranch(b).then(()=>{ if(STATE.unlocked[b]&&STATE.branch===b) renderList(b); }); }
+
+let STATE = { branch:"압구정점", unlocked:{"압구정점":false,"동탄본점":false}, search:"", sort:"visit", editId:null, status:"예정", pinBuf:"", pinMode:null };
+
+// ---- theme ----
+(function(){ const t=localStorage.getItem("gongu_theme"); if(t) document.documentElement.setAttribute("data-theme",t); })();
+$("themeBtn").onclick=()=>{ const cur=document.documentElement.getAttribute("data-theme"); const nx=cur==="dark"?"light":(cur==="light"?"":"dark"); if(nx) document.documentElement.setAttribute("data-theme",nx); else document.documentElement.removeAttribute("data-theme"); localStorage.setItem("gongu_theme", nx|| (matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light")); };
+
+// ---- tabs ----
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{ const b=t.dataset.branch; STATE.branch=b; render(); });
+function setTabUI(){ document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("on", t.dataset.branch===STATE.branch)); BRANCHES.forEach(b=>{ const el=$("lk-"+b); if(el) el.textContent = STATE.unlocked[b] ? "🔓" : "🔒"; }); }
+
+// ---- render ----
+function render(){
+  setTabUI();
+  const b=STATE.branch;
+  if(!STATE.unlocked[b]){ $("fab").style.display="none"; renderGate(b); return; }
+  $("fab").style.display="flex";
+  renderList(b);
+}
+
+function renderGate(b){
+  const has=getPw(b);
+  STATE.pinMode = has ? "enter" : "create";
+  STATE.pinBuf="";
+  $("app").innerHTML =
+    '<div class="gate">'+
+      '<div class="emo">'+(b==="압구정점"?"💆‍♀️":"🎨")+'</div>'+
+      '<h2>'+b+'</h2>'+
+      '<p>'+(has?"이 지점 비밀번호 4자리를 입력하세요":"이 지점에서 처음이에요. 사용할 비밀번호 4자리를 정하세요")+'</p>'+
+      '<div class="pininput" id="pinDots"></div>'+
+      '<div class="gateerr" id="pinErr"></div>'+
+      '<div class="pad" id="pad"></div>'+
+      (has?'<div style="margin-top:16px"><button class="ghostbtn" onclick="resetPw(\''+b+'\')">비밀번호 잊음 / 초기화</button></div>':'')+
+    '</div>';
+  const pad=$("pad");
+  ["1","2","3","4","5","6","7","8","9","blank","0","del"].forEach(k=>{ const btn=document.createElement("button"); if(k==="blank"){btn.className="blank";btn.disabled=true;} else { btn.textContent = k==="del"?"⌫":k; btn.onclick=()=>pinKey(k); } pad.appendChild(btn); });
+  drawDots();
+}
+function drawDots(){ const d=$("pinDots"); if(!d) return; d.innerHTML=""; for(let i=0;i<4;i++){ const s=document.createElement("div"); s.className="pindot"+(i<STATE.pinBuf.length?" on":""); d.appendChild(s); } }
+function pinKey(k){ if(k==="del"){ STATE.pinBuf=STATE.pinBuf.slice(0,-1); drawDots(); return; } if(STATE.pinBuf.length>=4) return; STATE.pinBuf+=k; drawDots(); if(STATE.pinBuf.length===4) setTimeout(submitPin,120); }
+function unlockBranch(b){ STATE.unlocked[b]=true; SYNC_STATE="…"; render(); pullBranch(b).then(()=>{ if(STATE.unlocked[b]&&STATE.branch===b) renderList(b); }); }
+function submitPin(){ const b=STATE.branch; if(STATE.pinMode==="create"){ setPw(b,STATE.pinBuf); unlockBranch(b); } else { if(STATE.pinBuf===getPw(b)){ unlockBranch(b); } else { $("pinErr").textContent="비밀번호가 달라요. 다시 입력해주세요."; STATE.pinBuf=""; drawDots(); } } }
+function resetPw(b){ if(confirm(b+" 비밀번호를 초기화할까요? (데이터는 그대로 남아요)")){ localStorage.removeItem(PWK(b)); render(); } }
+
+function fmtDT(s){ if(!s) return "—"; const d=new Date(s); if(isNaN(d)) return s; const wd=["일","월","화","수","목","금","토"][d.getDay()]; let h=d.getHours(); const mm=String(d.getMinutes()).padStart(2,"0"); const ap=h<12?"오전":"오후"; let h12=h%12; if(h12===0)h12=12; return (d.getMonth()+1)+"."+d.getDate()+"("+wd+") "+ap+" "+h12+":"+mm; }
+function dayKey(s){ if(!s) return "날짜 미정"; const d=new Date(s); if(isNaN(d)) return s; const wd=["일","월","화","수","목","금","토"][d.getDay()]; return (d.getMonth()+1)+"월 "+d.getDate()+"일 ("+wd+")"; }
+
+function renderList(b){
+  let rows=getData(b);
+  const q=STATE.search.trim().toLowerCase();
+  if(q) rows=rows.filter(r=>((r.name||"")+ (r.phone||"")+(r.pkg||"")+(r.reset||"")+(r.memo||"")).toLowerCase().includes(q));
+  const key = STATE.sort==="reserve" ? "reserve" : (STATE.sort==="name"?"name":"visit");
+  rows=rows.slice().sort((a,c)=>{ if(key==="name") return (a.name||"").localeCompare(c.name||"","ko"); const av=a[key]||"", cv=c[key]||""; return av<cv?-1:(av>cv?1:0); });
+  // summary (취소 제외)
+  const live=getData(b).filter(r=>r.status!=="취소");
+  const totPaid=live.reduce((s,r)=>s+(+r.paid||0),0);
+  const totMin=live.reduce((s,r)=>s+calc(r.paid).minish,0);
+  const totIntro=live.reduce((s,r)=>s+calc(r.paid).intro,0);
+  let html='<div class="wrap">';
+  html+='<div class="tools">'+
+    '<div class="search">🔍<input id="searchInp" placeholder="이름·연락처·패키지 검색" value="'+escAttr(STATE.search)+'"></div>'+
+    '<select class="sortsel" id="sortSel">'+
+      '<option value="visit"'+(STATE.sort==="visit"?" selected":"")+'>방문일순</option>'+
+      '<option value="reserve"'+(STATE.sort==="reserve"?" selected":"")+'>예약일순</option>'+
+      '<option value="name"'+(STATE.sort==="name"?" selected":"")+'>이름순</option>'+
+    '</select>'+
+    '<button class="ghostbtn" onclick="refreshBranch()" title="새로고침">🔄</button>'+
+    '<button class="ghostbtn" onclick="exportCSV()">⬇ 엑셀</button>'+
+  '</div>';
+  html+='<div class="sumrow">'+
+    '<div class="metric a"><div class="k">예약(취소제외)</div><div class="v tnum">'+live.length+'명</div></div>'+
+    '<div class="metric"><div class="k">총 결제</div><div class="v tnum">'+won(totPaid)+'</div></div>'+
+    '<div class="metric"><div class="k">소개비 15%</div><div class="v tnum">'+won(totIntro)+'</div></div>'+
+    '<div class="metric"><div class="k">미니쉬 40%</div><div class="v tnum">'+won(totMin)+'</div></div>'+
+  '</div>';
+  if(!rows.length){ html+='<div class="empty"><span class="big">🗒️</span>'+(q?"검색 결과가 없어요":"아직 예약이 없어요.<br>오른쪽 아래 ＋ 로 추가해요.")+'</div></div>'; $("app").innerHTML=html; wireList(); return; }
+  let lastDay=null;
+  rows.forEach(r=>{
+    const dk = STATE.sort==="name" ? null : dayKey(r[key]);
+    if(dk && dk!==lastDay){ lastDay=dk; const cnt=rows.filter(x=>dayKey(x[key])===dk).length; html+='<div class="daygroup">'+dk+' <span class="cnt">'+cnt+'명</span></div>'; }
+    const c=calc(r.paid);
+    const stcls=r.status==="방문완료"?"done":(r.status==="취소"?"cancel":"pl");
+    const stlb=r.status||"예정";
+    html+='<div class="card" onclick="openForm(\''+r.id+'\')">'+
+      '<div class="top">'+(r.ord?'<span class="ord">#'+escHtml(r.ord)+'</span>':'')+'<span class="nm">'+escHtml(r.name||"(이름없음)")+'</span><span class="pill '+stcls+'">'+stlb+'</span></div>'+
+      (r.pkg?'<div class="pkg">'+escHtml(r.pkg)+'</div>':'')+
+      '<div class="times">'+
+        '<div class="tchip"><div class="lb">예약</div><div class="vv">'+fmtDT(r.reserve)+'</div></div>'+
+        '<div class="tchip visit"><div class="lb">방문</div><div class="vv">'+fmtDT(r.visit)+'</div></div>'+
+      '</div>'+
+      '<div class="foot">'+
+        (r.reset?'<span class="who">'+escHtml(r.reset)+'</span>':'')+
+        (r.phone?'<a class="tel" href="tel:'+escAttr((r.phone||"").replace(/[^0-9]/g,""))+'" onclick="event.stopPropagation()">'+escHtml(r.phone)+'</a>':'')+
+        '<span class="amt tnum">'+won(r.paid)+'</span>'+
+      '</div>'+
+      (r.memo?'<div class="memo">'+escHtml(r.memo)+'</div>':'')+
+    '</div>';
+  });
+  html+='</div>';
+  $("app").innerHTML=html; wireList();
+}
+function wireList(){ const s=$("searchInp"); if(s){ s.oninput=e=>{ STATE.search=e.target.value; const pos=e.target.selectionStart; renderList(STATE.branch); const n=$("searchInp"); if(n){ n.focus(); try{n.setSelectionRange(pos,pos);}catch(_){}}}; } const so=$("sortSel"); if(so) so.onchange=e=>{ STATE.sort=e.target.value; renderList(STATE.branch); }; }
+
+// ---- form ----
+function fillSelects(){
+  const p=$("f_pkg"); p.innerHTML=PROGRAMS.map(x=>'<option value="'+escAttr(x[0])+'">'+escHtml(x[0])+(x[1]?" · "+won(x[1]):"")+'</option>').join("");
+  const r=$("f_reset"); r.innerHTML='<option value="">— 선택 —</option>'+RESETTERS.map(x=>'<option>'+x+'</option>').join("");
+}
+function setStatus(st){ STATE.status=st; document.querySelectorAll("#statusSeg .seg").forEach(s=>s.classList.toggle("on", s.dataset.st===st)); }
+document.querySelectorAll("#statusSeg .seg").forEach(s=>s.onclick=()=>setStatus(s.dataset.st));
+function openForm(id){
+  fillSelects();
+  STATE.editId=id||null;
+  const r = id ? getData(STATE.branch).find(x=>x.id===id) : null;
+  $("formTitle").textContent = r ? "예약 수정" : (STATE.branch+" · 고객 추가");
+  $("f_name").value=r?.name||""; $("f_phone").value=r?.phone||"";
+  $("f_pkg").value = r?.pkg || "— 선택 안 함 —"; $("f_reset").value=r?.reset||"";
+  $("f_reserve").value=r?.reserve||""; $("f_visit").value=r?.visit||"";
+  $("f_paid").value = (r&&r.paid!=null)?r.paid:"";
+  setStatus(r?.status||"예정");
+  $("f_memo").value=r?.memo||"";
+  $("delBtn").style.display = r ? "block":"none";
+  $("pkgHint").textContent=""; calcPreview();
+  $("formModal").classList.add("on");
+}
+function closeForm(){ $("formModal").classList.remove("on"); }
+function onPkg(){ const nm=$("f_pkg").value; const pr=pkgPrice(nm); if(pr){ $("f_paid").value=pr; $("pkgHint").textContent="정가 "+won(pr)+" · "+pkgSess(nm)+"회 (필요시 결제액 직접 수정)"; } else $("pkgHint").textContent=""; calcPreview(); }
+function calcPreview(){ const c=calc($("f_paid").value); $("calcBox").innerHTML=
+  '<div class="cr"><span>총 결제금액</span><b class="tnum">'+won(c.total)+'</b></div>'+
+  '<div class="cr"><span>소개비 15%</span><b class="tnum">'+won(c.intro)+'</b></div>'+
+  '<div class="cr"><span>잔액 (85%)</span><b class="tnum">'+won(c.bal)+'</b></div>'+
+  '<div class="cr"><span>미니쉬 40%</span><b class="tnum">'+won(c.minish)+'</b></div>'+
+  '<div class="cr"><span>네이버페이 수수료</span><b class="tnum">'+won(c.fee)+'</b></div>';
+}
+function uid(){ return "r"+Date.now().toString(36)+Math.floor(Math.random()*1e4).toString(36); }
+function saveForm(){
+  const b=STATE.branch;
+  const rec={ id:STATE.editId||uid(), name:$("f_name").value.trim(), phone:$("f_phone").value.trim(),
+    pkg: $("f_pkg").value==="— 선택 안 함 —"?"":$("f_pkg").value, reset:$("f_reset").value,
+    reserve:$("f_reserve").value, visit:$("f_visit").value, paid:+$("f_paid").value||0,
+    status:STATE.status, memo:$("f_memo").value.trim(), sess:pkgSess($("f_pkg").value) };
+  if(!rec.name){ alert("성함을 입력해주세요."); return; }
+  const arr=getData(b); const i=arr.findIndex(x=>x.id===rec.id); if(i>=0){ rec.ord=arr[i].ord; arr[i]=rec; } else { rec.ord=(arr.reduce((m,x)=>Math.max(m,+x.ord||0),0)+1); arr.push(rec); }
+  setData(b,arr); pushRec(b,rec); closeForm(); renderList(b);
+}
+function delForm(){ if(!STATE.editId) return; if(confirm("이 예약을 삭제할까요?")){ const b=STATE.branch; const id=STATE.editId; setData(b, getData(b).filter(x=>x.id!==id)); delRec(id); closeForm(); renderList(b); } }
+
+// ---- export (시트 양식 그대로) ----
+function exportDT(s){ if(!s) return ""; const d=new Date(s); if(isNaN(d)) return s; const wd=["일","월","화","수","목","금","토"][d.getDay()]; const mo=String(d.getMonth()+1).padStart(2,"0"); const da=String(d.getDate()).padStart(2,"0"); let h=d.getHours(); const mm=String(d.getMinutes()).padStart(2,"0"); const ap=h<12?"오전":"오후"; let h12=h%12; if(h12===0)h12=12; return mo+". "+da+".("+wd+") "+ap+" "+h12+":"+mm; }
+function exportCSV(){
+  const b=STATE.branch; const rows=getData(b);
+  // 구글시트와 동일한 열 순서/이름
+  const head=["예약순","성함","가입패키지","네이버페이 결제완료액","배정 리셋터","예약일자","방문일자","연락처","비고","가입횟수","총 결제금액(수정금지)","15%","잔액","미니쉬","페이","네이버페이 수수료","정수영","김현주","신대성","페이합산"];
+  const lines=[head.join(",")];
+  rows.slice().sort((a,c)=>(a.visit||"")<(c.visit||"")?-1:((a.visit||"")>(c.visit||"")?1:0)).forEach(r=>{
+    const cc=calc(r.paid);
+    let bigo=(r.memo||"").replace(/\n/g," ");
+    if(r.status==="취소" && !/취소/.test(bigo)) bigo=("취소 "+bigo).trim();
+    const row=[ r.ord||"", r.name||"", r.pkg||"", r.paid||0, r.reset||"", exportDT(r.reserve), exportDT(r.visit), r.phone||"", bigo, r.sess||pkgSess(r.pkg), cc.total, cc.intro, cc.bal, cc.minish, "", cc.fee, "", "", "", "" ];
+    lines.push(row.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(","));
+  });
+  const blob=new Blob(["﻿"+lines.join("\r\n")],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="네고예약_"+b+"_"+(new Date().toISOString().slice(0,10))+".csv"; a.click();
+}
+
+function escHtml(s){ return String(s==null?"":s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m])); }
+function escAttr(s){ return escHtml(s); }
+
+render();
+</script>
+</body>
+</html>
