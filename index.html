@@ -303,7 +303,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v222 (2026-08-24)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v223 (2026-08-24)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -330,6 +330,7 @@ h2.section,.logo{letter-spacing:-.01em}
     </div>
     <div id="faceResult"></div>
     <div id="entrySaveBar" style="margin:0 2px 12px"><button class="btn primary" style="width:100%" onclick="saveRecord()">💾 기록 저장</button></div>
+    <div id="consentBar" style="margin:0 2px 12px;display:flex;gap:8px;align-items:center"><button class="btn" style="flex:1" onclick="openConsent()">📝 개인정보·생체정보 동의서</button><span id="consentBadge" style="font-size:12px;font-weight:800"></span></div>
     <div class="card pad" id="fcodeCard" style="border:2px solid #7c3aed">
       <h2 class="section" style="margin-top:0">안면 코드 <span class="tag all">빠른 판독 · 첫 촉진용</span></h2>
       <div class="subtle" style="margin:-4px 0 8px;font-size:12px">AI가 타입~콧볼 예측 · <b>오른마루</b>는 촉진 후 직접 선택</div>
@@ -1382,7 +1383,7 @@ function getVals(r,k){const v=r[k];if(v==null||v==='')return[];return Array.isAr
 function applyFormToUI(){
   document.querySelectorAll('.seg').forEach(box=>{const k=box.dataset.k,multi=box.dataset.multi;box.querySelectorAll('button').forEach(b=>{const on=multi?(Array.isArray(form[k])&&form[k].includes(b.dataset.v)):(form[k]===b.dataset.v);b.classList.toggle('on',on);});});
   FIELDS.forEach(f=>{if(f.type==='seg')return;const el=document.getElementById('f_'+f.k);if(el)el.value=form[f.k]||'';});
-  document.getElementById('f_notes').value=form.notes||'';PHOTO_SLOTS.forEach(([s])=>setPhotoPreview(s));updateValidation();renderAfters();
+  document.getElementById('f_notes').value=form.notes||'';PHOTO_SLOTS.forEach(([s])=>setPhotoPreview(s));updateValidation();renderAfters();try{renderConsentBadge();}catch(e){}
 }
 
 /* ===== 안면 코드 (빠른 판독) + 솔루션 ===== */
@@ -2755,6 +2756,7 @@ async function saveRecord(){
   if(_pendingLeadId){ markLeadDone(_pendingLeadId,true); _pendingLeadId=null; }   // 유입 고객: 저장 완료 시 목록에서 처리
   progDone(photoFail?'기본정보 저장됨 · 사진은 용량초과로 실패':'저장됨 · 공용 클라우드 DB', false, photoFail);
   toast(photoFail?'기본정보는 저장됨 · 사진은 용량이 커서 저장 실패':(updateValidation()?'저장되었습니다':'저장됨 · 회전 오류가 남아있어요'));
+  if(!(form.consent&&form.consent.agreed)){setTimeout(function(){toast('⚠️ 동의서 미작성 — 아래 동의서 버튼에서 받아두세요');},1500);}
   document.getElementById('editState').textContent=(form.code||'무제')+' · 저장됨 (편집 중)';document.getElementById('delBtn').style.display='';refreshAll();try{if(mode==='cloud')_saveRecCache(records);}catch(e){}
 }
 var STAFF_NAMES={'ryeun88@naver.com':'김려은','rudal4186@naver.com':'신경미','spvkxmfl@naver.com':'신대성','soneed2512@gmail.com':'김현주','highfot25@naver.com':'이수연','jsa255@naver.com':'정수영','kellan12@naver.com':'장지환','soni0025@naver.com':'이소니','soni00025@gmail.com':'이소니'};
@@ -2968,7 +2970,69 @@ async function deleteCurrent(){
   });
 }
 function clearFormConfirm(){var has=form&&Object.keys(form).some(function(k){var v=form[k];return v!=null&&v!==''&&!(Array.isArray(v)&&!v.length);});if(has&&!confirm('현재 화면에 입력한 내용이 지워지고 새 기록을 작성합니다.\n(이미 저장한 기록은 목록에 그대로 남아요)\n계속할까요?'))return;clearForm();}
-function clearForm(){form={};currentId=null;autoFilled={};_pendingLeadId=null;renderForm();renderStickyThumbs();document.getElementById('f_notes').value='';document.getElementById('autoMsg').innerHTML='';const _fr=document.getElementById('faceResult');if(_fr)_fr.innerHTML='';document.getElementById('editState').textContent='새 기록을 작성합니다.';document.getElementById('delBtn').style.display='none';updateValidation();}
+/* ===== 개인정보·생체정보 동의서 (임시 서식 · 대표 확정 전) ===== */
+var _sigDraw=false,_sigDirty=false;
+function renderConsentBadge(){var el=document.getElementById('consentBadge');if(!el)return;var c=form&&form.consent;if(c&&c.agreed){el.innerHTML='<span style="color:#0e9f6e">✓ 동의 완료</span> <span style="color:#999;font-weight:600;font-size:11px">'+(c.at?String(c.at).slice(0,10):'')+'</span>';}else{el.innerHTML='<span style="color:#c0392b">● 미작성</span>';}}
+function _csChk(id,label,req,it){return '<label style="display:flex;gap:8px;align-items:flex-start;margin:8px 0;cursor:pointer"><input type="checkbox" id="'+id+'" '+(it[id]?'checked':'')+' style="margin-top:3px;width:18px;height:18px;flex:0 0 auto"><span>'+(req?'<b style="color:#c026d3">[필수]</b> ':'<span style="color:#888">[선택]</span> ')+label+'</span></label>';}
+function openConsent(){
+  if(typeof form==='undefined'||!form){toast('기록을 먼저 여세요');return;}
+  var c=form.consent||{}; var it=c.items||{};
+  var t=new Date(); var ds=t.getFullYear()+'-'+('0'+(t.getMonth()+1)).slice(-2)+'-'+('0'+t.getDate()).slice(-2);
+  var o=document.getElementById('consentOv');
+  if(!o){o=document.createElement('div');o.id='consentOv';o.style.cssText='position:fixed;inset:0;z-index:100060;background:rgba(20,18,26,.6);display:flex;align-items:flex-start;justify-content:center;padding:14px;overflow:auto';o.addEventListener('pointerdown',function(e){o._d=e.target;});o.onclick=function(e){if(e.target===o&&o._d===o)o.style.display='none';};document.body.appendChild(o);}
+  o.innerHTML='<div style="background:#fff;border-radius:14px;max-width:460px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.4);margin:auto">'
+    +'<div style="background:linear-gradient(135deg,#7c3aed,#c026d3);color:#fff;padding:16px 18px;border-radius:14px 14px 0 0;position:relative">'
+    +'<div style="font-size:12px;opacity:.9">SONEED</div><div style="font-size:18px;font-weight:900">개인정보·생체정보 수집·이용 동의서</div>'
+    +'<button onclick="document.getElementById(\'consentOv\').style.display=\'none\'" style="position:absolute;top:12px;right:14px;background:rgba(255,255,255,.25);border:0;color:#fff;width:30px;height:30px;border-radius:50%;font-size:18px;cursor:pointer">×</button></div>'
+    +'<div style="padding:16px 18px;font-size:13.5px;line-height:1.65;color:#333">'
+    +'<div style="background:#fff7e6;border:1px solid #ffe1a8;color:#8a6d00;font-size:11.5px;padding:8px 10px;border-radius:8px;margin-bottom:12px">※ <b>임시 서식</b>입니다. 실제 운영 전 대표님 확정 및 전문가(법무/노무) 검토가 필요합니다. 문구는 대표님이 수정하세요.</div>'
+    +'<div style="font-weight:800;margin-bottom:4px">수집·이용 안내</div>'
+    +'<div style="font-size:12.5px;color:#555;background:#faf7ff;border:1px solid #eee;border-radius:8px;padding:10px 12px;margin-bottom:12px">'
+    +'• 수집 항목: 얼굴 사진 등 <b>생체정보</b>, 성함, 연락처<br>• 이용 목적: 얼굴윤곽 비대칭 분석 및 관리 서비스 제공<br>'
+    +'• 보유·이용 기간: <b>[회원 관리 종료 또는 동의 철회 시까지]</b> (관계 법령상 기간 포함)<br>'
+    +'• 동의 거부 권리: 필수 항목에 동의하지 않으실 수 있으며, 이 경우 서비스 제공이 제한될 수 있습니다.</div>'
+    +_csChk('collect','얼굴 사진 등 생체정보의 수집·이용에 동의합니다.',true,it)
+    +_csChk('store','분석 결과 및 사진의 저장·보관에 동의합니다.',true,it)
+    +_csChk('retain','위 보유기간 및 파기 안내를 확인하였습니다.',true,it)
+    +_csChk('ai','분석·관리 서비스 제공 및 품질 향상을 위한 AI 분석·학습 이용에 동의합니다.',true,it)
+    +'<div style="margin:12px 0"><label style="font-size:12px;color:#555">법정대리인 성함 (만 14세 미만인 경우)</label><input id="cs_guardian" placeholder="해당 시에만 입력" style="width:100%;padding:9px 11px;border:1px solid #ddd;border-radius:8px;margin-top:4px"></div>'
+    +'<div style="font-size:11.5px;margin-bottom:8px"><a href="./privacy.html" target="_blank" style="color:#7c3aed">개인정보처리방침 보기</a></div>'
+    +'<div style="display:flex;gap:8px"><div style="flex:1"><label style="font-size:12px;color:#555">성함</label><input id="cs_name" style="width:100%;padding:9px 11px;border:1px solid #ddd;border-radius:8px"></div><div style="flex:1"><label style="font-size:12px;color:#555">날짜</label><input id="cs_date" type="date" style="width:100%;padding:9px 11px;border:1px solid #ddd;border-radius:8px"></div></div>'
+    +'<div style="margin-top:12px"><label style="font-size:12px;color:#555">서명 (아래 칸에 손가락으로)</label><div style="border:1px dashed #bbb;border-radius:8px;background:#fafafa;margin-top:4px;position:relative"><canvas id="cs_sig" style="width:100%;height:130px;display:block;touch-action:none"></canvas><button onclick="_clearSig()" style="position:absolute;top:6px;right:6px;font-size:11px;padding:3px 8px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer">지우기</button></div></div>'
+    +'<div style="display:flex;gap:8px;margin-top:14px"><button class="btn" style="flex:1" onclick="document.getElementById(\'consentOv\').style.display=\'none\'">닫기</button><button class="btn primary" style="flex:2" onclick="saveConsent()">동의 저장</button></div>'
+    +'</div></div>';
+  o.style.display='flex';
+  document.getElementById('cs_name').value=c.name||form.code||'';
+  document.getElementById('cs_date').value=c.date||ds;
+  document.getElementById('cs_guardian').value=c.guardian||'';
+  setTimeout(function(){_initSig(c.signature);},30);
+}
+function _initSig(dataUrl){
+  var cv=document.getElementById('cs_sig'); if(!cv)return;
+  var rect=cv.getBoundingClientRect(); var dpr=window.devicePixelRatio||1; var w=rect.width||300;
+  cv.width=w*dpr; cv.height=130*dpr; var ctx=cv.getContext('2d'); ctx.scale(dpr,dpr);
+  ctx.lineWidth=2.2; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.strokeStyle='#111';
+  cv._ctx=ctx; _sigDirty=false;
+  if(dataUrl){var img=new Image();img.onload=function(){ctx.drawImage(img,0,0,w,130);};img.src=dataUrl;_sigDirty=true;}
+  function pos(e){var r=cv.getBoundingClientRect();return {x:e.clientX-r.left,y:e.clientY-r.top};}
+  cv.onpointerdown=function(e){_sigDraw=true;var p=pos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);cv.setPointerCapture&&cv.setPointerCapture(e.pointerId);e.preventDefault();};
+  cv.onpointermove=function(e){if(!_sigDraw)return;var p=pos(e);ctx.lineTo(p.x,p.y);ctx.stroke();_sigDirty=true;e.preventDefault();};
+  cv.onpointerup=cv.onpointercancel=cv.onpointerleave=function(){_sigDraw=false;};
+}
+function _clearSig(){var cv=document.getElementById('cs_sig');if(!cv||!cv._ctx)return;cv._ctx.clearRect(0,0,cv.width,cv.height);_sigDirty=false;}
+function saveConsent(){
+  var g=function(id){var e=document.getElementById(id);return e?e.value.trim():'';};
+  var it={collect:document.getElementById('collect').checked,store:document.getElementById('store').checked,retain:document.getElementById('retain').checked,ai:document.getElementById('ai').checked};
+  if(!(it.collect&&it.store&&it.retain&&it.ai)){toast('필수 동의 항목을 모두 체크해 주세요');return;}
+  var name=g('cs_name'); if(!name){toast('성함을 입력해 주세요');return;}
+  var sig=''; try{var cv=document.getElementById('cs_sig');if(cv&&_sigDirty)sig=cv.toDataURL('image/png');}catch(e){}
+  if(!sig && !confirm('서명이 비어 있습니다. 서명 없이 저장할까요?'))return;
+  form.consent={agreed:true,at:new Date().toISOString(),items:it,name:name,date:g('cs_date'),guardian:g('cs_guardian'),signature:sig,ver:'temp1'};
+  toast('동의서 저장됨 (기록 저장 시 함께 저장돼요)');
+  document.getElementById('consentOv').style.display='none';
+  renderConsentBadge();
+}
+function clearForm(){form={};currentId=null;autoFilled={};_pendingLeadId=null;renderForm();renderStickyThumbs();document.getElementById('f_notes').value='';document.getElementById('autoMsg').innerHTML='';const _fr=document.getElementById('faceResult');if(_fr)_fr.innerHTML='';document.getElementById('editState').textContent='새 기록을 작성합니다.';document.getElementById('delBtn').style.display='none';updateValidation();try{renderConsentBadge();}catch(e){}}
 var _reportScroll=0,_restoreReport=false;
 function initEntryTabs(){
   var entry=document.getElementById('view-entry'); if(!entry)return;
