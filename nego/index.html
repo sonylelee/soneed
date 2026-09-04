@@ -94,6 +94,9 @@
   .card .foot .amt{margin-left:auto;font-weight:800;color:var(--ink)}
   .card .memo{font-size:.74rem;color:var(--warn);background:var(--warn-soft);border-radius:4px;padding:5px 9px;margin-top:8px;font-weight:600}
   .card .tel{color:var(--accent-2);font-weight:700;text-decoration:none}
+  .sms{text-decoration:none;font-size:1.05em;padding:2px 5px;margin-left:2px;border-radius:5px}
+  .sms:active{background:rgba(120,120,120,.18)}
+  .lt td.phc .tel{color:var(--accent-2);font-weight:600;text-decoration:none;white-space:nowrap}
   .empty{text-align:center;color:var(--muted);padding:56px 20px;font-weight:600}
   .empty .big{font-size:2.4rem;display:block;margin-bottom:10px}
   /* ---- FAB ---- */
@@ -335,6 +338,8 @@ function refreshBranch(){ const b=STATE.branch; SYNC_STATE="…"; renderList(b);
 let STATE = { view:"select", branch:"압구정점", unlocked:{"압구정점":false,"동탄본점":false}, search:"", sort:"visit", filter:"all", freset:"", view2:"table", editId:null, status:"예정", pinBuf:"", pinMode:null };
 function toggleView2(){ STATE.view2=(STATE.view2==="table"?"card":"table"); renderList(STATE.branch); }
 function fmtShort(s){ if(!s) return "—"; const d=new Date(s); if(isNaN(d)) return s; return (d.getMonth()+1)+"/"+d.getDate()+" "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); }
+// 연락처: 번호 탭=전화, 💬 탭=문자
+function phoneCell(p){ if(!p) return ""; const d=(p||"").replace(/[^0-9]/g,""); return '<a class="tel" href="tel:'+d+'" onclick="event.stopPropagation()">'+escHtml(p)+'</a> <a class="sms" href="sms:'+d+'" onclick="event.stopPropagation()" title="문자 보내기">💬</a>'; }
 function isTodayR(r){ const s=r.visit; if(!s) return false; const d=new Date(s); if(isNaN(d)) return false; const n=new Date(); return d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth()&&d.getDate()===n.getDate(); }
 function setFilter(f){ STATE.filter=f; renderList(STATE.branch); }
 function markStatus(id,st){ const b=STATE.branch; const arr=getData(b); const i=arr.findIndex(x=>x.id===id); if(i<0) return; arr[i].status=(arr[i].status===st?"예정":st); setData(b,arr); pushRec(b,arr[i]); renderBody(b); }
@@ -465,7 +470,7 @@ function renderBody(b){
       const st=r.status==="구매확정"?"done":(r.status==="취소"?"cancel":"pl");
       th+='<tr onclick="openForm(\''+r.id+'\')">'+
         '<td class="nm">'+escHtml(r.name||"")+'</td>'+
-        '<td>'+escHtml(r.phone||"")+'</td>'+
+        '<td class="phc">'+phoneCell(r.phone)+'</td>'+
         '<td>'+escHtml((r.pkg||"").replace("페이스리세팅 ","").replace("원장 단독 ","원장"))+'</td>'+
         '<td>'+fmtShort(r.reserve)+'</td>'+
         '<td'+(!r.visit?' class="warn"':'')+'>'+(r.visit?fmtShort(r.visit):"⚠")+'</td>'+
@@ -493,7 +498,7 @@ function renderBody(b){
       ((!r.reset||!r.visit)?'<div style="font-size:.72rem;color:var(--warn);background:var(--warn-soft);border-radius:4px;padding:5px 9px;margin-bottom:8px;font-weight:700">⚠ '+((!r.reset&&!r.visit)?'담당자·방문확정 입력 필요':(!r.reset?'담당자 입력 필요':'방문확정일 입력 필요'))+'</div>':'')+
       '<div class="foot">'+
         (r.reset?'<span class="who">'+escHtml(r.reset)+'</span>':'')+
-        (r.phone?'<a class="tel" href="tel:'+escAttr((r.phone||"").replace(/[^0-9]/g,""))+'" onclick="event.stopPropagation()">'+escHtml(r.phone)+'</a>':'')+
+        (r.phone?'<span class="telwrap">'+phoneCell(r.phone)+'</span>':'')+
         (function(){ var k=ckey(r), n=cCnt[k]||1; return '<span class="amt tnum">'+won(cTot[k]||r.paid)+(n>1?'<span style="font-weight:600;color:var(--muted);font-size:.8em"> ·합산 '+n+'건</span>':'')+'</span>'; })()+
       '</div>'+
       (r.memo?'<div class="memo">'+escHtml(r.memo)+'</div>':'')+
