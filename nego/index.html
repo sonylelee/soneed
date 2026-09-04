@@ -132,10 +132,12 @@
   .sheet-b{padding:16px 18px 22px}
   .fld{margin-bottom:14px}
   .fld label{display:block;font-size:.74rem;font-weight:700;color:var(--muted);margin-bottom:5px;letter-spacing:.01em}
-  .fld input,.fld select,.fld textarea{width:100%;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);border-radius:5px;padding:12px 13px;font-size:.98rem;font-family:inherit;outline:none}
+  .fld input,.fld select,.fld textarea{width:100%;min-width:0;max-width:100%;box-sizing:border-box;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);border-radius:5px;padding:12px 13px;font-size:.98rem;font-family:inherit;outline:none}
   .fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--accent)}
   .fld textarea{min-height:64px;resize:vertical}
   .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .two>.fld{min-width:0}
+  @media(max-width:560px){ .two{grid-template-columns:1fr} }
   .calcbox{background:var(--accent-soft);border-radius:5px;padding:12px 14px;margin:6px 0 16px}
   .calcbox .cr{display:flex;justify-content:space-between;font-size:.84rem;padding:3px 0;color:var(--accent-2)}
   .calcbox .cr b{font-weight:800}
