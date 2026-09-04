@@ -303,7 +303,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v224 (2026-08-24)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v225 (2026-08-24)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -3027,9 +3027,10 @@ function saveConsent(){
   var sig=''; try{var cv=document.getElementById('cs_sig');if(cv&&_sigDirty)sig=cv.toDataURL('image/png');}catch(e){}
   if(!sig && !confirm('서명이 비어 있습니다. 서명 없이 저장할까요?'))return;
   form.consent={agreed:true,at:new Date().toISOString(),items:it,name:name,date:g('cs_date'),guardian:g('cs_guardian'),signature:sig,ver:'temp1'};
-  toast('동의서 저장됨 (기록 저장 시 함께 저장돼요)');
   document.getElementById('consentOv').style.display='none';
   renderConsentBadge();
+  if(typeof saveRecord==='function'){ saveRecord(); }   /* ★ 즉시 DB 저장 — 서명 유실 방지 */
+  else { toast('동의서 저장됨'); }
 }
 function clearForm(){form={};currentId=null;autoFilled={};_pendingLeadId=null;renderForm();renderStickyThumbs();document.getElementById('f_notes').value='';document.getElementById('autoMsg').innerHTML='';const _fr=document.getElementById('faceResult');if(_fr)_fr.innerHTML='';document.getElementById('editState').textContent='새 기록을 작성합니다.';document.getElementById('delBtn').style.display='none';updateValidation();try{renderConsentBadge();}catch(e){}}
 var _reportScroll=0,_restoreReport=false;
