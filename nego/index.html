@@ -481,7 +481,7 @@ function renderBody(b){
   if(STATE.filter==="today") rows=rows.filter(isTodayR);
   if(STATE.freset) rows=rows.filter(r=>r.reset===STATE.freset);
   const key = STATE.sort==="reserve" ? "reserve" : (STATE.sort==="name"?"name":"visit");
-  rows=rows.slice().sort((a,c)=>{ if(key==="name") return (a.name||"").localeCompare(c.name||"","ko"); const av=a[key]||"", cv=c[key]||""; return av<cv?-1:(av>cv?1:0); });
+  rows=rows.slice().sort((a,c)=>{ if(key==="name") return (a.name||"").localeCompare(c.name||"","ko"); const av=a[key]||"", cv=c[key]||""; if(!av&&!cv) return 0; if(!av) return 1; if(!cv) return -1; return av<cv?-1:(av>cv?1:0); });
   if(!rows.length){ box.innerHTML='<div class="empty"><span class="big">🗒️</span>'+(STATE.filter==="today"?"오늘 방문 예정이 없어요 :)":((q||STATE.freset)?"조건에 맞는 예약이 없어요":"아직 예약이 없어요.<br>오른쪽 아래 ＋ 로 추가해요."))+'</div>'; return; }
   if(STATE.view2==="table"){
     let th='<div style="overflow-x:auto"><table class="lt"><thead><tr><th>성함</th><th>연락처</th><th>상품</th><th>예약(네이버)</th><th>방문확정</th><th>담당</th><th class="r">금액</th><th>상태</th></tr></thead><tbody>';
