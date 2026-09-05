@@ -713,12 +713,28 @@ function toast(msg){ let t=$("toastEl"); if(!t){ t=document.createElement("div")
 const WORKER_URL = "https://soneed-nego-ocr.soni0025.workers.dev"; // ⚠ 워커 배포 후 이 주소로 맞추기
 function pickPhoto(){ const el=$("photoInput"); if(el){ el.value=""; el.click(); } }
 function fileToB64(file){ return new Promise(function(res,rej){ const r=new FileReader(); r.onload=function(){ res(String(r.result).split(",")[1]); }; r.onerror=rej; r.readAsDataURL(file); }); }
+// HEIC·대용량 대응: 캔버스로 JPG 변환 + 축소 후 전송 (실패 시 원본 base64로 폴백)
+function prepImage(file){ return new Promise(function(res){
+  try{
+    const url=URL.createObjectURL(file); const img=new Image();
+    img.onload=function(){ try{
+      const maxW=1400; let w=img.naturalWidth||img.width, h=img.naturalHeight||img.height;
+      if(!w||!h){ URL.revokeObjectURL(url); return fileToB64(file).then(function(b){res({b64:b,type:file.type||"image/png"});}); }
+      if(w>maxW){ h=Math.round(h*maxW/w); w=maxW; }
+      const c=document.createElement("canvas"); c.width=w; c.height=h;
+      c.getContext("2d").drawImage(img,0,0,w,h); URL.revokeObjectURL(url);
+      const du=c.toDataURL("image/jpeg",0.85); res({b64:du.split(",")[1],type:"image/jpeg"});
+    }catch(e){ URL.revokeObjectURL(url); fileToB64(file).then(function(b){res({b64:b,type:file.type||"image/png"});}); } };
+    img.onerror=function(){ URL.revokeObjectURL(url); fileToB64(file).then(function(b){res({b64:b,type:file.type||"image/png"});}); };
+    img.src=url;
+  }catch(e){ fileToB64(file).then(function(b){res({b64:b,type:file.type||"image/png"});}); }
+}); }
 async function onPhotoFile(file){
   if(!file) return;
   toast("사진 읽는 중… 잠시만요 ⏳");
   try{
-    const b64=await fileToB64(file);
-    const r=await fetch(WORKER_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({image:b64,media_type:file.type||"image/png",branch:STATE.branch})});
+    const im=await prepImage(file);
+    const r=await fetch(WORKER_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({image:im.b64,media_type:im.type,branch:STATE.branch})});
     const d=await r.json();
     if(!d||d.error){ toast("사진을 못 읽었어요 — 직접 입력해주세요"); openForm(); return; }
     openForm();
