@@ -477,7 +477,7 @@ function renderBody(b){
   let rows=getData(b);
   // 고객별(전화번호) 총액·건수 — 같은 고객의 예약금+차액 등을 합산
   const ckey=x=>((x.phone||"").replace(/[^0-9]/g,"")||("nm:"+(x.name||"")));
-  const cTot={}, cCnt={}; getData(b).forEach(x=>{ const k=ckey(x); cTot[k]=(cTot[k]||0)+(+x.paid||0); cCnt[k]=(cCnt[k]||0)+1; });
+  const cTot={}, cCnt={}; getData(b).forEach(x=>{ if(x.status==="취소") return; const k=ckey(x); cTot[k]=(cTot[k]||0)+(+x.paid||0); cCnt[k]=(cCnt[k]||0)+1; });
   const q=STATE.search.trim().toLowerCase();
   if(q) rows=rows.filter(r=>((r.name||"")+(r.phone||"")+(r.pkg||"")+(r.reset||"")+(r.memo||"")).toLowerCase().includes(q));
   if(STATE.filter==="today") rows=rows.filter(isTodayR);
@@ -496,7 +496,7 @@ function renderBody(b){
         '<td>'+fmtShort(r.reserve)+'</td>'+
         '<td'+(!r.visit?' class="warn"':'')+'>'+(r.visit?fmtShort(r.visit):"⚠")+'</td>'+
         '<td'+(!r.reset?' class="warn"':'')+'>'+escHtml(r.reset||"⚠")+'</td>'+
-        '<td class="r tnum">'+won(cTot[k]||r.paid)+(n>1?'<span style="color:var(--muted)"> ·'+n+'</span>':'')+'</td>'+
+        '<td class="r tnum">'+won(r.status==="취소"?0:(cTot[k]||r.paid))+(n>1?'<span style="color:var(--muted)"> ·'+n+'</span>':'')+'</td>'+
         '<td><span class="pill '+st+'">'+(r.status||"예정")+'</span></td>'+
       '</tr>';
     });
@@ -520,7 +520,7 @@ function renderBody(b){
       '<div class="foot">'+
         (r.reset?'<span class="who">'+escHtml(r.reset)+'</span>':'')+
         (r.phone?'<span class="telwrap">'+phoneCell(r)+'</span>':'')+
-        (function(){ var k=ckey(r), n=cCnt[k]||1; return '<span class="amt tnum">'+won(cTot[k]||r.paid)+(n>1?'<span style="font-weight:600;color:var(--muted);font-size:.8em"> ·합산 '+n+'건</span>':'')+'</span>'; })()+
+        (function(){ var k=ckey(r), n=cCnt[k]||1; return '<span class="amt tnum">'+won(r.status==="취소"?0:(cTot[k]||r.paid))+(n>1?'<span style="font-weight:600;color:var(--muted);font-size:.8em"> ·합산 '+n+'건</span>':'')+'</span>'; })()+
       '</div>'+
       (r.memo?'<div class="memo">'+escHtml(r.memo)+'</div>':'')+
     '</div>';
