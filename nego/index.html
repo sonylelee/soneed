@@ -365,6 +365,8 @@ function isTodayR(r){ const s=r.visit; if(!s) return false; const d=new Date(s);
 // 방문 확정일시가 지났으면 true (완료 색상용)
 function isPastVisit(r){ if(!r.visit) return false; const d=new Date(r.visit); if(isNaN(d)) return false; return d.getTime() < Date.now(); }
 function isDoneLike(r){ return r.status==="구매확정" || isPastVisit(r); }
+// 확정일시 지난 '예정' 건을 '구매확정'으로 자동 전환(취소는 제외)하고 클라우드 반영
+function autoCompletePast(b){ const arr=getData(b); let changed=false; arr.forEach(function(r){ if(r.status!=="구매확정" && r.status!=="취소" && isPastVisit(r)){ r.status="구매확정"; changed=true; pushRec(b,r); } }); if(changed) setData(b,arr); return changed; }
 function setFilter(f){ STATE.filter=f; renderList(STATE.branch); }
 function markStatus(id,st){ const b=STATE.branch; const arr=getData(b); const i=arr.findIndex(x=>x.id===id); if(i<0) return; arr[i].status=(arr[i].status===st?"예정":st); setData(b,arr); pushRec(b,arr[i]); renderBody(b); }
 
@@ -477,6 +479,7 @@ function renderList(b){
 }
 function renderBody(b){
   const box=$("listBody"); if(!box) return;
+  autoCompletePast(b);
   let rows=getData(b);
   // 고객별(전화번호) 총액·건수 — 같은 고객의 예약금+차액 등을 합산
   const ckey=x=>((x.phone||"").replace(/[^0-9]/g,"")||("nm:"+(x.name||"")));
