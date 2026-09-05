@@ -362,6 +362,9 @@ function phoneCell(r){ if(!r||!r.phone) return ""; const d=(r.phone||"").replace
   return tel+' '+sms+ok; }
 function markSms(id,val){ const b=STATE.branch; const arr=getData(b); const i=arr.findIndex(x=>x.id===id); if(i<0) return; arr[i].sms=val; setData(b,arr); pushRec(b,arr[i]); if(val) toast("안내문자 보냄으로 표시했어요 ✅"); setTimeout(function(){ renderBody(b); },300); }
 function isTodayR(r){ const s=r.visit; if(!s) return false; const d=new Date(s); if(isNaN(d)) return false; const n=new Date(); return d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth()&&d.getDate()===n.getDate(); }
+// 방문 확정일시가 지났으면 true (완료 색상용)
+function isPastVisit(r){ if(!r.visit) return false; const d=new Date(r.visit); if(isNaN(d)) return false; return d.getTime() < Date.now(); }
+function isDoneLike(r){ return r.status==="구매확정" || isPastVisit(r); }
 function setFilter(f){ STATE.filter=f; renderList(STATE.branch); }
 function markStatus(id,st){ const b=STATE.branch; const arr=getData(b); const i=arr.findIndex(x=>x.id===id); if(i<0) return; arr[i].status=(arr[i].status===st?"예정":st); setData(b,arr); pushRec(b,arr[i]); renderBody(b); }
 
@@ -489,7 +492,7 @@ function renderBody(b){
     let th='<div style="overflow-x:auto"><table class="lt"><thead><tr><th>성함</th><th>연락처</th><th>상품</th><th>예약(네이버)</th><th>방문확정</th><th>담당</th><th class="r">금액</th><th>상태</th></tr></thead><tbody>';
     rows.forEach(function(r){ const k=ckey(r), n=cCnt[k]||1;
       const st=r.status==="구매확정"?"done":(r.status==="취소"?"cancel":"pl");
-      th+='<tr'+(r.status==="취소"?' class="cxrow"':(r.status==="구매확정"?' class="donerow"':''))+' onclick="openForm(\''+r.id+'\')">'+
+      th+='<tr'+(r.status==="취소"?' class="cxrow"':(isDoneLike(r)?' class="donerow"':''))+' onclick="openForm(\''+r.id+'\')">'+
         '<td class="nm">'+escHtml(r.name||"")+'</td>'+
         '<td class="phc">'+phoneCell(r)+'</td>'+
         '<td>'+escHtml((r.pkg||"").replace("페이스리세팅 ","").replace("원장 단독 ","원장"))+'</td>'+
@@ -509,7 +512,7 @@ function renderBody(b){
     if(dk && dk!==lastDay){ lastDay=dk; const cnt=rows.filter(x=>dayKey(x[key])===dk).length; html+='<div class="daygroup">'+dk+' <span class="cnt">'+cnt+'명</span></div>'; }
     const stcls=r.status==="구매확정"?"done":(r.status==="취소"?"cancel":"pl");
     const stlb=r.status||"예정";
-    html+='<div class="card'+(r.status==="취소"?' cxcard':(r.status==="구매확정"?' donecard':''))+'" onclick="openForm(\''+r.id+'\')">'+
+    html+='<div class="card'+(r.status==="취소"?' cxcard':(isDoneLike(r)?' donecard':''))+'" onclick="openForm(\''+r.id+'\')">'+
       '<div class="top">'+(r.ord?'<span class="ord">#'+escHtml(r.ord)+'</span>':'')+'<span class="nm">'+escHtml(r.name||"(이름없음)")+'</span><span class="pill '+stcls+'">'+stlb+'</span></div>'+
       (r.pkg?'<div class="pkg">'+escHtml(r.pkg)+'</div>':'')+
       '<div class="times">'+
@@ -752,6 +755,8 @@ async function onPhotoFile(file){
 
 render();
 pullConfig();
+// 타이머: 1분마다 목록 다시 그려 확정일시 지난 고객 자동 완료색 적용
+setInterval(function(){ try{ const b=STATE.branch; if(STATE.unlocked&&STATE.unlocked[b]&&document.getElementById("listBody")) renderBody(b); }catch(e){} }, 60000);
 </script>
 </body>
 </html>
