@@ -82,6 +82,8 @@
   .pill.pl{background:var(--accent-soft);color:var(--accent-2)}
   .pill.done{background:var(--ok-soft);color:var(--ok)}
   .pill.cancel{background:var(--bad-soft);color:var(--bad)}
+  .lt tr.donerow td{background:#eceef0}
+  .card.donecard{background:#eceef0}
   .lt tr.cxrow td{background:#3a3d42;color:#9aa0a8}
   .lt tr.cxrow td.nm{color:#b8bec6}
   .lt tr.cxrow .tel{color:#8b939c}
@@ -487,7 +489,7 @@ function renderBody(b){
     let th='<div style="overflow-x:auto"><table class="lt"><thead><tr><th>성함</th><th>연락처</th><th>상품</th><th>예약(네이버)</th><th>방문확정</th><th>담당</th><th class="r">금액</th><th>상태</th></tr></thead><tbody>';
     rows.forEach(function(r){ const k=ckey(r), n=cCnt[k]||1;
       const st=r.status==="구매확정"?"done":(r.status==="취소"?"cancel":"pl");
-      th+='<tr'+(r.status==="취소"?' class="cxrow"':'')+' onclick="openForm(\''+r.id+'\')">'+
+      th+='<tr'+(r.status==="취소"?' class="cxrow"':(r.status==="구매확정"?' class="donerow"':''))+' onclick="openForm(\''+r.id+'\')">'+
         '<td class="nm">'+escHtml(r.name||"")+'</td>'+
         '<td class="phc">'+phoneCell(r)+'</td>'+
         '<td>'+escHtml((r.pkg||"").replace("페이스리세팅 ","").replace("원장 단독 ","원장"))+'</td>'+
@@ -507,7 +509,7 @@ function renderBody(b){
     if(dk && dk!==lastDay){ lastDay=dk; const cnt=rows.filter(x=>dayKey(x[key])===dk).length; html+='<div class="daygroup">'+dk+' <span class="cnt">'+cnt+'명</span></div>'; }
     const stcls=r.status==="구매확정"?"done":(r.status==="취소"?"cancel":"pl");
     const stlb=r.status||"예정";
-    html+='<div class="card'+(r.status==="취소"?' cxcard':'')+'" onclick="openForm(\''+r.id+'\')">'+
+    html+='<div class="card'+(r.status==="취소"?' cxcard':(r.status==="구매확정"?' donecard':''))+'" onclick="openForm(\''+r.id+'\')">'+
       '<div class="top">'+(r.ord?'<span class="ord">#'+escHtml(r.ord)+'</span>':'')+'<span class="nm">'+escHtml(r.name||"(이름없음)")+'</span><span class="pill '+stcls+'">'+stlb+'</span></div>'+
       (r.pkg?'<div class="pkg">'+escHtml(r.pkg)+'</div>':'')+
       '<div class="times">'+
