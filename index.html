@@ -303,7 +303,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v231 (2026-09-07)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v232 (2026-09-07)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -1639,7 +1639,7 @@ function afterField(i,a){const opts='<option value="">회차</option>'+Array.fro
 /* 고객에게 보낼 전/후 비교 이미지 — BEFORE(첫 정면) | AFTER(최신 애프터). 얼굴크롭으로 프레이밍 일관 */
 function fpDrawCover(c,img,x,y,w,h){var ir=img.width/img.height,rr=w/h,sw,sh,sx,sy;if(ir>rr){sh=img.height;sw=sh*rr;sx=(img.width-sw)/2;sy=0;}else{sw=img.width;sh=sw/rr;sx=0;sy=(img.height-sh)/2;}c.drawImage(img,sx,sy,sw,sh,x,y,w,h);}
 /* 전/후 이미지 — 편집(드래그 이동·슬라이더 확대) 후 저장 */
-var _baState={before:null,after:null,meta:null},_baEdits={},_baMode='side',_baSideGuide=false,_baOv={op:0.5,ref:'eye',guide:true,nx:0,ny:0,nz:1,nrot:0,W:0,H:0,bUrl:null,aUrl:null,bOK:true,aOK:true};
+var _baState={before:null,after:null,meta:null},_baEdits={},_baMode='side',_baSideGuide=false,_baOv={op:0.5,ref:'eye',guide:true,scale:1,nx:0,ny:0,nz:1,nrot:0,W:0,H:0,bUrl:null,aUrl:null,bOK:true,aOK:true,bl:null,al:null,bImg:null,aImg:null};
 var BA_FW=210,BA_FH=280;
 function baSizes(){var vw=Math.min(window.innerWidth||390,560);BA_FW=Math.max(128,Math.min(210,Math.floor((vw-34-12)/2)));BA_FH=Math.round(BA_FW*4/3);}
 function _saveEdit(w){var st=_baState[w];if(st&&st.src)_baEdits[st.src]={zoom:st.zoom,tx:st.tx,ty:st.ty};}
@@ -2013,6 +2013,7 @@ function baRenderOverlay(){
     +'</div>'
     +'<div style="display:flex;align-items:center;gap:8px;margin-top:12px;width:100%;max-width:'+FW+'px"><span style="font-size:11.5px;color:#9aa2b1;font-weight:700;width:34px">비포</span><input type="range" min="0" max="1" step="0.02" value="'+_baOv.op+'" oninput="baOvOpacity(this.value)" style="flex:1"><span style="font-size:11.5px;color:#ff7ab8;font-weight:800;width:38px;text-align:right">에프터</span></div>'
     +'<div style="color:#7d8494;font-size:11px;text-align:center;margin-top:2px">투명도로 겹쳐보기 · 안 맞으면 에프터를 <b style="color:#9aa2b1">드래그</b>하거나 아래 크기·회전으로 맞추세요</div>'
+    +'<div style="display:flex;align-items:center;gap:7px;margin-top:8px;width:100%;max-width:'+FW+'px"><span style="font-size:11px;color:#9aa2b1;font-weight:700;width:64px">전체 크기</span><input id="baOvScale" type="range" min="0.55" max="1.4" step="0.01" value="'+(_baOv.scale||1)+'" oninput="baOvScale(this.value)" style="flex:1"><span style="font-size:10px;color:#777;width:42px;text-align:right">여백조절</span></div>'
     +'<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;justify-content:center">'
       +'<button onclick="baOvToggleRef()" id="baOvRefBtn" class="btn ghost" style="padding:7px 12px;font-size:12px">기준: 눈동자</button>'
       +'<button onclick="baOvToggleGuide()" id="baOvGuideBtn" class="btn ghost" style="padding:7px 12px;font-size:12px">가이드선 '+(_baOv.guide?'끄기':'켜기')+'</button>'
@@ -2036,6 +2037,8 @@ function baRenderOverlay(){
 function baOvOpacity(v){ _baOv.op=parseFloat(v); var a=document.getElementById('baOvA'); if(a)a.style.opacity=_baOv.op; }
 function baOvApplyNudge(){ var a=document.getElementById('baOvA'); if(a)a.style.transform='translate('+_baOv.nx+'px,'+_baOv.ny+'px) rotate('+_baOv.nrot+'deg) scale('+_baOv.nz+')'; }
 function baOvNudge(k,v){ _baOv[k]=parseFloat(v)||0; baOvApplyNudge(); }
+function baOvRebake(){ if(!_baOv.bImg||!_baOv.aImg)return; _baOv.bUrl=_baAlignedURL(_baOv.bImg,_baOv.bl,_baOv.W,_baOv.H); _baOv.aUrl=_baAlignedURL(_baOv.aImg,_baOv.al,_baOv.W,_baOv.H); var be=document.getElementById('baOvB'),ae=document.getElementById('baOvA'); if(be)be.src=_baOv.bUrl; if(ae)ae.src=_baOv.aUrl; }
+function baOvScale(v){ _baOv.scale=parseFloat(v)||1; baOvRebake(); }
 function baOvToggleGuide(){ _baOv.guide=!_baOv.guide; var g=document.getElementById('baOvGuide'); if(g)g.style.display=_baOv.guide?'block':'none'; var btn=document.getElementById('baOvGuideBtn'); if(btn)btn.textContent='가이드선 '+(_baOv.guide?'끄기':'켜기'); }
 function baOvToggleRef(){ _baOv.ref=(_baOv.ref==='eye')?'nose':'eye'; var btn=document.getElementById('baOvRefBtn'); if(btn)btn.textContent='기준: '+(_baOv.ref==='eye'?'눈동자':'코'); baOvAlign(); }
 async function _baLandmarks(src){
@@ -2068,7 +2071,7 @@ function _baAlignedURL(img,lm,FW,FH){
   var cv=document.createElement('canvas'); cv.width=FW; cv.height=FH; var c=cv.getContext('2d');
   c.fillStyle='#000'; c.fillRect(0,0,FW,FH); c.imageSmoothingEnabled=true; c.imageSmoothingQuality='high';
   if(lm){
-    var targetIPD=FW*0.34, s=targetIPD/(lm.ipd||1);
+    var targetIPD=FW*0.30*(_baOv.scale||1), s=targetIPD/(lm.ipd||1);
     var anchor=(_baOv.ref==='nose')?lm.nose:lm.mid;
     var ty=(_baOv.ref==='nose')?FH*0.54:FH*0.42;
     c.translate(FW/2,ty); c.rotate(-(lm.ang||0)); c.scale(s,s); c.translate(-anchor.x,-anchor.y);
@@ -2090,7 +2093,7 @@ async function baOvAlign(){
   try{
     var bImg=await _img(bShot.src), aImg=await _img(aShot.src);
     var bl=await _baLandmarks(bShot.src), al=await _baLandmarks(aShot.src);
-    _baOv.bOK=!!bl; _baOv.aOK=!!al;
+    _baOv.bOK=!!bl; _baOv.aOK=!!al; _baOv.bImg=bImg; _baOv.aImg=aImg; _baOv.bl=bl; _baOv.al=al;
     _baOv.bUrl=_baAlignedURL(bImg,bl,fw,fh); _baOv.aUrl=_baAlignedURL(aImg,al,fw,fh);
     var be=document.getElementById('baOvB'), ae=document.getElementById('baOvA');
     if(be)be.src=_baOv.bUrl; if(ae){ae.src=_baOv.aUrl; ae.style.opacity=_baOv.op;}
