@@ -369,7 +369,9 @@ function isTodayR(r){ const s=r.visit; if(!s) return false; const d=new Date(s);
 function isPastVisit(r){ if(!r.visit) return false; const d=new Date(r.visit); if(isNaN(d)) return false; const n=new Date(); const dd=new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime(); const nn=new Date(n.getFullYear(),n.getMonth(),n.getDate()).getTime(); return dd < nn; }
 function isDoneLike(r){ return r.status==="구매확정" || isPastVisit(r); }
 // 방문 '날짜'가 지나면 구매확정 / 안 지났으면 예정 — 날짜 기준 자동(취소·방문일 미입력 제외)
-function autoCompletePast(b){ const arr=getData(b); let changed=false; arr.forEach(function(r){ if(r.status==="취소") return; const past=(r.visit && isPastVisit(r)); if(past && r.status!=="구매확정"){ r.status="구매확정"; changed=true; pushRec(b,r); } else if(!past && r.status==="구매확정"){ r.status="예정"; changed=true; pushRec(b,r); } }); if(changed) setData(b,arr); return changed; }
+// 자동 로직이 정할 상태(수동 우선 판단용)
+function autoWouldBe(r){ if(r.status==="취소") return "취소"; return (r.visit && isPastVisit(r)) ? "구매확정" : "예정"; }
+function autoCompletePast(b){ const arr=getData(b); let changed=false; arr.forEach(function(r){ if(r.status==="취소") return; if(r.manual) return; const past=(r.visit && isPastVisit(r)); if(past && r.status!=="구매확정"){ r.status="구매확정"; changed=true; pushRec(b,r); } else if(!past && r.status==="구매확정"){ r.status="예정"; changed=true; pushRec(b,r); } }); if(changed) setData(b,arr); return changed; }
 function setFilter(f){ STATE.filter=f; renderList(STATE.branch); }
 function markStatus(id,st){ const b=STATE.branch; const arr=getData(b); const i=arr.findIndex(x=>x.id===id); if(i<0) return; arr[i].status=(arr[i].status===st?"예정":st); setData(b,arr); pushRec(b,arr[i]); renderBody(b); }
 
@@ -579,6 +581,8 @@ function saveForm(){
     reserve:$("f_reserve").value, visit:$("f_visit").value, paid:+$("f_paid").value||0,
     status:STATE.status, memo:$("f_memo").value.trim(), info:STATE.editInfo||"", sess:pkgSess($("f_pkg").value) };
   if(!rec.name){ alert("성함을 입력해주세요."); return; }
+  // 직접 고른 상태가 자동판정과 다르면 '수동'으로 표시 → 자동로직이 안 건드림 (같으면 자동관리)
+  rec.manual = (rec.status !== autoWouldBe(rec));
   const arr=getData(b); const i=arr.findIndex(x=>x.id===rec.id); if(i>=0){ rec.ord=arr[i].ord; rec.sms=arr[i].sms; arr[i]=rec; } else { rec.ord=(arr.reduce((m,x)=>Math.max(m,+x.ord||0),0)+1); arr.push(rec); }
   setData(b,arr); pushRec(b,rec); closeForm(); renderList(b);
 }
