@@ -319,20 +319,34 @@ function openPayroll(){
   }
   $("payTitle").textContent="💰 "+b+" 정산";
   const rows=getData(b).filter(r=>r.status!=="취소");
-  const totRev=rows.reduce((s,r)=>s+(+r.paid||0),0);
-  const mkt=Math.round(totRev*0.15);
+  const isApg=(b==="압구정점");
+  const totRev=rows.reduce((s,r)=>s+recTotal(r),0);        // 결제 총액(추가가입 합산)
+  const mkt=Math.round(totRev*0.15);                        // 마케팅홍보수수료 15%
+  const afterMkt=totRev-mkt;
+  const minish=isApg?Math.round(afterMkt*0.40):0;           // 미니쉬 40%(압구정만)
+  const base=afterMkt-minish;                               // 부가세 포함가(남은 금액)
+  const vat=Math.round(base/11);                            // 부가세(남은금액÷11)
+  const npay=Math.round(totRev*FEE_RATE);                   // 네이버페이 수수료(총액 기준)
   const by={}; rows.forEach(function(r){ const nm=r.reset||"⚠ 담당 미배정"; const s=recSessions(r,b)||0; (by[nm]=by[nm]||{cnt:0,sess:0}); by[nm].cnt++; by[nm].sess+=s; });
   const names=Object.keys(by).sort((a,c)=>by[c].sess-by[a].sess);
-  let tot=0;
-  let html='<div class="sumrow" style="margin-bottom:6px"><div class="metric a"><div class="k">결제 총액</div><div class="v tnum">'+won(totRev)+'</div></div><div class="metric"><div class="k">마케팅홍보수수료 (15%)</div><div class="v tnum">'+won(mkt)+'</div></div></div>'+
-    '<div class="note-inline" style="margin-bottom:14px">아래는 관리사별 급여 (회차당 6만원)</div>';
+  let payTot=0; names.forEach(function(nm){ payTot+=by[nm].sess*PAY_PER; });
+  const profit=base-vat-npay-payTot;                        // 순수익
+  let html='<div class="sumrow" style="margin-bottom:10px"><div class="metric a"><div class="k">결제 총액</div><div class="v tnum">'+won(totRev)+'</div></div></div>';
+  html+='<table class="tt"><tbody>'+
+    '<tr><td style="text-align:left">마케팅홍보수수료 (15%)</td><td class="tnum">− '+won(mkt)+'</td></tr>'+
+    (isApg?('<tr><td style="text-align:left">미니쉬 (남은액의 40%)</td><td class="tnum">− '+won(minish)+'</td></tr>'):'')+
+    '<tr><td style="text-align:left">부가세 (남은액÷11)</td><td class="tnum">− '+won(vat)+'</td></tr>'+
+    '<tr><td style="text-align:left">네이버페이 수수료</td><td class="tnum">− '+won(npay)+'</td></tr>'+
+    '<tr><td style="text-align:left">관리사 급여 합계</td><td class="tnum">− '+won(payTot)+'</td></tr>'+
+    '</tbody></table>';
+  html+='<div class="sumrow" style="margin:12px 0"><div class="metric a"><div class="k">💰 순수익 (대표님 실수령)</div><div class="v tnum" style="font-size:1.15em">'+won(profit)+'</div></div></div>';
+  html+='<div class="note-inline" style="margin:14px 0 8px">관리사별 급여 상세 (회차당 6만원)</div>';
   if(!names.length){ html+='<div class="empty">예약이 없어요.</div>'; }
   else{
     html+='<table class="tt"><thead><tr><th style="text-align:left">관리사</th><th>담당</th><th>총 회차</th><th>급여</th></tr></thead><tbody>';
-    names.forEach(function(nm){ const o=by[nm]; const pay=o.sess*PAY_PER; tot+=pay; html+='<tr><td style="text-align:left;font-weight:800">'+escHtml(nm)+'</td><td class="tnum">'+o.cnt+'건</td><td class="tnum">'+o.sess+'회</td><td class="tnum" style="font-weight:800">'+won(pay)+'</td></tr>'; });
+    names.forEach(function(nm){ const o=by[nm]; const pay=o.sess*PAY_PER; html+='<tr><td style="text-align:left;font-weight:800">'+escHtml(nm)+'</td><td class="tnum">'+o.cnt+'건</td><td class="tnum">'+o.sess+'회</td><td class="tnum" style="font-weight:800">'+won(pay)+'</td></tr>'; });
     html+='</tbody></table>';
-    html+='<div class="sumrow" style="margin-top:14px"><div class="metric a"><div class="k">총 지급액</div><div class="v tnum">'+won(tot)+'</div></div><div class="metric"><div class="k">회차당</div><div class="v tnum">₩60,000</div></div></div>';
-    html+='<div class="note-inline" style="margin-top:8px">※ 취소 건 제외 · "담당 미배정"은 관리사를 넣어주세요.</div>';
+    html+='<div class="note-inline" style="margin-top:8px">※ 취소 건 제외 · '+(isApg?'미니쉬 40%는 압구정만 · ':'')+'부가세는 남은금액(부가세포함가)÷11 · 네이버페이 수수료는 총액 기준.</div>';
   }
   $("payBody").innerHTML=html; $("payModal").classList.add("on");
 }
