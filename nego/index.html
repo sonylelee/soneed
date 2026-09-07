@@ -299,6 +299,8 @@ function paySessions(pkg, branch){ return branch==="동탄본점" ? pkgSess(pkg)
 function recTotal(r){ return (+r.paid||0) + ((r.addons||[]).reduce(function(s,a){ return s+(+a.paid||0); },0)); }
 function recSessions(r,b){ return (paySessions(r.pkg,b)||0) + ((r.addons||[]).reduce(function(s,a){ return s+(paySessions(a.pkg,b)||0); },0)); }
 function pkgOptHtml(sel){ return PROGRAMS.map(function(x){ return '<option value="'+escAttr(x[0])+'"'+(x[0]===sel?' selected':'')+'>'+escHtml(x[0])+(x[1]?" · "+won(x[1]):"")+'</option>'; }).join(""); }
+function shortPkg(nm){ return (nm||"").replace("페이스리세팅 ","").replace("원장 단독 ","원장"); }
+function pkgLabel(r){ var parts=[shortPkg(r.pkg)]; (r.addons||[]).forEach(function(a){ if(a.pkg) parts.push(shortPkg(a.pkg)); }); return parts.filter(Boolean).join(" & "); }
 let payAuthed={};
 function openPayroll(){
   const b=STATE.branch;
@@ -514,7 +516,7 @@ function renderBody(b){
       th+='<tr'+(r.status==="취소"?' class="cxrow"':(isPastVisit(r)?' class="pastrow"':(r.status==="구매확정"?' class="donerow"':'')))+' onclick="openForm(\''+r.id+'\')">'+
         '<td class="nm">'+escHtml(r.name||"")+(isDupR(r)?' <span class="dupbadge">중복?</span>':"")+'</td>'+
         '<td class="phc">'+phoneCell(r)+'</td>'+
-        '<td>'+escHtml((r.pkg||"").replace("페이스리세팅 ","").replace("원장 단독 ","원장"))+((r.addons&&r.addons.length)?'<span style="color:var(--accent-2);font-weight:700"> +'+r.addons.length+'</span>':'')+'</td>'+
+        '<td>'+escHtml(pkgLabel(r))+'</td>'+
         '<td>'+fmtShort(r.reserve)+'</td>'+
         '<td'+(!r.visit?' class="warn"':'')+'>'+(r.visit?fmtShort(r.visit):"⚠")+'</td>'+
         '<td'+(!r.reset?' class="warn"':'')+'>'+escHtml(r.reset||"⚠")+'</td>'+
@@ -533,7 +535,7 @@ function renderBody(b){
     const stlb=r.status||"예정";
     html+='<div class="card'+(r.status==="취소"?' cxcard':(isPastVisit(r)?' pastcard':(r.status==="구매확정"?' donecard':'')))+'" onclick="openForm(\''+r.id+'\')">'+
       '<div class="top">'+(r.ord?'<span class="ord">#'+escHtml(r.ord)+'</span>':'')+'<span class="nm">'+escHtml(r.name||"(이름없음)")+'</span>'+(isDupR(r)?'<span class="dupbadge">중복?</span>':"")+'<span class="pill '+stcls+'">'+stlb+'</span></div>'+
-      (r.pkg?'<div class="pkg">'+escHtml(r.pkg)+'</div>':'')+
+      (r.pkg?'<div class="pkg">'+escHtml(r.pkg+((r.addons&&r.addons.length)?(" & "+r.addons.map(function(a){return a.pkg;}).join(" & ")):""))+'</div>':'')+
       '<div class="times">'+
         '<div class="tchip"><div class="lb">예약(네이버)</div><div class="vv">'+fmtDT(r.reserve)+'</div></div>'+
         '<div class="tchip visit"><div class="lb">방문확정</div><div class="vv">'+fmtDT(r.visit)+'</div></div>'+
