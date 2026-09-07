@@ -803,7 +803,18 @@ async function onPhotoFile(file){
 render();
 pullConfig();
 // 타이머: 1분마다 목록 다시 그려 확정일시 지난 고객 자동 완료색 적용
-setInterval(function(){ try{ const b=STATE.branch; if(STATE.unlocked&&STATE.unlocked[b]&&document.getElementById("listBody")) renderBody(b); }catch(e){} }, 60000);
+// 자동 동기화: 1분마다 + 화면 복귀 시 클라우드에서 최신 데이터 받아와 렌더 (새로고침 안 해도 항상 최신 → 옛날 데이터 덮어쓰기 방지)
+async function autoSync(){ try{
+  const b=STATE.branch;
+  if(!(STATE.unlocked&&STATE.unlocked[b])) return;
+  if(!document.getElementById("listBody")) return;
+  const fm=document.getElementById("formModal");
+  if(fm&&fm.classList.contains("on")) return;   // 편집 중이면 건너뜀
+  await pullBranch(b);
+  if(STATE.unlocked&&STATE.unlocked[b]&&document.getElementById("listBody")) renderBody(b);
+}catch(e){} }
+setInterval(autoSync, 60000);
+document.addEventListener("visibilitychange", function(){ if(document.visibilityState==="visible") autoSync(); });
 </script>
 </body>
 </html>
