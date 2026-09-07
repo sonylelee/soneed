@@ -82,8 +82,11 @@
   .pill.pl{background:var(--accent-soft);color:var(--accent-2)}
   .pill.done{background:var(--ok-soft);color:var(--ok)}
   .pill.cancel{background:var(--bad-soft);color:var(--bad)}
+  .dupbadge{display:inline-block;font-size:.6rem;font-weight:800;color:#b02a2a;background:#ffe0e0;border:1px solid #f3b4b4;border-radius:4px;padding:1px 5px;margin-left:5px;vertical-align:middle}
   .lt tr.donerow td{background:#eceef0}
+  .lt tr.pastrow td{background:#ffbcd4}
   .card.donecard{background:#eceef0}
+  .card.pastcard{background:#ffbcd4}
   .lt tr.cxrow td{background:#3a3d42;color:#9aa0a8}
   .lt tr.cxrow td.nm{color:#b8bec6}
   .lt tr.cxrow .tel{color:#8b939c}
@@ -363,10 +366,10 @@ function phoneCell(r){ if(!r||!r.phone) return ""; const d=(r.phone||"").replace
 function markSms(id,val){ const b=STATE.branch; const arr=getData(b); const i=arr.findIndex(x=>x.id===id); if(i<0) return; arr[i].sms=val; setData(b,arr); pushRec(b,arr[i]); if(val) toast("안내문자 보냄으로 표시했어요 ✅"); setTimeout(function(){ renderBody(b); },300); }
 function isTodayR(r){ const s=r.visit; if(!s) return false; const d=new Date(s); if(isNaN(d)) return false; const n=new Date(); return d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth()&&d.getDate()===n.getDate(); }
 // 방문 확정일시가 지났으면 true (완료 색상용)
-function isPastVisit(r){ if(!r.visit) return false; const d=new Date(r.visit); if(isNaN(d)) return false; return d.getTime() < Date.now(); }
+function isPastVisit(r){ if(!r.visit) return false; const d=new Date(r.visit); if(isNaN(d)) return false; const n=new Date(); const dd=new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime(); const nn=new Date(n.getFullYear(),n.getMonth(),n.getDate()).getTime(); return dd < nn; }
 function isDoneLike(r){ return r.status==="구매확정" || isPastVisit(r); }
-// 확정일시 지난 '예정' 건을 '구매확정'으로 자동 전환(취소는 제외)하고 클라우드 반영
-function autoCompletePast(b){ const arr=getData(b); let changed=false; arr.forEach(function(r){ if(r.status!=="구매확정" && r.status!=="취소" && isPastVisit(r)){ r.status="구매확정"; changed=true; pushRec(b,r); } }); if(changed) setData(b,arr); return changed; }
+// 방문 '날짜'가 지나면 구매확정 / 안 지났으면 예정 — 날짜 기준 자동(취소·방문일 미입력 제외)
+function autoCompletePast(b){ const arr=getData(b); let changed=false; arr.forEach(function(r){ if(r.status==="취소") return; const past=(r.visit && isPastVisit(r)); if(past && r.status!=="구매확정"){ r.status="구매확정"; changed=true; pushRec(b,r); } else if(!past && r.status==="구매확정"){ r.status="예정"; changed=true; pushRec(b,r); } }); if(changed) setData(b,arr); return changed; }
 function setFilter(f){ STATE.filter=f; renderList(STATE.branch); }
 function markStatus(id,st){ const b=STATE.branch; const arr=getData(b); const i=arr.findIndex(x=>x.id===id); if(i<0) return; arr[i].status=(arr[i].status===st?"예정":st); setData(b,arr); pushRec(b,arr[i]); renderBody(b); }
 
@@ -484,6 +487,8 @@ function renderBody(b){
   // 고객별(전화번호) 총액·건수 — 같은 고객의 예약금+차액 등을 합산
   const ckey=x=>((x.phone||"").replace(/[^0-9]/g,"")||("nm:"+(x.name||"")));
   const cTot={}, cCnt={}; getData(b).forEach(x=>{ if(x.status==="취소") return; const k=ckey(x); cTot[k]=(cTot[k]||0)+(+x.paid||0); cCnt[k]=(cCnt[k]||0)+1; });
+  const dupC={}; getData(b).forEach(x=>{ if(x.status==="취소") return; const t=(x.visit||x.reserve||""); if(!t) return; const dk=(x.name||"").trim()+"|"+(x.phone||"").replace(/\D/g,"")+"|"+t; dupC[dk]=(dupC[dk]||0)+1; });
+  const isDupR=function(r){ const t=(r.visit||r.reserve||""); if(!t) return false; const dk=(r.name||"").trim()+"|"+(r.phone||"").replace(/\D/g,"")+"|"+t; return dupC[dk]>1; };
   const q=STATE.search.trim().toLowerCase();
   if(q) rows=rows.filter(r=>((r.name||"")+(r.phone||"")+(r.pkg||"")+(r.reset||"")+(r.memo||"")).toLowerCase().includes(q));
   if(STATE.filter==="today") rows=rows.filter(isTodayR);
@@ -495,8 +500,8 @@ function renderBody(b){
     let th='<div style="overflow-x:auto"><table class="lt"><thead><tr><th>성함</th><th>연락처</th><th>상품</th><th>예약(네이버)</th><th>방문확정</th><th>담당</th><th class="r">금액</th><th>상태</th></tr></thead><tbody>';
     rows.forEach(function(r){ const k=ckey(r), n=cCnt[k]||1;
       const st=r.status==="구매확정"?"done":(r.status==="취소"?"cancel":"pl");
-      th+='<tr'+(r.status==="취소"?' class="cxrow"':(isDoneLike(r)?' class="donerow"':''))+' onclick="openForm(\''+r.id+'\')">'+
-        '<td class="nm">'+escHtml(r.name||"")+'</td>'+
+      th+='<tr'+(r.status==="취소"?' class="cxrow"':(isPastVisit(r)?' class="pastrow"':(r.status==="구매확정"?' class="donerow"':'')))+' onclick="openForm(\''+r.id+'\')">'+
+        '<td class="nm">'+escHtml(r.name||"")+(isDupR(r)?' <span class="dupbadge">중복?</span>':"")+'</td>'+
         '<td class="phc">'+phoneCell(r)+'</td>'+
         '<td>'+escHtml((r.pkg||"").replace("페이스리세팅 ","").replace("원장 단독 ","원장"))+'</td>'+
         '<td>'+fmtShort(r.reserve)+'</td>'+
@@ -515,8 +520,8 @@ function renderBody(b){
     if(dk && dk!==lastDay){ lastDay=dk; const cnt=rows.filter(x=>dayKey(x[key])===dk).length; html+='<div class="daygroup">'+dk+' <span class="cnt">'+cnt+'명</span></div>'; }
     const stcls=r.status==="구매확정"?"done":(r.status==="취소"?"cancel":"pl");
     const stlb=r.status||"예정";
-    html+='<div class="card'+(r.status==="취소"?' cxcard':(isDoneLike(r)?' donecard':''))+'" onclick="openForm(\''+r.id+'\')">'+
-      '<div class="top">'+(r.ord?'<span class="ord">#'+escHtml(r.ord)+'</span>':'')+'<span class="nm">'+escHtml(r.name||"(이름없음)")+'</span><span class="pill '+stcls+'">'+stlb+'</span></div>'+
+    html+='<div class="card'+(r.status==="취소"?' cxcard':(isPastVisit(r)?' pastcard':(r.status==="구매확정"?' donecard':'')))+'" onclick="openForm(\''+r.id+'\')">'+
+      '<div class="top">'+(r.ord?'<span class="ord">#'+escHtml(r.ord)+'</span>':'')+'<span class="nm">'+escHtml(r.name||"(이름없음)")+'</span>'+(isDupR(r)?'<span class="dupbadge">중복?</span>':"")+'<span class="pill '+stcls+'">'+stlb+'</span></div>'+
       (r.pkg?'<div class="pkg">'+escHtml(r.pkg)+'</div>':'')+
       '<div class="times">'+
         '<div class="tchip"><div class="lb">예약(네이버)</div><div class="vv">'+fmtDT(r.reserve)+'</div></div>'+
