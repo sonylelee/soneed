@@ -229,7 +229,7 @@
         <div class="fld"><label>⭐ 방문 확정일시 (담당자 입력) <button type="button" class="samebtn" onclick="sameAsReserve()">= 요청일과 동일</button></label><input id="f_visit" type="datetime-local"></div>
       </div>
       <div class="fld"><label>네이버페이 결제완료액 (원)</label><input id="f_paid" type="number" inputmode="numeric" placeholder="0"><div class="hint" id="pkgHint"></div></div>
-      <div class="fld" id="addonFld"><label>➕ 추가 가입 <span style="font-weight:500;color:var(--muted);font-size:.8em">(첫방문 후 패키지 가입 시 · 금액·회차 합산됨)</span></label>
+      <div class="fld" id="addonFld"><label>➕ 추가 가입 <span style="font-weight:500;color:var(--muted);font-size:.8em">(첫방문 후 패키지 가입 · 차액=정가−기존결제액 자동계산 · 필요시 수정)</span></label>
         <div id="addonBox"></div>
         <button type="button" class="samebtn" style="margin-top:6px" onclick="addAddon()">＋ 추가 가입 상품</button>
         <div class="hint" id="addonSum"></div>
@@ -586,7 +586,7 @@ function renderAddons(){ const box=$("addonBox"); if(!box) return; const A=STATE
 function addonSum(){ const el=$("addonSum"); if(!el) return; const A=(STATE.addons||[]).filter(function(a){return a.pkg&&a.pkg!=="— 선택 안 함 —";}); const base=+$("f_paid").value||0; const add=A.reduce(function(s,a){return s+(+a.paid||0);},0); el.textContent = A.length? ("총 합산 금액: "+won(base+add)+" (기본 "+won(base)+" + 추가 "+won(add)+")") : ""; }
 function addAddon(){ if(!STATE.addons)STATE.addons=[]; STATE.addons.push({pkg:"— 선택 안 함 —",paid:0}); renderAddons(); }
 function delAddon(i){ STATE.addons.splice(i,1); renderAddons(); }
-function onAddonPkg(i,v){ STATE.addons[i].pkg=v; const pr=pkgPrice(v); if(pr) STATE.addons[i].paid=pr; renderAddons(); }
+function onAddonPkg(i,v){ STATE.addons[i].pkg=v; const pr=pkgPrice(v); const base=+$("f_paid").value||0; if(pr) STATE.addons[i].paid=Math.max(0, pr-base); renderAddons(); }
 function calcPreview(){ const cb=$("calcBox"); if(!cb) return; const c=calc($("f_paid").value); cb.innerHTML=
   '<div class="cr"><span>총 결제금액</span><b class="tnum">'+won(c.total)+'</b></div>'+
   '<div class="cr"><span>소개비 15%</span><b class="tnum">'+won(c.intro)+'</b></div>'+
