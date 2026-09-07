@@ -294,12 +294,15 @@ const PKG_BASE = {"페이스리세팅 10+1회":10,"페이스리세팅 15+2회":1
 const pkgBase = nm => (PKG_BASE[nm] != null ? PKG_BASE[nm] : pkgSess(nm));
 const PAY_PER = 60000; // 회차당 관리사 급여
 // 지점 규칙: 동탄=전체회차, 압구정=서비스 제외한 정가회차
-function paySessions(pkg, branch){ return branch==="동탄본점" ? pkgSess(pkg) : pkgBase(pkg); }
+// 급여 정산 회차: 양 지점 모두 전체 회차(+N 포함) 기준
+function paySessions(pkg, branch){ return pkgSess(pkg); }
 // 추가가입 합산: 기본상품 + addons
 function recTotal(r){ return (+r.paid||0) + ((r.addons||[]).reduce(function(s,a){ return s+(+a.paid||0); },0)); }
 function recSessions(r,b){ return (paySessions(r.pkg,b)||0) + ((r.addons||[]).reduce(function(s,a){ return s+(paySessions(a.pkg,b)||0); },0)); }
-function pkgOptHtml(sel){ return PROGRAMS.map(function(x){ return '<option value="'+escAttr(x[0])+'"'+(x[0]===sel?' selected':'')+'>'+escHtml(x[0])+(x[1]?" · "+won(x[1]):"")+'</option>'; }).join(""); }
-function shortPkg(nm){ return (nm||"").replace("페이스리세팅 ","").replace("원장 단독 ","원장"); }
+function pkgOptHtml(sel){ return PROGRAMS.map(function(x){ return '<option value="'+escAttr(x[0])+'"'+(x[0]===sel?' selected':'')+'>'+escHtml(dispPkg(x[0]))+(x[1]?" · "+won(x[1]):"")+'</option>'; }).join(""); }
+// 표시용 상품명: 서비스회차(+N) 빼고 표기 (내부 회차·급여 계산은 원본 그대로)
+function dispPkg(nm){ return (nm||"").replace("15+2회","15회").replace("10+1회","10회"); }
+function shortPkg(nm){ return dispPkg(nm).replace("페이스리세팅 ","").replace("원장 단독 ","원장"); }
 function pkgLabel(r){ var parts=[shortPkg(r.pkg)]; (r.addons||[]).forEach(function(a){ if(a.pkg) parts.push(shortPkg(a.pkg)); }); return parts.filter(Boolean).join(" & "); }
 let payAuthed={};
 function openPayroll(){
@@ -535,7 +538,7 @@ function renderBody(b){
     const stlb=r.status||"예정";
     html+='<div class="card'+(r.status==="취소"?' cxcard':(isPastVisit(r)?' pastcard':(r.status==="구매확정"?' donecard':'')))+'" onclick="openForm(\''+r.id+'\')">'+
       '<div class="top">'+(r.ord?'<span class="ord">#'+escHtml(r.ord)+'</span>':'')+'<span class="nm">'+escHtml(r.name||"(이름없음)")+'</span>'+(isDupR(r)?'<span class="dupbadge">중복?</span>':"")+'<span class="pill '+stcls+'">'+stlb+'</span></div>'+
-      (r.pkg?'<div class="pkg">'+escHtml(r.pkg+((r.addons&&r.addons.length)?(" & "+r.addons.map(function(a){return a.pkg;}).join(" & ")):""))+'</div>':'')+
+      (r.pkg?'<div class="pkg">'+escHtml(dispPkg(r.pkg)+((r.addons&&r.addons.length)?(" & "+r.addons.map(function(a){return dispPkg(a.pkg);}).join(" & ")):""))+'</div>':'')+
       '<div class="times">'+
         '<div class="tchip"><div class="lb">예약(네이버)</div><div class="vv">'+fmtDT(r.reserve)+'</div></div>'+
         '<div class="tchip visit"><div class="lb">방문확정</div><div class="vv">'+fmtDT(r.visit)+'</div></div>'+
@@ -554,7 +557,7 @@ function renderBody(b){
 
 // ---- form ----
 function fillSelects(){
-  const p=$("f_pkg"); p.innerHTML=PROGRAMS.map(x=>'<option value="'+escAttr(x[0])+'">'+escHtml(x[0])+(x[1]?" · "+won(x[1]):"")+'</option>').join("");
+  const p=$("f_pkg"); p.innerHTML=PROGRAMS.map(x=>'<option value="'+escAttr(x[0])+'">'+escHtml(dispPkg(x[0]))+(x[1]?" · "+won(x[1]):"")+'</option>').join("");
   const r=$("f_reset"); r.innerHTML='<option value="">— 선택 —</option>'+resettersFor(STATE.branch).map(x=>'<option>'+x+'</option>').join("");
 }
 function setStatus(st){ STATE.status=st; document.querySelectorAll("#statusSeg .seg").forEach(s=>s.classList.toggle("on", s.dataset.st===st)); }
@@ -630,7 +633,7 @@ function exportCSV(){
     let bigo=(r.memo||"").replace(/\n/g," ");
     if(r.addons&&r.addons.length) bigo=(bigo+" [추가가입: "+r.addons.map(function(a){return a.pkg+" "+won(a.paid);}).join(", ")+"]").trim();
     if(r.status==="취소" && !/취소/.test(bigo)) bigo=("취소 "+bigo).trim();
-    const pkgCell=(r.pkg||"")+((r.addons&&r.addons.length)?(" + "+r.addons.map(function(a){return a.pkg;}).join(" + ")):"");
+    const pkgCell=dispPkg(r.pkg||"")+((r.addons&&r.addons.length)?(" + "+r.addons.map(function(a){return dispPkg(a.pkg);}).join(" + ")):"");
     const row=[ r.ord||"", r.name||"", pkgCell, tot, r.reset||"", exportDT(r.reserve), exportDT(r.visit), r.phone||"", bigo, recSessions(r,b), cc.total, cc.intro, cc.bal, cc.minish, "", cc.fee, "", "", "", "" ];
     h+='<tr>'+row.map(c=>'<td>'+esc(c)+'</td>').join("")+'</tr>';
   });
