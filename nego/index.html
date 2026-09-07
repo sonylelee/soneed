@@ -237,7 +237,7 @@
       <div class="fld"><label>상태</label>
         <div class="segs" id="statusSeg">
           <div class="seg on" data-st="예정">예정</div>
-          <div class="seg" data-st="구매확정">구매확정</div>
+          <div class="seg" data-st="구매확정">네이버내 구매확정됨</div>
           <div class="seg" data-st="취소">취소</div>
         </div>
       </div>
@@ -300,6 +300,8 @@ function paySessions(pkg, branch){ return pkgSess(pkg); }
 function recTotal(r){ return (+r.paid||0) + ((r.addons||[]).reduce(function(s,a){ return s+(+a.paid||0); },0)); }
 function recSessions(r,b){ return (paySessions(r.pkg,b)||0) + ((r.addons||[]).reduce(function(s,a){ return s+(paySessions(a.pkg,b)||0); },0)); }
 function pkgOptHtml(sel){ return PROGRAMS.map(function(x){ return '<option value="'+escAttr(x[0])+'"'+(x[0]===sel?' selected':'')+'>'+escHtml(dispPkg(x[0]))+(x[1]?" · "+won(x[1]):"")+'</option>'; }).join(""); }
+// 상태 표시 라벨 (내부값 "구매확정" → 화면엔 "네이버내 구매확정됨")
+function stLabel(st){ return st==="구매확정" ? "네이버내 구매확정됨" : (st||"예정"); }
 // 상품명 원본 그대로 표기 (10+1회 등)
 function dispPkg(nm){ return nm||""; }
 function shortPkg(nm){ return (nm||"").replace("페이스리세팅 ","").replace("원장 단독 ","원장"); }
@@ -387,7 +389,8 @@ function isDoneLike(r){ return r.status==="구매확정" || isPastVisit(r); }
 // 방문 '날짜'가 지나면 구매확정 / 안 지났으면 예정 — 날짜 기준 자동(취소·방문일 미입력 제외)
 // 자동 로직이 정할 상태(수동 우선 판단용)
 function autoWouldBe(r){ if(r.status==="취소") return "취소"; return (r.visit && isPastVisit(r)) ? "구매확정" : "예정"; }
-function autoCompletePast(b){ const arr=getData(b); let changed=false; arr.forEach(function(r){ if(r.status==="취소") return; if(r.manual) return; const past=(r.visit && isPastVisit(r)); if(past && r.status!=="구매확정"){ r.status="구매확정"; changed=true; pushRec(b,r); } else if(!past && r.status==="구매확정"){ r.status="예정"; changed=true; pushRec(b,r); } }); if(changed) setData(b,arr); return changed; }
+// 날짜가 지나도 상태는 자동으로 안 바꿈(구매확정은 직접+비번만). 지난 예약은 분홍색으로만 표시(isPastVisit).
+function autoCompletePast(b){ return false; }
 function setFilter(f){ STATE.filter=f; renderList(STATE.branch); }
 function markStatus(id,st){ const b=STATE.branch; const arr=getData(b); const i=arr.findIndex(x=>x.id===id); if(i<0) return; arr[i].status=(arr[i].status===st?"예정":st); setData(b,arr); pushRec(b,arr[i]); renderBody(b); }
 
@@ -526,7 +529,7 @@ function renderBody(b){
         '<td'+(!r.visit?' class="warn"':'')+'>'+(r.visit?fmtShort(r.visit):"⚠")+'</td>'+
         '<td'+(!r.reset?' class="warn"':'')+'>'+escHtml(r.reset||"⚠")+'</td>'+
         '<td class="r tnum">'+won(r.status==="취소"?0:(cTot[k]||recTotal(r)))+(n>1?'<span style="color:var(--muted)"> ·'+n+'</span>':'')+'</td>'+
-        '<td><span class="pill '+st+'">'+(r.status||"예정")+'</span></td>'+
+        '<td><span class="pill '+st+'">'+escHtml(stLabel(r.status))+'</span></td>'+
       '</tr>';
     });
     th+='</tbody></table></div>';
@@ -537,7 +540,7 @@ function renderBody(b){
     const dk = STATE.sort==="name" ? null : dayKey(r[key]);
     if(dk && dk!==lastDay){ lastDay=dk; const cnt=rows.filter(x=>dayKey(x[key])===dk).length; html+='<div class="daygroup">'+dk+' <span class="cnt">'+cnt+'명</span></div>'; }
     const stcls=r.status==="구매확정"?"done":(r.status==="취소"?"cancel":"pl");
-    const stlb=r.status||"예정";
+    const stlb=stLabel(r.status);
     html+='<div class="card'+(r.status==="취소"?' cxcard':(isPastVisit(r)?' pastcard':(r.status==="구매확정"?' donecard':'')))+'" onclick="openForm(\''+r.id+'\')">'+
       '<div class="top">'+(r.ord?'<span class="ord">#'+escHtml(r.ord)+'</span>':'')+'<span class="nm">'+escHtml(r.name||"(이름없음)")+'</span>'+(isDupR(r)?'<span class="dupbadge">중복?</span>':"")+'<span class="pill '+stcls+'">'+stlb+'</span></div>'+
       (r.pkg?'<div class="pkg">'+escHtml(mainPkg(r))+'</div>':'')+
@@ -562,7 +565,16 @@ function fillSelects(){
   const p=$("f_pkg"); p.innerHTML=PROGRAMS.map(x=>'<option value="'+escAttr(x[0])+'">'+escHtml(dispPkg(x[0]))+(x[1]?" · "+won(x[1]):"")+'</option>').join("");
   const r=$("f_reset"); r.innerHTML='<option value="">— 선택 —</option>'+resettersFor(STATE.branch).map(x=>'<option>'+x+'</option>').join("");
 }
-function setStatus(st){ STATE.status=st; document.querySelectorAll("#statusSeg .seg").forEach(s=>s.classList.toggle("on", s.dataset.st===st)); }
+let confirmAuthed=false;
+function setStatus(st){
+  if(st==="구매확정" && STATE.status!=="구매확정" && !confirmAuthed){
+    const p=prompt("🔒 구매확정은 관리자만 가능해요\n비밀번호를 입력하세요");
+    if(p===null) return;
+    if(p!=="9092"){ alert("비밀번호가 달라요."); return; }
+    confirmAuthed=true;
+  }
+  STATE.status=st; document.querySelectorAll("#statusSeg .seg").forEach(s=>s.classList.toggle("on", s.dataset.st===st));
+}
 document.querySelectorAll("#statusSeg .seg").forEach(s=>s.onclick=()=>setStatus(s.dataset.st));
 function openForm(id){
   fillSelects();
