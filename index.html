@@ -303,7 +303,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v236 (2026-09-07)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v238 (2026-09-07)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -2007,7 +2007,7 @@ function baRenderOverlay(){
       +'<select id="baOvSelB" onchange="baOvAlign()" style="flex:1;padding:6px;border-radius:8px;border:1px solid #3a3f4c;background:#1b1e26;color:#fff;font-size:12px;font-weight:700"></select>'
       +'<select id="baOvSelA" onchange="baOvAlign()" style="flex:1;padding:6px;border-radius:8px;border:1px solid #3a3f4c;background:#1b1e26;color:#fff;font-size:12px;font-weight:700"></select>'
     +'</div>'
-    +'<div id="baOvFrame" style="width:'+FW+'px;height:'+FH+'px;margin:0 auto;position:relative;overflow:hidden;border-radius:12px;background:#000;touch-action:none">'
+    +'<div id="baOvFrame" style="width:'+FW+'px;height:'+FH+'px;margin:0 auto;position:relative;overflow:hidden;border-radius:12px;background:#fff;touch-action:none">'
       +'<div id="baOvPan" style="position:absolute;left:0;top:0;width:100%;height:100%;transform-origin:center;will-change:transform">'
         +'<img id="baOvB" draggable="false" style="position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;-webkit-touch-callout:none;-webkit-user-drag:none;user-select:none;pointer-events:none">'
         +'<img id="baOvA" draggable="false" style="position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;opacity:'+_baOv.op+';transform-origin:center;-webkit-touch-callout:none;-webkit-user-drag:none;user-select:none;pointer-events:none">'
@@ -2075,7 +2075,7 @@ function baOvWireDrag(){
 }
 function _baAlignedURL(img,lm,FW,FH){
   var cv=document.createElement('canvas'); cv.width=FW; cv.height=FH; var c=cv.getContext('2d');
-  c.fillStyle='#000'; c.fillRect(0,0,FW,FH); c.imageSmoothingEnabled=true; c.imageSmoothingQuality='high';
+  c.fillStyle='#fff'; c.fillRect(0,0,FW,FH); c.imageSmoothingEnabled=true; c.imageSmoothingQuality='high';
   if(lm){
     var targetIPD=FW*0.30, s=targetIPD/(lm.ipd||1);
     var anchor=(_baOv.ref==='nose')?lm.nose:lm.mid;
@@ -2133,7 +2133,7 @@ function baOvSave(){
   function draw(){
     c.save();
     var r=16; c.beginPath();c.moveTo(fx+r,fy);c.arcTo(fx+fw,fy,fx+fw,fy+fh,r);c.arcTo(fx+fw,fy+fh,fx,fy+fh,r);c.arcTo(fx,fy+fh,fx,fy,r);c.arcTo(fx,fy,fx+fw,fy,r);c.closePath();c.clip();
-    c.fillStyle='#000'; c.fillRect(fx,fy,fw,fh);
+    c.fillStyle='#fff'; c.fillRect(fx,fy,fw,fh);
     c.translate(fx+fw/2+(_baOv.gx||0), fy+fh/2+(_baOv.gy||0)); c.scale(_baOv.z||1,_baOv.z||1);
     c.drawImage(bImg,-fw/2,-fh/2,fw,fh);
     c.save(); c.globalAlpha=_baOv.op;
@@ -2153,14 +2153,17 @@ function baOvVideo(){
   var fw=_baOv.W, fh=_baOv.H; if(!_baOv.bUrl||!_baOv.aUrl){ try{toast('정렬 중이에요 · 잠시 후 다시');}catch(e){} return; }
   var SS=2, W=Math.round(fw*SS), Hh=Math.round(fh*SS);
   var cv=document.createElement('canvas'); cv.width=W; cv.height=Hh; var c=cv.getContext('2d');
-  var bImg=new Image(), aImg=new Image(), ready=0, DUR=5000;
-  function opAt(el){ if(el<900)return 0; if(el<2400)return (el-900)/1500; if(el<3400)return 1; if(el<4900)return 1-(el-3400)/1500; return 0; }
+  var bImg=new Image(), aImg=new Image(), ready=0;
+  var HOLD=1800, FADE=900, CYCLE=2*(HOLD+FADE), CYCLES=3, DUR=CYCLE*CYCLES;
+  function opAt(el){ var t=el%CYCLE; if(t<HOLD)return 0; if(t<HOLD+FADE)return (t-HOLD)/FADE; if(t<HOLD+FADE+HOLD)return 1; return 1-(t-(HOLD+FADE+HOLD))/FADE; }
   function start(){
     if(!window.MediaRecorder||!cv.captureStream){ try{toast('이 브라우저는 영상 저장을 지원하지 않아요 · 이미지로 저장해주세요');}catch(e){} return; }
     var stream; try{ stream=cv.captureStream(30); }catch(e){ try{toast('영상 캡처 미지원');}catch(_){} return; }
-    var mime=(window.MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported('video/mp4'))?'video/mp4':((window.MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported('video/webm;codecs=vp9'))?'video/webm;codecs=vp9':'video/webm');
+    var cand=['video/mp4;codecs=avc1','video/mp4','video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'], mime='';
+    try{ for(var mi=0;mi<cand.length;mi++){ if(window.MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(cand[mi])){ mime=cand[mi]; break; } } }catch(e){}
     var rec, chunks=[];
-    try{ rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:8000000}); }catch(e){ try{ rec=new MediaRecorder(stream); mime=rec.mimeType||'video/webm'; }catch(e2){ try{toast('영상 녹화를 시작할 수 없어요');}catch(_){} return; } }
+    try{ rec = mime ? new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:8000000}) : new MediaRecorder(stream); }catch(e){ try{ rec=new MediaRecorder(stream); }catch(e2){ try{toast('이 브라우저는 영상 녹화를 지원하지 않아요 · 이미지로 저장해주세요');}catch(_){} return; } }
+    mime=rec.mimeType||mime||'video/webm';
     rec.ondataavailable=function(e){ if(e.data&&e.data.size)chunks.push(e.data); };
     rec.onstop=function(){
       var ext=(mime.indexOf('mp4')>=0)?'mp4':'webm';
@@ -2172,11 +2175,11 @@ function baOvVideo(){
         navigator.share({files:[file],title:'SONEED 전/후 영상'}).then(function(){ try{toast('영상 저장 · 공유 시트에서 “비디오 저장”을 누르세요');}catch(e){} }).catch(function(er){ if(!er||er.name!=='AbortError'){ _dl(blob,name); try{toast('영상 다운로드됨 ('+ext.toUpperCase()+')');}catch(e){} } });
       } else { _dl(blob,name); try{toast('영상 다운로드됨 ('+ext.toUpperCase()+')');}catch(e){} }
     };
-    var t0=null; try{ rec.start(); }catch(e){ try{toast('녹화 시작 실패');}catch(_){} return; }
-    try{toast('전/후 영상 만드는 중… 약 5초');}catch(e){}
+    var t0=null; try{ rec.start(200); }catch(e){ try{ rec.start(); }catch(e2){ try{toast('녹화 시작 실패 · 이미지로 저장해주세요');}catch(_){} return; } }
+    try{toast('전/후 영상 만드는 중… 약 16초 · 비포↔에프터 3회 (완료까지 화면 유지)');}catch(e){}
     function frame(ts){
       if(t0==null)t0=ts; var el=ts-t0, op=opAt(el);
-      c.setTransform(1,0,0,1,0,0); c.fillStyle='#000'; c.fillRect(0,0,W,Hh);
+      c.setTransform(1,0,0,1,0,0); c.fillStyle='#fff'; c.fillRect(0,0,W,Hh);
       c.save();
       c.translate(W/2+(_baOv.gx||0)*SS, Hh/2+(_baOv.gy||0)*SS); c.scale(_baOv.z||1,_baOv.z||1);
       c.drawImage(bImg,-W/2,-Hh/2,W,Hh);
