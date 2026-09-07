@@ -303,7 +303,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v232 (2026-09-07)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v233 (2026-09-07)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -2077,7 +2077,12 @@ function _baAlignedURL(img,lm,FW,FH){
     c.translate(FW/2,ty); c.rotate(-(lm.ang||0)); c.scale(s,s); c.translate(-anchor.x,-anchor.y);
     c.drawImage(img,0,0,lm.W,lm.H);
   } else {
-    fpDrawCover(c,img,0,0,FW,FH);
+    /* 얼굴 미인식 → 중앙 커버, 전체 크기(여백) 반영 */
+    var scv=_baOv.scale||1, iw=img.naturalWidth||img.width||1, ih=img.naturalHeight||img.height||1;
+    var ir=iw/ih, rr=FW/FH, dw, dh;
+    if(ir>rr){ dh=FH; dw=dh*ir; } else { dw=FW; dh=dw/ir; }
+    dw*=scv; dh*=scv;
+    c.drawImage(img,(FW-dw)/2,(FH-dh)/2,dw,dh);
   }
   return cv.toDataURL('image/jpeg',0.9);
 }
