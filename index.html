@@ -303,7 +303,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v238 (2026-09-07)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v239 (2026-09-07)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -1665,7 +1665,7 @@ function baTileHTML(which,label){
       +'<div class="ba-guide" style="position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;display:'+(_baSideGuide?'block':'none')+'">'+_baGuideSVG(BA_FW,BA_FH)+'</div>'
     +'</div>'
     +'<input type="range" min="1" max="3.2" step="0.02" value="1" oninput="baZoom(\''+which+'\',this.value)" style="width:'+BA_FW+'px;margin-top:8px">'
-    +'<div style="display:flex;align-items:center;gap:6px;width:'+BA_FW+'px;margin-top:5px"><span style="font-size:11px;color:#9aa2b1">회전</span><input type="range" min="-12" max="12" step="0.2" value="0" oninput="baRot(\''+which+'\',this.value)" style="flex:1"></div>'
+    +'<div style="display:flex;align-items:center;gap:6px;width:'+BA_FW+'px;margin-top:5px"><span style="font-size:11px;color:#9aa2b1">회전</span><input type="range" min="-5" max="5" step="0.1" value="0" oninput="baRot(\''+which+'\',this.value)" style="flex:1"><span id="baRotV_'+which+'" style="font-size:11px;color:#9aa2b1;min-width:42px;text-align:right">0°</span></div>'
   +'</div>';
 }
 function baModal(){
@@ -1873,6 +1873,7 @@ function baInit(w){ var st=_baState[w]; if(!st)return; st.base=Math.max(BA_FW/st
   var sls=fr?fr.parentNode.querySelectorAll('input[type=range]'):null, sl=sls&&sls[0], rl=sls&&sls[1];
   if(sv){ st.zoom=sv.zoom; st.tx=sv.tx; st.ty=sv.ty; st.rot=sv.rot||0; baClamp(w); st.el.style.transform=baTf(st); if(sl)sl.value=st.zoom; if(rl)rl.value=st.rot; }
   else { st.zoom=1; st.rot=0; baApply(w,true); if(sl)sl.value=1; if(rl)rl.value=0; }
+  var dv=document.getElementById('baRotV_'+w); if(dv)dv.textContent=((st.rot||0)>0?'+':'')+(st.rot||0).toFixed(1)+'\u00b0';
 }
 function baClamp(w){ var st=_baState[w]; if(st.rot){return;} var S=st.base*st.zoom; st.tx=Math.min(0,Math.max(BA_FW-st.iw*S,st.tx)); st.ty=Math.min(0,Math.max(BA_FH-st.ih*S,st.ty)); }
 function baApply(w,center){ var st=_baState[w]; if(!st)return; var S=st.base*st.zoom; if(center){st.tx=(BA_FW-st.iw*S)/2;st.ty=(BA_FH-st.ih*S)/2;} baClamp(w); st.el.style.transform=baTf(st); }
@@ -1885,7 +1886,7 @@ function baWire(w){ var fr=document.querySelector('.ba-frame[data-w="'+w+'"]'); 
 }
 function baReset(){ ['before','after'].forEach(function(w){var st=_baState[w];if(st&&st.src)delete _baEdits[st.src];}); baInit('before'); baInit('after'); }
 function baTf(st){ return 'translate('+st.tx+'px,'+st.ty+'px) scale('+(st.base*st.zoom)+') rotate('+(st.rot||0)+'deg)'; }
-function baRot(w,val){ var st=_baState[w]; if(!st)return; st.rot=parseFloat(val)||0; st.el.style.transform=baTf(st); _saveEdit(w); }
+function baRot(w,val){ var st=_baState[w]; if(!st)return; st.rot=parseFloat(val)||0; st.el.style.transform=baTf(st); var d=document.getElementById('baRotV_'+w); if(d)d.textContent=(st.rot>0?'+':'')+st.rot.toFixed(1)+'\u00b0'; _saveEdit(w); }
 function _dataURLtoFile(url,name){var arr=url.split(','),m=(arr[0].match(/:(.*?);/)||[])[1]||'image/jpeg',bin=atob(arr[1]),n=bin.length,u8=new Uint8Array(n);while(n--)u8[n]=bin.charCodeAt(n);return new File([u8],name,{type:m});}
 function camSaveAllShots(){   /* 이번 촬영에서 찍은 모든 컷을 폰 앨범에 저장(앱엔 3장만 담음) */
   var all=[];
