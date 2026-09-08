@@ -303,7 +303,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v239 (2026-09-07)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v240 (2026-09-09)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -1978,7 +1978,7 @@ function baRenderSide(){
   b.innerHTML='<div style="color:#9aa2b1;font-size:12px;margin-bottom:12px;text-align:center">사진을 <b style="color:#fff">드래그</b>해 위치 이동 · <b style="color:#fff">슬라이더</b>로 확대/축소</div>'
     +'<div style="display:flex;gap:10px;flex-wrap:nowrap;justify-content:center">'+baTileHTML('before','BEFORE')+baTileHTML('after','AFTER')+'</div>'
     +'<div style="text-align:center;margin-top:10px"><button onclick="baToggleSideGuide()" id="baSideGuideBtn" class="btn ghost" style="padding:7px 14px;font-size:12px">레벨 가이드선 '+(_baSideGuide?'끄기':'켜기')+'</button></div>'
-    +'<div style="display:flex;gap:8px;margin-top:14px;justify-content:center">'
+    +'<div style="display:flex;gap:8px;margin-top:14px;justify-content:center;position:sticky;bottom:0;background:rgba(15,17,25,.96);padding:11px 6px 5px;border-radius:10px;z-index:3">'
       +'<button class="btn ghost" onclick="baModal().style.display=\'none\'" style="min-width:70px">취소</button>'
       +'<button class="btn ghost" onclick="baReset()" style="min-width:70px">초기화</button>'
       +'<button class="btn primary" onclick="baSave()" style="min-width:120px">저장하기</button>'
@@ -2031,7 +2031,7 @@ function baRenderOverlay(){
       +'<div style="display:flex;align-items:center;gap:7px;margin-bottom:3px"><span style="font-size:11px;color:#777;width:30px">좌우</span><input id="baNx" type="range" min="-40" max="40" step="1" value="'+_baOv.nx+'" oninput="baOvNudge(\'nx\',this.value)" style="flex:1"></div>'
       +'<div style="display:flex;align-items:center;gap:7px"><span style="font-size:11px;color:#777;width:30px">상하</span><input id="baNy" type="range" min="-40" max="40" step="1" value="'+_baOv.ny+'" oninput="baOvNudge(\'ny\',this.value)" style="flex:1"></div>'
     +'</div>'
-    +'<div style="display:flex;gap:8px;margin-top:14px;justify-content:center;flex-wrap:wrap">'
+    +'<div style="display:flex;gap:8px;margin-top:14px;justify-content:center;flex-wrap:wrap;position:sticky;bottom:0;background:rgba(15,17,25,.96);padding:11px 6px 5px;border-radius:10px;z-index:3">'
       +'<button class="btn ghost" onclick="baModal().style.display=\'none\'" style="min-width:62px">취소</button>'
       +'<button class="btn primary" onclick="baOvSave()" style="min-width:100px">이미지 저장</button>'
       +'<button class="btn" onclick="baOvVideo()" style="min-width:100px;background:#5a3fb0;color:#fff;font-weight:800">영상 저장</button>'
@@ -2153,7 +2153,7 @@ function _dl(blob,name){ try{ var u=URL.createObjectURL(blob); var a=document.cr
 function baOvVideo(){
   var fw=_baOv.W, fh=_baOv.H; if(!_baOv.bUrl||!_baOv.aUrl){ try{toast('정렬 중이에요 · 잠시 후 다시');}catch(e){} return; }
   var SS=2, W=Math.round(fw*SS), Hh=Math.round(fh*SS);
-  var cv=document.createElement('canvas'); cv.width=W; cv.height=Hh; var c=cv.getContext('2d');
+  var cv=document.createElement('canvas'); cv.width=W; cv.height=Hh; cv.style.cssText='position:fixed;left:0;bottom:0;width:2px;height:2px;opacity:.01;pointer-events:none;z-index:0'; var c=cv.getContext('2d');
   var bImg=new Image(), aImg=new Image(), ready=0;
   var HOLD=1800, FADE=900, CYCLE=2*(HOLD+FADE), CYCLES=3, DUR=CYCLE*CYCLES;
   function opAt(el){ var t=el%CYCLE; if(t<HOLD)return 0; if(t<HOLD+FADE)return (t-HOLD)/FADE; if(t<HOLD+FADE+HOLD)return 1; return 1-(t-(HOLD+FADE+HOLD))/FADE; }
@@ -2167,8 +2167,10 @@ function baOvVideo(){
     mime=rec.mimeType||mime||'video/webm';
     rec.ondataavailable=function(e){ if(e.data&&e.data.size)chunks.push(e.data); };
     rec.onstop=function(){
+      if(cv.parentNode)cv.parentNode.removeChild(cv);
       var ext=(mime.indexOf('mp4')>=0)?'mp4':'webm';
       var blob=new Blob(chunks,{type:mime});
+      if(!blob.size){ try{toast('영상이 비어서 저장 실패 — 이 브라우저(사파리 등)에서 겹쳐보기 영상이 안 될 수 있어요. 크롬으로 열거나 이미지로 저장해주세요');}catch(e){} return; }
       var nm=((_baState.meta||{}).code||todayStr()||'soneed');
       var name='soneed_전후영상_'+nm+'.'+ext;
       var file=null; try{ file=new File([blob],name,{type:mime}); }catch(e){}
@@ -2176,7 +2178,8 @@ function baOvVideo(){
         navigator.share({files:[file],title:'SONEED 전/후 영상'}).then(function(){ try{toast('영상 저장 · 공유 시트에서 “비디오 저장”을 누르세요');}catch(e){} }).catch(function(er){ if(!er||er.name!=='AbortError'){ _dl(blob,name); try{toast('영상 다운로드됨 ('+ext.toUpperCase()+')');}catch(e){} } });
       } else { _dl(blob,name); try{toast('영상 다운로드됨 ('+ext.toUpperCase()+')');}catch(e){} }
     };
-    var t0=null; try{ rec.start(200); }catch(e){ try{ rec.start(); }catch(e2){ try{toast('녹화 시작 실패 · 이미지로 저장해주세요');}catch(_){} return; } }
+    try{ document.body.appendChild(cv); }catch(e){}
+    var t0=null; try{ rec.start(200); }catch(e){ try{ rec.start(); }catch(e2){ if(cv.parentNode)cv.parentNode.removeChild(cv); try{toast('녹화 시작 실패 · 이미지로 저장해주세요');}catch(_){} return; } }
     try{toast('전/후 영상 만드는 중… 약 16초 · 비포↔에프터 3회 (완료까지 화면 유지)');}catch(e){}
     function frame(ts){
       if(t0==null)t0=ts; var el=ts-t0, op=opAt(el);
