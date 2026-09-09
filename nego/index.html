@@ -299,6 +299,9 @@ function paySessions(pkg, branch){ return pkgSess(pkg); }
 // 추가가입 합산: 기본상품 + addons
 function recTotal(r){ return (+r.paid||0) + ((r.addons||[]).reduce(function(s,a){ return s+(+a.paid||0); },0)); }
 function recSessions(r,b){ return (paySessions(r.pkg,b)||0) + ((r.addons||[]).reduce(function(s,a){ return s+(paySessions(a.pkg,b)||0); },0)); }
+// 스마트윤곽 업그레이드 보너스: 15+2회는 +2회분을 스마트윤곽으로 업그레이드 → 급여 총 2만원 추가
+const SMART_BONUS={"페이스리세팅 15+2회":20000};
+function recBonus(r){ let bo=SMART_BONUS[r.pkg]||0; (r.addons||[]).forEach(function(a){ bo+=SMART_BONUS[a.pkg]||0; }); return bo; }
 function pkgOptHtml(sel){ return PROGRAMS.map(function(x){ return '<option value="'+escAttr(x[0])+'"'+(x[0]===sel?' selected':'')+'>'+escHtml(dispPkg(x[0]))+(x[1]?" · "+won(x[1]):"")+'</option>'; }).join(""); }
 // 상태 표시 라벨 (내부값 "구매확정" → 화면엔 "네이버내 구매확정됨")
 function stLabel(st){ return st==="구매확정" ? "네이버내 구매확정됨" : (st||"예정"); }
@@ -327,9 +330,9 @@ function openPayroll(){
   const base=afterMkt-minish;                               // 부가세 포함가(남은 금액)
   const vat=Math.round(base/11);                            // 부가세(남은금액÷11)
   const npay=Math.round(totRev*FEE_RATE);                   // 네이버페이 수수료(총액 기준)
-  const by={}; rows.forEach(function(r){ const nm=r.reset||"⚠ 담당 미배정"; const s=recSessions(r,b)||0; (by[nm]=by[nm]||{cnt:0,sess:0}); by[nm].cnt++; by[nm].sess+=s; });
+  const by={}; rows.forEach(function(r){ const nm=r.reset||"⚠ 담당 미배정"; const s=recSessions(r,b)||0; const bo=recBonus(r); (by[nm]=by[nm]||{cnt:0,sess:0,bonus:0}); by[nm].cnt++; by[nm].sess+=s; by[nm].bonus+=bo; });
   const names=Object.keys(by).sort((a,c)=>by[c].sess-by[a].sess);
-  let payTot=0; names.forEach(function(nm){ payTot+=by[nm].sess*PAY_PER; });
+  let payTot=0; names.forEach(function(nm){ payTot+=by[nm].sess*PAY_PER+(by[nm].bonus||0); });
   const profit=base-vat-npay-payTot;                        // 순수익
   let html='<div class="sumrow" style="margin-bottom:10px"><div class="metric a"><div class="k">결제 총액</div><div class="v tnum">'+won(totRev)+'</div></div></div>';
   html+='<table class="tt"><tbody>'+
@@ -344,9 +347,9 @@ function openPayroll(){
   if(!names.length){ html+='<div class="empty">예약이 없어요.</div>'; }
   else{
     html+='<table class="tt"><thead><tr><th style="text-align:left">관리사</th><th>담당</th><th>총 회차</th><th>급여</th></tr></thead><tbody>';
-    names.forEach(function(nm){ const o=by[nm]; const pay=o.sess*PAY_PER; html+='<tr><td style="text-align:left;font-weight:800">'+escHtml(nm)+'</td><td class="tnum">'+o.cnt+'건</td><td class="tnum">'+o.sess+'회</td><td class="tnum" style="font-weight:800">'+won(pay)+'</td></tr>'; });
+    names.forEach(function(nm){ const o=by[nm]; const pay=o.sess*PAY_PER+(o.bonus||0); html+='<tr><td style="text-align:left;font-weight:800">'+escHtml(nm)+'</td><td class="tnum">'+o.cnt+'건</td><td class="tnum">'+o.sess+'회'+(o.bonus?'<span style="color:var(--accent-2)"> +스마트</span>':'')+'</td><td class="tnum" style="font-weight:800">'+won(pay)+'</td></tr>'; });
     html+='</tbody></table>';
-    html+='<div class="note-inline" style="margin-top:8px">※ 취소 건 제외 · '+(isApg?'미니쉬 40%는 압구정만 · ':'')+'부가세는 남은금액(부가세포함가)÷11 · 네이버페이 수수료는 총액 기준.</div>';
+    html+='<div class="note-inline" style="margin-top:8px">※ 취소 건 제외 · 급여=회차×6만 · 15+2회는 스마트윤곽 업그레이드로 +2만원 · '+(isApg?'미니쉬 40%는 압구정만 · ':'')+'부가세는 남은금액(부가세포함가)÷11 · 네이버페이 수수료는 총액 기준.</div>';
   }
   $("payBody").innerHTML=html; $("payModal").classList.add("on");
 }
