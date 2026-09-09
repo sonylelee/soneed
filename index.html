@@ -303,7 +303,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v240 (2026-09-09)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v241 (2026-09-09)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -2018,7 +2018,7 @@ function baRenderOverlay(){
     +'</div>'
     +'<div style="display:flex;align-items:center;gap:8px;margin-top:12px;width:100%;max-width:'+FW+'px"><span style="font-size:11.5px;color:#9aa2b1;font-weight:700;width:34px">비포</span><input type="range" min="0" max="1" step="0.02" value="'+_baOv.op+'" oninput="baOvOpacity(this.value)" style="flex:1"><span style="font-size:11.5px;color:#ff7ab8;font-weight:800;width:38px;text-align:right">에프터</span></div>'
     +'<div style="color:#7d8494;font-size:11px;text-align:center;margin-top:2px"><b style="color:#9aa2b1">드래그</b>로 위치(자르기) · <b style="color:#9aa2b1">전체 크기</b>로 확대·여백 · 에프터는 아래로 미세조정</div>'
-    +'<div style="display:flex;align-items:center;gap:7px;margin-top:8px;width:100%;max-width:'+FW+'px"><span style="font-size:11px;color:#9aa2b1;font-weight:700;width:64px">전체 크기</span><input id="baOvScale" type="range" min="0.5" max="2.6" step="0.01" value="'+(_baOv.z||1)+'" oninput="baOvZoom(this.value)" style="flex:1"><span style="font-size:10px;color:#777;width:42px;text-align:right">확대·여백</span></div>'
+    +'<div style="display:flex;align-items:center;gap:7px;margin-top:8px;width:100%;max-width:'+FW+'px"><span style="font-size:11px;color:#9aa2b1;font-weight:700;width:64px">전체 크기</span><input id="baOvScale" type="range" min="0.45" max="1.6" step="0.01" value="'+(_baOv.scale||1)+'" oninput="baOvZoom(this.value)" style="flex:1"><span style="font-size:10px;color:#777;width:42px;text-align:right">확대·여백</span></div>'
     +'<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;justify-content:center">'
       +'<button onclick="baOvToggleRef()" id="baOvRefBtn" class="btn ghost" style="padding:7px 12px;font-size:12px">기준: 눈동자</button>'
       +'<button onclick="baOvToggleGuide()" id="baOvGuideBtn" class="btn ghost" style="padding:7px 12px;font-size:12px">가이드선 '+(_baOv.guide?'끄기':'켜기')+'</button>'
@@ -2044,8 +2044,8 @@ function baOvOpacity(v){ _baOv.op=parseFloat(v); var a=document.getElementById('
 function baOvApplyNudge(){ var a=document.getElementById('baOvA'); if(a)a.style.transform='translate('+_baOv.nx+'px,'+_baOv.ny+'px) rotate('+_baOv.nrot+'deg) scale('+_baOv.nz+')'; }
 function baOvNudge(k,v){ _baOv[k]=parseFloat(v)||0; baOvApplyNudge(); }
 function baOvRebake(){ if(!_baOv.bImg||!_baOv.aImg)return; _baOv.bUrl=_baAlignedURL(_baOv.bImg,_baOv.bl,_baOv.W,_baOv.H); _baOv.aUrl=_baAlignedURL(_baOv.aImg,_baOv.al,_baOv.W,_baOv.H); var be=document.getElementById('baOvB'),ae=document.getElementById('baOvA'); if(be)be.src=_baOv.bUrl; if(ae)ae.src=_baOv.aUrl; }
-function baOvApplyView(){ var p=document.getElementById('baOvPan'); if(p)p.style.transform='translate('+(_baOv.gx||0)+'px,'+(_baOv.gy||0)+'px) scale('+(_baOv.z||1)+')'; }
-function baOvZoom(v){ _baOv.z=parseFloat(v)||1; baOvApplyView(); }
+function baOvApplyView(){ var p=document.getElementById('baOvPan'); if(p)p.style.transform='translate('+(_baOv.gx||0)+'px,'+(_baOv.gy||0)+'px)'; }
+function baOvZoom(v){ _baOv.scale=parseFloat(v)||1; baOvRebake(); }
 function baOvToggleGuide(){ _baOv.guide=!_baOv.guide; var g=document.getElementById('baOvGuide'); if(g)g.style.display=_baOv.guide?'block':'none'; var btn=document.getElementById('baOvGuideBtn'); if(btn)btn.textContent='가이드선 '+(_baOv.guide?'끄기':'켜기'); }
 function baOvToggleRef(){ _baOv.ref=(_baOv.ref==='eye')?'nose':'eye'; var btn=document.getElementById('baOvRefBtn'); if(btn)btn.textContent='기준: '+(_baOv.ref==='eye'?'눈동자':'코'); baOvAlign(); }
 async function _baLandmarks(src){
@@ -2078,7 +2078,7 @@ function _baAlignedURL(img,lm,FW,FH){
   var cv=document.createElement('canvas'); cv.width=FW; cv.height=FH; var c=cv.getContext('2d');
   c.fillStyle='#fff'; c.fillRect(0,0,FW,FH); c.imageSmoothingEnabled=true; c.imageSmoothingQuality='high';
   if(lm){
-    var targetIPD=FW*0.30, s=targetIPD/(lm.ipd||1);
+    var targetIPD=FW*0.30*(_baOv.scale||1), s=targetIPD/(lm.ipd||1);
     var anchor=(_baOv.ref==='nose')?lm.nose:lm.mid;
     var ty=(_baOv.ref==='nose')?FH*0.54:FH*0.42;
     c.translate(FW/2,ty); c.rotate(-(lm.ang||0)); c.scale(s,s); c.translate(-anchor.x,-anchor.y);
@@ -2135,7 +2135,7 @@ function baOvSave(){
     c.save();
     var r=16; c.beginPath();c.moveTo(fx+r,fy);c.arcTo(fx+fw,fy,fx+fw,fy+fh,r);c.arcTo(fx+fw,fy+fh,fx,fy+fh,r);c.arcTo(fx,fy+fh,fx,fy,r);c.arcTo(fx,fy,fx+fw,fy,r);c.closePath();c.clip();
     c.fillStyle='#fff'; c.fillRect(fx,fy,fw,fh);
-    c.translate(fx+fw/2+(_baOv.gx||0), fy+fh/2+(_baOv.gy||0)); c.scale(_baOv.z||1,_baOv.z||1);
+    c.translate(fx+fw/2+(_baOv.gx||0), fy+fh/2+(_baOv.gy||0));
     c.drawImage(bImg,-fw/2,-fh/2,fw,fh);
     c.save(); c.globalAlpha=_baOv.op;
     c.translate((_baOv.nx||0),(_baOv.ny||0)); c.rotate((_baOv.nrot||0)*Math.PI/180); c.scale(_baOv.nz||1,_baOv.nz||1);
@@ -2185,7 +2185,7 @@ function baOvVideo(){
       if(t0==null)t0=ts; var el=ts-t0, op=opAt(el);
       c.setTransform(1,0,0,1,0,0); c.fillStyle='#fff'; c.fillRect(0,0,W,Hh);
       c.save();
-      c.translate(W/2+(_baOv.gx||0)*SS, Hh/2+(_baOv.gy||0)*SS); c.scale(_baOv.z||1,_baOv.z||1);
+      c.translate(W/2+(_baOv.gx||0)*SS, Hh/2+(_baOv.gy||0)*SS);
       c.drawImage(bImg,-W/2,-Hh/2,W,Hh);
       c.save(); c.globalAlpha=op;
       c.translate((_baOv.nx||0)*SS,(_baOv.ny||0)*SS); c.rotate((_baOv.nrot||0)*Math.PI/180); c.scale(_baOv.nz||1,_baOv.nz||1);
