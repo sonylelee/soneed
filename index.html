@@ -304,7 +304,7 @@ h2.section,.logo{letter-spacing:-.01em}
 
 <header class="top"><div class="wrap">
   <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v242 (2026-09-11)</span></div>
-  <div class="tabs"><button id="tabConsult" onclick="showView('consult')">첫관리 상담</button><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
+  <div class="tabs"><button id="tabConsult" onclick="openConsultFull()">첫관리 상담</button><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
   <span class="count-pill">기록 <b id="totalCount">0</b></span>
@@ -312,9 +312,6 @@ h2.section,.logo{letter-spacing:-.01em}
 
 <main class="wrap">
   <div id="storeBanner" class="banner warn"></div>
-  <section id="view-consult" style="display:none">
-    <iframe id="consultFrame" allow="camera;microphone" style="width:100%;border:0;height:calc(100dvh - 120px);min-height:560px;display:block;border-radius:12px;background:#141018"></iframe>
-  </section>
   <section id="view-entry">
     <div class="toolbar">
       <div class="grow subtle" id="editState">새 기록을 작성합니다.</div>
@@ -3279,16 +3276,26 @@ function saveConsent(){
   else { toast('동의서 저장됨'); }
 }
 /* ★ 셀프 상담(얼굴 분석) 오버레이 — selfcapture.html을 열고, 동의 완료 신호를 받으면 차트 동의완료 처리 */
-function openSelfConsult(){
+function openConsultFull(){
+  try{ clearForm(); }catch(_){}   /* 새 고객 상담 시작 — 빈 기록으로 */
+  window._consultActive=true;
   var o=document.getElementById('selfConsultOv');
   if(!o){ o=document.createElement('div'); o.id='selfConsultOv'; o.style.cssText='position:fixed;inset:0;z-index:100070;background:#141215;display:flex;flex-direction:column';
-    o.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #2b2830;color:#efe9e2;flex:0 0 auto"><b>얼굴형 니즈분석</b><button onclick="var o=document.getElementById(\'selfConsultOv\');o.style.display=\'none\';var f=document.getElementById(\'selfConsultFrame\');if(f)f.src=\'about:blank\';" style="background:transparent;border:1px solid #2b2830;color:#efe9e2;border-radius:8px;padding:7px 12px;cursor:pointer">닫기 ✕</button></div><iframe id="selfConsultFrame" allow="camera;microphone" style="flex:1;width:100%;border:0"></iframe>';
+    o.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #2b2830;color:#efe9e2;flex:0 0 auto"><b>첫관리 상담 · 얼굴형 니즈분석</b><button onclick="closeConsultFull()" style="background:#C4185C;border:0;color:#fff;border-radius:8px;padding:9px 16px;cursor:pointer;font-weight:800;font-size:14px">닫기 ✕</button></div><iframe id="selfConsultFrame" allow="camera;microphone" style="flex:1;width:100%;border:0"></iframe>';
     document.body.appendChild(o);
   }
   o.style.display='flex';
   document.getElementById('selfConsultFrame').src='selfcapture.html?ts='+Date.now();
 }
-window.addEventListener('message',function(e){ try{ var d=e&&e.data; if(d&&d.soneedConsent){ var c=d.soneedConsent; form.consent={agreed:true,at:c.at||new Date().toISOString(),items:c.items||{},name:(c.name||(form&&form.name)||''),ver:c.ver||'v2',via:'self'}; try{renderConsentBadge();}catch(_){} try{ if(typeof saveRecord==='function') saveRecord(); }catch(_){} try{toast('✓ 얼굴형 니즈분석에서 동의 완료 — 차트에 반영됐어요');}catch(_){} } if(d&&d.soneedFcode){ window._selfFcode=d.soneedFcode; try{toast('상담 페이셜 코드 수신: '+(d.soneedFcode.code||''));}catch(_){} } if(d&&d.soneedNeeds){ try{ form.face_needs=d.soneedNeeds; renderSelfNeeds(); if(typeof saveRecord==='function') saveRecord(); toast('셀프 니즈 저장됨 — 차트에 반영'); }catch(_){} } }catch(_){} });
+window.openSelfConsult=openConsultFull;   /* 구버전 호출 호환 */
+function closeConsultFull(){
+  var o=document.getElementById('selfConsultOv'); if(o)o.style.display='none';
+  var f=document.getElementById('selfConsultFrame'); if(f)f.src='about:blank';
+  window._consultActive=false;
+  try{ showView('data'); }catch(_){}   /* 닫으면 고객 리포트로 이동해 저장 결과 확인 */
+  try{ if(typeof loadAll==='function'&&mode==='cloud') loadAll(); else if(typeof renderRecList==='function') renderRecList(); }catch(_){}
+}
+window.addEventListener('message',function(e){ try{ var d=e&&e.data; if(d&&d.soneedConsent){ var c=d.soneedConsent; form.consent={agreed:true,at:c.at||new Date().toISOString(),items:c.items||{},name:(c.name||(form&&form.code)||''),ver:c.ver||'v2',via:'self'}; if(c.name&&!form.code){ form.code=c.name; var _ci=document.getElementById('f_code'); if(_ci)_ci.value=c.name; } try{renderConsentBadge();}catch(_){} try{ if(typeof saveRecord==='function') saveRecord(); }catch(_){} try{toast('✓ 얼굴형 니즈분석에서 동의 완료 — 차트에 반영됐어요');}catch(_){} } if(d&&d.soneedFcode){ window._selfFcode=d.soneedFcode; try{toast('상담 페이셜 코드 수신: '+(d.soneedFcode.code||''));}catch(_){} } if(d&&d.soneedNeeds){ try{ form.face_needs=d.soneedNeeds; renderSelfNeeds(); if(typeof saveRecord==='function') saveRecord(); toast('셀프 니즈 저장됨 — 차트에 반영'); }catch(_){} } }catch(_){} });
 function renderSelfNeeds(){ var el=document.getElementById('selfNeedsCard'); if(!el) return; var n=form&&form.face_needs; if(n&&n.summary){ el.style.display='block'; el.innerHTML='<div class="card pad" style="border:1px solid #7c3aed"><div style="font-weight:800;color:#7c3aed;margin-bottom:4px">🧑‍💼 셀프 니즈 분석 <span style="font-weight:600;color:#999;font-size:11px">'+(n.at?String(n.at).slice(0,10):'')+'</span></div><div style="font-size:13px;line-height:1.6">'+n.summary+'</div></div>'; } else { el.style.display='none'; el.innerHTML=''; } }
 function renderAiConsentList(){
   var box=document.getElementById('aiConsentBox'); if(!box)return;
@@ -3347,8 +3354,6 @@ function showEntryTab(n){
 }
 function showView(v){
   if((v==='admin'||v==='academy')&&!isAdmin())v='data';   // 관리·아카데미는 대표만
-  var vcs=document.getElementById('view-consult'); if(vcs)vcs.style.display=v==='consult'?'':'none';
-  if(v==='consult'){ var cf=document.getElementById('consultFrame'); if(cf&&cf.src.indexOf('selfcapture.html')<0) cf.src='selfcapture.html?ts='+Date.now(); }
   document.getElementById('view-entry').style.display=v==='entry'?'':'none';
   if(v==='entry')setTimeout(function(){try{initEntryTabs();}catch(e){}},20);
   document.getElementById('view-data').style.display=v==='data'?'':'none';
