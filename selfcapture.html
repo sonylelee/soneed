@@ -894,7 +894,7 @@ window.goProp=function(){
   go('scProp'); renderProp(f);
 };
 let _propBase=null,_idealRef=null,_idealTried=false,_idealLm=null,_idealPromise=null;
-const _idealFallback={ys:{top:0.13,brow:0.31,sub:0.53,chin:0.68},xs:[0.26,0.34,0.44,0.56,0.66,0.72],thirds:[25,41,34],fifths:[17,22,26,22,13]};
+const _idealFallback={ys:{top:0.20,brow:0.30,sub:0.54,chin:0.72},xs:[0.285,0.347,0.437,0.562,0.653,0.715],thirds:[21,44,35],fifths:[14,21,29,21,14]};
 function propInterp(pct,ref,kind){ const d=pct-ref; if(Math.abs(d)<3) return ''; if(kind==='eye') return d>0?' · <b>큰 편</b>':' · <b>작은 편</b>'; if(kind==='len') return d>0?' · <b>긴 편</b>':' · <b>짧은 편</b>'; return d>0?' · <b>넓은 편</b>':' · <b>좁은 편</b>'; }
 async function _getFaceImgLm(){ if(_idealLm)return _idealLm; const vision=await import(V); const fs=await vision.FilesetResolver.forVisionTasks(V+'/wasm'); _idealLm=await vision.FaceLandmarker.createFromOptions(fs,{baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',delegate:'CPU'},runningMode:'IMAGE',numFaces:1,minFaceDetectionConfidence:0.3}); return _idealLm; }
 function measureIdealRatios(){ return new Promise(function(res){ const im=new Image(); im.onload=async function(){ try{ await getLandmarker(); let r=null; try{ r=landmarker.detectForVideo(im, performance.now()); }catch(e){} const p=r&&r.faceLandmarks&&r.faceLandmarks[0]; if(!p){res(null);return;} const topY=p[10].y,browY=(p[105].y+p[334].y)/2,subY=p[0].y,chinY=p[152].y,tot=(chinY-topY)||1; const thirds=[(browY-topY)/tot*100,(subY-browY)/tot*100,(chinY-subY)/tot*100]; const xs=[234,33,133,362,263,454].map(i=>p[i].x).sort((a,b)=>a-b); const span=(xs[5]-xs[0])||1; const fifths=[]; for(let i=0;i<5;i++)fifths.push((xs[i+1]-xs[i])/span*100); res({thirds,fifths,ys:{top:topY,brow:browY,sub:subY,chin:chinY},xs:xs}); }catch(e){res(null);} }; im.onerror=function(){res(null);}; im.src='ideal.jpg'; }); }
@@ -907,14 +907,13 @@ function renderProp(f){
   // 가로 5등분(이마 상단과 무관) — 한 번만
   const seg=[]; for(let i=0;i<5;i++) seg.push((idset[i+1]-idset[i])/span*100);
   const fNames=['바깥여백 오른쪽','눈폭 오른쪽','미간','눈폭 왼쪽','바깥여백 왼쪽'];
-  const FID=(_idealRef||_idealFallback).fifths;
+  const FID=_idealFallback.fifths;
   const fKind=['gap','eye','gap','eye','gap'];
   document.getElementById('propFifths').innerHTML=seg.map((p,i)=>propBar(fNames[i]+propInterp(p,FID[i],fKind[i]),p,FID[i])).join('')
-    +'<div class="sub" style="margin-top:8px"><b style="color:#fff">흰 선</b> = '+(_idealRef?'예시 얼굴 실측':'참고')+' 비율(1:1:1 아님) · <b style="color:#6bd3a8">막대</b> = 현재 나. 여백은 좁고 눈은 클수록 또렷한 인상이에요.</div>';
+    +'<div class="sub" style="margin-top:8px"><b style="color:#fff">흰 선</b> = 참고 비율(1:1:1 아님) · <b style="color:#6bd3a8">막대</b> = 현재 나. 여백은 좁고 눈은 클수록 또렷한 인상이에요.</div>';
   _an.fifths=seg;
   const sl=document.getElementById('foreheadSlider'); if(sl) sl.value=50;
   renderPropThirds();
-  if(!_idealRef&&!_idealPromise){ _idealPromise=measureIdealRatios(); _idealPromise.then(function(r){ _idealRef=r; if(_propBase) renderProp(_propBase.f); }); }
 }
 function renderPropThirds(){
   const b=_propBase; if(!b) return;
@@ -922,9 +921,9 @@ function renderPropThirds(){
   const u1=browY-topY, u2=subY-browY, u3=chinY-subY, tot=(chinY-topY)||1;
   const t=[u1/tot*100,u2/tot*100,u3/tot*100];
   const tNames=['이마 (이마상단~눈썹)','중안부 (눈썹~입술상단)','하안부 (입술상단~턱끝)'];
-  const TID=(_idealRef||_idealFallback).thirds;
+  const TID=_idealFallback.thirds;
   document.getElementById('propThirds').innerHTML=t.map((p,i)=>propBar(tNames[i]+propInterp(p,TID[i],'len'),p,TID[i])).join('')
-    +'<div class="sub" style="margin-top:8px">※ 흰 선 = '+(_idealRef?'<b>예시 얼굴 실측</b> 비율':'참고 비율')+'. <b>이마 상단(헤어라인)</b>은 위 슬라이더로 직접 맞추세요 (AI 자동값 부정확).</div>';
+    +'<div class="sub" style="margin-top:8px">※ 흰 선 = 참고 비율. <b>이마 상단(헤어라인)</b>은 위 슬라이더로 직접 맞추세요 (AI 자동값 부정확).</div>';
   _an.thirds=t;
   drawPropCanvas(b.f,{topY,browY,subY,chinY},b.idset,b.span);
   prepareRatioSim(b.f,{topY,browY,subY,chinY},b.idset);
@@ -935,7 +934,7 @@ function drawPropCanvas(f,ys,xs,span){
   const W=cv.width,H=cv.height,c=cv.getContext('2d'); c.fillStyle='#0c0b0d'; c.fillRect(0,0,W,H);
   const halfW=W/2;
   // --- 좌: 참고 비율 (실사 ideal.jpg 우선, 없으면 일러스트) ---
-  (function(){ const im=new Image(); im.onload=async function(){ if(!_idealRef){ if(!_idealPromise)_idealPromise=measureIdealRatios(); try{ _idealRef=await _idealPromise; }catch(e){} } drawIdealPhoto(c,im,0,0,halfW,H); }; im.onerror=function(){ drawIdealFace(c,0,0,halfW,H); }; im.src='ideal.jpg'; })();
+  (function(){ const im=new Image(); im.onload=function(){ drawIdealPhoto(c,im,0,0,halfW,H); }; im.onerror=function(){ drawIdealFace(c,0,0,halfW,H); }; im.src='ideal.jpg'; })();
   // --- 우: 현재 나 (얼굴 확대 크롭 + 실제 선) ---
   const img=new Image();
   img.onload=function(){
@@ -965,7 +964,7 @@ function drawIdealPhoto(c,im,bx,by,bw,bh){
   const boxW=bw*0.72, boxH=bh*0.72, dx=(bw-boxW)/2, dy=bh*0.13;
   const iw=im.naturalWidth, ih=im.naturalHeight, sc=Math.max(boxW/iw,boxH/ih), dw=iw*sc, dh=ih*sc, ox=dx+(boxW-dw)/2, oy=dy+(boxH-dh)/2;
   c.save(); c.beginPath(); c.rect(dx,dy,boxW,boxH); c.clip(); c.drawImage(im, ox, oy, dw, dh);
-  const R=_idealRef||_idealFallback;
+  const R=_idealFallback;
   if(R&&R.ys){ const Y=ny=>oy+ny*dh, X=nx=>ox+nx*dw;
     c.strokeStyle='rgba(56,182,255,.9)'; c.lineWidth=1.6; [R.ys.brow,R.ys.sub].forEach(ny=>{c.beginPath();c.moveTo(dx,Y(ny));c.lineTo(dx+boxW,Y(ny));c.stroke();});
     c.strokeStyle='rgba(56,182,255,.4)'; [R.ys.top,R.ys.chin].forEach(ny=>{c.beginPath();c.moveTo(dx,Y(ny));c.lineTo(dx+boxW,Y(ny));c.stroke();});
