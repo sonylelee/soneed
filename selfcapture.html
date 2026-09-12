@@ -1,0 +1,1335 @@
+<!doctype html><html lang="ko"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>SONEED · 얼굴형 니즈분석</title>
+<style>
+  :root{--bg:#141215;--panel:#1b191e;--line:#2b2830;--ink:#efe9e2;--mut:#9a938b;--brand:#C81D74;--brandink:#e89bc3;--ok:#6bd3a8}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,'Apple SD Gothic Neo',sans-serif;letter-spacing:-.01em;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:440px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+  .brandbar{display:flex;align-items:baseline;gap:12px;padding:18px 20px 14px;border-bottom:1px solid var(--line)}
+  .wm{font-family:Georgia,'Times New Roman',serif;font-size:19px;letter-spacing:.16em}
+  .eyebrow{font-size:10px;font-weight:600;letter-spacing:.26em;color:var(--mut);text-transform:uppercase}
+  .screen{display:none;flex:1;flex-direction:column;padding:26px 20px 30px}
+  .screen.on{display:flex;animation:fadeUp .5s cubic-bezier(.2,.7,.2,1)}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){.screen.on{animation:none}}
+  h1{font-size:27px;font-weight:800;margin:6px 0 8px;letter-spacing:-.025em;line-height:1.18}
+  .sub{color:var(--mut);font-size:13.5px;line-height:1.7}
+  .mut{color:var(--mut)}
+  .hair{height:1px;background:var(--line);margin:6px 0}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;margin-top:16px}
+  .btn{width:100%;padding:15px;border:0;border-radius:10px;font-weight:700;font-size:14.5px;letter-spacing:.02em;cursor:pointer;background:#26232a;color:#fff;transition:transform .12s ease,opacity .12s}
+  .btn:active{transform:translateY(1px)}
+  .btn.primary{background:var(--brand);color:#fff}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--mut)}
+  .btn.line{background:transparent;border:1px solid var(--brand);color:var(--brandink)}
+  .btn:disabled{opacity:.4}
+  .row{display:flex;gap:9px;margin-top:14px}
+  label.chk{display:flex;gap:11px;align-items:flex-start;padding:13px 14px;border:1px solid var(--line);border-radius:10px;margin-top:9px;cursor:pointer;font-size:13.5px;line-height:1.55}
+  label.chk input{margin-top:2px;width:18px;height:18px;accent-color:var(--brand);flex:0 0 auto}
+  input.txt{width:100%;padding:13px;border-radius:10px;border:1px solid var(--line);background:#100e12;color:#fff;font-size:15px;margin-top:6px}
+  input.txt::placeholder{color:#6b6560}
+  .stepbar{display:flex;gap:7px;margin:2px 0 6px}
+  .stepbar i{flex:1;height:2px;border-radius:2px;background:#2b2830}
+  .stepbar i.on{background:var(--brand)}
+  #camStage{position:relative;width:100%;aspect-ratio:3/4;background:#000;border-radius:14px;overflow:hidden;margin-top:14px;box-shadow:0 20px 50px -30px rgba(0,0,0,.9)}
+  #cam{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+  #camGuide{position:absolute;inset:0;pointer-events:none}
+  #camMesh{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  #camMsg{position:absolute;left:0;right:0;top:16px;text-align:center;font-weight:700;font-size:15px;color:#fff;letter-spacing:-.01em;text-shadow:0 1px 8px rgba(0,0,0,.7)}
+  #camHint{position:absolute;left:0;right:0;bottom:14px;text-align:center;font-size:11px;letter-spacing:.04em;color:#d6d2cb;text-shadow:0 1px 8px rgba(0,0,0,.8)}
+  .shots{display:flex;gap:9px;margin-top:12px}
+  .shot{flex:1;aspect-ratio:3/4;border-radius:9px;background:#0c0b0d;border:1px solid var(--line);overflow:hidden;position:relative}
+  .shot img{width:100%;height:100%;object-fit:cover}
+  .shot .lb{position:absolute;left:0;bottom:0;right:0;font-size:10px;letter-spacing:.04em;text-align:center;background:rgba(0,0,0,.55);padding:3px}
+  .shot.ok{border-color:var(--brand)}
+  #d3{width:100%;aspect-ratio:1/1;background:#0c0b0d;border:1px solid var(--line);border-radius:14px;margin-top:14px;touch-action:none}
+  .metric{display:flex;justify-content:space-between;align-items:center;padding:11px 2px;border-bottom:1px solid var(--line);font-size:14px}
+  .metric:last-child{border-bottom:0}
+  .metric b{font-weight:700}
+  .warn{color:#dda45a}
+  textarea.txt{width:100%;padding:13px;border-radius:10px;border:1px solid var(--line);background:#100e12;color:#fff;font-size:15px;margin-top:6px;font-family:inherit}
+  .flabel{display:block;font-size:11px;font-weight:600;letter-spacing:.08em;color:var(--brandink);text-transform:uppercase;margin-bottom:8px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{border:1px solid var(--line);background:#171317;border-radius:8px;padding:9px 13px;font-size:13px;cursor:pointer;color:var(--ink)}
+  .chip.on{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:700}
+  .seg{display:flex;gap:7px}
+  .seg .s{flex:1;text-align:center;border:1px solid var(--line);background:#171317;border-radius:9px;padding:11px;font-size:13px;cursor:pointer;color:var(--ink)}
+  .seg .s.on{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:700}
+  .hist{border:1px solid var(--line);border-radius:10px;padding:11px 12px;margin-top:9px}
+  .hist .row1{display:flex;align-items:center;gap:11px}
+  .hist .row1 .nm{font-weight:600;font-size:14px}
+  .hist .extra{margin-top:9px;display:none;gap:8px;flex-wrap:wrap}
+  .hist.on .extra{display:flex}
+  .hist .extra input{flex:1;min-width:120px}
+  .bar{height:9px;border-radius:5px;background:#26232a;overflow:hidden;margin-top:5px}
+  .bar>i{display:block;height:100%;background:var(--brand);transition:width .4s ease}
+  .bar.warn>i{background:#dda45a}
+  .propcanv{width:100%;background:#0c0b0d;border:1px solid var(--line);border-radius:12px;margin-top:12px;display:block}
+</style></head>
+<body><div class="wrap">
+<header class="brandbar"><span class="wm">SONEED</span><span class="eyebrow">Face Contour · 얼굴형 니즈분석</span></header>
+
+<!-- 1. INTRO -->
+<section class="screen on" id="scIntro">
+  <h1>얼굴형 니즈분석</h1>
+  <div class="sub">고개를 원을 그리듯 천천히 돌려 <b>자동 촬영</b>하고,<br>얼굴을 <b>3D · 비율 · 옆모습 · 자세</b>로 분석해요.</div>
+  <div class="card" style="border-color:var(--brand)">
+    <div style="font-weight:800;color:var(--brandink);font-size:16px;margin-bottom:6px">촬영 전, 머리를 묶어주세요!</div>
+    <div class="sub">· <b>머리를 묶어</b> 이마·귀·얼굴선이 다 보이게 해주세요.<br>· <b>어깨</b>도 보이게 살짝 뒤로 앉아주세요 (어깨너비 분석).</div>
+  </div>
+  <div class="card">
+    <div style="font-weight:800;margin-bottom:8px">진행 순서</div>
+    <div class="sub" style="line-height:2">① 상담 설문<br>② 촬영 동의<br>③ 얼굴 촬영<br>④ 얼굴 3D · 비율 분석<br>⑤ 옆모습 · 자세 분석<br>⑥ 리포트 요약</div>
+  </div>
+  <div class="card sub" style="line-height:1.8">
+    · 미용 목적의 얼굴 윤곽(비대칭) 분석용이에요.<br>
+    · <b>본인인증 · 결제 · 의료가 아니며</b>,<br>
+    &nbsp;&nbsp;얼굴을 신원 식별용으로 변환 · 저장하지 않아요.
+  </div>
+  <div style="flex:1"></div>
+  <button class="btn primary" onclick="go('scSurvey')">시작하기</button>
+</section>
+
+<!-- 1. SURVEY -->
+<section class="screen" id="scSurvey">
+  <div class="stepbar"><i class="on"></i><i></i><i></i><i></i><i></i></div>
+  <h1>상담 설문</h1>
+  <div class="sub">정확한 상담을 위해 편하게 작성해 주세요. 모든 내용은 안전하게 보관돼요.</div>
+  <div class="card">
+    <input class="txt" id="s_name" placeholder="성함">
+    <input class="txt" id="s_phone" type="tel" inputmode="numeric" placeholder="연락처 010-0000-0000" style="margin-top:10px">
+  </div>
+  <div class="card">
+    <span class="flabel">성형 · 시술 히스토리 <span class="mut" style="text-transform:none;letter-spacing:0;font-weight:400">(해당 체크 + 위치/시기)</span></span>
+    <div id="histbox"></div>
+  </div>
+  <div class="card">
+    <span class="flabel">치아</span>
+    <div class="sub" style="margin:2px 0 6px">교정 여부</div>
+    <div class="seg" data-seg="ortho"><div class="s on" data-v="안함">안 함</div><div class="s" data-v="진행중">진행중</div><div class="s" data-v="완료">완료</div></div>
+    <div class="sub" style="margin:14px 0 6px">발치 여부</div>
+    <div class="seg" data-seg="extract"><div class="s on" data-v="무">발치 안 함</div><div class="s" data-v="유">발치 함</div></div>
+    <div id="extractDetail" style="display:none;margin-top:8px">
+      <div class="sub" style="margin:2px 0 6px">발치 위치 <span class="mut">(해당 모두 · 본인 기준)</span></div>
+      <div class="chips" id="extractChips"></div>
+    </div>
+    <div class="sub" style="margin:14px 0 6px">라미네이트 / 미니쉬</div>
+    <div class="seg" data-seg="veneer"><div class="s on" data-v="무">없음</div><div class="s" data-v="라미네이트">라미네이트</div><div class="s" data-v="미니쉬">미니쉬</div></div>
+    <input class="txt" id="s_veneer_when" placeholder="완료 시기 (예: 2024년 봄)" style="margin-top:8px">
+    <div id="veneerDetail" style="display:none;margin-top:8px">
+      <input class="txt" id="s_veneer_cnt" inputmode="numeric" placeholder="개수 (예: 앞니 8개)" style="margin-top:0">
+      <div class="sub" style="margin:8px 0 6px">위치 <span class="mut">(해당 모두)</span></div>
+      <div class="chips" id="veneerChips"></div>
+    </div>
+  </div>
+  <div class="card">
+    <span class="flabel">고민 부위 <span class="mut" style="text-transform:none;letter-spacing:0;font-weight:400">(여러 개 선택 가능)</span></span>
+    <div class="chips" id="worrychips"></div>
+    <input class="txt" id="s_worry_etc" placeholder="기타 상세 설명" style="display:none">
+  </div>
+  <div class="card">
+    <span class="flabel">평소 습관 <span class="mut" style="text-transform:none;letter-spacing:0;font-weight:400">(아는 경우만)</span></span>
+    <div class="sub" style="margin:2px 0 6px">주로 자는 방향 <span class="mut">· 온전히 인지하는 경우만</span></div>
+    <div class="seg" data-seg="sleep" style="flex-wrap:wrap"><div class="s on" data-v="모름" style="min-width:30%">잘 모름</div><div class="s" data-v="천장" style="min-width:30%">천장(바로)</div><div class="s" data-v="왼쪽" style="min-width:30%">왼쪽 옆으로</div><div class="s" data-v="오른쪽" style="min-width:30%">오른쪽 옆으로</div><div class="s" data-v="엎드림-왼볼" style="min-width:46%">엎드림(왼볼)</div><div class="s" data-v="엎드림-오른볼" style="min-width:46%">엎드림(오른볼)</div></div>
+    <div class="sub" style="margin:14px 0 6px">주로 씹는 쪽</div>
+    <div class="seg" data-seg="chew"><div class="s on" data-v="모름">잘 모름</div><div class="s" data-v="왼쪽">왼쪽</div><div class="s" data-v="오른쪽">오른쪽</div><div class="s" data-v="양쪽">양쪽</div></div>
+  </div>
+
+  <div class="card">
+    <span class="flabel">렌즈삽입술 (ICL 등)</span>
+    <div class="seg" data-seg="lens"><div class="s on" data-v="무">안 함</div><div class="s" data-v="유">함</div></div>
+    <input class="txt" id="s_lens_when" placeholder="시술 시기" style="margin-top:8px">
+    <div style="margin-top:14px"><span class="flabel">추가로 하고 싶은 말 (선택)</span><textarea class="txt" id="s_memo" placeholder="자유롭게 적어주세요"></textarea></div>
+  </div>
+  <div style="flex:1"></div>
+  <div class="row"><button class="btn ghost" style="flex:1" onclick="go('scIntro')">이전</button><button class="btn primary" style="flex:2" onclick="submitSurvey()">제출하고 다음 →</button></div>
+  <div class="sub" id="surveyInfo" style="margin-top:10px"></div>
+</section>
+
+<!-- 2. CONSENT -->
+<section class="screen" id="scConsent">
+  <div class="stepbar"><i class="on"></i><i class="on"></i><i></i><i></i><i></i></div>
+  <h1>동의</h1>
+  <div class="card">
+    <input class="txt" id="cName" placeholder="성함">
+    <div class="sub" style="margin-top:12px">
+      <b>수집 항목:</b> 얼굴 사진 및 영상, 성함<br>
+      <b>이용 목적:</b> 미용 목적의 얼굴 윤곽(비대칭) 분석 및 관리 전/후 비교. 본 서비스는 의료행위나 본인인증(결제)이 아니며, 얼굴을 신원 식별용 생체정보로 변환·저장하지 않습니다.<br>
+      <b>보유 기간:</b> <b>가입(회원 등록) 시</b>에만 관리·애프터 목적으로 보관하며, <b>가입하지 않으면 분석 후 삭제</b>합니다. (철회 시 즉시 파기)
+    </div>
+    <label class="chk"><input type="checkbox" id="c1"><span>얼굴 사진·영상의 <b>수집·이용</b>에 동의합니다. (필수)</span></label>
+    <label class="chk"><input type="checkbox" id="c2"><span><b>가입 시</b> 분석 결과·사진의 <b>저장·보관</b>에 동의합니다. (미가입 시 삭제 · 필수)</span></label>
+    <label class="chk"><input type="checkbox" id="c3"><span>수집한 자료를 <b>서비스 품질 향상·AI 학습</b>에 활용하는 것에 동의합니다. <b>(선택 · 동의하지 않아도 분석 결과는 정상 제공돼요)</b></span></label>
+  </div>
+  <div style="flex:1"></div>
+  <div class="row"><button class="btn ghost" style="flex:1" onclick="go('scSurvey')">이전</button><button class="btn primary" style="flex:2" onclick="startCapture()">동의하고 촬영</button></div>
+</section>
+
+<!-- 3. CAMERA -->
+<section class="screen" id="scCam">
+  <div class="stepbar"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></div>
+  <h1 id="camTitle">얼굴 스캔</h1>
+  <div class="sub"><b>귀·어깨가 보이게</b> 앉아 정면을 잠깐 본 뒤, <b>원을 따라 천천히 고개를 돌려</b>주세요 (여러 각도로 재서 정확도↑).</div>
+  <div id="camStage">
+    <video id="cam" playsinline muted autoplay></video>
+    <canvas id="camMesh"></canvas>
+    <svg id="camGuide" viewBox="0 0 300 400" preserveAspectRatio="none"></svg>
+    <div id="camMsg">얼굴을 원 안에…</div>
+    <div id="camHint">— 카메라 준비 중 —</div>
+    <div style="position:absolute;left:7%;bottom:0;height:44%;border-left:2px dashed rgba(255,255,255,.5);pointer-events:none"></div>
+    <div style="position:absolute;right:7%;bottom:0;height:44%;border-right:2px dashed rgba(255,255,255,.5);pointer-events:none"></div>
+    <div style="position:absolute;left:0;right:0;bottom:6%;text-align:center;pointer-events:none"><span style="font-size:11px;color:#fff;text-shadow:0 1px 6px #000;background:rgba(0,0,0,.4);padding:2px 9px;border-radius:9px">여기 안에 어깨 끝이 보이게</span></div>
+  </div>
+  <div class="row"><button class="btn ghost" style="flex:1" onclick="retakeAll()">다시</button><button class="btn primary" style="flex:2" id="toResultBtn" disabled onclick="build3D()">3D 보기</button></div>
+</section>
+
+<!-- 4. RESULT -->
+<section class="screen" id="scResult">
+  <div class="stepbar"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></div>
+  <h1>얼굴 3D · 지표</h1>
+  <div class="sub">드래그해서 좌우로 돌려보세요 · 실제 얼굴 3D</div>
+  <canvas id="d3"></canvas>
+  <div class="sub" style="color:var(--ink);font-weight:700;margin-top:16px">라인 분석 <span class="mut" style="font-weight:400">· 눈·콧볼·눈썹·코 기울기</span></div>
+  <canvas id="lineCanvas" style="width:100%;aspect-ratio:3/4;background:#fff;border:1px solid var(--line);border-radius:12px;margin-top:8px;display:block"></canvas>
+  <div class="card" id="metrics"></div>
+  <button class="btn line" id="simBtn" style="margin-top:12px" onclick="openSim()">리세팅가이드 · 3D 변형 미리보기</button>
+  <button class="btn primary" style="margin-top:14px" onclick="goProp()">다음 · 얼굴 비율 분석 →</button>
+  <div class="row"><button class="btn ghost" style="flex:1" onclick="go('scCam')">뒤로</button></div>
+</section>
+
+<!-- 4b. PROPORTION -->
+<section class="screen" id="scProp">
+  <div class="stepbar"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></div>
+  <h1>얼굴 비율 분석</h1>
+  <div class="sub"><b>참고 비율(선호 스타일)</b>과 <b>현재 내 비율</b>을 나란히 비교해요 · 참고용</div>
+  <canvas id="propCanvas" class="propcanv" style="aspect-ratio:4/3"></canvas>
+  <div class="sub" style="margin-top:10px">이마 상단(헤어라인) 파란 선이 안 맞으면 <b>직접 조절</b>하세요 (AI가 정확히 못 잡아요)</div>
+  <input type="range" id="foreheadSlider" min="0" max="100" value="50" oninput="adjForehead(this.value)" style="width:100%;accent-color:var(--brand);margin-top:6px">
+  <div class="sub" style="color:var(--ink);font-weight:700;margin-top:16px">세로 3등분 <span class="mut" style="font-weight:400">· 참고(평균) = 이마 33 : 중안 40 : 하관 27</span></div>
+  <div class="card" id="propThirds"></div>
+  <div class="sub" style="color:var(--ink);font-weight:700;margin-top:14px">가로 비율 <span class="mut" style="font-weight:400">(본인 기준) · 선호 = 여백 좁게 · 눈 크게</span></div>
+  <div class="card" id="propFifths"></div>
+  <div class="sub" style="color:var(--ink);font-weight:700;margin-top:14px">나의 얼굴형 니즈 분석 <span class="mut" style="font-weight:400">· 슬라이더로 직접 조정해 보세요</span></div>
+  <div class="card" style="border-color:var(--brand);padding:12px 14px;margin-top:8px"><div class="sub" style="line-height:1.6">⚠️ 이 미리보기는 <b>비율을 수학적으로 늘리고 줄인 참고 이미지</b>예요.<br>실제 시술·관리 <b>결과가 아니며</b>, 개인차가 크고 <b>결과를 보장하지 않아요.</b></div></div>
+  <canvas id="ratioSimCanvas" class="propcanv" style="aspect-ratio:3/4"></canvas>
+  <div class="card">
+    <div style="font-size:12px;color:var(--brandink);margin-bottom:2px">이마 길이</div><input type="range" id="rs_fo" min="-100" max="100" value="0" oninput="rsAdj('fo',this.value)" style="width:100%;accent-color:var(--brand)">
+    <div style="font-size:12px;color:var(--brandink);margin:8px 0 2px">하관(턱) 길이</div><input type="range" id="rs_lo" min="-100" max="100" value="0" oninput="rsAdj('lo',this.value)" style="width:100%;accent-color:var(--brand)">
+    <div style="font-size:12px;color:var(--brandink);margin:8px 0 2px">중안부 길이 (눈밑~입술)</div><input type="range" id="rs_mid" min="-100" max="100" value="0" oninput="rsAdj('mid',this.value)" style="width:100%;accent-color:var(--brand)">
+    <div style="font-size:12px;color:var(--brandink);margin:8px 0 2px">얼굴 폭</div><input type="range" id="rs_w" min="-100" max="100" value="0" oninput="rsAdj('w',this.value)" style="width:100%;accent-color:var(--brand)">
+    <div style="font-size:12px;color:var(--brandink);margin:8px 0 2px">좌우 여백</div><input type="range" id="rs_m" min="-100" max="100" value="0" oninput="rsAdj('m',this.value)" style="width:100%;accent-color:var(--brand)">
+    <div style="font-size:12px;color:var(--brandink);margin:8px 0 2px">전방경사 (눈밑~광대 길어짐·앞 기울임)</div><input type="range" id="rs_j" min="-100" max="100" value="0" oninput="rsAdj('j',this.value)" style="width:100%;accent-color:var(--brand)">
+    <div style="font-size:12px;color:var(--brandink);margin:8px 0 2px">눈 크기</div><input type="range" id="rs_e" min="-100" max="100" value="0" oninput="rsAdj('e',this.value)" style="width:100%;accent-color:var(--brand)">
+    <div class="row"><button class="btn ghost" style="flex:1" onclick="resetRatio()">초기화</button></div>
+  </div>
+  <button class="btn primary" style="margin-top:14px" onclick="goSide()">다음 · 옆모습 분석 →</button>
+  <div class="row"><button class="btn ghost" style="flex:1" onclick="go('scResult')">이전</button></div>
+</section>
+
+<!-- 4c. SIDE PROFILE -->
+<section class="screen" id="scSide">
+  <div class="stepbar"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></div>
+  <h1>옆모습 분석</h1>
+  <div class="sub"><b>몸(의자)을 옆으로 돌려 앉아</b> 완전 측면으로 만든 뒤 <b>촬영 버튼</b>을 눌러주세요.<br>귀·코·턱 옆선과 <b>어깨</b>가 다 보이고 <b>정측면일수록</b> 정확해요.</div>
+  <div id="sideStage" style="position:relative;width:100%;aspect-ratio:3/4;background:#000;border-radius:14px;overflow:hidden;margin-top:12px">
+    <video id="sideCam" playsinline muted autoplay style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"></video>
+    <canvas id="sideOv" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none"></canvas>
+    <div id="sideMsg" style="position:absolute;left:0;right:0;top:14px;text-align:center;font-weight:700;color:#fff;text-shadow:0 1px 8px rgba(0,0,0,.7)">카메라 준비 중…</div>
+    <div id="sideHint" style="position:absolute;left:0;right:0;bottom:12px;text-align:center;font-size:11px;color:#d6d2cb;text-shadow:0 1px 8px rgba(0,0,0,.8)"></div>
+  </div>
+  <button class="btn primary" id="sideSnapBtn" style="margin-top:10px" onclick="snapSide()">몸을 옆으로 돌려앉아 촬영</button>
+  <canvas id="sideShot" class="propcanv" style="aspect-ratio:3/4;display:none"></canvas>
+  <div class="card" id="sideMetrics" style="display:none"></div>
+  <div class="card" id="postureCard" style="display:none"></div>
+  <div class="row"><button class="btn ghost" style="flex:1" onclick="retakeSide()">다시 촬영</button><button class="btn primary" style="flex:1" id="sideNextBtn" onclick="stopSide();goBody()" disabled>다음 · 상체 분석 →</button></div>
+  <div class="row"><button class="btn ghost" style="flex:1" onclick="stopSide();go('scProp')">이전</button></div>
+</section>
+
+<!-- 4c-1c. UPPER BODY (어좁이 + 거북목) -->
+<section class="screen" id="scBody">
+  <div class="stepbar"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></div>
+  <h1>상체 분석</h1>
+  <div class="sub">앞서 찍은 <b>정면·옆모습</b>이에요. <b>점을 손가락으로 끌어서</b> 어깨/머리/귀 위치를 맞춰주세요.</div>
+  <div class="sub" style="color:var(--ink);font-weight:700;margin-top:12px">어깨 너비 (어좁이) · 정면</div>
+  <canvas id="bodyShCanvas" class="propcanv" style="aspect-ratio:3/4"></canvas>
+  <div class="card">
+    <div class="metric"><span class="mut">어깨/머리 너비</span><b id="bodyShV">—</b></div>
+    <div class="sub" style="margin-top:4px"><b style="color:#38b6ff">파란 점</b>(머리 좌우)·<b style="color:#3ddc8a">초록 점</b>(어깨 좌우)을 끌어서 맞춰주세요.</div>
+  </div>
+<div class="sub" style="color:var(--ink);font-weight:700;margin-top:14px">거북목 · 옆모습</div>
+  <canvas id="bodyTuCanvas" class="propcanv" style="aspect-ratio:3/4"></canvas>
+  <div class="card">
+    <div class="metric"><span class="mut">거북목 (어깨중간~귀)</span><b id="bodyTuV">—</b></div>
+    <div class="sub" style="margin-top:4px"><b style="color:#ff9a3d">주황 점</b>(어깨중앙·귀구멍)을 끌어서 맞춰주세요.</div>
+  </div>
+<button class="btn primary" style="margin-top:14px" onclick="goUp()">다음 · 고개 들기 →</button>
+  <div class="row"><button class="btn ghost" style="flex:1" onclick="go('scSide')">이전</button></div>
+</section>
+
+<!-- 4c-2. HEAD UP (후두골 시간) -->
+<section class="screen" id="scUp">
+  <div class="stepbar"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></div>
+  <h1>고개 들기 (후두골)</h1>
+  <div class="sub">고개를 <b>살짝 뒤로 들어</b> 턱을 위로, <b>양쪽 귀가 보이게</b> 한 뒤 촬영하세요.<br>좌우 귀 높이로 <b>후두골 시간(5·6·7시)</b>을 봐요.</div>
+  <div id="upStage" style="position:relative;width:100%;aspect-ratio:3/4;background:#000;border-radius:14px;overflow:hidden;margin-top:12px">
+    <video id="upCam" playsinline muted autoplay style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"></video>
+    <canvas id="upOv" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none"></canvas>
+    <div id="upMsg" style="position:absolute;left:0;right:0;top:14px;text-align:center;font-weight:700;color:#fff;text-shadow:0 1px 8px rgba(0,0,0,.7)">카메라 준비 중…</div>
+  </div>
+  <button class="btn primary" id="upSnapBtn" style="margin-top:10px" onclick="snapUp()">고개 든 채 · 촬영</button>
+  <canvas id="upShot" class="propcanv" style="aspect-ratio:3/4;display:none"></canvas>
+  <div class="card" id="upMetrics" style="display:none"></div>
+  <div class="card" id="faceCodeCard" style="border-color:var(--brand);display:none"></div>
+  <div class="row"><button class="btn ghost" style="flex:1" onclick="retakeUp()">다시</button><button class="btn primary" style="flex:1" id="upNextBtn" onclick="stopUp();goRec()" disabled>다음 · 리포트 요약 →</button></div>
+  <div class="row"><button class="btn ghost" style="flex:1" onclick="stopUp();go('scSide')">이전</button></div>
+</section>
+
+<!-- 4d. RECOMMENDATIONS -->
+<section class="screen" id="scRec">
+  <div class="stepbar"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></div>
+  <h1>리포트 요약</h1>
+  <div class="card" id="recList"></div>
+  <button class="btn primary" style="margin-top:14px" onclick="goSym()">다음 · 얼굴 대칭 보기 →</button>
+  <div class="row"><button class="btn ghost" style="flex:1" onclick="go('scSide')">이전</button></div>
+</section>
+
+<!-- 5. SYMMETRY -->
+<section class="screen" id="scSym">
+  <h1>얼굴 대칭 보기</h1>
+  <div class="sub">한쪽 얼굴로 맞췄을 때 · 원래 · 균형(중간)</div>
+  <canvas id="symCanvas" style="width:100%;aspect-ratio:3/4;background:#000;border:1px solid var(--line);border-radius:12px;margin-top:12px;display:block"></canvas>
+  <div class="row" style="flex-wrap:wrap">
+    <button id="symBtn_left" class="btn ghost" style="flex:1;min-width:44%" onclick="showSym('left')">왼쪽 대칭</button>
+    <button id="symBtn_right" class="btn ghost" style="flex:1;min-width:44%" onclick="showSym('right')">오른쪽 대칭</button>
+    <button id="symBtn_orig" class="btn ghost" style="flex:1;min-width:44%" onclick="showSym('orig')">원래 얼굴</button>
+    <button id="symBtn_bal" class="btn ghost" style="flex:1;min-width:44%" onclick="showSym('bal')">균형(중간)</button>
+  </div>
+  <button class="btn primary" style="margin-top:12px" onclick="goMirror()">다음 · 마법의 거울 (실시간) →</button>
+  <div class="row"><button class="btn ghost" style="flex:1" onclick="go('scResult')">이전</button></div>
+</section>
+
+<!-- 6. MAGIC MIRROR (live) -->
+<section class="screen" id="scMirror">
+  <h1>마법의 거울</h1>
+  <div class="sub">얼굴을 <b>중앙선</b>에 맞추면 실시간 반반 대칭으로 보여요</div>
+  <video id="mirVideo" playsinline muted autoplay style="display:none"></video>
+  <canvas id="mirCanvas" style="width:100%;aspect-ratio:3/4;background:#000;border:1px solid var(--line);border-radius:14px;margin-top:12px;display:block"></canvas>
+  <div class="row" style="flex-wrap:wrap">
+    <button id="mirBtn_normal" class="btn ghost" style="flex:1;min-width:44%;line-height:1.3" onclick="mirSide('normal')">정상<div style="font-size:10px;font-weight:400;opacity:.8;margin-top:3px">다른 사람이 보는 내 얼굴</div></button>
+    <button id="mirBtn_flip" class="btn ghost" style="flex:1;min-width:44%;line-height:1.3" onclick="mirSide('flip')">반전(거울)<div style="font-size:10px;font-weight:400;opacity:.8;margin-top:3px">평상시 거울로 보는 내 얼굴</div></button>
+    <button id="mirBtn_left" class="btn primary" style="flex:1;min-width:44%;line-height:1.3" onclick="mirSide('left')">왼쪽 반반<div style="font-size:10px;font-weight:400;opacity:.8;margin-top:3px">왼쪽 얼굴 기준 대칭</div></button>
+    <button id="mirBtn_right" class="btn ghost" style="flex:1;min-width:44%;line-height:1.3" onclick="mirSide('right')">오른쪽 반반<div style="font-size:10px;font-weight:400;opacity:.8;margin-top:3px">오른쪽 얼굴 기준 대칭</div></button>
+  </div>
+  <button class="btn primary" style="margin-top:12px" onclick="stopMirror();goCare()">관리 후 주의사항 보기 →</button>
+  <div class="row"><button class="btn ghost" style="flex:1" onclick="stopMirror();go('scSym')">이전</button></div>
+</section>
+
+<!-- 7. AFTERCARE -->
+<section class="screen" id="scCare">
+  <h1>관리 후 주의사항</h1>
+  <div class="sub">안녕하세요, 소니드 얼굴윤곽입니다. 보다 좋은 유지 효과를 위해 아래 사항을 참고해 주세요.</div>
+  <div class="card" id="careTips" style="display:none;border-color:var(--brand)"></div>
+  <div class="card sub" style="line-height:1.7">
+    <div style="margin-bottom:12px"><b style="color:var(--brandink)">✔️ 1. 얼굴 만지지 않기</b><br>괄사, 자가 마사지 등 얼굴에 직접적인 자극은 피해주시고, 손으로 만지는 행동은 삼가해주세요.</div>
+    <div style="margin-bottom:12px"><b style="color:var(--brandink)">✔️ 2. 얼굴에 진동 주의</b><br>마사지 기계나 버스 창가에 기대는 등 얼굴에 진동이 전달되는 상황은 가급적 피해주세요.</div>
+    <div style="margin-bottom:12px"><b style="color:var(--brandink)">✔️ 3. 강한 턱 사용 · 큰 입벌림 주의</b><br>딱딱하거나 질긴 음식(얼음, 오징어, 사탕 깨물기 등)과 입을 크게 벌리는 행동은 가급적 피해주세요.</div>
+    <div><b style="color:var(--brandink)">✔️ 4. 생활 습관 및 수면 자세 주의</b><br>턱을 괴거나 머리를 기대는 습관, 엎드려서 자는 자세는 피해주세요.</div>
+  </div>
+  <div class="card sub">위 사항은 관리 후 <b>약 1주일간</b> 지켜주시면<br>더욱 만족스러운 효과에 도움이 됩니다.<br>궁금하신 점 있으시면 언제든 편하게 문의 주세요.<br>감사합니다.</div>
+  <div class="card sub" style="line-height:1.8;border-color:var(--brand)">
+    <div style="font-weight:800;color:var(--brandink);margin-bottom:8px">✔️ 다른 얼굴 시술 후 방문 시</div>
+    <div>· 보톡스 · 레이저 — <b>1주일 후</b> 관리 가능</div>
+    <div>· 필러 · 실리프팅 — <b>2~4주 후</b> 관리 가능</div>
+    <div>· 부분 얼굴 성형 — <b>1~2개월 후</b> 관리 가능</div>
+    <div>· 윤곽 관련 수술 — <b>6~12개월 후</b> 관리 가능</div>
+  </div>
+  <div style="flex:1"></div>
+  <div class="row"><button class="btn ghost" style="flex:1" onclick="go('scMirror')">이전</button><button class="btn primary" style="flex:1" onclick="go('scIntro')">처음으로</button></div>
+</section>
+
+</div>
+
+<!-- 페이스리세팅 가이드 (전체화면) -->
+<div id="simModal" style="display:none;position:fixed;inset:0;z-index:60;background:var(--bg);flex-direction:column">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--line);flex:0 0 auto">
+    <span style="font-weight:800;font-size:16px">페이스리세팅 가이드</span>
+    <button onclick="closeSim()" style="background:transparent;border:1px solid var(--line);color:var(--ink);border-radius:9px;padding:8px 14px;font-size:14px;cursor:pointer">닫기 ✕</button>
+  </div>
+  <div style="flex:0 0 auto;padding:9px 16px;background:var(--panel);border-bottom:1px solid var(--line);font-size:12px;color:var(--mut);line-height:1.5">⚠️ 개선 <b>방향</b>을 보여주는 참고 시뮬레이션이에요 · 실제 시술 결과가 아니며 <b>결과를 보장하지 않아요</b>.</div>
+  <iframe id="simFrame" style="flex:1;width:100%;border:0;background:#0d0f14"></iframe>
+</div>
+
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+const V='https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';
+
+let landmarker=null, running=false, stream=null;
+const SEG=108;   // 링 눈금 수 (촘촘한 방사형 눈금)
+let filled=[], filledN=0, captured={}, doneSweep=false, phase='front', frontHold=0, frontDoneAt=0, _bestYaw=1, frontT0=0;
+
+function go(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));document.getElementById(id).classList.add('on');window.scrollTo(0,0);}
+window.go=go;
+let _an={};   // 분석값 누적 (맞춤 제안용)
+
+/* ---- pose helpers (raw front-cam frame = 마주보기 기준) ---- */
+function faceH(p){return Math.hypot(p[10].x-p[152].x,p[10].y-p[152].y)||1;}
+function pitch(p){ return (p[10].z - p[152].z); } // 이마 뒤로/턱 앞으로 → 든=양수, 숙인=음수
+function centered(p){ var cx=(p[468]?.x??p[1].x); return cx>0.32 && cx<0.68 && p[1].y>0.32 && p[1].y<0.72; }
+
+async function getLandmarker(){
+  if(landmarker) return landmarker;
+  const vision=await import(V);
+  const fs=await vision.FilesetResolver.forVisionTasks(V+'/wasm');
+  landmarker=await vision.FaceLandmarker.createFromOptions(fs,{
+    baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',delegate:'CPU'},
+    runningMode:'VIDEO',numFaces:1,minFaceDetectionConfidence:0.4
+  });
+  window._TESS=vision.FaceLandmarker.FACE_LANDMARKS_TESSELATION;
+  return landmarker;
+}
+
+function headDir(p){ return {yaw:(p[454].z-p[234].z), pit:(p[10].z-p[152].z)}; }
+function segOf(yaw,pit){ const a=Math.atan2(-pit,-yaw); return ((Math.floor(((a+Math.PI)/(2*Math.PI))*SEG)%SEG)+SEG)%SEG; }
+function drawMesh(lm,vw,vh){
+  const cv=document.getElementById('camMesh'), st=document.getElementById('camStage'); if(!cv||!st||!window._TESS) return;
+  const W=cv.width=Math.round(st.clientWidth*2), H=cv.height=Math.round(st.clientHeight*2), c=cv.getContext('2d');
+  c.clearRect(0,0,W,H);
+  const ds=Math.max(W/vw,H/vh), ox=(W-vw*ds)/2, oy=(H-vh*ds)/2;
+  const X=i=>W-(lm[i].x*vw*ds+ox), Y=i=>lm[i].y*vh*ds+oy;   // 거울 표시에 맞춰 x 반전
+  c.strokeStyle='rgba(64,232,164,.7)'; c.lineWidth=Math.max(0.7,W*0.0010); c.beginPath();
+  window._TESS.forEach(e=>{ c.moveTo(X(e.start),Y(e.start)); c.lineTo(X(e.end),Y(e.end)); }); c.stroke();
+  // 이마 확장 (헤어라인 쪽으로 초록 메시 연장)
+  try{
+    const fhn=Math.hypot(lm[10].x-lm[152].x,lm[10].y-lm[152].y)||0.3;
+    const ux=(lm[10].x-lm[152].x)/fhn, uy=(lm[10].y-lm[152].y)/fhn, push=fhn*0.30;
+    const rim=[21,54,103,67,109,10,338,297,332,284,251];
+    const CXn=nx=>W-(nx*vw*ds+ox), CYn=ny=>ny*vh*ds+oy;
+    const ex=rim.map(i=>({x:lm[i].x+ux*push, y:lm[i].y+uy*push}));
+    const md=rim.map((i,k)=>({x:(lm[i].x+ex[k].x)/2, y:(lm[i].y+ex[k].y)/2}));
+    c.strokeStyle='rgba(64,232,164,.5)'; c.lineWidth=Math.max(0.7,W*0.0010);
+    c.beginPath(); for(let k=0;k<rim.length;k++){ const x=CXn(ex[k].x),y=CYn(ex[k].y); if(k===0)c.moveTo(x,y);else c.lineTo(x,y);} c.stroke();
+    c.beginPath(); for(let k=0;k<rim.length;k++){ const x=CXn(md[k].x),y=CYn(md[k].y); if(k===0)c.moveTo(x,y);else c.lineTo(x,y);} c.stroke();
+    c.beginPath(); for(let k=0;k<rim.length;k++){ const i=rim[k]; c.moveTo(CXn(lm[i].x),CYn(lm[i].y)); c.lineTo(CXn(ex[k].x),CYn(ex[k].y)); } c.stroke();
+  }catch(e){}
+  c.fillStyle='rgba(80,240,170,.9)'; const kp=[468,473,1,152,10,234,454,61,291,168];
+  for(const i of kp){ c.beginPath(); c.arc(X(i),Y(i),Math.max(2,W*0.005),0,7); c.fill(); }
+}
+function flashCam(){ const st=document.getElementById('camStage'); if(!st)return; const f=document.createElement('div'); f.style.cssText='position:absolute;inset:0;background:#fff;opacity:.9;transition:opacity .55s ease;pointer-events:none;z-index:6'; st.appendChild(f); requestAnimationFrame(()=>{f.style.opacity='0';}); setTimeout(()=>{try{f.remove();}catch(e){}},650); }
+function drawRing(curAng){
+  const g=document.getElementById('camGuide'), cx=150,cy=185,r0=128,r1=140; let out='';
+  for(let i=0;i<SEG;i++){
+    const a=(i/SEG)*2*Math.PI-Math.PI;
+    const x0=cx+r0*Math.cos(a), y0=cy+r0*Math.sin(a), x1=cx+r1*Math.cos(a), y1=cy+r1*Math.sin(a);
+    const frac=i/SEG, col=filled[i]?('hsl('+Math.round(150+frac*195)+',85%,58%)'):'rgba(255,255,255,.16)';
+    out+='<line x1="'+x0.toFixed(1)+'" y1="'+y0.toFixed(1)+'" x2="'+x1.toFixed(1)+'" y2="'+y1.toFixed(1)+'" stroke="'+col+'" stroke-width="'+(filled[i]?1.8:0.8)+'" stroke-linecap="round"/>';
+  }
+  out+='<ellipse cx="150" cy="185" rx="74" ry="98" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="1"/>';
+  if(curAng!=null){ const dx=cx+((r0+r1)/2)*Math.cos(curAng), dy=cy+((r0+r1)/2)*Math.sin(curAng); out+='<circle cx="'+dx.toFixed(1)+'" cy="'+dy.toFixed(1)+'" r="6" fill="#C81D74"/>'; }
+  g.innerHTML=out;
+}
+
+window.startCapture=async function(){
+  const it={c1:c1.checked,c2:c2.checked,c3:c3.checked};
+  if(!it.c1||!it.c2){ alert('필수 동의 2개를 체크해 주세요'); return; }
+  window._consent={name:(cName.value||'').trim(),items:it,at:new Date().toISOString(),ver:'v2'};
+  try{ if(window.parent && window.parent!==window) window.parent.postMessage({soneedConsent:window._consent},'*'); }catch(e){}   // 얼굴앱 차트에 동의완료 표시
+  filled=new Array(SEG).fill(false); filledN=0; captured={}; doneSweep=false; phase='front'; frontHold=0; _bestYaw=1; frontT0=0;
+  go('scCam'); document.getElementById('toResultBtn').disabled=true; drawRing(null);
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1280},height:{ideal:960}},audio:false});
+    const v=document.getElementById('cam'); v.srcObject=stream; await v.play();
+    await getLandmarker(); running=true;
+    document.getElementById('camMsg').textContent='원 안에 얼굴을 맞춰주세요';
+    document.getElementById('camHint').textContent='0 / '+SEG;
+    loop();
+  }catch(e){ document.getElementById('camHint').textContent='카메라를 열 수 없어요: '+(e.message||e); }
+};
+
+function captureFrame(v,p){
+  // raw 프레임 = 마주보기 기준(미러 아님). flip 없이 저장.
+  const c=document.createElement('canvas'), vw=v.videoWidth,vh=v.videoHeight, tw=720, th=Math.round(tw*vh/vw);
+  c.width=tw;c.height=th; c.getContext('2d').drawImage(v,0,0,tw,th);
+  return {img:c.toDataURL('image/jpeg',0.9), lm:p.map(q=>({x:q.x,y:q.y,z:q.z})), w:tw, h:th};
+}
+function loop(){
+  if(!running) return;
+  const v=document.getElementById('cam'); const msg=document.getElementById('camMsg'), hint=document.getElementById('camHint');
+  if(v.readyState>=2){
+    let res=null; try{ res=landmarker.detectForVideo(v, performance.now()); }catch(e){}
+    if(res && res.faceLandmarks && res.faceLandmarks.length){
+      const p=res.faceLandmarks[0], d=headDir(p), r=Math.hypot(d.yaw,d.pit), cen=centered(p);
+      try{ drawMesh(p, v.videoWidth, v.videoHeight); }catch(e){}
+      if(phase==='front'){
+        drawRing(null);
+        if(cen && r<0.02){ if(!frontT0) frontT0=performance.now(); const el=performance.now()-frontT0, left=Math.max(1,Math.ceil(3-el/1000)); msg.textContent='그대로! '+left; hint.textContent=left+'초 후 자동 촬영';
+          if(el>=3000){ captured.front=captureFrame(v,p); _bestYaw=r; phase='sweep'; frontT0=0; frontDoneAt=performance.now(); flashCam(); if(navigator.vibrate)navigator.vibrate([30,60,30]); document.getElementById('toResultBtn').disabled=false; }
+        } else { frontT0=0; msg.textContent='정면을 봐주세요'; hint.textContent='원 안에 얼굴을 맞춰주세요'; }
+      } else {
+        if(cen && r<_bestYaw){ _bestYaw=r; captured.front=captureFrame(v,p); }   // 돌면서 가장 정면인 순간을 정면 프레임으로 (정확도↑)
+        let curAng = (r>0.01) ? Math.atan2(-d.pit,-d.yaw) : null;
+        if(r>0.035){ const seg=segOf(d.yaw,d.pit);
+          let _any=false; Array.from({length:13},(_,d)=>((seg+d-6)%SEG+SEG)%SEG).forEach(k=>{ if(!filled[k]){ filled[k]=true; filledN++; _any=true; } }); if(_any&&navigator.vibrate)navigator.vibrate(9); }
+        drawRing(curAng);
+        msg.textContent = (performance.now()-frontDoneAt<1100) ? '정면 촬영 완료 ✓' : '원을 따라 고개를 천천히 돌려주세요';
+        hint.textContent=filledN+' / '+SEG;
+        if(!doneSweep && filledN>=SEG-4) complete();
+      }
+    } else { drawRing(null); const mc=document.getElementById('camMesh'); if(mc){const mcc=mc.getContext('2d');mcc.clearRect(0,0,mc.width,mc.height);} msg.textContent='얼굴을 원 안에…'; }
+  }
+  requestAnimationFrame(loop);
+}
+function complete(){
+  doneSweep=true; running=false; stopCam();
+  document.getElementById('camMsg').textContent='스캔 완료 ✓';
+  document.getElementById('camHint').textContent='아래 “3D 보기”를 눌러주세요';
+  document.getElementById('toResultBtn').disabled=!captured.front;
+  if(navigator.vibrate)navigator.vibrate([20,40,20]);
+}
+function stopCam(){ if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;} }
+window.retakeAll=function(){ filled=new Array(SEG).fill(false); filledN=0; captured={}; doneSweep=false; phase='front'; frontHold=0; _bestYaw=1; frontT0=0; document.getElementById('toResultBtn').disabled=true; if(!running) startCapture(); };
+
+/* ---- 3D (흰 얼굴, 눈알 없이, 회전) ---- */
+let renderer,scene,cam3,meshGroup;
+function tessTriangles(edges){
+  const adj={}; edges.forEach(e=>{(adj[e.start]=adj[e.start]||new Set()).add(e.end);(adj[e.end]=adj[e.end]||new Set()).add(e.start);});
+  const tris=[],seen=new Set();
+  edges.forEach(e=>{const a=e.start,b=e.end;(adj[a]||[]).forEach(cc=>{if(adj[b].has(cc)){const k=[a,b,cc].sort((x,y)=>x-y).join(',');if(!seen.has(k)){seen.add(k);tris.push(a,b,cc);}}});});
+  return tris;
+}
+window.build3D=async function(){
+  go('scResult');
+  const front=captured.front; if(!front){alert('정면 촬영이 필요해요');return;}
+  await getLandmarker();
+  const lm=front.lm;
+  const asp=(front.w&&front.h)?front.w/front.h:1;   // 사진 비율 보정 → 실제 얼굴형
+  const pos=new Float32Array(468*3), uv=new Float32Array(468*2);
+  for(let i=0;i<468;i++){ pos[i*3]=(lm[i].x-0.5)*asp; pos[i*3+1]=-(lm[i].y-0.5); pos[i*3+2]=-(lm[i].z)*0.8; uv[i*2]=lm[i].x; uv[i*2+1]=1-lm[i].y; }
+  const idx=tessTriangles(window._TESS);
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  geo.setAttribute('uv',new THREE.BufferAttribute(uv,2));
+  geo.setIndex(idx); geo.computeVertexNormals();
+  const canvas=document.getElementById('d3');
+  if(!renderer){
+    renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
+    scene=new THREE.Scene();
+    cam3=new THREE.PerspectiveCamera(35,1,0.01,10); cam3.position.set(0,0,1.35);
+    scene.add(new THREE.AmbientLight(0xffffff,0.98));
+    const d=new THREE.DirectionalLight(0xffffff,0.4); d.position.set(0.3,0.5,1); scene.add(d);
+    const d2=new THREE.DirectionalLight(0xffffff,0.28); d2.position.set(-0.6,-0.1,0.6); scene.add(d2);
+    meshGroup=new THREE.Group(); scene.add(meshGroup);
+    bindDrag(canvas);
+  }
+  while(meshGroup.children.length) meshGroup.remove(meshGroup.children[0]);
+  const tex=new THREE.Texture(); const _im=new Image(); _im.onload=function(){ tex.image=_im; if('SRGBColorSpace' in THREE)tex.colorSpace=THREE.SRGBColorSpace; tex.needsUpdate=true; }; _im.src=front.img;
+  const mat=new THREE.MeshBasicMaterial({map:tex,side:THREE.DoubleSide});
+  const mesh=new THREE.Mesh(geo,mat); meshGroup.add(mesh);
+  meshGroup.rotation.set(0,0,0);
+  resize3D(); renderMetrics(lm); drawLines(lm); animate();
+};
+/* ---- 주름 정도(참고용): 이마·미간·팔자 텍스처를 매끈한 볼과 비교 ---- */
+function estimateWrinkles(f){
+  const lm=f.lm; const img=new Image();
+  img.onload=function(){
+    try{
+      const DW=320, DH=Math.round(DW*img.naturalHeight/img.naturalWidth);
+      const cc=document.createElement('canvas'); cc.width=DW; cc.height=DH; const cx=cc.getContext('2d'); cx.drawImage(img,0,0,DW,DH);
+      const data=cx.getImageData(0,0,DW,DH).data;
+      const gray=(x,y)=>{ x=Math.max(1,Math.min(DW-2,x|0)); y=Math.max(1,Math.min(DH-2,y|0)); const i=(y*DW+x)*4; return 0.3*data[i]+0.59*data[i+1]+0.11*data[i+2]; };
+      function boxGrad(nx,ny,hw,hh){ const x0=(nx-hw)*DW,x1=(nx+hw)*DW,y0=(ny-hh)*DH,y1=(ny+hh)*DH; let s=0,n=0; for(let y=y0;y<y1;y+=2){ for(let x=x0;x<x1;x+=2){ const gx=Math.abs(gray(x+1,y)-gray(x-1,y)), gy=Math.abs(gray(x,y+1)-gray(x,y-1)); s+=gx+gy; n++; } } return n?s/n:0; }
+      const foreY=(lm[10].y*0.55+lm[9].y*0.45), foreX=lm[9].x;
+      const nlL={x:(lm[64].x+lm[61].x)/2,y:(lm[64].y+lm[61].y)/2}, nlR={x:(lm[294].x+lm[291].x)/2,y:(lm[294].y+lm[291].y)/2};
+      const forehead=boxGrad(foreX,foreY,0.11,0.05), glab=boxGrad(lm[9].x,lm[9].y,0.05,0.03);
+      const nasoL=boxGrad(nlL.x,nlL.y,0.05,0.05), nasoR=boxGrad(nlR.x,nlR.y,0.05,0.05);
+      const cheekL=boxGrad(lm[50]?lm[50].x:lm[116].x, lm[50]?lm[50].y:lm[116].y,0.045,0.045), cheekR=boxGrad(lm[280]?lm[280].x:lm[345].x, lm[280]?lm[280].y:lm[345].y,0.045,0.045);
+      const base=Math.max(2,(cheekL+cheekR)/2);
+      const ratio=((forehead+glab+nasoL+nasoR)/4)/base;
+      _an.wrinkle=ratio;
+      const level=ratio<1.35?'적은 편':(ratio<1.9?'보통':'많은 편');
+      const el=document.getElementById('metrics'); if(el){ const d=document.createElement('div'); d.className='metric'; d.innerHTML='<span class="mut">주름 정도(이마·팔자)</span><b>'+level+' <span class="mut" style="font-weight:400">· 지수 '+ratio.toFixed(2)+'</b>'; el.insertBefore(d, el.querySelector('.sub')); }
+    }catch(e){}
+  };
+  img.src=f.img;
+}
+function resize3D(){ const c=document.getElementById('d3'); const w=c.clientWidth||360; renderer.setPixelRatio(Math.min(2,devicePixelRatio||1)); renderer.setSize(w,w,false); cam3.aspect=1; cam3.updateProjectionMatrix(); }
+let rx=0,ry=0,auto=true;
+function bindDrag(c){ let dr=false,lx=0,ly=0;
+  c.addEventListener('pointerdown',e=>{dr=true;auto=false;lx=e.clientX;ly=e.clientY;c.setPointerCapture(e.pointerId);});
+  c.addEventListener('pointermove',e=>{if(!dr)return;ry+=(e.clientX-lx)*0.01;rx+=(e.clientY-ly)*0.01;rx=Math.max(-0.6,Math.min(0.6,rx));ry=Math.max(-0.8,Math.min(0.8,ry));lx=e.clientX;ly=e.clientY;});
+  c.addEventListener('pointerup',()=>dr=false); c.addEventListener('pointercancel',()=>dr=false);
+}
+function animate(){ if(!renderer)return; if(auto){ ry=0.5*Math.sin(performance.now()/1600); } meshGroup.rotation.x=rx; meshGroup.rotation.y=ry; renderer.render(scene,cam3); requestAnimationFrame(animate); }
+window.addEventListener('resize',()=>{ if(renderer)resize3D(); });
+
+/* ---- 지표 (눈 각도 등) ---- */
+function renderMetrics(lm){
+  const P=lm.map(q=>({x:q.x,y:q.y}));
+  const irisA=P[468],irisB=P[473]; const L=irisA.x<irisB.x?irisA:irisB, R=irisA.x<irisB.x?irisB:irisA;
+  let eyeAng=Math.atan2(R.y-L.y,R.x-L.x)*180/Math.PI; // 화면기준
+  const own = eyeAng>0?'본인 오른쪽↓':(eyeAng<0?'본인 왼쪽↓':'수평'); // 화면오른쪽아래=본인왼쪽... 표기용
+  const noseMid={x:(L.x+R.x)/2,y:(L.y+R.y)/2};
+  const noseDev=(P[1].x-noseMid.x);
+  const fw=Math.hypot(P[234].x-P[454].x,P[234].y-P[454].y)||1;
+  const fh=Math.hypot(P[10].x-P[152].x,P[10].y-P[152].y)||1;
+  const fhEst=(Math.hypot(P[9].x-P[152].x,P[9].y-P[152].y)*1.5)||fh;   // 헤어라인 비의존 세로 추정(눈썹~턱×1.5)
+  const midX=(P[133].x+P[362].x)/2;                    // 얼굴 정중선(양 눈 안쪽)
+  const leftW=midX-P[234].x, rightW=P[454].x-midX;     // 화면 좌/우 반폭
+  const earDiff=(rightW-leftW)/fw*100;                 // +면 화면오른쪽(본인 왼쪽) 옆면 더 보임
+  const earSide=Math.abs(earDiff)<3?'좌우 비슷':(earDiff>0?'본인 왼쪽 더 보임':'본인 오른쪽 더 보임');
+  const earSum=(Math.abs(leftW)+Math.abs(rightW))||1;
+  const pctOwnR=Math.round(Math.abs(leftW)/earSum*100);   // 화면 왼쪽 반폭 = 본인 오른쪽
+  const pctOwnL=100-pctOwnR;
+  const earHy=(P[234].y-P[454].y)/fh*100;                 // + = 화면왼쪽(본인 오른쪽) 귀가 아래
+  const earHside=Math.abs(earHy)<1?'좌우 비슷':(earHy>0?'본인 오른쪽이 낮음':'본인 왼쪽이 낮음');
+  const noseLen=(P[2].y-P[168].y)/fh*100;              // 미간~코밑 = 코 길이(세로)
+  const norm=a=>{ if(a>90)a-=180; if(a<-90)a+=180; return a; };
+  const _alL={x:(P[64].x+P[98].x)/2,y:(P[64].y+P[98].y)/2}, _alR={x:(P[294].x+P[327].x)/2,y:(P[294].y+P[327].y)/2}; const alaAng=norm(Math.atan2(_alR.y-_alL.y,_alR.x-_alL.x)*180/Math.PI);
+  // 콧볼 높은 쪽 = 콧대축(홍채중점→코끝) 대비 콧볼선이 예각인(축상 위쪽) 쪽
+  const _irisMid={x:(P[468].x+P[473].x)/2,y:(P[468].y+P[473].y)/2}; const _axL=Math.hypot(_irisMid.x-P[1].x,_irisMid.y-P[1].y)||1; const _axx=(_irisMid.x-P[1].x)/_axL,_axy=(_irisMid.y-P[1].y)/_axL; const _along=pt=>((pt.x-P[1].x)*_axx+(pt.y-P[1].y)*_axy); const alaHi=(_along(_alL)-_along(_alR))/fh*100; // +면 화면왼쪽(본인오른쪽) 콧볼이 축상 위=높음
+  const browL=P[46],browR=P[276], browAng=norm(Math.atan2(browR.y-browL.y,browR.x-browL.x)*180/Math.PI);
+  const mthL=P[61],mthR=P[291], mouthAng=norm(Math.atan2(mthR.y-mthL.y,mthR.x-mthL.x)*180/Math.PI);
+  eyeAng=norm(eyeAng);
+  const side=a=>Math.abs(a)<0.6?'수평':(a>0?'본인 왼쪽↓':'본인 오른쪽↓');  // 화면 오른쪽아래(+)=본인 왼쪽
+  const rows=[
+    ['눈선(홍채) 기울기', Math.abs(eyeAng).toFixed(1)+'° · '+side(eyeAng)],
+    ['콧볼 높은 쪽(콧대축 대비)', Math.abs(alaHi)<0.6?'좌우 비슷':((alaHi>0?'본인 오른쪽':'본인 왼쪽')+' 높음 · Δ'+Math.abs(alaHi).toFixed(1)+'%')],
+    ['눈썹 기울기', Math.abs(browAng).toFixed(1)+'° · '+side(browAng)],
+    ['입꼬리 기울기', Math.abs(mouthAng).toFixed(1)+'° · '+side(mouthAng)],
+    ['코끝 좌우 편차', (noseDev/fw*100).toFixed(1)+'% · '+(Math.abs(noseDev/fw)<0.005?'중앙':(noseDev>0?'본인 왼쪽':'본인 오른쪽'))],
+    ['얼굴 가로/세로', (fw/fhEst*100).toFixed(0)+'% · '+((fw/fhEst*100)<78?'세로형':((fw/fhEst*100)>90?'가로형':'보통'))],
+    ['코 길이(미간~코밑)', noseLen.toFixed(0)+'% · '+(noseLen<30?'짧은 편':(noseLen>37?'긴 편':'보통'))],
+    ['좌우 옆면(귀) 노출', '왼 '+pctOwnL+' : '+pctOwnR+' 오'],
+    ['좌우 귀 높낮이', earHside + (Math.abs(earHy)<1?'':' · Δ'+Math.abs(earHy).toFixed(1)+'%')]
+  ];
+  _an.front={eyeAng:Math.abs(eyeAng),ala:Math.abs(alaAng),earDiff,noseLen,faceRatio:fw/fh*100};
+  document.getElementById('metrics').innerHTML=rows.map(r=>'<div class="metric"><span class="mut">'+r[0]+'</span><b>'+r[1]+'</b></div>').join('')
+    +'<div class="sub" style="margin-top:8px">※ 촬영 각도가 흔들릴 수 있어 참고용이에요. 옆면 노출은 <b>회전·비대칭으로 한쪽 귀가 더 보이는 정도</b>이고, 귀 <b>돌출 각도</b>는 정면으론 못 재요(촉진). 정밀 좌우 판정은 관리사 앱에서.</div>';
+  // 소니드 페이셜 코드 (사진 추정) — 타입은 눈동자↔입꼬리 거리 좌우차로 추정
+  const dImgL=Math.hypot(P[468].x-P[61].x,P[468].y-P[61].y), dImgR=Math.hypot(P[473].x-P[291].x,P[473].y-P[291].y);
+  const relT=(dImgL-dImgR)/(((dImgL+dImgR)/2)||1);
+  const typeC=Math.abs(relT)<0.03?'?':(dImgL<dImgR?'A':'B');   // 화면왼쪽(본인 오른쪽) 짧음=압축=A
+  const noseC=Math.abs(noseDev/fw)<0.006?'중립':(noseDev>0?'왼':'오');
+  const eyeC=Math.abs(eyeAng)<0.6?'중립':(eyeAng>0?'오':'왼');
+  const alaC=Math.abs(alaAng)<0.6?'중립':(alaAng>0?'오':'왼');
+  _an.fcode={type:typeC,nose:noseC,eye:eyeC,ala:alaC};
+  updateFaceCode();
+}
+function updateFaceCode(){
+  const fcd=_an.fcode; if(!fcd) return; const fc=document.getElementById('faceCodeCard'); if(!fc) return; fc.style.display='block';
+  const clock=_an.clock||'7시', clockN=(''+clock).replace('시',''), measured=!!_an.clock;
+  const ch=s=>s==='중립'?'0':s;
+  const codeStr=(fcd.type==='?'?'A/B':fcd.type)+clockN+'-'+ch(fcd.nose)+'·'+ch(fcd.eye)+ch(fcd.ala);
+  fc.innerHTML='<div style="font-weight:800;color:var(--brandink);margin-bottom:2px">소니드 페이셜 코드</div>'+
+    '<div style="font-size:24px;font-weight:800;letter-spacing:.04em;margin:4px 0 10px">'+codeStr+'</div>'+
+    '<div class="metric"><span class="mut">타입</span><b>'+(fcd.type==='?'?'A or B':fcd.type+' 타입')+'</b></div>'+
+    '<div class="metric"><span class="mut">후두골 시간</span><b>'+clock+(measured?'':' (임시)')+'</b></div>'+
+    '<div class="metric"><span class="mut">코 방향</span><b>'+fcd.nose+'</b></div>'+
+    '<div class="metric"><span class="mut">눈 높은 쪽</span><b>'+fcd.eye+'</b></div>'+
+    '<div class="metric"><span class="mut">콧볼 높은 쪽</span><b>'+fcd.ala+'</b></div>'+
+    '<div class="sub" style="margin-top:8px">소니드는 고객님 얼굴을 <b>코드(예: A7-왼왼왼오)</b>로 구분하고, <b>촉진</b>을 통해 광대·마루 두께까지 더 상세히 확정해요. 얼굴 <b>전체 위치 분석</b>은 국내에서 가장 상세합니다.'+(measured?'':'<br>※ 후두골 시간은 <b>고개 들기</b> 촬영 후 확정돼요.')+'</div>';
+  try{ if(window.parent&&window.parent!==window) window.parent.postMessage({soneedFcode:{code:codeStr,type:fcd.type,clock:clock,nose:fcd.nose,eye:fcd.eye,ala:fcd.ala,measured:measured}},'*'); }catch(e){}   // 얼굴앱 코드 AI가 참고
+}
+
+/* ---- 라인 분석: 흰 얼굴 메시 + 눈·콧볼·눈썹·코 선 ---- */
+function drawLines(lm){
+  const cv=document.getElementById('lineCanvas'); const f=captured.front; if(!cv||!f) return;
+  const cw=cv.clientWidth||340; cv.width=cw*2; cv.height=Math.round(cw*2*4/3);
+  const W=cv.width,H=cv.height,c=cv.getContext('2d');
+  const img=new Image();
+  img.onload=function(){
+    const iw=img.naturalWidth, ih=img.naturalHeight;
+    let mnx=1,mny=1,mxx=0,mxy=0; for(let i=0;i<468;i++){mnx=Math.min(mnx,lm[i].x);mxx=Math.max(mxx,lm[i].x);mny=Math.min(mny,lm[i].y);mxy=Math.max(mxy,lm[i].y);}
+    const padX=0.28, padT=0.34, padB=0.18;
+    let sx=(mnx-(mxx-mnx)*padX)*iw, sy=(mny-(mxy-mny)*padT)*ih;
+    let sw=(mxx-mnx)*(1+padX*2)*iw, sh=(mxy-mny)*(1+padT+padB)*ih;
+    const carat=W/H;                       // 3:4 맞춰 크롭
+    if(sw/sh>carat){ const n=sw/carat; sy-=(n-sh)/2; sh=n; } else { const n=sh*carat; sx-=(n-sw)/2; sw=n; }
+    c.fillStyle='#000'; c.fillRect(0,0,W,H);
+    c.save(); c.translate(W,0); c.scale(-1,1); try{ c.drawImage(img, sx,sy,sw,sh, 0,0,W,H); }catch(e){} c.restore();   // 거울모드(셀카)
+    const X=i=>W-((lm[i].x*iw - sx)/sw*W), Y=i=>(lm[i].y*ih - sy)/sh*H;
+    const pt=i=>({x:X(i),y:Y(i)}), avg=(a,b)=>({x:(a.x+b.x)/2,y:(a.y+b.y)/2});
+    function segP(p0,p1,col){ c.save();c.strokeStyle=col;c.lineWidth=Math.max(3,W*0.006);c.lineCap='round';c.shadowColor='rgba(0,0,0,.55)';c.shadowBlur=4;c.beginPath();c.moveTo(p0.x,p0.y);c.lineTo(p1.x,p1.y);c.stroke();c.restore(); c.fillStyle=col;[p0,p1].forEach(q=>{c.beginPath();c.arc(q.x,q.y,Math.max(4,W*0.008),0,7);c.fill();}); }
+    function angP(p0,p1){ let a=Math.atan2(p1.y-p0.y,p1.x-p0.x)*180/Math.PI; if(a>90)a-=180; if(a<-90)a+=180; return a; }
+    const seg=(i,j,col)=>segP(pt(i),pt(j),col), ang=(i,j)=>angP(pt(i),pt(j));
+    const alaL=avg(pt(64),pt(98)), alaR=avg(pt(294),pt(327));   // 콧볼: 바깥알라+아래콧구멍 평균(더 아래)
+    seg(468,473,'#38b6ff'); segP(alaL,alaR,'#ff9a3d'); seg(46,276,'#c39bff'); seg(61,291,'#ff6b9d'); seg(168,1,'#3ddc8a');
+    const F=Math.round(H*0.03), items=[['눈선','#38b6ff',ang(468,473).toFixed(1)+'°'],['콧볼','#ff9a3d',angP(alaL,alaR).toFixed(1)+'°'],['눈썹','#c39bff',ang(46,276).toFixed(1)+'°'],['입술','#ff6b9d',ang(61,291).toFixed(1)+'°'],['코중심','#3ddc8a',(X(1)>X(168)?'→':'←')]];
+    c.fillStyle='rgba(0,0,0,.5)'; c.fillRect(0,0,Math.round(W*0.36),Math.round(F*1.7*items.length+F*0.7));
+    c.font='700 '+F+'px -apple-system,sans-serif'; c.textAlign='left'; c.textBaseline='middle';
+    let ly=Math.round(F*1.1);
+    items.forEach(t=>{ c.fillStyle=t[1]; c.fillRect(Math.round(W*0.03),ly-F*0.5,F,F); c.fillStyle='#fff'; c.fillText(t[0]+'  '+t[2],Math.round(W*0.03)+F*1.5,ly); ly+=Math.round(F*1.7); });
+  };
+  img.src=f.img;
+}
+
+/* ---- 얼굴 대칭 보기: 정면사진 미드라인 반사 ---- */
+let _symImg=null;
+window.goSym=function(){ const f=captured.front; if(!f){alert('정면 사진이 필요해요');return;} go('scSym'); _symImg=new Image(); _symImg.onload=function(){ showSym('orig'); }; _symImg.src=f.img; };
+window.showSym=function(mode){
+  const f=captured.front; if(!f||!_symImg||!_symImg.naturalWidth) return; const lm=f.lm, img=_symImg;
+  const cv=document.getElementById('symCanvas'); const cw=cv.clientWidth||340; cv.width=cw*2; cv.height=Math.round(cw*2*4/3);
+  const W=cv.width,H=cv.height, iw=img.naturalWidth, ih=img.naturalHeight;
+  const ax={x:lm[10].x*iw,y:lm[10].y*ih}, bx={x:lm[152].x*iw,y:lm[152].y*ih};
+  const mid={x:(ax.x+bx.x)/2,y:(ax.y+bx.y)/2};
+  const rot=Math.atan2(bx.x-ax.x, bx.y-ax.y), faceLen=Math.hypot(bx.x-ax.x,bx.y-ax.y)||1, scale=0.64*H/faceLen;
+  const rc=document.createElement('canvas'); rc.width=W; rc.height=H; const rx=rc.getContext('2d');
+  rx.fillStyle='#000'; rx.fillRect(0,0,W,H);
+  rx.save(); rx.translate(W/2,H*0.47); rx.rotate(-rot); rx.scale(scale,scale); rx.translate(-mid.x,-mid.y); rx.imageSmoothingQuality='high'; rx.drawImage(img,0,0,iw,ih); rx.restore();
+  const c=cv.getContext('2d'); c.fillStyle='#000'; c.fillRect(0,0,W,H);
+  function comp(m,outc){ const cc=outc.getContext('2d'); cc.fillStyle='#000'; cc.fillRect(0,0,W,H);
+    function mir(){ cc.save(); cc.translate(W,0); cc.scale(-1,1); cc.drawImage(rc,0,0); cc.restore(); }
+    if(m==='orig') cc.drawImage(rc,0,0);
+    else if(m==='left'){ cc.drawImage(rc,0,0,W/2,H,0,0,W/2,H); cc.save();cc.beginPath();cc.rect(W/2,0,W/2,H);cc.clip();mir();cc.restore(); }
+    else if(m==='right'){ cc.drawImage(rc,W/2,0,W/2,H,W/2,0,W/2,H); cc.save();cc.beginPath();cc.rect(0,0,W/2,H);cc.clip();mir();cc.restore(); } }
+  if(mode==='bal'){ c.drawImage(rc,0,0); c.globalAlpha=0.5; c.save(); c.translate(W,0); c.scale(-1,1); c.drawImage(rc,0,0); c.restore(); c.globalAlpha=1; }   // 원본 + 좌우반전 50% = 양쪽 평균 대칭얼굴
+  else comp(mode,cv);
+  const lab={left:'왼쪽 얼굴로 대칭',orig:'원래 얼굴',right:'오른쪽 얼굴로 대칭',bal:'균형(중간) 대칭'}[mode];
+  c.fillStyle='rgba(0,0,0,.5)'; c.fillRect(0,0,W,Math.round(H*0.062)); c.fillStyle='#fff'; c.font='700 '+Math.round(H*0.032)+'px -apple-system,sans-serif'; c.textAlign='left'; c.textBaseline='middle'; c.fillText(lab,Math.round(W*0.03),Math.round(H*0.032));
+  ['left','right','orig','bal'].forEach(m=>{ const b=document.getElementById('symBtn_'+m); if(b)b.className='btn '+(m===mode?'primary':'ghost')+(m==='left'||m==='right'||m==='orig'||m==='bal'?'':''); if(b)b.style.minWidth='44%'; });
+};
+
+/* ---- 마법의 거울: 실시간 반반 대칭 ---- */
+let mirStream=null, mirrorOn=false, mirrorSide='left', _vc=null;
+function mirSideUI(){ ['normal','flip','left','right'].forEach(m=>{ const b=document.getElementById('mirBtn_'+m); if(b){ b.className='btn '+(mirrorSide===m?'primary':'ghost'); b.style.minWidth='44%'; } }); }
+window.mirSide=function(sd){ mirrorSide=sd; mirSideUI(); };
+window.stopMirror=function(){ mirrorOn=false; if(mirStream){ mirStream.getTracks().forEach(t=>t.stop()); mirStream=null; } };
+window.goMirror=async function(){
+  go('scMirror'); mirrorSide='left'; mirSideUI();
+  try{
+    mirStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1280},height:{ideal:960}},audio:false});
+    const v=document.getElementById('mirVideo'); v.srcObject=mirStream; await v.play();
+    mirrorOn=true; mirrorLoop();
+  }catch(e){ alert('카메라를 열 수 없어요: '+(e.message||e)); }
+};
+function mirrorLoop(){
+  if(!mirrorOn) return;
+  const v=document.getElementById('mirVideo'), mc=document.getElementById('mirCanvas');
+  if(v && mc && v.readyState>=2){
+    const cw=mc.clientWidth||340; if(mc.width!==cw*2){ mc.width=cw*2; mc.height=Math.round(cw*2*4/3); }
+    const W=mc.width,H=mc.height;
+    if(!_vc)_vc=document.createElement('canvas'); if(_vc.width!==W){ _vc.width=W; _vc.height=H; }
+    const vcx=_vc.getContext('2d'), vw=v.videoWidth,vh=v.videoHeight;
+    if(vw&&vh){
+      const ds=Math.max(W/vw,H/vh), dw=vw*ds, dh=vh*ds, ox=(W-dw)/2, oy=(H-dh)/2;
+      vcx.save(); vcx.translate(W,0); vcx.scale(-1,1); vcx.drawImage(v, ox,oy,dw,dh); vcx.restore();   // 셀피 거울 + cover
+      const c=mc.getContext('2d'); c.clearRect(0,0,W,H);
+      function mir(){ c.save(); c.translate(W,0); c.scale(-1,1); c.drawImage(_vc,0,0); c.restore(); }
+      if(mirrorSide==='normal'){ c.drawImage(v, ox,oy,dw,dh); }
+      else if(mirrorSide==='flip'){ c.drawImage(_vc,0,0); }
+      else if(mirrorSide==='left'){ c.drawImage(_vc,0,0,W/2,H,0,0,W/2,H); c.save();c.beginPath();c.rect(W/2,0,W/2,H);c.clip();mir();c.restore(); }
+      else { c.drawImage(_vc,W/2,0,W/2,H,W/2,0,W/2,H); c.save();c.beginPath();c.rect(0,0,W/2,H);c.clip();mir();c.restore(); }
+      if(mirrorSide==='left'||mirrorSide==='right'){ c.strokeStyle='rgba(255,255,255,.22)'; c.lineWidth=1; c.beginPath(); c.moveTo(W/2,0); c.lineTo(W/2,H); c.stroke(); }
+    }
+  }
+  requestAnimationFrame(mirrorLoop);
+}
+
+/* ---- 앱 3D 시뮬(리세팅가이드) 임베드: 촬영 사진을 test-preview.html로 넘김 ---- */
+window.openSim=function(){
+  const f=captured.front; if(!f){alert('정면 촬영이 필요해요');return;}
+  try{localStorage.setItem('sc_simphoto',f.img);}catch(e){}
+  const m=document.getElementById('simModal'), fr=document.getElementById('simFrame');
+  m.style.display='flex';
+  fr.onload=function(){ try{ fr.contentWindow.postMessage({scPhoto:f.img},'*'); }catch(e){} };
+  fr.src='test-preview.html?ts='+Date.now();
+};
+window.closeSim=function(){ const m=document.getElementById('simModal'), fr=document.getElementById('simFrame'); if(m)m.style.display='none'; if(fr)fr.src='about:blank'; };
+
+
+/* ================== 설문 (박람회 부스 · Supabase 저장) ================== */
+const SB_URL="https://xzclowgorxhcbsfrrbop.supabase.co";
+const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh6Y2xvd2dvcnhoY2JzZnJyYm9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2MTg4MzIsImV4cCI6MjA5OTE5NDgzMn0.4BuAYPxlHOd3HwbKAkhcccNJAVjz6u9brnE4j9BWE6s";
+const SB_H={ apikey:SB_KEY, Authorization:"Bearer "+SB_KEY, "Content-Type":"application/json" };
+const HISTS=[
+  {k:"쌍커풀", loc:false}, {k:"코성형", loc:false}, {k:"필러", loc:true, ph:"위치 (예: 이마·팔자)"},
+  {k:"보톡스", loc:true, ph:"위치 (예: 사각턱·이마)"}, {k:"양악수술", loc:false}, {k:"윤곽수술", loc:false},
+  {k:"기타 성형/시술", loc:true, ph:"내용"}
+];
+const WORRIES=["얼굴 비대칭","볼 패임","광대 볼륨","이마 볼륨","주걱턱","무턱","사각턱","앞트임/뒤트임(눈)","기타"];
+(function initSurvey(){
+  const hb=document.getElementById('histbox');
+  if(hb){ hb.innerHTML=HISTS.map(x=>'<div class="hist" data-h="'+x.k+'" data-ph="'+(x.ph||'위치/내용')+'"><div class="row1"><label class="chk" style="display:flex;align-items:center;cursor:pointer"><input type="checkbox" style="width:18px;height:18px;accent-color:var(--brand)" onchange="onHistCheck(this)"></label><span class="nm">'+x.k+'</span></div><div class="extra"><div class="hrows"></div><button type="button" class="chip hadd" onclick="addHistRow(this.closest(\'.hist\'))">+ 추가</button></div></div>').join(''); }
+  const wc=document.getElementById('worrychips');
+  if(wc){ wc.innerHTML=WORRIES.map(w=>'<div class="chip" onclick="onWorryChip(this)">'+w+'</div>').join(''); }
+  document.querySelectorAll('.seg').forEach(seg=>{ seg.querySelectorAll('.s').forEach(s=>{ s.onclick=()=>{ seg.querySelectorAll('.s').forEach(x=>x.classList.remove('on')); s.classList.add('on'); if(seg.dataset.seg==='extract') updateExtractDetail(); if(seg.dataset.seg==='veneer') updateVeneerDetail(); }; }); });
+  const ec=document.getElementById('extractChips'); if(ec){ ec.innerHTML=["상악 우","상악 좌","하악 우","하악 좌","사랑니"].map(w=>'<div class="chip" onclick="this.classList.toggle(\'on\')">'+w+'</div>').join(''); }
+  const vc=document.getElementById('veneerChips'); if(vc){ vc.innerHTML=["윗 앞니","윗 어금니","아래 앞니","아래 어금니"].map(w=>'<div class="chip" onclick="this.classList.toggle(\'on\')">'+w+'</div>').join(''); }
+  updateExtractDetail(); updateVeneerDetail();
+})();
+function updateExtractDetail(){ const d=document.getElementById('extractDetail'); if(d) d.style.display=(segVal('extract')==='유')?'block':'none'; }
+function updateVeneerDetail(){ const d=document.getElementById('veneerDetail'); if(d) d.style.display=(segVal('veneer')&&segVal('veneer')!=='무')?'block':'none'; }
+window.onWorryChip=function(el){ el.classList.toggle('on'); if(el.textContent==='기타'){ const inp=document.getElementById('s_worry_etc'); if(inp) inp.style.display=el.classList.contains('on')?'block':'none'; } };
+function histRowHTML(ph){ return '<div class="hrow" style="display:flex;gap:8px;width:100%;margin-bottom:8px"><input type="text" class="loc txt" style="margin-top:0;flex:2" placeholder="'+ph+'"><input type="text" class="when txt" style="margin-top:0;flex:1" placeholder="시기"><button type="button" onclick="this.closest(\'.hrow\').remove()" style="flex:0 0 auto;width:40px;border:1px solid var(--line);background:#171317;color:var(--mut);border-radius:9px;cursor:pointer">✕</button></div>'; }
+window.addHistRow=function(hist){ const ph=hist.getAttribute('data-ph')||'위치/내용'; const rows=hist.querySelector('.hrows'); if(rows) rows.insertAdjacentHTML('beforeend',histRowHTML(ph)); };
+window.onHistCheck=function(cb){ const hist=cb.closest('.hist'); hist.classList.toggle('on',cb.checked); if(cb.checked && !hist.querySelector('.hrow')) addHistRow(hist); };
+function segVal(name){ const seg=document.querySelector('[data-seg="'+name+'"]'); if(!seg)return''; const on=seg.querySelector('.s.on'); return on?on.dataset.v:''; }
+function uid(){ return "expo"+Date.now().toString(36)+Math.floor(Math.random()*1e4).toString(36); }
+window.submitSurvey=async function(){
+  const name=(document.getElementById('s_name').value||'').trim();
+  if(!name){ alert('성함을 입력해주세요'); return; }
+  const hist=[];
+  document.querySelectorAll('.hist.on').forEach(h=>{ const rows=h.querySelectorAll('.hrow'); if(!rows.length){ hist.push({항목:h.dataset.h,위치:'',시기:''}); return; } rows.forEach(r=>{ hist.push({항목:h.dataset.h, 위치:(r.querySelector('.loc')?r.querySelector('.loc').value.trim():''), 시기:(r.querySelector('.when')?r.querySelector('.when').value.trim():'')}); }); });
+  const worries=[]; document.querySelectorAll('#worrychips .chip.on').forEach(c=>worries.push(c.textContent));
+  const extractPos=[]; if(segVal('extract')==='유'){ document.querySelectorAll('#extractChips .chip.on').forEach(c=>extractPos.push(c.textContent)); }
+  const veneerPos=[]; if(segVal('veneer')&&segVal('veneer')!=='무'){ document.querySelectorAll('#veneerChips .chip.on').forEach(c=>veneerPos.push(c.textContent)); }
+  const rec={ id:uid(), name:name, phone:(document.getElementById('s_phone').value||'').trim(),
+    history:hist, ortho:segVal('ortho'), extract:segVal('extract'), extract_pos:extractPos,
+    veneer:segVal('veneer'), veneer_when:(document.getElementById('s_veneer_when').value||'').trim(),
+    veneer_cnt:(document.getElementById('s_veneer_cnt').value||'').trim(), veneer_pos:veneerPos,
+    worries:worries, worry_etc:(document.getElementById('s_worry_etc').value||'').trim(),
+    lens:segVal('lens'), lens_when:(document.getElementById('s_lens_when').value||'').trim(),
+    sleep_side:segVal('sleep'), chew_side:segVal('chew'),
+    memo:(document.getElementById('s_memo').value||'').trim(), at:new Date().toISOString() };
+  window._survey=rec;
+  const cn=document.getElementById('cName'); if(cn) cn.value=name;   // 동의 화면에 성함 자동 채움
+  go('scConsent');   // ★ 즉시 다음으로 (네트워크 안 기다림)
+  try{ fetch(SB_URL+"/rest/v1/gongu_reservations",{method:"POST",headers:Object.assign({Prefer:"return=minimal"},SB_H),
+      body:JSON.stringify([{id:rec.id, branch:"__expo", rec:rec, updated_at:rec.at}])}).catch(function(){}); }catch(e){}   // 백그라운드 저장(실패해도 진행)
+};
+
+/* ================== 관리 후 주의사항 (설문 습관 강조) ================== */
+window.goCare=function(){
+  go('scCare');
+  const s=window._survey||{}; const tips=[];
+  if(s.sleep_side==='왼쪽'||s.sleep_side==='오른쪽') tips.push('주로 <b>'+s.sleep_side+' 옆으로 주무시는</b> 자세 (반대쪽·천장 보기 권장)');
+  if(s.sleep_side==='엎드림-왼볼'||s.sleep_side==='엎드림-오른볼'){ const cheek=s.sleep_side.split('-')[1]; tips.push('주로 <b>엎드려('+cheek+') 주무시는</b> 자세 (얼굴 눌림 주의 — 천장 보기 권장)'); }
+  if(s.chew_side==='왼쪽'||s.chew_side==='오른쪽') tips.push('주로 <b>'+s.chew_side+'으로 씹는</b> 습관 (양쪽 고루 씹기 권장)');
+  const box=document.getElementById('careTips');
+  if(box){ if(tips.length){ box.style.display='block'; box.innerHTML='<div style="font-weight:800;margin-bottom:8px;color:var(--brandink)">특히 아래 습관은 더 주의해 주세요</div><div class="sub" style="line-height:1.7">· '+tips.join('<br>· ')+'</div>'; } else { box.style.display='none'; box.innerHTML=''; } }
+};
+
+window.applyConsult=async function(){
+  const s=window._survey; const btn=document.getElementById('consultBtn'), info=document.getElementById('consultInfo');
+  if(!s||!s.id){ alert('설문 정보가 없어요. 처음부터 진행해 주세요.'); return; }
+  if(!s.phone){ const ph=prompt('연락처를 입력해 주세요 (010-0000-0000)'); if(!ph) return; s.phone=ph.trim(); }
+  btn.disabled=true; btn.textContent='신청 중…';
+  const rec=Object.assign({}, s, {want_consult:true, consult_at:new Date().toISOString()});
+  try{
+    await fetch(SB_URL+"/rest/v1/gongu_reservations?id=eq."+encodeURIComponent(s.id),{method:'PATCH',headers:Object.assign({Prefer:'return=minimal'},SB_H),body:JSON.stringify({rec:rec,updated_at:rec.consult_at})});
+    window._survey=rec; btn.textContent='상담 신청 완료'; if(info) info.textContent='담당 관리사가 곧 연락드릴게요.';
+  }catch(e){ btn.disabled=false; btn.textContent='상담 신청하기'; if(info) info.textContent='전송 오류 — 다시 시도해 주세요'; }
+};
+
+/* ================== 맞춤 시술 제안 (참고용) ================== */
+function collectNeeds(){
+  const s=window._survey||{}, a=_an||{}, r=_rp||{};
+  const worries=(s.worries||[]).concat(s.worry_etc?['기타:'+s.worry_etc]:[]);
+  const nm={fo:'이마길이',lo:'하관길이',mid:'중안부',w:'얼굴폭',m:'좌우여백',j:'전방경사',e:'눈크기'};
+  const adj=[]; ['fo','lo','mid','w','m','j','e'].forEach(k=>{ if(r[k]) adj.push(nm[k]+' '+(r[k]>0?'+':'')+Math.round(r[k]*100)); });
+  const nose=(typeof _sideWarp!=='undefined'&&(_sideWarp.nose||_sideWarp.brow||_sideWarp.chin))?('코'+(_sideWarp.nose||0)+'/이마'+(_sideWarp.brow||0)+'/턱'+(_sideWarp.chin||0)):'';
+  const code=(a.fcode?((a.fcode.type||'?')+((''+(a.clock||'7')).replace('시',''))+'-'+[a.fcode.nose,a.fcode.eye,a.fcode.ala].map(x=>x==='중립'?'0':x).join('')):'');
+  const obj={worries:worries,adj:adj,nose:nose,code:code,side:a.side||null,pose:a.pose||null,thirds:a.thirds||null,memo:(s.memo||''),name:(s.name||''),phone:(s.phone||''),at:new Date().toISOString()};
+  let sum='';
+  if(worries.length) sum+='고민: '+worries.join(', ')+' · ';
+  if(code) sum+='코드 '+code+' · ';
+  if(adj.length) sum+='니즈조정 '+adj.join(', ')+' · ';
+  if(nose) sum+=nose+' · ';
+  if(a.side) sum+='콧대 '+Math.round(a.side.nasofrontal)+'°·비순 '+Math.round(a.side.nasolabial)+'° · ';
+  if(a.pose){ if(a.pose.shoulderRatio) sum+='어깨/머리 '+a.pose.shoulderRatio.toFixed(2)+'배 · '; if(a.pose.turtleAngle) sum+='거북목 '+Math.round(a.pose.turtleAngle)+'° · '; }
+  obj.summary=sum.replace(/ · $/,''); return obj;
+}
+window.goRec=function(){ go('scRec'); buildRec(); try{ if(window.parent&&window.parent!==window) window.parent.postMessage({soneedNeeds:collectNeeds()},'*'); }catch(e){} };
+function buildRec(){
+  const a=_an||{}, s=a.side||{}, f=a.front||{}, th=a.thirds||[], fi=a.fifths||[], pz=a.pose||{}, sv=window._survey||{}, w=sv.worries||[];
+  const obs=[]; const O=t=>obs.push(t);
+  if(f.faceRatio!=null){ if(f.faceRatio>90) O('얼굴형이 <b>가로형(넓은 편)</b>이에요'); else if(f.faceRatio<78) O('얼굴형이 <b>세로형(갸름한 편)</b>이에요'); }
+  if(fi[2]!=null){ if(fi[2]>22) O('<b>미간이 넓은 편</b>이에요'); else if(fi[2]<17) O('<b>미간이 좁은 편</b>이에요'); }
+  if(fi[1]!=null&&fi[3]!=null){ const eye=(fi[1]+fi[3])/2; if(eye<19) O('<b>눈 폭이 작은 편</b>이에요'); else if(eye>24) O('<b>눈이 큰 편</b>이에요'); }
+  if(fi[0]!=null&&fi[4]!=null&&((fi[0]+fi[4])/2>21)) O('<b>바깥 여백이 넓은 편</b>이에요');
+  if(f.noseLen!=null){ if(f.noseLen<30) O('<b>코 길이가 짧은 편</b>이에요'); else if(f.noseLen>37) O('<b>코 길이가 긴 편</b>이에요'); }
+  if(th[1]!=null&&th[1]>42) O('<b>중안부가 긴 편</b>이에요');
+  if(th[2]!=null&&th[2]>33) O('<b>하관이 긴 편</b>이에요');
+  if(s.nasofrontal!=null){ if(s.nasofrontal>140) O('<b>콧대가 낮은 편</b>이에요'); else if(s.nasofrontal<120) O('<b>콧대가 높은 편</b>이에요'); }
+  if(s.tipAng!=null){ if(s.tipAng<95) O('<b>코끝이 들린/뾰족한 편</b>이에요'); else if(s.tipAng>120) O('<b>코끝이 처진/뭉툭한 편</b>이에요'); }
+  if(s.nasolabial!=null&&s.nasolabial<90) O('<b>비순각이 작은 편</b>(코끝 아래로)이에요');
+  if(s.eLip!=null){ if(s.eLip>7) O('측면 E-line 기준 <b>턱끝이 뒤로(무턱 경향)</b>이에요'); else if(s.eLip<-4) O('측면에서 <b>턱끝이 앞으로 나온 편</b>이에요'); }
+  if(s.convexity!=null&&s.convexity<160) O('옆모습이 <b>볼록(돌출)한 편</b>이에요');
+  if((f.eyeAng!=null&&f.eyeAng>2)||(f.earDiff!=null&&Math.abs(f.earDiff)>5)||w.includes('얼굴 비대칭')) O('얼굴 <b>좌우 비대칭</b>이 있는 편이에요');
+  if(pz.shoulderRatio!=null&&pz.shoulderRatio<2.8) O('머리 대비 <b>어깨가 좁은 편(어좁이)</b>이에요');
+  if(pz.turtleAngle!=null&&pz.turtleAngle>=22) O('<b>거북목 경향</b>이 있어요');
+  if(!obs.length) O('전반적으로 <b>편차가 적은 균형형</b>이에요');
+  const extra=[];
+  if(w.length||sv.worry_etc) extra.push('고민 부위: '+w.concat(sv.worry_etc?['기타']:[]).join(', '));
+  const hb=[]; if(sv.sleep_side&&sv.sleep_side!=='모름') hb.push('수면 '+sv.sleep_side); if(sv.chew_side&&sv.chew_side!=='모름') hb.push('씹기 '+sv.chew_side);
+  if(hb.length) extra.push('습관: '+hb.join(' · '));
+  const RES=[];
+  if(s.nasofrontal!=null&&s.nasofrontal>140) RES.push('코 주변 라인 정리로 <b>인상</b> 개선 기대 (코뼈 변화는 아님)');
+  if(s.eLip!=null&&s.eLip>7) RES.push('하관·턱 라인 정리로 <b>옆선 인상</b> 개선 기대');
+  if((f.faceRatio!=null&&f.faceRatio>90)||w.includes('사각턱')) RES.push('하관 슬림 리세팅으로 <b>갸름한 인상</b> 기대');
+  if(w.includes('광대 볼륨')||(s.convexity!=null&&s.convexity<160)) RES.push('광대 인·다운 리세팅으로 <b>부드러운 라인</b> 기대');
+  if((f.eyeAng!=null&&f.eyeAng>2)||(f.earDiff!=null&&Math.abs(f.earDiff)>5)||w.includes('얼굴 비대칭')) RES.push('★ 페이스리세팅 핵심 — <b>좌우 균형(비대칭)</b> 개선 기대');
+  if(pz.turtleAngle!=null&&pz.turtleAngle>=22) RES.push('자세·목 라인 관리로 <b>거북목</b> 완화 기대');
+  if(!RES.length) RES.push('현재 <b>라인 유지·미세 개선</b> 기대');
+  const D=[]; const rp=_rp||{}, sw=(typeof _sideWarp!=='undefined')?_sideWarp:{};
+  if(rp.mid) D.push('중안부가 더 <b>'+(rp.mid<0?'짧아':'길어')+'</b>지길 원해요');
+  if(rp.lo) D.push('하관이 더 <b>'+(rp.lo>0?'길어':'짧아')+'</b>지길 원해요');
+  if(rp.w) D.push('얼굴 폭이 더 <b>'+(rp.w<0?'갸름해':'넓어')+'</b>지길 원해요');
+  if(rp.m) D.push('바깥 여백이 더 <b>'+(rp.m<0?'좁아':'넓어')+'</b>지길 원해요');
+  if(rp.j) D.push('얼굴이 더 <b>'+(rp.j>0?'길어(전방경사)':'짧아')+'</b>지길 원해요');
+  if(rp.e) D.push('눈이 더 <b>'+(rp.e>0?'커':'작아')+'</b>지길 원해요');
+  if(sw.nose) D.push('코가 더 <b>'+(sw.nose>0?'높아':'낮아')+'</b>지길 원해요');
+  if(sw.brow) D.push('이마가 더 <b>'+(sw.brow>0?'앞으로 나오':'들어가')+'</b>길 원해요');
+  if(sw.chin) D.push('턱이 더 <b>'+(sw.chin>0?'앞으로 나오':'들어가')+'</b>길 원해요');
+  const HB=[];
+  if(sv.sleep_side==='왼쪽'||sv.sleep_side==='오른쪽') HB.push('<b>'+sv.sleep_side+' 옆으로 자는 습관</b>은 얼굴 눌림·좌우 비대칭을 키워요 — <b>천장을 보고</b> 주무시길 권장해요');
+  if(sv.sleep_side==='엎드림-왼볼'||sv.sleep_side==='엎드림-오른볼') HB.push('<b>엎드려 자는 습관</b>은 얼굴 눌림이 커요 — <b>천장을 보고</b> 주무시길 권장해요');
+  if(sv.chew_side==='왼쪽'||sv.chew_side==='오른쪽') HB.push('<b>'+sv.chew_side+'으로만 씹는 습관</b>은 좌우 비대칭을 키워요 — <b>양쪽 고루</b> 씹기를 권장해요');
+  const line=arr=>arr.map(t=>'<div style="padding:9px 2px;border-bottom:1px solid var(--line);font-size:13.5px;line-height:1.5">· '+t+'</div>').join('');
+  const resHtml=RES.map(t=>'<div style="padding:9px 2px;border-bottom:1px solid var(--line);font-size:13.5px;line-height:1.5"><span class="mut">페이스리세팅 · </span>'+t+'</div>').join('');
+  document.getElementById('recList').innerHTML=
+    '<div class="sub" style="margin-bottom:8px">아래는 <b>미용 목적의 참고 측정</b>이에요 (의료 진단 아님 · 참고용). <b>소니드 페이스리세팅</b>으로 기대할 수 있는 부분을 정리했어요.</div>'+
+    (D.length?('<div class="flabel" style="margin-top:6px;color:var(--brandink)">내가 원하는 얼굴 (니즈)</div>'+line(D)):'')+
+    '<div class="flabel" style="margin-top:14px">측정 관찰</div>'+line(obs)+
+    (extra.length?('<div class="flabel" style="margin-top:14px">설문 (고민·습관)</div>'+line(extra)):'')+
+    (HB.length?('<div class="flabel" style="margin-top:14px;color:#d4674a">습관 주의 (이런 습관은 피해주세요)</div>'+line(HB)):'')+
+    '<div class="flabel" style="margin-top:14px">페이스리세팅 기대</div>'+resHtml+
+    '<div class="sub" style="margin-top:10px">※ 골격 자체 변화가 필요한 경우는 관리 범위를 넘어설 수 있어요.</div>';
+}
+
+/* ================== 얼굴 비율 분석 (세로 3등분 · 가로 5등분) ================== */
+function ang3(a,b,c){ const v1=Math.atan2(a.y-b.y,a.x-b.x), v2=Math.atan2(c.y-b.y,c.x-b.x); let d=Math.abs((v1-v2)*180/Math.PI); if(d>180)d=360-d; return d; }
+window.goProp=function(){
+  const f=captured.front; if(!f){ alert('정면 촬영이 필요해요'); return; }
+  go('scProp'); renderProp(f);
+};
+let _propBase=null,_idealRef=null,_idealTried=false,_idealLm=null,_idealPromise=null;
+const _idealFallback={ys:{top:0.13,brow:0.31,sub:0.53,chin:0.68},xs:[0.26,0.34,0.44,0.56,0.66,0.72],thirds:[25,41,34],fifths:[17,22,26,22,13]};
+function propInterp(pct,ref,kind){ const d=pct-ref; if(Math.abs(d)<3) return ''; if(kind==='eye') return d>0?' · <b>큰 편</b>':' · <b>작은 편</b>'; if(kind==='len') return d>0?' · <b>긴 편</b>':' · <b>짧은 편</b>'; return d>0?' · <b>넓은 편</b>':' · <b>좁은 편</b>'; }
+async function _getFaceImgLm(){ if(_idealLm)return _idealLm; const vision=await import(V); const fs=await vision.FilesetResolver.forVisionTasks(V+'/wasm'); _idealLm=await vision.FaceLandmarker.createFromOptions(fs,{baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',delegate:'CPU'},runningMode:'IMAGE',numFaces:1,minFaceDetectionConfidence:0.3}); return _idealLm; }
+function measureIdealRatios(){ return new Promise(function(res){ const im=new Image(); im.onload=async function(){ try{ await getLandmarker(); let r=null; try{ r=landmarker.detectForVideo(im, performance.now()); }catch(e){} const p=r&&r.faceLandmarks&&r.faceLandmarks[0]; if(!p){res(null);return;} const topY=p[10].y,browY=(p[105].y+p[334].y)/2,subY=p[0].y,chinY=p[152].y,tot=(chinY-topY)||1; const thirds=[(browY-topY)/tot*100,(subY-browY)/tot*100,(chinY-subY)/tot*100]; const xs=[234,33,133,362,263,454].map(i=>p[i].x).sort((a,b)=>a-b); const span=(xs[5]-xs[0])||1; const fifths=[]; for(let i=0;i<5;i++)fifths.push((xs[i+1]-xs[i])/span*100); res({thirds,fifths,ys:{top:topY,brow:browY,sub:subY,chin:chinY},xs:xs}); }catch(e){res(null);} }; im.onerror=function(){res(null);}; im.src='ideal.jpg'; }); }
+function propBar(label,pct,ideal){ const off=pct-ideal, ao=Math.abs(off); const w=Math.min(100,pct*2), mk=Math.min(100,ideal*2); const col=ao<3?'#6bd3a8':(ao<7?'#dda45a':'#e07070'); const sign=off>0?'+':''; return '<div style="padding:11px 2px;border-bottom:1px solid var(--line)"><div style="display:flex;justify-content:space-between;font-size:14px"><span class="mut">'+label+'</span><b>'+pct.toFixed(0)+'% <span style="color:'+col+'">('+sign+off.toFixed(0)+'%)</span> <span class="mut" style="font-weight:400">/ 참고 '+ideal+'%</span></b></div><div style="position:relative;height:12px;border-radius:6px;background:#26232a;margin-top:6px;overflow:hidden"><i style="display:block;height:100%;width:'+w+'%;background:'+col+'"></i><span style="position:absolute;left:'+mk+'%;top:0;bottom:0;width:2px;background:#fff;transform:translateX(-1px)"></span></div></div>'; }
+function renderProp(f){
+  const lm=f.lm;
+  const idset=[234,33,133,362,263,454].map(i=>lm[i].x).sort((a,b)=>a-b);
+  const span=(idset[5]-idset[0])||1;
+  _propBase={ f, top0:lm[10].y, topY:lm[10].y, brow:(lm[105].y+lm[334].y)/2, sub:lm[0].y, chin:lm[152].y, idset, span };
+  // 가로 5등분(이마 상단과 무관) — 한 번만
+  const seg=[]; for(let i=0;i<5;i++) seg.push((idset[i+1]-idset[i])/span*100);
+  const fNames=['바깥여백 오른쪽','눈폭 오른쪽','미간','눈폭 왼쪽','바깥여백 왼쪽'];
+  const FID=(_idealRef||_idealFallback).fifths;
+  const fKind=['gap','eye','gap','eye','gap'];
+  document.getElementById('propFifths').innerHTML=seg.map((p,i)=>propBar(fNames[i]+propInterp(p,FID[i],fKind[i]),p,FID[i])).join('')
+    +'<div class="sub" style="margin-top:8px"><b style="color:#fff">흰 선</b> = '+(_idealRef?'예시 얼굴 실측':'참고')+' 비율(1:1:1 아님) · <b style="color:#6bd3a8">막대</b> = 현재 나. 여백은 좁고 눈은 클수록 또렷한 인상이에요.</div>';
+  _an.fifths=seg;
+  const sl=document.getElementById('foreheadSlider'); if(sl) sl.value=50;
+  renderPropThirds();
+  if(!_idealRef&&!_idealPromise){ _idealPromise=measureIdealRatios(); _idealPromise.then(function(r){ _idealRef=r; if(_propBase) renderProp(_propBase.f); }); }
+}
+function renderPropThirds(){
+  const b=_propBase; if(!b) return;
+  const topY=b.topY, browY=b.brow, subY=b.sub, chinY=b.chin;
+  const u1=browY-topY, u2=subY-browY, u3=chinY-subY, tot=(chinY-topY)||1;
+  const t=[u1/tot*100,u2/tot*100,u3/tot*100];
+  const tNames=['이마 (이마상단~눈썹)','중안부 (눈썹~입술상단)','하안부 (입술상단~턱끝)'];
+  const TID=(_idealRef||_idealFallback).thirds;
+  document.getElementById('propThirds').innerHTML=t.map((p,i)=>propBar(tNames[i]+propInterp(p,TID[i],'len'),p,TID[i])).join('')
+    +'<div class="sub" style="margin-top:8px">※ 흰 선 = '+(_idealRef?'<b>예시 얼굴 실측</b> 비율':'참고 비율')+'. <b>이마 상단(헤어라인)</b>은 위 슬라이더로 직접 맞추세요 (AI 자동값 부정확).</div>';
+  _an.thirds=t;
+  drawPropCanvas(b.f,{topY,browY,subY,chinY},b.idset,b.span);
+  prepareRatioSim(b.f,{topY,browY,subY,chinY},b.idset);
+}
+window.adjForehead=function(v){ const b=_propBase; if(!b) return; b.topY=Math.max(0, b.top0 + (v-50)/50*0.42); renderPropThirds(); };
+function drawPropCanvas(f,ys,xs,span){
+  const cv=document.getElementById('propCanvas'); const cw=cv.clientWidth||360; cv.width=cw*2; cv.height=Math.round(cw*2*3/4);
+  const W=cv.width,H=cv.height,c=cv.getContext('2d'); c.fillStyle='#0c0b0d'; c.fillRect(0,0,W,H);
+  const halfW=W/2;
+  // --- 좌: 참고 비율 (실사 ideal.jpg 우선, 없으면 일러스트) ---
+  (function(){ const im=new Image(); im.onload=async function(){ if(!_idealRef){ if(!_idealPromise)_idealPromise=measureIdealRatios(); try{ _idealRef=await _idealPromise; }catch(e){} } drawIdealPhoto(c,im,0,0,halfW,H); }; im.onerror=function(){ drawIdealFace(c,0,0,halfW,H); }; im.src='ideal.jpg'; })();
+  // --- 우: 현재 나 (얼굴 확대 크롭 + 실제 선) ---
+  const img=new Image();
+  img.onload=function(){
+    const iw=img.naturalWidth, ih=img.naturalHeight, lm=f.lm;
+    let mnx=1,mny=1,mxx=0,mxy=0; for(let i=0;i<468;i++){ mnx=Math.min(mnx,lm[i].x);mxx=Math.max(mxx,lm[i].x);mny=Math.min(mny,lm[i].y);mxy=Math.max(mxy,lm[i].y); }
+    const padX=0.22,padT=0.42,padB=0.20;   // 이마 보이되 얼굴이 아래로 처지지 않게 균형
+    let sx=(mnx-(mxx-mnx)*padX)*iw, sy=(mny-(mxy-mny)*padT)*ih, sw=(mxx-mnx)*(1+padX*2)*iw, sh=(mxy-mny)*(1+padT+padB)*ih;
+    const boxW=halfW*0.88, boxH=H*0.80, x0=halfW+(halfW-boxW)/2, dy=(H-boxH)/2+H*0.03, carat=boxW/boxH;
+    if(sw/sh>carat){ const n=sw/carat; sy-=(n-sh)/2; sh=n; } else { const n=sh*carat; sx-=(n-sw)/2; sw=n; }
+    c.save(); c.beginPath(); c.rect(x0,dy,boxW,boxH); c.clip(); c.translate(x0+boxW,dy); c.scale(-1,1); try{ c.drawImage(img, sx,sy,sw,sh, 0,0,boxW,boxH); }catch(e){} c.restore();  // 거울모드
+    const SX=nx=>x0+(1-((nx*iw-sx)/sw))*boxW, SY=ny=>dy+((ny*ih-sy)/sh)*boxH;
+    c.save(); c.beginPath(); c.rect(x0,dy,boxW,boxH); c.clip();
+    c.lineWidth=2;
+    c.strokeStyle='rgba(56,182,255,.9)'; [ys.browY,ys.subY].forEach(ny=>{ const y=SY(ny); c.beginPath(); c.moveTo(x0,y); c.lineTo(x0+boxW,y); c.stroke(); });
+    c.strokeStyle='rgba(56,182,255,.4)'; [ys.topY,ys.chinY].forEach(ny=>{ const y=SY(ny); c.beginPath(); c.moveTo(x0,y); c.lineTo(x0+boxW,y); c.stroke(); });
+    c.strokeStyle='rgba(255,154,61,.85)'; c.lineWidth=1.5;
+    xs.forEach(nx=>{ const x=SX(nx); c.beginPath(); c.moveTo(x,SY(ys.topY)); c.lineTo(x,SY(ys.chinY)); c.stroke(); });
+    c.restore();
+    c.fillStyle='#e89bc3'; c.font='700 '+Math.round(H*0.05)+'px -apple-system,sans-serif'; c.textAlign='center'; c.textBaseline='top'; c.fillText('현재 나',halfW+halfW/2,Math.round(H*0.03));
+  };
+  img.src=f.img;
+}
+
+function drawIdealPhoto(c,im,bx,by,bw,bh){
+  c.save(); c.translate(bx,by);
+  c.fillStyle='#e89bc3'; c.font='700 '+Math.round(bh*0.05)+'px -apple-system,sans-serif'; c.textAlign='center'; c.textBaseline='top'; c.fillText('참고 비율',bw/2,Math.round(bh*0.03));
+  const boxW=bw*0.72, boxH=bh*0.72, dx=(bw-boxW)/2, dy=bh*0.13;
+  const iw=im.naturalWidth, ih=im.naturalHeight, sc=Math.max(boxW/iw,boxH/ih), dw=iw*sc, dh=ih*sc, ox=dx+(boxW-dw)/2, oy=dy+(boxH-dh)/2;
+  c.save(); c.beginPath(); c.rect(dx,dy,boxW,boxH); c.clip(); c.drawImage(im, ox, oy, dw, dh);
+  const R=_idealRef||_idealFallback;
+  if(R&&R.ys){ const Y=ny=>oy+ny*dh, X=nx=>ox+nx*dw;
+    c.strokeStyle='rgba(56,182,255,.9)'; c.lineWidth=1.6; [R.ys.brow,R.ys.sub].forEach(ny=>{c.beginPath();c.moveTo(dx,Y(ny));c.lineTo(dx+boxW,Y(ny));c.stroke();});
+    c.strokeStyle='rgba(56,182,255,.4)'; [R.ys.top,R.ys.chin].forEach(ny=>{c.beginPath();c.moveTo(dx,Y(ny));c.lineTo(dx+boxW,Y(ny));c.stroke();});
+    c.strokeStyle='rgba(255,154,61,.6)'; c.lineWidth=1.2; (R.xs||[]).forEach(nx=>{c.beginPath();c.moveTo(X(nx),dy);c.lineTo(X(nx),dy+boxH);c.stroke();});
+  } else { c.setLineDash([5,4]); c.strokeStyle='rgba(56,182,255,.5)'; c.lineWidth=1.2; for(let i=1;i<3;i++){const y=dy+boxH*i/3;c.beginPath();c.moveTo(dx,y);c.lineTo(dx+boxW,y);c.stroke();} c.strokeStyle='rgba(255,154,61,.45)'; for(let i=1;i<5;i++){const x=dx+boxW*i/5;c.beginPath();c.moveTo(x,dy);c.lineTo(x,dy+boxH);c.stroke();} c.setLineDash([]); }
+  c.restore(); c.restore();
+}
+function drawIdealFace(c,bx,by,bw,bh){
+  c.save(); c.translate(bx,by);
+  c.fillStyle='#e89bc3'; c.font='700 '+Math.round(bh*0.05)+'px -apple-system,sans-serif'; c.textAlign='center'; c.textBaseline='top'; c.fillText('참고 비율',bw/2,Math.round(bh*0.03));
+  const fx=bw*0.5, top=bh*0.20, chin=bh*0.84, F=chin-top, rw=bw*0.26, rh=F/2, cyf=(top+chin)/2;
+  const t1=top+F/3, t2=top+2*F/3, w5=2*rw/5, lx=fx-rw;
+  // 머리카락(뒤) + 목
+  c.fillStyle='#eec3ad'; c.fillRect(fx-rw*0.26,chin-rh*0.12,rw*0.52,rh*0.42);
+  c.fillStyle='#3a2b34'; c.beginPath(); c.ellipse(fx,cyf-F*0.05,rw*1.34,rh*1.22,0,0,7); c.fill();
+  // 얼굴
+  const grd=c.createLinearGradient(0,top,0,chin); grd.addColorStop(0,'#f7dccb'); grd.addColorStop(1,'#eec3ad');
+  c.fillStyle=grd; c.beginPath(); c.ellipse(fx,cyf,rw,rh,0,0,7); c.fill();
+  // 앞머리(이마 살짝)
+  c.fillStyle='#3a2b34'; c.beginPath(); c.moveTo(fx-rw,top+F*0.03); c.quadraticCurveTo(fx,top-F*0.13,fx+rw,top+F*0.03); c.quadraticCurveTo(fx+rw*0.5,top+F*0.15,fx,top+F*0.09); c.quadraticCurveTo(fx-rw*0.5,top+F*0.15,fx-rw,top+F*0.03); c.fill();
+  // 눈(5등분 2·4칸), 눈썹
+  const eyeY=t1+(t2-t1)*0.20, ew=w5*0.74, eh=(t2-t1)*0.15, eL=lx+1.5*w5, eR=lx+3.5*w5;
+  function eye(ex){ c.fillStyle='#fff'; c.beginPath(); c.ellipse(ex,eyeY,ew*0.5,eh,0,0,7); c.fill(); c.fillStyle='#4a3b33'; c.beginPath(); c.arc(ex,eyeY,eh*0.78,0,7); c.fill(); c.fillStyle='#1a1210'; c.beginPath(); c.arc(ex,eyeY,eh*0.36,0,7); c.fill(); c.strokeStyle='#2a1c18'; c.lineWidth=Math.max(1,bw*0.004); c.beginPath(); c.ellipse(ex,eyeY,ew*0.5,eh,0,Math.PI*0.03,Math.PI*0.97); c.stroke(); }
+  eye(eL); eye(eR);
+  c.strokeStyle='#5a4038'; c.lineWidth=Math.max(2,bw*0.010); c.lineCap='round';
+  [[eL,1],[eR,-1]].forEach(([ex,dir])=>{ c.beginPath(); c.moveTo(ex-ew*0.55*dir,t1+(t2-t1)*0.02); c.quadraticCurveTo(ex,t1-(t2-t1)*0.05,ex+ew*0.55*dir,t1); c.stroke(); });
+  // 코
+  c.strokeStyle='rgba(150,110,90,.65)'; c.lineWidth=Math.max(1.5,bw*0.005);
+  c.beginPath(); c.moveTo(fx-w5*0.12,eyeY+eh); c.lineTo(fx-w5*0.20,t2); c.quadraticCurveTo(fx,t2+(t2-t1)*0.05,fx+w5*0.20,t2); c.lineTo(fx+w5*0.12,eyeY+eh); c.stroke();
+  // 입술
+  const lipY=t2+(chin-t2)*0.40, lw=w5*1.10, lh=(chin-t2)*0.13;
+  c.fillStyle='#d0817f'; c.beginPath(); c.moveTo(fx-lw,lipY); c.quadraticCurveTo(fx-lw*0.4,lipY-lh*0.8,fx,lipY); c.quadraticCurveTo(fx+lw*0.4,lipY-lh*0.8,fx+lw,lipY); c.quadraticCurveTo(fx+lw*0.4,lipY+lh*1.3,fx,lipY+lh*1.1); c.quadraticCurveTo(fx-lw*0.4,lipY+lh*1.3,fx-lw,lipY); c.fill();
+  // 그리드 3등분/5등분
+  c.setLineDash([5,4]);
+  c.strokeStyle='rgba(56,182,255,.6)'; c.lineWidth=1.4; [t1,t2].forEach(y=>{ c.beginPath(); c.moveTo(fx-rw,y); c.lineTo(fx+rw,y); c.stroke(); });
+  c.strokeStyle='rgba(56,182,255,.3)'; [top,chin].forEach(y=>{ c.beginPath(); c.moveTo(fx-rw,y); c.lineTo(fx+rw,y); c.stroke(); });
+  c.strokeStyle='rgba(255,154,61,.5)'; for(let i=0;i<=5;i++){ const x=lx+i*w5; c.beginPath(); c.moveTo(x,top); c.lineTo(x,chin); c.stroke(); }
+  c.setLineDash([]);
+  c.fillStyle='rgba(255,255,255,.7)'; c.font='600 '+Math.round(bh*0.032)+'px -apple-system,sans-serif'; c.textAlign='left'; c.textBaseline='middle';
+  c.fillText('1',fx+rw+bw*0.02,(top+t1)/2); c.fillText('1',fx+rw+bw*0.02,(t1+t2)/2); c.fillText('1',fx+rw+bw*0.02,(t2+chin)/2);
+  c.restore();
+}
+
+/* ---- 비율 직접 조정 (삼각형 메시 워프) ---- */
+let _rimg=null,_rlm=null,_rtris=null,_rraf=0,_rrec={fo:0,lo:0,w:0,j:0,e:0,m:0,mid:0};
+const _rp={fo:0,lo:0,w:0,j:0,e:0,m:0,mid:0};
+function prepareRatioSim(f,ys,xs){ _rlm=f.lm; _rimg=new Image(); _rimg.onload=function(){ try{ _rtris=tessTriangles(window._TESS); }catch(e){ _rtris=null; } resetRatio(); }; _rimg.src=f.img; }
+function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
+function computeRec(){
+  const a=_an||{}, th=a.thirds||[], fifth=a.fifths||[], fr=(a.front&&a.front.faceRatio)||80;
+  const t0=th[0]!=null?th[0]:33, t2=th[2]!=null?th[2]:33;
+  const eyeAvg=(fifth[1]!=null&&fifth[3]!=null)?(fifth[1]+fifth[3])/2:20;
+  const outer=(fifth[0]!=null&&fifth[4]!=null)?(fifth[0]+fifth[4])/2:18;
+  return {
+    fo: clamp((33-t0)/22, -0.7, 0.7),          // 이마 짧으면 +(길게)
+    lo: clamp((33-t2)/22, -0.7, 0.7),          // 하관 길면 -(짧게)
+    w:  clamp((78-fr)/22, -0.6, 0.25),          // 얼굴 넓으면 -(슬림)
+    j:  0,                                        // 전방경사(기울임)은 기본 0 · 직접 조절
+    e:  clamp((23-eyeAvg)/16, -0.2, 0.7),       // 눈 작으면 +(크게)
+    m:  clamp((17-outer)/14, -0.6, 0.2),        // 바깥 여백 넓으면 -(좁게)
+    mid:clamp((40-(th[1]!=null?th[1]:40))/22, -0.7, 0.4)  // 중안부 길면 -(짧게)
+  };
+}
+window.applyRec=function(){ Object.assign(_rp,_rrec); syncSliders(); warpRender(); };
+window.resetRatio=function(){ _rp.fo=_rp.lo=_rp.w=_rp.j=_rp.e=_rp.m=_rp.mid=0; syncSliders(); warpRender(); };
+function syncSliders(){ ['fo','lo','w','j','e','m','mid'].forEach(k=>{ const s=document.getElementById('rs_'+k); if(s) s.value=Math.round(_rp[k]*100); }); }
+window.rsAdj=function(k,v){ _rp[k]=(+v)/100; if(_rraf) return; _rraf=requestAnimationFrame(()=>{ _rraf=0; warpRender(); }); };
+function warpTargets(){
+  const lm=_rlm, n=lm.length, t=lm.map(q=>({x:q.x,y:q.y})), p=_rp;
+  const cx=(lm[234].x+lm[454].x)/2;
+  const browY=(lm[105].y+lm[334].y)/2, subY=lm[0].y, chinY=lm[152].y;   // 중안부 경계 = 입술 상단
+  const eyeHalf=Math.max(Math.abs(lm[33].x-cx),Math.abs(lm[263].x-cx))||0.1;   // 눈 바깥~중심 = 여백 기준
+  for(let i=0;i<n;i++){ let x=t[i].x,y=t[i].y;
+    if(y<browY) y=browY-(browY-y)*(1+p.fo*0.9);
+    if(y>subY) y=subY+(y-subY)*(1+p.lo*0.4);
+    x=cx+(x-cx)*(1+p.w*0.3);
+    if(p.mid){ const eyeY=(lm[468].y+lm[473].y)/2, bandBot=subY, H0=(bandBot-eyeY)||1, k=p.mid*0.35, sideW=0.4+0.6*Math.min(1,Math.abs(x-cx)/0.14); if(y>eyeY&&y<bandBot){ y=eyeY+(y-eyeY)*(1+k*sideW); } else if(y>=bandBot){ y=y+H0*(k*0.6); } }   // 중안부 길이: 눈밑~입술위 세로(좌우 위주)
+    if(p.j){ const eyeY=(lm[468].y+lm[473].y)/2, cheekBot=lm[2].y, H0=(cheekBot-eyeY)||1, k=p.j*0.40; if(y>eyeY&&y<cheekBot){ y=eyeY+(y-eyeY)*(1+k); } else if(y>=cheekBot){ y=y+H0*k; } }   // 전방경사(+): 눈밑~코옆광대 세로 길어짐 + 아래 따라내려 얼굴 앞으로 기울임
+    if(p.m){ const dx=x-cx, ad=Math.abs(dx); if(ad>eyeHalf){ const nd=eyeHalf+(ad-eyeHalf)*(1+p.m*0.6); x=cx+(dx<0?-1:1)*nd; } }   // 눈 바깥쪽 여백만 조정
+    t[i].x=x; t[i].y=y;
+  }
+  if(p.e!==0){ [468,473].forEach(ci=>{ const c0={x:lm[ci].x,y:lm[ci].y}, R=0.06; for(let i=0;i<n;i++){ const d=Math.hypot(lm[i].x-c0.x,lm[i].y-c0.y); if(d<R){ const ff=1+p.e*0.6*(1-d/R); t[i].x=c0.x+(t[i].x-c0.x)*ff; t[i].y=c0.y+(t[i].y-c0.y)*ff; } } }); }
+  return t;
+}
+function drawTri(ctx,img,x0,y0,x1,y1,x2,y2,u0,v0,u1,v1,u2,v2){
+  ctx.save(); ctx.beginPath(); ctx.moveTo(u0,v0); ctx.lineTo(u1,v1); ctx.lineTo(u2,v2); ctx.closePath(); ctx.clip();
+  const d=x0*(y1-y2)+x1*(y2-y0)+x2*(y0-y1); if(Math.abs(d)<1e-9){ ctx.restore(); return; }
+  const A=(u0*(y1-y2)+u1*(y2-y0)+u2*(y0-y1))/d, C=(u0*(x2-x1)+u1*(x0-x2)+u2*(x1-x0))/d, E=(u0*(x1*y2-x2*y1)+u1*(x2*y0-x0*y2)+u2*(x0*y1-x1*y0))/d;
+  const B=(v0*(y1-y2)+v1*(y2-y0)+v2*(y0-y1))/d, D=(v0*(x2-x1)+v1*(x0-x2)+v2*(x1-x0))/d, Fv=(v0*(x1*y2-x2*y1)+v1*(x2*y0-x0*y2)+v2*(x0*y1-x1*y0))/d;
+  ctx.setTransform(A,B,C,D,E,Fv); ctx.drawImage(img,0,0); ctx.restore(); ctx.setTransform(1,0,0,1,0,0);
+}
+function warpRender(){
+  const cv=document.getElementById('ratioSimCanvas'); if(!cv||!_rimg||!_rimg.naturalWidth||!_rlm) return;
+  const cw=cv.clientWidth||340; cv.width=cw*2; cv.height=Math.round(cw*2*4/3);
+  const W=cv.width,H=cv.height,c=cv.getContext('2d'); c.fillStyle='#000'; c.fillRect(0,0,W,H);
+  const iw=_rimg.naturalWidth, ih=_rimg.naturalHeight;
+  let mnx=1,mny=1,mxx=0,mxy=0; for(let i=0;i<468;i++){ mnx=Math.min(mnx,_rlm[i].x);mxx=Math.max(mxx,_rlm[i].x);mny=Math.min(mny,_rlm[i].y);mxy=Math.max(mxy,_rlm[i].y); }
+  const padX=0.22,padT=0.55,padB=0.14;
+  let px=(mnx-(mxx-mnx)*padX)*iw, py=(mny-(mxy-mny)*padT)*ih, pw=(mxx-mnx)*(1+padX*2)*iw, ph=(mxy-mny)*(1+padT+padB)*ih;
+  const carat=W/H; if(pw/ph>carat){ const nH=pw/carat; py-=(nH-ph)/2; ph=nH; } else { const nW=ph*carat; px-=(nW-pw)/2; pw=nW; }
+  const DX=nx=>W-((nx*iw-px)/pw*W), DY=ny=>(ny*ih-py)/ph*H, SX=nx=>nx*iw, SY=ny=>ny*ih;
+  if(!_rtris){ c.save(); c.translate(W,0); c.scale(-1,1); try{ c.drawImage(_rimg,px,py,pw,ph,0,0,W,H); }catch(e){} c.restore(); return; }
+  const tg=warpTargets();
+  for(let k=0;k<_rtris.length;k+=3){ const a=_rtris[k],b=_rtris[k+1],d2=_rtris[k+2];
+    drawTri(c,_rimg, SX(_rlm[a].x),SY(_rlm[a].y),SX(_rlm[b].x),SY(_rlm[b].y),SX(_rlm[d2].x),SY(_rlm[d2].y),
+      DX(tg[a].x),DY(tg[a].y),DX(tg[b].x),DY(tg[b].y),DX(tg[d2].x),DY(tg[d2].y)); }
+  const anyAdj=(_rp.fo||_rp.lo||_rp.w||_rp.j||_rp.e);
+  c.fillStyle='rgba(0,0,0,.5)'; c.fillRect(0,0,W,Math.round(H*0.07)); c.fillStyle='#fff'; c.font='700 '+Math.round(H*0.036)+'px -apple-system,sans-serif'; c.textAlign='left'; c.textBaseline='middle'; c.fillText(anyAdj?'나의 얼굴형 니즈':'현재 나',Math.round(W*0.03),Math.round(H*0.036));
+}
+
+/* ================== 옆모습 분석 (영상 → 정측면 자동 채집) ================== */
+let sideStream=null, sideRun=false, sideBest=null, sideHold=0, sideDone=false, sideLost=0, sideCur=null;
+const SIDE_TARGET=0.30;   // 코끝이 귀중심에서 얼마나 벗어났나(정측면 근접)
+let _sidePhoto=null,_sidePts=[],_sideTf=null,_sideTapBound=false,_sideWarp={nose:0,brow:0,chin:0},_swRaf=0;
+const SIDE_LABELS=['① 이마 (눈썹 앞 튀어나온 곳)','② 코뿌리 (콧대 시작·눈 사이)','③ 코끝','④ 코밑 (인중 시작)','⑤ 윗입술 끝','⑥ 턱끝'];
+window.goSide=async function(){
+  go('scSide'); sideDone=false; _sidePhoto=null; _sidePts=[];
+  document.getElementById('sideShot').style.display='none';
+  document.getElementById('sideMetrics').style.display='none';
+  document.getElementById('sideStage').style.display='block';
+  document.getElementById('sideSnapBtn').style.display='block';
+  document.getElementById('sideNextBtn').disabled=true;
+  try{
+    sideStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1280},height:{ideal:960}},audio:false});
+    const v=document.getElementById('sideCam'); v.srcObject=sideStream; await v.play();
+    document.getElementById('sideMsg').textContent='몸을 옆으로 돌려 앉아 촬영하세요';
+    document.getElementById('sideHint').textContent='귀·코·턱 옆선이 잘 보이게';
+  }catch(e){ document.getElementById('sideMsg').textContent='카메라를 열 수 없어요'; }
+};
+function grabSide(v){ const c=document.createElement('canvas'), vw=v.videoWidth,vh=v.videoHeight, tw=720, th=Math.round(tw*vh/vw); c.width=tw;c.height=th; c.getContext('2d').drawImage(v,0,0,tw,th); return {img:c.toDataURL('image/jpeg',0.9), w:tw, h:th}; }
+window.stopSide=function(){ sideRun=false; if(sideStream){ sideStream.getTracks().forEach(t=>t.stop()); sideStream=null; } };
+window.retakeSide=function(){ stopSide(); goSide(); };
+window.snapSide=function(){
+  const v=document.getElementById('sideCam'); if(!v||!v.videoWidth){ alert('카메라가 준비되면 촬영돼요'); return; }
+  _sidePhoto=grabSide(v); _sidePts=[]; _sideWarp={nose:0,brow:0,chin:0}; stopSide();
+  document.getElementById('sideStage').style.display='none';
+  document.getElementById('sideSnapBtn').style.display='none';
+  bindSideTap(); drawSideAnnot();
+  document.getElementById('sideNextBtn').disabled=false;
+  sideTapPrompt();
+  if(navigator.vibrate)navigator.vibrate(20);
+};
+function sideTapPrompt(){ var m=document.getElementById('sideMetrics'); if(!m)return; m.style.display='block';
+  if(_sidePts.length<6){ m.innerHTML='<div class="card" style="border-color:var(--brand);padding:12px 14px"><div style="font-weight:800;color:var(--brandink);font-size:15px">👉 사진 위 <span style="font-size:17px">'+SIDE_LABELS[_sidePts.length]+'</span> 을(를) 탭하세요</div><div class="sub" style="margin-top:4px">번호 순서대로 6곳을 톡 찍어주세요 ('+_sidePts.length+'/6)</div></div>'+(_sidePts.length? '<button class="btn ghost" style="margin-top:8px;width:100%" onclick="undoSidePt()">방금 점 취소 (뒤로)</button>':''); }
+}
+window.undoSidePt=function(){ if(_sidePts.length){ _sidePts.pop(); drawSideAnnot(); sideTapPrompt(); } };
+function bindSideTap(){
+  const cv=document.getElementById('sideShot'); if(!cv||_sideTapBound) return; _sideTapBound=true; cv.style.cursor='crosshair';
+  cv.addEventListener('pointerdown',function(e){
+    if(!_sidePhoto||!_sideTf) return;
+    const r=cv.getBoundingClientRect(); const dcx=(e.clientX-r.left)/r.width*_sideTf.W, dcy=(e.clientY-r.top)/r.height*_sideTf.H;
+    const px=_sideTf.sx+dcx/_sideTf.W*_sideTf.sw, py=_sideTf.sy+dcy/_sideTf.H*_sideTf.sh;
+    if(_sidePts.length<6){ _sidePts.push({x:px,y:py}); drawSideAnnot(); if(_sidePts.length<6) sideTapPrompt(); else computeSideAngles(); }
+    else { let bi=0,bd=1e9; for(let i=0;i<6;i++){ const dd=Math.hypot(_sidePts[i].x-px,_sidePts[i].y-py); if(dd<bd){bd=dd;bi=i;} } _sidePts[bi]={x:px,y:py}; drawSideAnnot(); computeSideAngles(); }
+  });
+}
+function drawSideAnnot(){
+  const cv=document.getElementById('sideShot'); if(!cv||!_sidePhoto) return; cv.style.display='block';
+  const cw=cv.clientWidth||340; cv.width=cw*2; cv.height=Math.round(cw*2*4/3);
+  const W=cv.width,H=cv.height,c=cv.getContext('2d');
+  const img=new Image();
+  img.onload=function(){
+    const iw=img.naturalWidth, ih=img.naturalHeight, carat=W/H; let sw=iw,sh=ih,sx=0,sy=0;
+    if(iw/ih>carat){ sw=ih*carat; sx=(iw-sw)/2; } else { sh=iw/carat; sy=(ih-sh)/2; }
+    c.fillStyle='#000'; c.fillRect(0,0,W,H); try{ c.drawImage(img,sx,sy,sw,sh,0,0,W,H); }catch(e){}
+    _sideTf={sx,sy,sw,sh,W,H};
+    const MX=px=>(px-sx)/sw*W, MY=py=>(py-sy)/sh*H, P=_sidePts;
+    if(P.length>=6 && (_sideWarp.nose||_sideWarp.brow||_sideWarp.chin)){ const ax=MX(P[5].x)-MX(P[0].x), ay=MY(P[5].y)-MY(P[0].y), al=Math.hypot(ax,ay)||1; let fx=-ay/al, fy=ax/al; const nvx=MX(P[2].x)-MX(P[1].x), nvy=MY(P[2].y)-MY(P[1].y); if(fx*nvx+fy*nvy<0){fx=-fx;fy=-fy;} const K=al*0.13, cps=[]; if(_sideWarp.nose){ const m=_sideWarp.nose/100*K; cps.push({x:(MX(P[1].x)+MX(P[2].x))/2,y:(MY(P[1].y)+MY(P[2].y))/2,mx:fx*m,my:fy*m,r:al*0.16}); cps.push({x:MX(P[2].x),y:MY(P[2].y),mx:fx*m,my:fy*m,r:al*0.13}); } if(_sideWarp.brow){ const m=_sideWarp.brow/100*K; cps.push({x:MX(P[0].x),y:MY(P[0].y),mx:fx*m,my:fy*m,r:al*0.22}); } if(_sideWarp.chin){ const m=_sideWarp.chin/100*K; cps.push({x:MX(P[5].x),y:MY(P[5].y),mx:fx*m,my:fy*m,r:al*0.20}); } liquifySide(c,W,H,cps); c.fillStyle='rgba(0,0,0,.5)';c.fillRect(0,0,W,Math.round(H*0.06)); c.fillStyle='#e2cd94'; c.font='700 '+Math.round(H*0.03)+'px -apple-system,sans-serif'; c.textAlign='left'; c.textBaseline='middle'; c.fillText('코·이마·턱 시뮬 (조정 후)',Math.round(W*0.03),Math.round(H*0.032)); return; }
+    function seg(a,b,col){ if(!P[a]||!P[b])return; c.strokeStyle=col;c.lineWidth=Math.max(2.5,W*0.006);c.lineCap='round';c.beginPath();c.moveTo(MX(P[a].x),MY(P[a].y));c.lineTo(MX(P[b].x),MY(P[b].y));c.stroke(); }
+    seg(0,1,'#38b6ff'); seg(1,2,'#38b6ff');       // 콧대(이마-코뿌리-코끝)
+    seg(2,3,'#ff9a3d'); seg(3,4,'#ff6b9d');       // 코밑·비순
+    seg(2,5,'rgba(226,205,148,.95)');             // E-line(코끝-턱끝)
+    P.forEach(function(p,i){ c.fillStyle='#C81D74'; c.beginPath(); c.arc(MX(p.x),MY(p.y),Math.max(5,W*0.011),0,7); c.fill(); c.fillStyle='#fff'; c.font='700 '+Math.round(W*0.03)+'px sans-serif'; c.textAlign='center'; c.textBaseline='middle'; c.fillText(String(i+1),MX(p.x),MY(p.y)); });
+    if(P.length<6){ c.fillStyle='rgba(0,0,0,.5)'; c.fillRect(0,0,W,Math.round(H*0.06)); c.fillStyle='#fff'; c.font='700 '+Math.round(H*0.03)+'px -apple-system,sans-serif'; c.textAlign='left'; c.textBaseline='middle'; c.fillText(SIDE_LABELS[P.length]+' 를 탭',Math.round(W*0.03),Math.round(H*0.032)); }
+  };
+  img.src=_sidePhoto.img;
+}
+function detectSideAuto(ph){ return new Promise(function(res){ const im=new Image(); im.onload=async function(){ try{ await _getFaceImgLm(); const r=_idealLm.detect(im); const q=r&&r.faceLandmarks&&r.faceLandmarks[0]; if(!q){res(null);return;} const iw=im.naturalWidth,ih=im.naturalHeight, idx=[9,168,1,2,0,152]; res(idx.map(i=>({x:q[i].x*iw,y:q[i].y*ih}))); }catch(e){res(null);} }; im.onerror=function(){res(null);}; im.src=ph.img; }); }
+window.resetSidePts=function(){ _sidePts=[]; _sideWarp={nose:0,brow:0,chin:0}; drawSideAnnot(); var m=document.getElementById('sideMetrics'); if(m){ m.style.display='block'; m.innerHTML='<div class="flabel">옆모습 각도</div><div class="sub">사진에서 순서대로 <b>탭</b>: <b id="sidePtLabel" style="color:var(--brandink)">'+SIDE_LABELS[0]+'</b></div>'; } };
+window.sideWarpAdj=function(k,v){ _sideWarp[k]=+v; if(_swRaf)return; _swRaf=requestAnimationFrame(function(){_swRaf=0;drawSideAnnot();}); };
+function liquifySide(c,W,H,cps){ let x0=W,y0=H,x1=0,y1=0; cps.forEach(cp=>{const R=cp.r*3;x0=Math.min(x0,cp.x-R);y0=Math.min(y0,cp.y-R);x1=Math.max(x1,cp.x+R);y1=Math.max(y1,cp.y+R);}); x0=Math.max(0,x0|0);y0=Math.max(0,y0|0);x1=Math.min(W,x1|0);y1=Math.min(H,y1|0); const bw=x1-x0,bh=y1-y0; if(bw<=0||bh<=0)return; const src=c.getImageData(0,0,W,H),sdata=src.data; const out=c.getImageData(x0,y0,bw,bh),d=out.data; for(let yy=0;yy<bh;yy++){const gy=y0+yy; for(let xx=0;xx<bw;xx++){const gx=x0+xx; let ddx=0,ddy=0; for(let k=0;k<cps.length;k++){const cp=cps[k];const ex=gx-cp.x,ey=gy-cp.y;const w=Math.exp(-(ex*ex+ey*ey)/(2*cp.r*cp.r));ddx+=cp.mx*w;ddy+=cp.my*w;} let sxp=gx-ddx,syp=gy-ddy; if(sxp<0)sxp=0;else if(sxp>W-1)sxp=W-1; if(syp<0)syp=0;else if(syp>H-1)syp=H-1; const si=(((syp|0)*W)+(sxp|0))*4,di=(yy*bw+xx)*4; d[di]=sdata[si];d[di+1]=sdata[si+1];d[di+2]=sdata[si+2];d[di+3]=255;}} c.putImageData(out,x0,y0); }
+function computeSideAngles(){
+  const P=_sidePts; if(P.length<6) return;
+  const nasofrontal=ang3(P[0],P[1],P[2]);   // 콧대: 이마-코뿌리-코끝
+  const tipAng=ang3(P[1],P[2],P[3]);        // 코끝: 코뿌리-코끝-코밑
+  const nasolabial=ang3(P[2],P[3],P[4]);    // 비순각: 코끝-코밑-윗입술
+  const convexity=ang3(P[0],P[3],P[5]);     // 이마-코밑-턱끝
+  const chinAng=ang3(P[3],P[4],P[5]);       // 무턱: 코밑-윗입술-턱끝(하관 라인)
+  const perp=(pt,a,b)=>{const dx=b.x-a.x,dy=b.y-a.y,len=Math.hypot(dx,dy)||1;return ((pt.x-a.x)*dy-(pt.y-a.y)*dx)/len;};
+  const faceH=Math.hypot(P[0].x-P[5].x,P[0].y-P[5].y)||1;
+  const fs=Math.sign(perp(P[2],P[0],P[5]))||1;
+  const eLip=perp(P[4],P[2],P[5])*fs/faceH*100;
+  _an.side={nasofrontal,tipAng,nasolabial,convexity,chinAng,eLip};
+  const row=(l,v,n)=>'<div class="metric"><span class="mut">'+l+'</span><b>'+v+(n?' <span class="mut" style="font-weight:400">· '+n+'</span>':'')+'</b></div>';
+  const rng='style="width:100%;accent-color:var(--brand)"';
+  document.getElementById('sideMetrics').innerHTML=
+    '<div class="flabel">옆모습 각도</div>'+
+    row('콧대각', nasofrontal.toFixed(0)+'°', nasofrontal>140?'콧대 낮은 편':(nasofrontal<125?'콧대 높은 편':'보통'))+
+    row('코끝각', tipAng.toFixed(0)+'°', tipAng<95?'코끝 들린/뾰족':(tipAng>120?'코끝 처진/뭉툭':'보통'))+
+    row('비순각', nasolabial.toFixed(0)+'°', '한국 여 95~110°·남 90~95°')+
+    row('안면 볼록도', convexity.toFixed(0)+'°', '동아시아 162~172°')+
+    row('무턱 각도', chinAng.toFixed(0)+'°', eLip>7?'무턱 경향(턱끝 뒤)':(eLip<-4?'턱끝 나온 편':'보통'))+
+    row('E-line 대비 윗입술', (eLip>=0?'+':'')+eLip.toFixed(0)+'%', '한국인은 붙거나 살짝 앞이 정상')+
+    '<div class="flabel" style="margin-top:12px">코·이마·턱 시뮬 <span class="mut" style="text-transform:none;letter-spacing:0;font-weight:400">(밀어서 실제 변형)</span></div>'+
+    '<div style="font-size:12px;color:var(--brandink)">코 (앞으로/뒤로)</div><input type="range" id="sw_nose" min="-100" max="100" value="'+(_sideWarp.nose||0)+'" oninput="sideWarpAdj(\'nose\',this.value)" '+rng+'>'+
+    '<div style="font-size:12px;color:var(--brandink);margin-top:6px">이마 (앞으로/뒤로)</div><input type="range" id="sw_brow" min="-100" max="100" value="'+(_sideWarp.brow||0)+'" oninput="sideWarpAdj(\'brow\',this.value)" '+rng+'>'+
+    '<div style="font-size:12px;color:var(--brandink);margin-top:6px">턱 (앞으로/뒤로)</div><input type="range" id="sw_chin" min="-100" max="100" value="'+(_sideWarp.chin||0)+'" oninput="sideWarpAdj(\'chin\',this.value)" '+rng+'>'+
+    '<button class="btn ghost" style="margin-top:10px;width:100%" onclick="resetSidePts()">점 다시 찍기</button>'+
+    '<div class="sub" style="margin-top:8px">잘못된 점은 <b>그 위치를 다시 탭</b>하면 수정돼요. 콧대각은 <b>클수록 낮은 코</b> · 기준=<b>한국인 실측</b> 참고용.</div>';
+  document.getElementById('sideMetrics').style.display='block';
+  drawSideAnnot();
+  if(navigator.vibrate)navigator.vibrate([20,40,20]);
+}
+
+/* ================== 자세 (Pose · 정지 이미지) — 어좁이 + 거북목 ================== */
+let poseLm=null;
+const POSE_MODEL='https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task';
+async function getPose(){
+  if(poseLm) return poseLm;
+  const vision=await import(V);
+  const fs=await vision.FilesetResolver.forVisionTasks(V+'/wasm');
+  poseLm=await vision.PoseLandmarker.createFromOptions(fs,{ baseOptions:{modelAssetPath:POSE_MODEL,delegate:'CPU'}, runningMode:'IMAGE', numPoses:1, minPoseDetectionConfidence:0.4 });
+  return poseLm;
+}
+function detectPoseOnImage(dataUrl){ return new Promise(function(resolve){ const im=new Image(); im.onload=async function(){ try{ await getPose(); const r=poseLm.detect(im); resolve((r&&r.landmarks&&r.landmarks[0])?{lm:r.landmarks[0],asp:im.naturalWidth/im.naturalHeight}:null); }catch(e){ resolve(null); } }; im.onerror=function(){ resolve(null); }; im.src=dataUrl; }); }
+async function analyzePosture(sideImg){
+  _an.pose=_an.pose||{};
+  // 어좁이: 처음 스캔(정면) 사진
+  try{ if(captured.front){ const fp=await detectPoseOnImage(captured.front.img); if(fp){ const p=fp.lm, a=fp.asp, px=i=>p[i].x*a, py=i=>p[i].y;
+    if(!(p[11].visibility<0.4||p[12].visibility<0.4)){ const sw=Math.hypot(px(11)-px(12),py(11)-py(12)), hw=Math.hypot(px(7)-px(8),py(7)-py(8))||0.001; _an.pose.shoulderRatio=sw/hw; let t=Math.abs(Math.atan2(py(12)-py(11),px(12)-px(11))*180/Math.PI); if(t>90)t=180-t; _an.pose.shoulderTilt=t; _an.pose.frontImg=captured.front.img; _an.pose.sh=[{x:p[11].x,y:p[11].y},{x:p[12].x,y:p[12].y}]; _an.pose.hd=[{x:p[7].x,y:p[7].y},{x:p[8].x,y:p[8].y}]; } } } }catch(e){}
+  // 거북목: 방금 옆모습 사진
+  try{ if(sideImg){ const sp=await detectPoseOnImage(sideImg.img); if(sp){ const p=sp.lm, a=sp.asp; const earI=((p[7].visibility||0)>=(p[8].visibility||0))?7:8, shI=((p[11].visibility||0)>=(p[12].visibility||0))?11:12;
+    const dx=Math.abs(p[earI].x*a-p[shI].x*a), dy=Math.abs(p[earI].y-p[shI].y)||0.001; _an.pose.turtleAngle=Math.atan2(dx,dy)*180/Math.PI; _an.pose.turtleImg=sideImg.img; _an.pose.tEar={x:p[earI].x,y:p[earI].y}; _an.pose.tSh={x:p[shI].x,y:p[shI].y}; } } }catch(e){}
+  renderPostureBlock();
+}
+function shoulderTxt(r){ return r==null?'측정 실패':(r.toFixed(2)+'배 · '+(r<2.8?'좁은 편 (어좁이)':(r>3.4?'넓은 편':'보통'))); }
+function turtleTxt(a){ return a==null?'측정 실패':(a.toFixed(0)+'° · '+(a<12?'정상':(a<22?'약간 앞으로':'거북목'))); }
+function renderPostureBlock(){
+  const p=_an.pose||{}; const el=document.getElementById('postureCard'); if(!el) return;
+  const sr=(p.shoulderRatio!=null)?p.shoulderRatio:2.4, tu=(p.turtleAngle!=null)?p.turtleAngle:12;
+  if(p.shoulderRatio==null) p.shoulderRatio=sr; if(p.turtleAngle==null) p.turtleAngle=tu;
+  el.innerHTML='<div class="flabel">자세 · 어깨</div>'+
+    (p.frontImg?'<canvas id="shoulderCanvas" class="propcanv" style="aspect-ratio:3/4"></canvas>':'')+
+    '<div class="metric"><span class="mut">어깨/머리 너비 (어좁이)</span><b id="psSrV">'+shoulderTxt(p.shoulderRatio)+'</b></div>'+
+    '<input type="range" min="160" max="340" value="'+Math.round(p.shoulderRatio*100)+'" oninput="psAdj(\'sr\',this.value)" style="width:100%;accent-color:var(--brand)">'+
+    '<div class="metric" style="margin-top:8px"><span class="mut">거북목 (귀가 어깨보다 앞으로)</span><b id="psTurV">'+turtleTxt(p.turtleAngle)+'</b></div>'+
+    '<input type="range" min="0" max="45" value="'+Math.round(p.turtleAngle)+'" oninput="psAdj(\'turtle\',this.value)" style="width:100%;accent-color:var(--brand)">'+
+    (p.turtleImg?'<canvas id="turtleCanvas" class="propcanv" style="aspect-ratio:3/4"></canvas>':'')+
+    '<div class="sub" style="margin-top:8px"><b style="color:#3ddc8a">초록 선</b>=어깨너비 · <b style="color:#38b6ff">파란 선</b>=머리너비. 거북목 각도=귀가 어깨보다 앞으로 나온 정도(<b>0~12° 정상 · 12~22° 약간 · 22°↑ 거북목</b>). 촬영 오차가 있어 슬라이더로 보정하세요.</div>';
+  el.style.display='block';
+  if(p.frontImg) drawShoulderLine();
+  if(p.turtleImg) drawTurtleLine();
+}
+function drawTurtleLine(){
+  const p=_an.pose||{}; const cv=document.getElementById('turtleCanvas'); if(!cv||!p.turtleImg||!p.tEar) return;
+  const cw=cv.clientWidth||340; cv.width=cw*2; cv.height=Math.round(cw*2*4/3);
+  const W=cv.width,H=cv.height,c=cv.getContext('2d'); const img=new Image();
+  img.onload=function(){ const iw=img.naturalWidth,ih=img.naturalHeight,carat=W/H; let sw=iw,sh2=ih,sx=0,sy=0; if(iw/ih>carat){sw=ih*carat;sx=(iw-sw)/2;}else{sh2=iw/carat;sy=(ih-sh2)/2;}
+    c.fillStyle='#000';c.fillRect(0,0,W,H); try{ c.drawImage(img,sx,sy,sw,sh2,0,0,W,H);}catch(e){}
+    const MX=nx=>(nx*iw-sx)/sw*W, MY=ny=>(ny*ih-sy)/sh2*H; const ex=MX(p.tEar.x),ey=MY(p.tEar.y),shx=MX(p.tSh.x),shy=MY(p.tSh.y);
+    c.lineCap='round';
+    c.setLineDash([6,5]); c.strokeStyle='rgba(255,255,255,.6)'; c.lineWidth=Math.max(2,W*0.005); c.beginPath(); c.moveTo(shx,shy); c.lineTo(shx,Math.min(ey,shy)-H*0.05); c.stroke(); c.setLineDash([]);
+    c.strokeStyle='#ff9a3d'; c.lineWidth=Math.max(3,W*0.008); c.beginPath(); c.moveTo(shx,shy); c.lineTo(ex,ey); c.stroke();
+    c.fillStyle='#fff'; [[ex,ey],[shx,shy]].forEach(q=>{c.beginPath();c.arc(q[0],q[1],Math.max(4,W*0.01),0,7);c.fill();});
+    c.fillStyle='rgba(0,0,0,.5)';c.fillRect(0,0,W,Math.round(H*0.06)); c.fillStyle='#fff'; c.font='700 '+Math.round(H*0.03)+'px -apple-system,sans-serif'; c.textAlign='left'; c.textBaseline='middle'; c.fillText('거북목 '+(p.turtleAngle!=null?p.turtleAngle.toFixed(0):'?')+'° · 귀가 어깨보다 앞으로',Math.round(W*0.03),Math.round(H*0.032));
+  };
+  img.src=p.turtleImg;
+}
+function drawShoulderLine(){
+  const p=_an.pose||{}; const cv=document.getElementById('shoulderCanvas'); if(!cv||!p.frontImg||!p.sh) return;
+  const cw=cv.clientWidth||340; cv.width=cw*2; cv.height=Math.round(cw*2*4/3);
+  const W=cv.width,H=cv.height,c=cv.getContext('2d'); const img=new Image();
+  img.onload=function(){ const iw=img.naturalWidth,ih=img.naturalHeight,carat=W/H; let sw=iw,sh2=ih,sx=0,sy=0; if(iw/ih>carat){sw=ih*carat;sx=(iw-sw)/2;}else{sh2=iw/carat;sy=(ih-sh2)/2;}
+    c.fillStyle='#000';c.fillRect(0,0,W,H); try{ c.drawImage(img,sx,sy,sw,sh2,0,0,W,H);}catch(e){}
+    const MX=nx=>(nx*iw-sx)/sw*W, MY=ny=>(ny*ih-sy)/sh2*H; c.lineCap='round';
+    if(p.hd){ c.strokeStyle='#38b6ff'; c.lineWidth=Math.max(2.5,W*0.006); c.beginPath(); c.moveTo(MX(p.hd[0].x),MY(p.hd[0].y)); c.lineTo(MX(p.hd[1].x),MY(p.hd[1].y)); c.stroke(); }
+    c.strokeStyle='#3ddc8a'; c.lineWidth=Math.max(3,W*0.009); c.beginPath(); c.moveTo(MX(p.sh[0].x),MY(p.sh[0].y)); c.lineTo(MX(p.sh[1].x),MY(p.sh[1].y)); c.stroke();
+    [p.sh[0],p.sh[1]].forEach(q=>{c.fillStyle='#3ddc8a';c.beginPath();c.arc(MX(q.x),MY(q.y),Math.max(4,W*0.01),0,7);c.fill();});
+  };
+  img.src=p.frontImg;
+}
+window.psAdj=function(k,v){ _an.pose=_an.pose||{}; if(k==='sr'){ _an.pose.shoulderRatio=(+v)/100; const e=document.getElementById('psSrV'); if(e)e.innerHTML=shoulderTxt(_an.pose.shoulderRatio); } else { _an.pose.turtleAngle=+v; const e=document.getElementById('psTurV'); if(e)e.innerHTML=turtleTxt(_an.pose.turtleAngle); } };
+
+/* ================== 고개 들기 (후두골 시간) — 수동 촬영 ================== */
+let upStream=null, upRun=false, upDone=false, upCur=null;
+/* ================== 상체 분석 (점 드래그) ================== */
+let _body={shA:{x:0.25,y:0.9},shB:{x:0.75,y:0.9},hdA:{x:0.37,y:0.5},hdB:{x:0.63,y:0.5},tuSh:{x:0.5,y:0.9},tuEar:{x:0.58,y:0.4}};
+let _bodyShTf=null,_bodyTuTf=null,_bodyDrag=null;
+window.goBody=function(){ go('scBody'); bindBodyDrag(); initBody(); };
+function initBody(){
+  if(captured.front&&captured.front.lm){ const L=captured.front.lm; _body.hdA={x:L[234].x,y:L[234].y}; _body.hdB={x:L[454].x,y:L[454].y}; const cx=(L[234].x+L[454].x)/2; _body.shA={x:Math.max(0.05,cx-0.28),y:0.9}; _body.shB={x:Math.min(0.95,cx+0.28),y:0.9}; }
+  drawBodySh();
+  if(captured.front){ detectPoseOnImage(captured.front.img).then(function(fp){ if(fp){ const p=fp.lm; if((p[11].visibility==null||p[11].visibility>0.4)&&(p[12].visibility==null||p[12].visibility>0.4)){ _body.shA={x:p[11].x,y:p[11].y}; _body.shB={x:p[12].x,y:p[12].y}; } } drawBodySh(); }); }
+  _body.tuSh={x:0.5,y:0.9}; _body.tuEar={x:0.58,y:0.4}; drawBodyTu();
+  if(_sidePhoto){ detectPoseOnImage(_sidePhoto.img).then(function(sp){ if(sp){ const p=sp.lm; const earI=((p[7].visibility||0)>=(p[8].visibility||0))?7:8; _body.tuEar={x:p[earI].x,y:p[earI].y}; _body.tuSh={x:(p[11].x+p[12].x)/2,y:(p[11].y+p[12].y)/2}; } drawBodyTu(); }); }
+}
+function _bodyImg(cv,src,tfset,cb){ const cw=cv.clientWidth||340; cv.width=cw*2; cv.height=Math.round(cw*2*4/3); const W=cv.width,H=cv.height,c=cv.getContext('2d'); const img=new Image(); img.onload=function(){ const iw=img.naturalWidth,ih=img.naturalHeight,carat=W/H; let sw=iw,sh=ih,sx=0,sy=0; if(iw/ih>carat){sw=ih*carat;sx=(iw-sw)/2;}else{sh=iw/carat;sy=(ih-sh)/2;} c.fillStyle='#000';c.fillRect(0,0,W,H); try{c.drawImage(img,sx,sy,sw,sh,0,0,W,H);}catch(e){} tfset({sx,sy,sw,sh,W,H,iw,ih}); const MX=nx=>(nx*iw-sx)/sw*W,MY=ny=>(ny*ih-sy)/sh*H; cb(c,MX,MY,W,H); }; img.src=src; }
+function drawBodySh(){ const cv=document.getElementById('bodyShCanvas'); if(!cv||!captured.front) return; _bodyImg(cv,captured.front.img,function(t){_bodyShTf=t;},function(c,MX,MY,W){ c.lineCap='round'; [['#38b6ff',_body.hdA,_body.hdB],['#3ddc8a',_body.shA,_body.shB]].forEach(function(g){ c.strokeStyle=g[0]; c.lineWidth=Math.max(3,W*0.008); c.beginPath(); c.moveTo(MX(g[1].x),MY(g[1].y)); c.lineTo(MX(g[2].x),MY(g[2].y)); c.stroke(); c.fillStyle=g[0]; [g[1],g[2]].forEach(function(pt){c.beginPath();c.arc(MX(pt.x),MY(pt.y),Math.max(7,W*0.016),0,7);c.fill();}); }); });
+  const ratio=Math.hypot(_body.shB.x-_body.shA.x,_body.shB.y-_body.shA.y)/(Math.hypot(_body.hdB.x-_body.hdA.x,_body.hdB.y-_body.hdA.y)||0.13); const el=document.getElementById('bodyShV'); if(el) el.innerHTML=ratio.toFixed(2)+'배 · '+(ratio<2.8?'좁은 편 (어좁이)':(ratio>3.4?'넓은 편':'보통')); _an.pose=_an.pose||{}; _an.pose.shoulderRatio=ratio;
+}
+function drawBodyTu(){ const cv=document.getElementById('bodyTuCanvas'); if(!cv||!_sidePhoto) return; _bodyImg(cv,_sidePhoto.img,function(t){_bodyTuTf=t;},function(c,MX,MY,W,H){ c.lineCap='round'; const sh=_body.tuSh, ear=_body.tuEar;
+   c.setLineDash([6,5]); c.strokeStyle='rgba(255,255,255,.6)'; c.lineWidth=Math.max(2,W*0.005); c.beginPath(); c.moveTo(MX(sh.x),MY(sh.y)); c.lineTo(MX(sh.x),MY(ear.y)-H*0.03); c.stroke(); c.setLineDash([]);
+   c.strokeStyle='#ff9a3d'; c.lineWidth=Math.max(3,W*0.008); c.beginPath(); c.moveTo(MX(sh.x),MY(sh.y)); c.lineTo(MX(ear.x),MY(ear.y)); c.stroke();
+   c.fillStyle='#ff9a3d'; [sh,ear].forEach(function(pt){c.beginPath();c.arc(MX(pt.x),MY(pt.y),Math.max(7,W*0.016),0,7);c.fill();}); });
+  const dx=Math.abs(_body.tuEar.x-_body.tuSh.x), dy=Math.abs(_body.tuEar.y-_body.tuSh.y)||0.001; const ang=Math.atan2(dx,dy)*180/Math.PI; const el=document.getElementById('bodyTuV'); if(el) el.innerHTML=ang.toFixed(0)+'° · '+(ang<12?'정상':(ang<22?'약간 앞으로':'거북목')); _an.pose=_an.pose||{}; _an.pose.turtleAngle=ang;
+}
+function bindBodyDrag(){
+  [['bodyShCanvas',function(){return [_body.hdA,_body.hdB,_body.shA,_body.shB];},function(){return _bodyShTf;},drawBodySh],
+   ['bodyTuCanvas',function(){return [_body.tuSh,_body.tuEar];},function(){return _bodyTuTf;},drawBodyTu]].forEach(function(cfg){
+    const cv=document.getElementById(cfg[0]); if(!cv||cv._bd) return; cv._bd=true; cv.style.touchAction='none'; cv.style.cursor='grab';
+    function loc(e){ const tf=cfg[2](); if(!tf) return null; const r=cv.getBoundingClientRect(); const dcx=(e.clientX-r.left)/r.width*tf.W, dcy=(e.clientY-r.top)/r.height*tf.H; return {nx:((dcx/tf.W*tf.sw)+tf.sx)/tf.iw, ny:((dcy/tf.H*tf.sh)+tf.sy)/tf.ih, dcx:dcx, dcy:dcy, tf:tf}; }
+    cv.addEventListener('pointerdown',function(e){ const n=loc(e); if(!n) return; const pts=cfg[1](); let bi=-1,bd=1e9; for(let i=0;i<pts.length;i++){ const px=(pts[i].x*n.tf.iw-n.tf.sx)/n.tf.sw*n.tf.W, py=(pts[i].y*n.tf.ih-n.tf.sy)/n.tf.sh*n.tf.H; const dd=Math.hypot(px-n.dcx,py-n.dcy); if(dd<bd){bd=dd;bi=i;} } if(bi>=0 && bd<n.tf.W*0.1){ _bodyDrag={pt:pts[bi],draw:cfg[3]}; try{cv.setPointerCapture(e.pointerId);}catch(_){} } });
+    cv.addEventListener('pointermove',function(e){ if(!_bodyDrag) return; const n=loc(e); if(!n) return; _bodyDrag.pt.x=Math.max(0,Math.min(1,n.nx)); _bodyDrag.pt.y=Math.max(0,Math.min(1,n.ny)); _bodyDrag.draw(); });
+    cv.addEventListener('pointerup',function(){ _bodyDrag=null; }); cv.addEventListener('pointercancel',function(){ _bodyDrag=null; });
+  });
+}
+window.goUp=async function(){
+  go('scUp'); upDone=false; upCur=null;
+  document.getElementById('upShot').style.display='none'; document.getElementById('upMetrics').style.display='none';
+  document.getElementById('upStage').style.display='block'; document.getElementById('upSnapBtn').style.display='block';
+  document.getElementById('upNextBtn').disabled=true;
+  try{
+    upStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1280},height:{ideal:960}},audio:false});
+    const v=document.getElementById('upCam'); v.srcObject=upStream; await v.play(); await getLandmarker(); upRun=true;
+    document.getElementById('upMsg').textContent='고개를 살짝 뒤로 들어주세요'; upLoop();
+  }catch(e){ document.getElementById('upMsg').textContent='카메라를 열 수 없어요'; }
+};
+window.stopUp=function(){ upRun=false; if(upStream){ upStream.getTracks().forEach(t=>t.stop()); upStream=null; } };
+window.retakeUp=function(){ stopUp(); goUp(); };
+function upLoop(){
+  if(!upRun) return; const v=document.getElementById('upCam'); const msg=document.getElementById('upMsg');
+  if(v.readyState>=2){ let res=null; try{ res=landmarker.detectForVideo(v,performance.now()); }catch(e){}
+    if(res && res.faceLandmarks && res.faceLandmarks.length){ const p=res.faceLandmarks[0]; upCur={ lm:p.map(q=>({x:q.x,y:q.y,z:q.z})), img:grabSide(v) }; msg.textContent='고개 든 채로 촬영하세요'; }
+    else { upCur=null; msg.textContent='고개를 살짝 뒤로 들어 귀가 보이게 해주세요'; }
+  }
+  requestAnimationFrame(upLoop);
+}
+window.snapUp=function(){ if(!upRun) return; if(!upCur){ alert('얼굴이 인식되면 촬영돼요'); return; } upDone=true; upRun=false; stopUp();
+  document.getElementById('upStage').style.display='none'; document.getElementById('upSnapBtn').style.display='none';
+  measureUp(upCur); document.getElementById('upNextBtn').disabled=false; if(navigator.vibrate)navigator.vibrate([20,40,20]);
+};
+function measureUp(b){
+  const lm=b.lm, iw=b.img.w||720, ih=b.img.h||960; const P=i=>({x:lm[i].x*iw,y:lm[i].y*ih});
+  const T=P(10),C=P(152); const faceH=Math.hypot(T.x-C.x,T.y-C.y)||1;
+  const dy=lm[127].y-lm[356].y, thr=0.006;   // 127=본인 오른귀(화면 왼) / 356=본인 왼귀(화면 오른)
+  const clock=Math.abs(dy)<thr?'6시':(lm[127].y>lm[356].y?'7시':'5시');
+  _an.clock=clock; updateFaceCode();
+  const jl=P(172), jr=P(397); const jawTilt=Math.atan2(jr.y-jl.y,jr.x-jl.x)*180/Math.PI;
+  const jawSide=Math.abs(jawTilt)<1.5?'좌우 대칭':(jawTilt>0?'본인 왼쪽이 내려감':'본인 오른쪽이 내려감');
+  document.getElementById('upMetrics').innerHTML='<div class="metric"><span class="mut">후두골 시간</span><b>'+clock+(clock==='6시'?' (대칭)':'')+'</b></div>'+
+    '<div class="metric"><span class="mut">턱라인 기울기</span><b>'+jawSide+(Math.abs(jawTilt)<1.5?'':' · '+Math.abs(jawTilt).toFixed(0)+'°')+'</b></div>'+
+    '<div class="sub" style="margin-top:8px">본인 오른귀 아래=7시·대칭=6시·왼귀 아래=5시. <b style="color:#e2cd94">노란 선</b>=귀 / <b style="color:#ff9a3d">주황 선</b>=턱라인. 좌우 높이차로 추정한 <b>참고값</b>, 정확한 판정은 촉진에서.</div>';
+  document.getElementById('upMetrics').style.display='block';
+  // 사진 위 귀선 표시
+  const cv=document.getElementById('upShot'); cv.style.display='block'; const cw=cv.clientWidth||340; cv.width=cw*2; cv.height=Math.round(cw*2*4/3);
+  const W=cv.width,H=cv.height,c=cv.getContext('2d'); const img=new Image();
+  img.onload=function(){ const niw=img.naturalWidth,nih=img.naturalHeight,carat=W/H; let sw=niw,sh=nih,sx=0,sy=0; if(niw/nih>carat){sw=nih*carat;sx=(niw-sw)/2;}else{sh=niw/carat;sy=(nih-sh)/2;}
+    c.fillStyle='#000'; c.fillRect(0,0,W,H); try{ c.drawImage(img,sx,sy,sw,sh,0,0,W,H); }catch(e){}
+    const mx=px=>(px/iw*niw-sx)/sw*W, my=py=>(py/ih*nih-sy)/sh*H;
+    c.lineWidth=Math.max(2,W*0.006); c.lineCap='round';
+    c.strokeStyle='#e2cd94'; c.beginPath(); c.moveTo(mx(P(127).x),my(P(127).y)); c.lineTo(mx(P(356).x),my(P(356).y)); c.stroke();
+    c.strokeStyle='#ff9a3d'; c.beginPath(); c.moveTo(mx(P(172).x),my(P(172).y)); c.lineTo(mx(P(397).x),my(P(397).y)); c.stroke();
+    c.fillStyle='#fff'; [127,356,172,397].forEach(i=>{ c.beginPath(); c.arc(mx(P(i).x),my(P(i).y),Math.max(3,W*0.008),0,7); c.fill(); }); };
+  img.src=b.img.img;
+}
+</script>
+</body></html>

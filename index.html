@@ -303,7 +303,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v241 (2026-09-09)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v242 (2026-09-11)</span></div>
   <div class="tabs"><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -331,6 +331,8 @@ h2.section,.logo{letter-spacing:-.01em}
     <div id="faceResult"></div>
     <div id="entrySaveBar" style="margin:0 2px 12px"><button class="btn primary" style="width:100%" onclick="saveRecord()">💾 기록 저장</button></div>
     <div id="consentBar" style="margin:0 2px 12px;display:flex;gap:8px;align-items:center"><button class="btn" style="flex:1" onclick="openConsent()">📝 개인정보 동의서 (얼굴 사진·영상)</button><span id="consentBadge" style="font-size:12px;font-weight:800"></span></div>
+  <div style="margin:0 2px 12px"><button class="btn" style="width:100%" onclick="openSelfConsult()">🧑‍💼 얼굴형 니즈분석 (동의 포함)</button></div>
+  <div id="selfNeedsCard" style="display:none;margin:0 2px 12px"></div>
     <div class="card pad" id="fcodeCard" style="border:2px solid #7c3aed">
       <h2 class="section" style="margin-top:0">안면 코드 <span class="tag all">빠른 판독 · 첫 촉진용</span></h2>
       <div class="subtle" style="margin:-4px 0 8px;font-size:12px">AI가 타입~콧볼 예측 · <b>오른마루</b>는 촉진 후 직접 선택</div>
@@ -490,6 +492,11 @@ h2.section,.logo{letter-spacing:-.01em}
       <h2 class="section" style="margin-top:0">AI 정확도 <span class="subtle" style="text-transform:none;letter-spacing:0;font-weight:600">AI 초안 vs 최종 저장 · 항목별 일치율</span></h2>
       <button class="btn ghost" style="font-size:12.5px;padding:6px 12px" onclick="aiAccuracyReport()">계산하기</button>
       <div id="aiAccOut" style="margin-top:10px" class="subtle">[계산하기]를 누르면 전체 기록에서 AI가 준 값과 최종 저장값의 항목별 일치율을 집계합니다.</div>
+    </div>
+    <div class="card pad" style="margin-bottom:16px;border:2px solid #0e9f6e">
+      <h2 class="section" style="margin-top:0">AI 학습 동의자 <span class="subtle" style="text-transform:none;letter-spacing:0;font-weight:600">AI 분석·학습에 동의한 고객만 (모델 학습용)</span></h2>
+      <button class="btn ghost" style="font-size:12.5px;padding:6px 12px" onclick="renderAiConsentList()">새로고침</button>
+      <div id="aiConsentBox" style="margin-top:10px" class="subtle">[새로고침]을 눌러 확인하세요.</div>
     </div>
     <div class="card pad" style="margin-bottom:16px;border:2px solid #1f72b0">
       <h2 class="section" style="margin-top:0">폰 알림 켠 사람 <span class="subtle" style="text-transform:none;letter-spacing:0;font-weight:600">누가 알림을 받고 있는지 확인</span></h2>
@@ -1383,7 +1390,7 @@ function getVals(r,k){const v=r[k];if(v==null||v==='')return[];return Array.isAr
 function applyFormToUI(){
   document.querySelectorAll('.seg').forEach(box=>{const k=box.dataset.k,multi=box.dataset.multi;box.querySelectorAll('button').forEach(b=>{const on=multi?(Array.isArray(form[k])&&form[k].includes(b.dataset.v)):(form[k]===b.dataset.v);b.classList.toggle('on',on);});});
   FIELDS.forEach(f=>{if(f.type==='seg')return;const el=document.getElementById('f_'+f.k);if(el)el.value=form[f.k]||'';});
-  document.getElementById('f_notes').value=form.notes||'';PHOTO_SLOTS.forEach(([s])=>setPhotoPreview(s));updateValidation();renderAfters();try{renderConsentBadge();}catch(e){}
+  document.getElementById('f_notes').value=form.notes||'';PHOTO_SLOTS.forEach(([s])=>setPhotoPreview(s));updateValidation();renderAfters();try{renderConsentBadge();}catch(e){}try{renderSelfNeeds();}catch(e){}
 }
 
 /* ===== 안면 코드 (빠른 판독) + 솔루션 ===== */
@@ -2892,7 +2899,8 @@ async function onCodeAnalyze(){
     earsU=form['photo_up']?await measureEarsUp(form['photo_up']):null;
     const content=[];
     for(const [s,ko] of slots){const b64=await shrinkForAI(form['photo_'+s],560,0.55);content.push({type:'text',text:'['+ko+' 사진]'});content.push({type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}});}
-    content.push({type:'text',text:'당신은 소니드 얼굴 분석 보조입니다. 아래 지침대로 "안면 코드"만 판정해 JSON 하나만 출력하세요(다른 설명 금지).\n\n'+measureText(meas,null,earsU)+'\n\n'+FCODE_PROMPT});
+    var _selfRef=(window._selfFcode&&window._selfFcode.code)?('\n\n[얼굴형 니즈분석 측정 참고] 방금 얼굴형 니즈분석에서 측정된 안면 코드: '+window._selfFcode.code+' (타입 '+(window._selfFcode.type||'?')+' · 코 '+(window._selfFcode.nose||'')+' · 눈 '+(window._selfFcode.eye||'')+' · 콧볼 '+(window._selfFcode.ala||'')+'). 온디바이스 측정값이니 우선 참고하되, 사진과 명백히 다르면 사진을 따르세요.'):'';
+    content.push({type:'text',text:'당신은 소니드 얼굴 분석 보조입니다. 아래 지침대로 "안면 코드"만 판정해 JSON 하나만 출력하세요(다른 설명 금지).\n\n'+measureText(meas,null,earsU)+_selfRef+'\n\n'+FCODE_PROMPT});
     const resp=await fetch(RELAY,{method:"POST",headers:{"Content-Type":"application/json","x-sb-token":(authTok||"")},body:JSON.stringify({model:"claude-sonnet-5",thinking:{type:"disabled"},max_tokens:2500,messages:[{role:"user",content}]})});
     let data;try{data=await resp.json();}catch(je){throw new Error('응답을 읽지 못했습니다 (HTTP '+resp.status+')');}
     if(!resp.ok||(data&&data.error)){throw new Error('API 오류 '+(resp.status||'')+' · '+((data&&data.error&&data.error.message)||JSON.stringify(data).slice(0,200)));}
@@ -3223,11 +3231,11 @@ function openConsent(){
     +'<div style="padding:16px 18px;font-size:13.5px;line-height:1.65;color:#333">'
     +'<div style="font-weight:800;margin-bottom:4px">수집·이용 안내</div>'
     +'<div style="font-size:12.5px;color:#555;background:#faf7ff;border:1px solid #eee;border-radius:8px;padding:10px 12px;margin-bottom:12px">'
-    +'• 수집 항목: <b>얼굴 사진 및 영상</b>, 성함, 연락처<br>• 이용 목적: 얼굴 사진에 나타나는 비대칭·왜곡을 지속적으로 모니터링하고 케어 효과를 확인하기 위함이며, 당사자 본인을 위한 케어 연구 목적으로 이용됩니다.<br>'
-    +'• 보유·이용 기간: <b>관리 후 애프터 처리까지 최대 1개월</b> 보유 후 파기 (동의 철회 시 즉시 파기)<br>'
+    +'• 수집 항목: <b>얼굴 사진 및 영상</b>, 성함, 연락처<br>• 이용 목적: <b>미용 목적의 얼굴 윤곽(비대칭) 분석 및 관리 전/후 비교</b>를 위해 이용합니다. 본 서비스는 <b>의료행위나 본인인증(결제)이 아니며</b>, 얼굴을 신원 식별용 생체정보로 변환·저장하지 않습니다.<br>'
+    +'• 보유·이용 기간: <b>가입(회원 등록) 시</b>에만 관리·애프터 목적으로 보관하며, <b>가입하지 않으면 분석 후 삭제</b>합니다. (동의 철회 시 즉시 파기)<br>'
     +'• 동의 거부 권리: 필수 항목에 동의하지 않으실 수 있으며, 이 경우 서비스 제공이 제한될 수 있습니다.</div>'
     +_csChk('collect','얼굴 사진 및 영상의 수집·이용에 동의합니다.',true,it)
-    +_csChk('store','분석 결과 및 사진의 저장·보관에 동의합니다.',true,it)
+    +_csChk('store','가입 시 분석 결과·사진의 저장·보관에 동의합니다. (미가입 시 삭제)',true,it)
     +_csChk('retain','위 보유기간 및 파기 안내를 확인하였습니다.',true,it)
     +_csChk('ai','서비스 품질 향상을 위한 AI 분석·학습 이용에 동의합니다. (미동의해도 서비스 이용 가능)',false,it)
     +'<div style="margin:12px 0"><label style="font-size:12px;color:#555">법정대리인 성함 (만 14세 미만인 경우)</label><input id="cs_guardian" placeholder="해당 시에만 입력" style="width:100%;padding:9px 11px;border:1px solid #ddd;border-radius:8px;margin-top:4px"></div>'
@@ -3262,13 +3270,33 @@ function saveConsent(){
   var name=g('cs_name'); if(!name){toast('성함을 입력해 주세요');return;}
   var sig=''; try{var cv=document.getElementById('cs_sig');if(cv&&_sigDirty)sig=cv.toDataURL('image/png');}catch(e){}
   if(!sig && !confirm('서명이 비어 있습니다. 서명 없이 저장할까요?'))return;
-  form.consent={agreed:true,at:new Date().toISOString(),items:it,name:name,date:g('cs_date'),guardian:g('cs_guardian'),signature:sig,ver:'temp1'};
+  form.consent={agreed:true,at:new Date().toISOString(),items:it,name:name,date:g('cs_date'),guardian:g('cs_guardian'),signature:sig,ver:'v2'};
   document.getElementById('consentOv').style.display='none';
   renderConsentBadge();
   if(typeof saveRecord==='function'){ saveRecord(); }   /* ★ 즉시 DB 저장 — 서명 유실 방지 */
   else { toast('동의서 저장됨'); }
 }
-function clearForm(){form={};currentId=null;autoFilled={};_pendingLeadId=null;renderForm();renderStickyThumbs();document.getElementById('f_notes').value='';document.getElementById('autoMsg').innerHTML='';const _fr=document.getElementById('faceResult');if(_fr)_fr.innerHTML='';document.getElementById('editState').textContent='새 기록을 작성합니다.';document.getElementById('delBtn').style.display='none';updateValidation();try{renderConsentBadge();}catch(e){}}
+/* ★ 셀프 상담(얼굴 분석) 오버레이 — selfcapture.html을 열고, 동의 완료 신호를 받으면 차트 동의완료 처리 */
+function openSelfConsult(){
+  var o=document.getElementById('selfConsultOv');
+  if(!o){ o=document.createElement('div'); o.id='selfConsultOv'; o.style.cssText='position:fixed;inset:0;z-index:100070;background:#141215;display:flex;flex-direction:column';
+    o.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #2b2830;color:#efe9e2;flex:0 0 auto"><b>얼굴형 니즈분석</b><button onclick="var o=document.getElementById(\'selfConsultOv\');o.style.display=\'none\';var f=document.getElementById(\'selfConsultFrame\');if(f)f.src=\'about:blank\';" style="background:transparent;border:1px solid #2b2830;color:#efe9e2;border-radius:8px;padding:7px 12px;cursor:pointer">닫기 ✕</button></div><iframe id="selfConsultFrame" allow="camera;microphone" style="flex:1;width:100%;border:0"></iframe>';
+    document.body.appendChild(o);
+  }
+  o.style.display='flex';
+  document.getElementById('selfConsultFrame').src='selfcapture.html?ts='+Date.now();
+}
+window.addEventListener('message',function(e){ try{ var d=e&&e.data; if(d&&d.soneedConsent){ var c=d.soneedConsent; form.consent={agreed:true,at:c.at||new Date().toISOString(),items:c.items||{},name:(c.name||(form&&form.name)||''),ver:c.ver||'v2',via:'self'}; try{renderConsentBadge();}catch(_){} try{ if(typeof saveRecord==='function') saveRecord(); }catch(_){} try{toast('✓ 얼굴형 니즈분석에서 동의 완료 — 차트에 반영됐어요');}catch(_){} } if(d&&d.soneedFcode){ window._selfFcode=d.soneedFcode; try{toast('상담 페이셜 코드 수신: '+(d.soneedFcode.code||''));}catch(_){} } if(d&&d.soneedNeeds){ try{ form.face_needs=d.soneedNeeds; renderSelfNeeds(); if(typeof saveRecord==='function') saveRecord(); toast('셀프 니즈 저장됨 — 차트에 반영'); }catch(_){} } }catch(_){} });
+function renderSelfNeeds(){ var el=document.getElementById('selfNeedsCard'); if(!el) return; var n=form&&form.face_needs; if(n&&n.summary){ el.style.display='block'; el.innerHTML='<div class="card pad" style="border:1px solid #7c3aed"><div style="font-weight:800;color:#7c3aed;margin-bottom:4px">🧑‍💼 셀프 니즈 분석 <span style="font-weight:600;color:#999;font-size:11px">'+(n.at?String(n.at).slice(0,10):'')+'</span></div><div style="font-size:13px;line-height:1.6">'+n.summary+'</div></div>'; } else { el.style.display='none'; el.innerHTML=''; } }
+function renderAiConsentList(){
+  var box=document.getElementById('aiConsentBox'); if(!box)return;
+  var list=(records||[]).filter(function(r){ return r&&r.consent&&r.consent.items&&r.consent.items.ai; });
+  if(!list.length){ box.innerHTML='AI 학습에 동의한 고객이 아직 없어요. <span style="font-size:11px">(현재 불러온 기록 기준)</span>'; return; }
+  box.innerHTML='<div style="margin-bottom:8px;font-weight:800;color:#0e9f6e">총 '+list.length+'명 · AI 학습 동의</div>'+
+    list.map(function(r){ var sub=[r.date,r.therapist].filter(Boolean).join(' · '); var at=(r.consent&&r.consent.at)?' <span style="color:#0e9f6e;font-size:11px">✓ '+String(r.consent.at).slice(0,10)+'</span>':''; return '<div onclick="editRecord(\''+r.id+'\')" style="padding:9px 11px;border:1px solid #eee;border-radius:8px;margin-bottom:6px;cursor:pointer;background:#fff"><b>'+((r.name||r.code||'무제'))+'</b> <span style="color:#999;font-size:12px">'+(sub||'')+'</span>'+at+'</div>'; }).join('')+
+    '<div class="subtle" style="margin-top:6px;font-size:11px">※ 현재 불러온 기록 기준이에요. 전체를 보려면 먼저 \'고객 리포트\' 탭에서 목록을 끝까지 불러오세요.</div>';
+}
+function clearForm(){form={};currentId=null;autoFilled={};_pendingLeadId=null;renderForm();renderStickyThumbs();document.getElementById('f_notes').value='';document.getElementById('autoMsg').innerHTML='';const _fr=document.getElementById('faceResult');if(_fr)_fr.innerHTML='';document.getElementById('editState').textContent='새 기록을 작성합니다.';document.getElementById('delBtn').style.display='none';updateValidation();try{renderConsentBadge();}catch(e){}try{renderSelfNeeds();}catch(e){}}
 var _reportScroll=0,_restoreReport=false;
 function initEntryTabs(){
   var entry=document.getElementById('view-entry'); if(!entry)return;
