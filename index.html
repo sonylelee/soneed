@@ -768,7 +768,7 @@ const FIELDS=[
  {k:'d_jawcenter_parietal',g:'lr',label:'턱 중앙 > 마루뼈의 거리',type:'seg',opt:['L','R','대칭'],hint:'기준=정면 마루뼈 절대높이 · 두께로 판독'},
  {k:'d_temporal_teeth',g:'lr',label:'템포럴 아치 > 윗 치아 거리',type:'seg',opt:['L','R','대칭'],hint:'"이~" 어금니-템포럴 · 광대 높이에 좌우 · 절대규칙 아님(뒤집힐 수 있음)'},
  {k:'d_temporal_forehead',g:'lr',label:'템포럴 아치 > 이마뼈 랜드마크 거리',type:'seg',opt:['L','R','대칭'],hint:'두께 · 짜부된 쪽이 짧음(부피 살아있는 쪽=긴 쪽)'},
- {k:'zygoma_incline',g:'lr',label:'광대뼈의 전,후방경사',type:'seg',opt:['L 전방','R 전방','대칭'],hint:'★촉진 필요 · 사진 양가(콧볼→L 예측 / 전체 부피 우측 큼→R 예측)'},
+ {k:'zygoma_incline',g:'lr',label:'광대뼈의 전,후방경사',type:'seg',opt:['L 전방','R 전방','대칭'],hint:'콧볼 더 낮은 쪽이 전방경사 (측정 자동 · 최종 촉진 권장)'},
  {k:'mastoid_incline',g:'lr',label:'유양돌기 전,후방경사 차이',type:'seg',opt:['L 전방','R 전방','대칭'],hint:'★촉진 필수 · 고개든 귀 젖힘/정면 귀하단 노출 · 광대가 귀 가림 주의(햄버거시프트)'},
  {k:'d_mastoid_jawjoint',g:'lr',label:'유양돌기 > 턱관절 두께 (두꺼운 쪽)',type:'seg',opt:['L','R','대칭']},
  {k:'d_mastoid_zygoma',g:'lr',label:'유양돌기 > 앞광대 두께 (두꺼운 쪽)',type:'seg',opt:['L','R','대칭']},
@@ -2825,7 +2825,7 @@ function measureText(m,ef,eu){
       : (m.eye_low_own==='본인오른쪽' ? 'R (본인 오른쪽 눈이 낮음)' : 'L (본인 왼쪽 눈이 낮음)');
     const nose = m.nose_own==='거의수직' ? '중립'
       : (m.nose_own==='본인오른쪽' ? 'R (본인 오른쪽으로 내려감)' : 'L (본인 왼쪽으로 내려감)');
-    const shape = m.wh<80 ? '세로형' : (m.wh>86 ? '가로형' : '중립');
+    const shape = m.wh<84 ? '세로형' : (m.wh>88 ? '가로형' : '중립');
     const rot = m.rot_ear_own==='중립' ? '중립'
       : (m.rot_ear_own==='본인오른쪽' ? 'R (본인 오른쪽 귀가 더 보임)' : 'L (본인 왼쪽 귀가 더 보임)');
     lines.push(`· 투구 기울기 = ${tilt}   (눈동자 높이차 ${m.eye_dy_norm}%)`);
@@ -2904,6 +2904,11 @@ async function onFaceAnalyze(){
     for(const label in parsed){const key=LABEL2KEY[label];if(!key)continue;const f=FMAP[key];const o=parsed[label];if(!o)continue;const val=o.v;
       if(f.type==='multi'){const vals=(Array.isArray(val)?val:[val]).filter(x=>f.opt.includes(x));if(vals.length){form[key]=vals;form._src[key]="ai";form._ai[key]=vals;n++;}}
       else if(f.opt.includes(val)){form[key]=val;form._src[key]="ai";form._ai[key]=val;n++;}}
+    // ★ 측정으로 결정(AI보다 우선): 얼굴형(임계 조정) · 광대경사(콧볼 낮은 쪽=전방)
+    if(meas){
+      if(meas.wh!=null){ form.face_shape = meas.wh<84?'세로형':(meas.wh>88?'가로형':'중립'); form._src.face_shape='ai'; form._ai.face_shape=form.face_shape; }
+      if(meas.ala_own){ form.zygoma_incline = meas.ala_own==='거의같음'?'대칭':(meas.ala_own==='본인오른쪽'?'L 전방':'R 전방'); form._src.zygoma_incline='ai'; form._ai.zygoma_incline=form.zygoma_incline; }   // 콧볼 높은 쪽의 반대(=낮은 쪽)가 전방
+    }
     renderForm();applyFormToUI();
     renderFaceResult(parsed,n);
   }catch(err){
