@@ -584,7 +584,7 @@ create policy "sol write" on solutions
     <div id="camPhotoCtrls">
     <div id="camOpWrap" class="cam-op">비포 연하게 <input type="range" id="camOp" min="0" max="90" value="45" oninput="camOpacity(this.value)"> 진하게</div>
     <div class="cam-count" id="camCount"></div>
-    <div class="cam-zoom" id="camZoomRow"><button data-z="1" onclick="setZoom(1)">1×</button><button data-z="2" onclick="setZoom(2)">2×</button><button data-z="3" class="on" onclick="setZoom(3)">3×</button></div>
+    <div class="cam-zoom" id="camZoomRow"><button data-z="1" onclick="setZoom(1)">1×</button><button data-z="2" class="on" onclick="setZoom(2)">2×</button></div>
     <div class="cam-strip" id="camStrip"></div>
     <div id="camSaveRow" style="text-align:center;margin-bottom:8px;display:none"><button class="cam-flip" onclick="camSaveAllShots()" style="padding:9px 15px;font-size:12.5px;background:rgba(255,255,255,.2);color:#fff">찍은 사진 전부 폰 앨범에 저장</button></div>
     <div style="text-align:right;margin-bottom:8px"><button class="cam-flip" id="camSkip" onclick="camSkip()" style="display:none;padding:7px 12px;font-size:12px">건너뛰기 ▶</button></div>
@@ -2355,7 +2355,7 @@ function positionStickyThumbs(){const h=document.querySelector('header.top'),st=
 function zoomPhoto(s){const src=form['photo_'+s];if(!src)return;let o=document.getElementById('photoZoom');if(!o){o=document.createElement('div');o.id='photoZoom';o.onclick=function(){o.style.display='none';};document.body.appendChild(o);}o.innerHTML='<img src="'+src+'">';o.style.display='flex';}
 
 /* ===== 인앱 카메라 (비포 반투명 오버레이 + 여러 장 촬영 후 best 선택) ===== */
-let _camStream=null,_camFacing='environment',_camShots=[],_camSel=-1,_camSteps=[],_camStep=0,_camZoom=3,_camDigital=false,_camBuckets={},_camPickStep=0;
+let _camStream=null,_camFacing='environment',_camShots=[],_camSel=-1,_camSteps=[],_camStep=0,_camZoom=2,_camDigital=false,_camBuckets={},_camPickStep=0;
 var ZOOM_CAL=0.6;   /* iOS getUserMedia 화각이 좁아 디지털 3배가 과함 → 보정(작을수록 덜 확대). 값 튜닝 대상 */
 function _effZoom(){return _camDigital?(1+(_camZoom-1)*ZOOM_CAL):_camZoom;}
 function camSupported(){return !!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia);}
