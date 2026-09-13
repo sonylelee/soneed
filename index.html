@@ -1268,10 +1268,19 @@ async function fetchFull(id){
   return rec;
 }
 async function cloudPutPhotos(id,photosObj){
-  const r=await fetch(sbBase()+'records?id=eq.'+encodeURIComponent(String(id)),{method:'PATCH',headers:sbHeaders({Prefer:'return=minimal'}),body:JSON.stringify({photos:photosObj,updated_at:new Date().toISOString()})});
-  if(!r.ok)throw new Error('HTTP '+r.status+' '+await r.text());
+  await _sbWrite(sbBase()+'records?id=eq.'+encodeURIComponent(String(id)),'PATCH',{photos:photosObj,updated_at:new Date().toISOString()});
 }
-async function cloudPut(id,dataObj){if(authEmail()){try{if(!dataObj.savedBy)dataObj.savedBy=authEmail();dataObj.lastBy=authEmail();}catch(e){}}const r=await fetch(sbBase()+'records',{method:'POST',headers:sbHeaders({Prefer:'resolution=merge-duplicates,return=minimal'}),body:JSON.stringify({id:String(id),data:dataObj,updated_at:new Date().toISOString()})});if(!r.ok)throw new Error('HTTP '+r.status+' '+await r.text());}
+async function _sbWrite(url,method,bodyObj){   /* 토큰 만료(401/403) 시 자동 갱신 후 1회 재시도 */
+  var body=JSON.stringify(bodyObj);
+  var doIt=function(){return fetch(url,{method:method,headers:sbHeaders({Prefer:'resolution=merge-duplicates,return=minimal'}),body:body});};
+  var r=await doIt();
+  if(r.status===401||r.status===403){ var ok=false; try{ok=await authRefresh();}catch(e){} if(ok){ r=await doIt(); } }
+  if(!r.ok){ var t=''; try{t=await r.text();}catch(e){}
+    if(r.status===401||r.status===403){ try{updateAuthUI();}catch(e){} try{openLogin();}catch(e){} throw new Error('로그인 세션이 만료됐어요 — 다시 로그인 후 저장해 주세요'); }
+    throw new Error('HTTP '+r.status+' '+t); }
+  return r;
+}
+async function cloudPut(id,dataObj){if(authEmail()){try{if(!dataObj.savedBy)dataObj.savedBy=authEmail();dataObj.lastBy=authEmail();}catch(e){}}await _sbWrite(sbBase()+'records','POST',{id:String(id),data:dataObj,updated_at:new Date().toISOString()});}
 async function cloudSaveRecord(rec){
   if(Array.isArray(rec.afters))rec.afters.forEach(function(a){if(a&&!a.id)a.id=newId();});   // 회차 id 보장(사진 매칭 키)
   var sp=_splitPhotos(rec);
