@@ -66,6 +66,12 @@
   .bar>i{display:block;height:100%;background:var(--brand);transition:width .4s ease}
   .bar.warn>i{background:#dda45a}
   .propcanv{width:100%;background:#0c0b0d;border:1px solid var(--line);border-radius:12px;margin-top:12px;display:block}
+  /* ★ 폰 터치 슬라이더: thumb 크게 + 트랙 드래그 시 스크롤에 안 뺏기게 */
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:30px;background:transparent;touch-action:none;cursor:pointer}
+  input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:#e7cbdb}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:28px;height:28px;margin-top:-11px;border-radius:50%;background:var(--brand);border:2px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.35)}
+  input[type=range]::-moz-range-track{height:6px;border-radius:3px;background:#e7cbdb}
+  input[type=range]::-moz-range-thumb{width:28px;height:28px;border:2px solid #fff;border-radius:50%;background:var(--brand);box-shadow:0 1px 5px rgba(0,0,0,.35)}
 </style></head>
 <body><div class="wrap">
 <header class="brandbar"><span class="wm">SONEED</span><span class="eyebrow">Face Contour · 얼굴형 니즈분석</span></header>
