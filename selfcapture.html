@@ -826,7 +826,7 @@ function collectNeeds(){
   const adj=[]; ['fo','lo','mid','w','m','j','e'].forEach(k=>{ if(r[k]) adj.push(nm[k]+' '+(r[k]>0?'+':'')+Math.round(r[k]*100)); });
   const nose=(typeof _sideWarp!=='undefined'&&(_sideWarp.nose||_sideWarp.brow||_sideWarp.chin))?('코'+(_sideWarp.nose||0)+'/이마'+(_sideWarp.brow||0)+'/턱'+(_sideWarp.chin||0)):'';
   const code=(a.fcode?((a.fcode.type||'?')+((''+(a.clock||'7')).replace('시',''))+'-'+[a.fcode.nose,a.fcode.eye,a.fcode.ala].map(x=>x==='중립'?'0':x).join('')):'');
-  const obj={worries:worries,adj:adj,nose:nose,code:code,side:a.side||null,pose:a.pose||null,thirds:a.thirds||null,memo:(s.memo||''),name:(s.name||''),phone:(s.phone||''),at:new Date().toISOString()};
+  const obj={worries:worries,adj:adj,nose:nose,code:code,side:a.side||null,pose:a.pose||null,thirds:a.thirds||null,sleep_side:(s.sleep_side||''),chew_side:(s.chew_side||''),memo:(s.memo||''),name:(s.name||''),phone:(s.phone||''),at:new Date().toISOString()};
   let sum='';
   if(worries.length) sum+='고민: '+worries.join(', ')+' · ';
   if(code) sum+='코드 '+code+' · ';

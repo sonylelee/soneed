@@ -744,6 +744,8 @@ const FIELDS=[
  {k:'sex',g:'meta',label:'성별',type:'select',opt:['','여','남']},
  {k:'age',g:'meta',label:'나이',type:'num'},
  {k:'date',g:'meta',label:'날짜',type:'date'},
+ {k:'habit_sleep',g:'meta',label:'수면 자세',type:'select',opt:['','천장','왼쪽','오른쪽','엎드림-왼볼','엎드림-오른볼','모름'],hint:'첫관리 상담 설문에서 자동 입력 · 타입과 상관분석용'},
+ {k:'habit_chew',g:'meta',label:'씹는 쪽',type:'select',opt:['','왼쪽','오른쪽','양쪽','모름'],hint:'첫관리 상담 설문에서 자동 입력 · 타입과 상관분석용'},
  {k:'satisfaction',g:'meta',label:'만족도',type:'select',opt:['','상','중','하']},
 
  // 2D 진단
@@ -3329,7 +3331,7 @@ function closeConsultFull(){
   try{ showView('data'); }catch(_){}   /* 닫으면 고객 리포트로 이동해 저장 결과 확인 */
   try{ if(typeof loadAll==='function'&&mode==='cloud') loadAll(); else if(typeof renderRecList==='function') renderRecList(); }catch(_){}
 }
-window.addEventListener('message',function(e){ try{ var d=e&&e.data; if(d&&d.soneedConsent){ var c=d.soneedConsent; form.consent={agreed:true,at:c.at||new Date().toISOString(),items:c.items||{},name:(c.name||(form&&form.code)||''),ver:c.ver||'v2',via:'self'}; if(c.name&&!form.code){ form.code=c.name; var _ci=document.getElementById('f_code'); if(_ci)_ci.value=c.name; } if(window._consultActive)form.consultOnly=true; try{renderConsentBadge();}catch(_){} try{ if(typeof saveRecord==='function') saveRecord(); }catch(_){} try{toast('✓ 얼굴형 니즈분석에서 동의 완료 — 차트에 반영됐어요');}catch(_){} } if(d&&d.soneedFcode){ window._selfFcode=d.soneedFcode; try{toast('상담 페이셜 코드 수신: '+(d.soneedFcode.code||''));}catch(_){} } if(d&&d.soneedNeeds){ try{ form.face_needs=d.soneedNeeds; if(window._consultActive)form.consultOnly=true; renderSelfNeeds(); if(typeof saveRecord==='function') saveRecord(); toast('셀프 니즈 저장됨 — 차트에 반영'); }catch(_){} } }catch(_){} });
+window.addEventListener('message',function(e){ try{ var d=e&&e.data; if(d&&d.soneedConsent){ var c=d.soneedConsent; form.consent={agreed:true,at:c.at||new Date().toISOString(),items:c.items||{},name:(c.name||(form&&form.code)||''),ver:c.ver||'v2',via:'self'}; if(c.name&&!form.code){ form.code=c.name; var _ci=document.getElementById('f_code'); if(_ci)_ci.value=c.name; } if(window._consultActive)form.consultOnly=true; try{renderConsentBadge();}catch(_){} try{ if(typeof saveRecord==='function') saveRecord(); }catch(_){} try{toast('✓ 얼굴형 니즈분석에서 동의 완료 — 차트에 반영됐어요');}catch(_){} } if(d&&d.soneedFcode){ window._selfFcode=d.soneedFcode; try{toast('상담 페이셜 코드 수신: '+(d.soneedFcode.code||''));}catch(_){} } if(d&&d.soneedNeeds){ try{ form.face_needs=d.soneedNeeds; if(d.soneedNeeds.sleep_side)form.habit_sleep=d.soneedNeeds.sleep_side; if(d.soneedNeeds.chew_side)form.habit_chew=d.soneedNeeds.chew_side; if(window._consultActive)form.consultOnly=true; renderSelfNeeds(); if(typeof saveRecord==='function') saveRecord(); toast('셀프 니즈 저장됨 — 차트에 반영'); }catch(_){} } }catch(_){} });
 function renderSelfNeeds(){ var el=document.getElementById('selfNeedsCard'); if(!el) return; var n=form&&form.face_needs; if(n&&n.summary){ el.style.display='block'; el.innerHTML='<div class="card pad" style="border:1px solid #7c3aed"><div style="font-weight:800;color:#7c3aed;margin-bottom:4px">🧑‍💼 셀프 니즈 분석 <span style="font-weight:600;color:#999;font-size:11px">'+(n.at?String(n.at).slice(0,10):'')+'</span></div><div style="font-size:13px;line-height:1.6">'+n.summary+'</div></div>'; } else { el.style.display='none'; el.innerHTML=''; } }
 function renderAiConsentList(){
   var box=document.getElementById('aiConsentBox'); if(!box)return;
