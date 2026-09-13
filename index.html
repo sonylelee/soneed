@@ -445,6 +445,11 @@ h2.section,.logo{letter-spacing:-.01em}
         <option value="updated" selected>최근 업데이트순</option>
         <option value="date">날짜(회차)순</option>
       </select>
+      <select id="consultFilter" onchange="setConsultFilter(this.value)" style="font-size:13px;padding:5px 9px;border:1px solid #D3D7DE;border-radius:8px;background:#fff" title="상담만 하고 간 기록(사진 없음) 분리">
+        <option value="chart" selected>정식 차트만</option>
+        <option value="all">전체(상담 포함)</option>
+        <option value="consult">상담만 보기</option>
+      </select>
       <input id="recSearch" list="recCodeList" oninput="onRecSearch(this.value)" placeholder="코드·이름 검색 (예: A7 · 왼오오오 · 홍길동)" style="flex:1;min-width:180px;font-size:13px;padding:6px 11px;border:1px solid #D3D7DE;border-radius:8px;background:#fff">
       <datalist id="recCodeList"></datalist>
     </div>
@@ -734,7 +739,7 @@ const FIELDS=[
  {k:'code',g:'meta',label:'고객 성함',type:'text'},
  {k:'branch',g:'meta',label:'지점',type:'select',opt:['','소니드동탄본점','소니드압구정점','스파드블랑','게스트1']},
  {k:'therapist',g:'meta',label:'리셋터 (관리사)',type:'select',opt:THERAPISTS},
- {k:'final_type',g:'meta',label:'최종 타입',type:'seg',opt:['A','B']},
+ {k:'final_type',g:'meta',label:'최종 타입',type:'seg',opt:['A','B','RD','LD']},
  {k:'signup',g:'meta',label:'가입회차',type:'select',opt:['',...Array.from({length:40},(_,i)=>(i+1)+'회')]},
  {k:'sex',g:'meta',label:'성별',type:'select',opt:['','여','남']},
  {k:'age',g:'meta',label:'나이',type:'num'},
@@ -742,7 +747,7 @@ const FIELDS=[
  {k:'satisfaction',g:'meta',label:'만족도',type:'select',opt:['','상','중','하']},
 
  // 2D 진단
- {k:'type',g:'2d',label:'타입',type:'seg',opt:['A','B'],hint:'A=우측 짧음 / B=좌측 짧음'},
+ {k:'type',g:'2d',label:'타입',type:'seg',opt:['A','B','RD','LD'],hint:'A=우측 짧음 / B=좌측 짧음 / RD=눈·콧볼·입꼬리 모두 오른쪽 처짐 / LD=모두 왼쪽 처짐'},
  {k:'skull_tilt',g:'2d',label:'투구 기울기',type:'seg',opt:['L','R','중립'],hint:'L=왼쪽 / R=오른쪽으로 기울어짐'},
  {k:'skull_rot',g:'2d',label:'투구 회전 (귀 보이는 쪽)',type:'seg',opt:['L','R','중립']},
  {k:'lateral_vol',g:'2d',label:'측면함유량 많은 쪽',type:'seg',opt:['L','R']},
@@ -799,6 +804,7 @@ function sortRecs(){records.sort((a,b)=>(b.date||'').localeCompare(a.date||'')||
 /* 목록 정렬(드롭다운) — updMap: 로드 시 각 기록의 updated_at 보관(레코드 오염 없이) */
 let sortMode='updated',updMap={};
 function setSort(v){sortMode=v;renderRecList();}
+let _consultFilter='chart';function setConsultFilter(v){_consultFilter=v;renderRecList();}
 function sortList(arr){var a=arr.slice();
   if(sortMode==='name')a.sort(function(x,y){return String(x.code||'힣힣힣').localeCompare(String(y.code||'힣힣힣'),'ko');});
   else if(sortMode==='updated')a.sort(function(x,y){return String(updMap[y.id]||'').localeCompare(String(updMap[x.id]||''));});
@@ -1196,7 +1202,7 @@ async function cloudLoad(offset,limit){
     try{
       const r=await fetch(_url,{headers:sbHeaders(),signal:_ctl.signal});
       clearTimeout(_to);
-      if((r.status===401||r.status===403)){ if(attempt===0){ var ok=false; try{ok=await authRefresh();}catch(e){} if(ok) continue; } openLogin(); throw new Error('auth'); }
+      if((r.status===401||r.status===403)){ if(attempt===0){ var ok=false; try{ok=await authRefresh();}catch(e){} if(ok) continue; } try{updateAuthUI();}catch(e){} try{toast('로그인이 만료됐어요 · 상단 로그인 버튼으로 다시 로그인하세요');}catch(e){} throw new Error('auth'); }
       if((r.status===429||r.status>=500)&&attempt<3){ await _sleep(600*(attempt+1)+Math.floor(Math.random()*600)); continue; }   /* 서버 혼잡 → 재시도 */
       if(!r.ok) throw new Error('목록 '+r.status+' '+await r.text());
       const rows=await r.json();
@@ -1416,7 +1422,7 @@ function applyFormToUI(){
 
 /* ===== 안면 코드 (빠른 판독) + 솔루션 ===== */
 const FCODE=[
- {k:'t',label:'타입',opt:['A','B']},
+ {k:'t',label:'타입',opt:['A','B','RD','LD']},
  {k:'clock',label:'후두골',opt:['7시','6시','5시']},
  {k:'nose',label:'눈>코(예각인 쪽)',opt:['왼','오','중립']},
  {k:'cheek',label:'광대 전면레벨(나온 쪽)',opt:['왼','오','중립']},
@@ -1426,7 +1432,7 @@ const FCODE=[
 ];
 function fcodeStr(o){if(!o||!o.t||!o.clock)return'';var z=function(v){return(!v||v==='중립')?'0':v;};var p=o.par==='두꺼움'?'T':(o.par==='얇음'?'F':'0');return o.t+String(o.clock).replace('시','')+'-'+z(o.nose)+z(o.cheek)+z(o.eye)+z(o.ala)+'-'+p;}
 const FCODE_PROMPT='{{FCODE_PROMPT}}';
-function _fcNorm(k,v){v=String(v==null?'':v).trim();if(k==='t')return /b/i.test(v)?'B':(/a/i.test(v)?'A':null);if(k==='clock'){var d=v.match(/[567]/);return d?d[0]+'시':null;}if(/중립|중앙|대칭|neutral|middle/i.test(v))return '중립';if(/왼|left|(^|[^a-z])l([^a-z]|$)/i.test(v))return '왼';if(/오|right|(^|[^a-z])r([^a-z]|$)/i.test(v))return '오';return null;}
+function _fcNorm(k,v){v=String(v==null?'':v).trim();if(k==='t'){if(/rd/i.test(v))return 'RD';if(/ld/i.test(v))return 'LD';return /b/i.test(v)?'B':(/a/i.test(v)?'A':null);}if(k==='clock'){var d=v.match(/[567]/);return d?d[0]+'시':null;}if(/중립|중앙|대칭|neutral|middle/i.test(v))return '중립';if(/왼|left|(^|[^a-z])l([^a-z]|$)/i.test(v))return '왼';if(/오|right|(^|[^a-z])r([^a-z]|$)/i.test(v))return '오';return null;}
 function applyFcodeFromAI(parsed){
   var fc=parsed&&(parsed['안면코드']||parsed['안면 코드']);if(!fc||typeof fc!=='object')return false;
   var map={타입:'t',후두골:'clock',눈코밀림:'nose',광대전면:'cheek',광대올라옴:'cheek',눈높은쪽:'eye',콧볼올라감:'ala'};
@@ -2421,12 +2427,12 @@ function snapCam(){
   _shutterSound();
   var zoom=_effZoom();   /* 디지털 줌이면 중앙만 크롭(보정 적용) · 하드웨어 줌이면 1 */
   var sw=v.videoWidth/zoom, sh=v.videoHeight/zoom, sx=(v.videoWidth-sw)/2, sy=(v.videoHeight-sh)/2;
-  const max=1280,sc=Math.min(1,max/Math.max(sw,sh));
+  const max=1600,sc=Math.min(1,max/Math.max(sw,sh));
   const cv=document.createElement('canvas');cv.width=Math.round(sw*sc);cv.height=Math.round(sh*sc);
-  const ctx=cv.getContext('2d');
+  const ctx=cv.getContext('2d');ctx.imageSmoothingQuality='high';
   if(_camFacing==='user'){ctx.translate(cv.width,0);ctx.scale(-1,1);}   /* 셀피 미러 보정 — 저장은 정상 방향 */
   ctx.drawImage(v, sx,sy,sw,sh, 0,0,cv.width,cv.height);
-  _camShots.push(cv.toDataURL('image/jpeg',0.85));
+  _camShots.push(cv.toDataURL('image/jpeg',0.92));
   _camRenderStrip();   /* 연속 촬영 — 미리보기로 끊지 않음(썸네일 탭하면 리뷰) */
 }
 function _camRenderStrip(){
@@ -2548,7 +2554,7 @@ function _askLevel(){   /* 버튼 탭 = 확실한 사용자 제스처로 권한 
 /* 시작 슬롯부터 끝(고개 숙임)까지 이어 촬영. 애프터는 각 슬롯의 비포를 오버레이 */
 function _buildSteps(startSlot,mk){var started=false,st=[];PHOTO_SLOTS.forEach(function(p){var s=p[0],ko=p[1];if(s===startSlot)started=true;if(started)st.push(mk(s,ko));});return st;}
 /* ★ 촬영 순서: 정면→든→정면→숙임→정면 (정면 3번, 고개 움직여 best 고르기). 정면 샷은 한 필름스트립에 누적 */
-function _seq5(mk){return [mk('front','정면 · 1/3'),mk('up','고개 든'),mk('front','정면 · 2/3'),mk('down','고개 숙임'),mk('front','정면 · 3/3')];}
+function _seq5(mk){return [mk('front','정면'),mk('up','고개 든'),mk('down','고개 숙임')];}
 function _confirmOverwrite(s){if(!form['photo_'+s])return true;return confirm('초회차(원본) 사진을 새로 촬영하면 기존 사진이 바뀝니다.\n회차(애프터) 사진은 아래 "회차별 애프터"에서 촬영/추가하세요.\n그래도 초회차를 다시 찍을까요?');}
 /* 초회차(원본): 겹칠 비포가 없으니 오버레이 없음 */
 function camMain(s){if(!_confirmOverwrite(s))return;openCamSeq(_seq5(function(sl,ko){return {slot:sl,ko:ko,ref:function(){return null;},assign:function(d){form['photo_'+sl]=d;setPhotoPreview(sl);}};}));}
@@ -3008,6 +3014,7 @@ async function saveRecord(){
   form.notes=document.getElementById('f_notes').value||null;
   const hasPhoto=PHOTO_SLOTS.some(([s])=>form['photo_'+s]);
   const hasAfter=Array.isArray(form.afters)&&form.afters.some(a=>a&&(a.photo_front||a.photo_up||a.photo_down||a.before_front||a.before_up||a.before_down));
+  if(hasPhoto||hasAfter)delete form.consultOnly;   // 사진이 들어오면 정식 차트로 승격(상담전용 태그 해제)
   if(!form.code&&!hasPhoto&&!hasAfter){toast('고객 성함이나 사진 중 하나는 입력해 주세요');return;}
   const rec=Object.assign({},form);rec.id=currentId||newId();currentId=rec.id;
   if(!rec.savedBy&&authEmail())rec.savedBy=authEmail();   // 최초 올린이 고정(cloudPut이 매번 덮어쓰지 않게 여기서 선점)
@@ -3317,7 +3324,7 @@ function closeConsultFull(){
   try{ showView('data'); }catch(_){}   /* 닫으면 고객 리포트로 이동해 저장 결과 확인 */
   try{ if(typeof loadAll==='function'&&mode==='cloud') loadAll(); else if(typeof renderRecList==='function') renderRecList(); }catch(_){}
 }
-window.addEventListener('message',function(e){ try{ var d=e&&e.data; if(d&&d.soneedConsent){ var c=d.soneedConsent; form.consent={agreed:true,at:c.at||new Date().toISOString(),items:c.items||{},name:(c.name||(form&&form.code)||''),ver:c.ver||'v2',via:'self'}; if(c.name&&!form.code){ form.code=c.name; var _ci=document.getElementById('f_code'); if(_ci)_ci.value=c.name; } try{renderConsentBadge();}catch(_){} try{ if(typeof saveRecord==='function') saveRecord(); }catch(_){} try{toast('✓ 얼굴형 니즈분석에서 동의 완료 — 차트에 반영됐어요');}catch(_){} } if(d&&d.soneedFcode){ window._selfFcode=d.soneedFcode; try{toast('상담 페이셜 코드 수신: '+(d.soneedFcode.code||''));}catch(_){} } if(d&&d.soneedNeeds){ try{ form.face_needs=d.soneedNeeds; renderSelfNeeds(); if(typeof saveRecord==='function') saveRecord(); toast('셀프 니즈 저장됨 — 차트에 반영'); }catch(_){} } }catch(_){} });
+window.addEventListener('message',function(e){ try{ var d=e&&e.data; if(d&&d.soneedConsent){ var c=d.soneedConsent; form.consent={agreed:true,at:c.at||new Date().toISOString(),items:c.items||{},name:(c.name||(form&&form.code)||''),ver:c.ver||'v2',via:'self'}; if(c.name&&!form.code){ form.code=c.name; var _ci=document.getElementById('f_code'); if(_ci)_ci.value=c.name; } if(window._consultActive)form.consultOnly=true; try{renderConsentBadge();}catch(_){} try{ if(typeof saveRecord==='function') saveRecord(); }catch(_){} try{toast('✓ 얼굴형 니즈분석에서 동의 완료 — 차트에 반영됐어요');}catch(_){} } if(d&&d.soneedFcode){ window._selfFcode=d.soneedFcode; try{toast('상담 페이셜 코드 수신: '+(d.soneedFcode.code||''));}catch(_){} } if(d&&d.soneedNeeds){ try{ form.face_needs=d.soneedNeeds; if(window._consultActive)form.consultOnly=true; renderSelfNeeds(); if(typeof saveRecord==='function') saveRecord(); toast('셀프 니즈 저장됨 — 차트에 반영'); }catch(_){} } }catch(_){} });
 function renderSelfNeeds(){ var el=document.getElementById('selfNeedsCard'); if(!el) return; var n=form&&form.face_needs; if(n&&n.summary){ el.style.display='block'; el.innerHTML='<div class="card pad" style="border:1px solid #7c3aed"><div style="font-weight:800;color:#7c3aed;margin-bottom:4px">🧑‍💼 셀프 니즈 분석 <span style="font-weight:600;color:#999;font-size:11px">'+(n.at?String(n.at).slice(0,10):'')+'</span></div><div style="font-size:13px;line-height:1.6">'+n.summary+'</div></div>'; } else { el.style.display='none'; el.innerHTML=''; } }
 function renderAiConsentList(){
   var box=document.getElementById('aiConsentBox'); if(!box)return;
@@ -3460,7 +3467,7 @@ function fillCodeList(){
 function renderRecList(){
   fillCodeList();
   try{ var _bar=document.getElementById('adminReportBar'); if(_bar&&typeof isAdmin==='function'){ _bar.style.display=isAdmin()?'':'none'; if(isAdmin())_fillWhoFilter(); } }catch(e){}
-  const list=sortList(filtered()),box=document.getElementById('recList');
+  var list=sortList(filtered()).filter(function(r){var co=!!r.consultOnly;return _consultFilter==='consult'?co:(_consultFilter==='chart'?!co:true);}),box=document.getElementById('recList');
   try{ var _rc=document.getElementById('reportCount'); if(_rc){ var _w=list.filter(function(r){return !r.confirmedBy;}).length; _rc.textContent=list.length+'건 · 컨펌대기 '+_w; } }catch(e){}
   try{ var pr=document.getElementById('pushRow'); if(pr){ var li=(typeof authEmail==='function'&&authEmail()); pr.style.display=li?'':'none';
       var pb=document.getElementById('pushBtn'), ps=document.getElementById('pushState');
@@ -3468,7 +3475,7 @@ function renderRecList(){
     } }catch(e){}
   try{ renderNotif(); }catch(e){}
   if(list.length===0){box.innerHTML=`<div class="empty-note" style="grid-column:1/-1"><b>아직 기록이 없습니다.</b><br>‘기록 입력’ 탭에서 첫 데이터를 저장해 보세요.</div>`;return;}
-  box.innerHTML=list.map(r=>{const p=recPhoto(r);const thumb=p?`<img src="${p}" loading="lazy" decoding="async">`:`<span>사진 없음</span>`;const sub=[r.date,r.therapist,r.signup].filter(Boolean).join(' · ');const chips=CHIP_KEYS.map(k=>chipFor(r,k)).filter(Boolean).join('');const fcd=recCode(r);return `<div class="rec" onclick="editRecord('${r.id}')"><div class="thumb ${p?'':'empty'}">${thumb}</div><div class="meta"><div class="code">${r.code||'무제'}${(function(){var u=unreadCount(r);return u?' <span style="display:inline-block;min-width:16px;height:16px;line-height:16px;text-align:center;background:#e02424;color:#fff;border-radius:9px;font-size:11px;font-weight:800;padding:0 4px;vertical-align:1px">'+u+'</span>':'';})()}</div>${fcd?`<div class="fcode-tag">${fcd}</div>`:''}<div class="sub">${sub||'&nbsp;'}</div>${r.savedBy?'<div class="sub" style="color:#8a7aa8;font-size:11px">올린이 '+_who(r.savedBy)+(r.lastBy&&r.lastBy!==r.savedBy?(' · 수정 '+_who(r.lastBy)):'')+'</div>':''}${(function(){var sb=(r.savedBy||'').toLowerCase();var byAdmin=(typeof ADMIN_EMAILS!=='undefined'&&ADMIN_EMAILS.indexOf(sb)>=0);if(byAdmin)return '';return r.confirmedBy?'<div class="sub" style="color:#0e9f6e;font-weight:800;font-size:11px">✓ 원장 컨펌</div>':'<div class="sub" style="color:#c98a00;font-size:11px">· 컨펌 대기</div>';})()}<div class="chips">${chips||'<span class="chip k">미입력</span>'}</div></div></div>`;}).join('');
+  box.innerHTML=list.map(r=>{const p=recPhoto(r);const thumb=p?`<img src="${p}" loading="lazy" decoding="async">`:`<span>사진 없음</span>`;const sub=[r.date,r.therapist,r.signup].filter(Boolean).join(' · ');const chips=CHIP_KEYS.map(k=>chipFor(r,k)).filter(Boolean).join('');const fcd=recCode(r);return `<div class="rec" onclick="editRecord('${r.id}')"><div class="thumb ${p?'':'empty'}">${thumb}</div><div class="meta"><div class="code">${r.code||'무제'}${(function(){var u=unreadCount(r);return u?' <span style="display:inline-block;min-width:16px;height:16px;line-height:16px;text-align:center;background:#e02424;color:#fff;border-radius:9px;font-size:11px;font-weight:800;padding:0 4px;vertical-align:1px">'+u+'</span>':'';})()}</div>${fcd?`<div class="fcode-tag">${fcd}</div>`:''}${r.consultOnly?'<div class="fcode-tag" style="background:#fdeef6;color:#c4185c">상담만</div>':''}<div class="sub">${sub||'&nbsp;'}</div>${r.savedBy?'<div class="sub" style="color:#8a7aa8;font-size:11px">올린이 '+_who(r.savedBy)+(r.lastBy&&r.lastBy!==r.savedBy?(' · 수정 '+_who(r.lastBy)):'')+'</div>':''}${(function(){var sb=(r.savedBy||'').toLowerCase();var byAdmin=(typeof ADMIN_EMAILS!=='undefined'&&ADMIN_EMAILS.indexOf(sb)>=0);if(byAdmin)return '';return r.confirmedBy?'<div class="sub" style="color:#0e9f6e;font-weight:800;font-size:11px">✓ 원장 컨펌</div>':'<div class="sub" style="color:#c98a00;font-size:11px">· 컨펌 대기</div>';})()}<div class="chips">${chips||'<span class="chip k">미입력</span>'}</div></div></div>`;}).join('');
   if(mode==='cloud'&&!_recEnd){ box.innerHTML+='<div style="grid-column:1/-1;text-align:center;padding:14px"><button id="recMoreBtn" class="btn ghost" onclick="loadMore()">더 보기 (+'+_PAGE+'건)</button></div>'; }
 }
 function fillXtSelects(){const opts='<option value="">(선택)</option>'+FILTERABLE.map(f=>`<option value="${f.k}">${f.label}</option>`).join('');const row=document.getElementById('xtRow'),col=document.getElementById('xtCol');row.innerHTML=opts;col.innerHTML=opts;row.value='zyg_maxilla';col.value='nasolabial';}

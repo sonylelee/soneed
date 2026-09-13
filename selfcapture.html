@@ -212,7 +212,7 @@
   <canvas id="propCanvas" class="propcanv" style="aspect-ratio:4/3"></canvas>
   <div class="sub" style="margin-top:10px">이마 상단(헤어라인) 파란 선이 안 맞으면 <b>직접 조절</b>하세요 (AI가 정확히 못 잡아요)</div>
   <input type="range" id="foreheadSlider" min="0" max="100" value="50" oninput="adjForehead(this.value)" style="width:100%;accent-color:var(--brand);margin-top:6px">
-  <div class="sub" style="color:var(--ink);font-weight:700;margin-top:16px">세로 3등분 <span class="mut" style="font-weight:400">· 참고 = 이마 27 : 중안 47 : 하관 26</span></div>
+  <div class="sub" style="color:var(--ink);font-weight:700;margin-top:16px">세로 3등분 <span class="mut" style="font-weight:400">· 참고 = 이마 27 : 중안 43 : 하관 30</span></div>
   <div class="card" id="propThirds"></div>
   <div class="sub" style="color:var(--ink);font-weight:700;margin-top:14px">가로 비율 <span class="mut" style="font-weight:400">(본인 기준) · 선호 = 여백 좁게 · 눈 크게</span></div>
   <div class="card" id="propFifths"></div>
@@ -248,7 +248,7 @@
   <canvas id="sideShot" class="propcanv" style="aspect-ratio:3/4;display:none"></canvas>
   <div class="card" id="sideMetrics" style="display:none"></div>
   <div class="card" id="postureCard" style="display:none"></div>
-  <div class="row"><button class="btn ghost" style="flex:1" onclick="retakeSide()">다시 촬영</button><button class="btn primary" style="flex:1" id="sideNextBtn" onclick="stopSide();goBody()" disabled>다음 · 상체 분석 →</button></div>
+  <div class="row"><button class="btn ghost" style="flex:1" onclick="retakeSide()">다시 촬영</button><button class="btn primary" style="flex:1" id="sideNextBtn" onclick="stopSide();goUp()" disabled>다음 · 고개 들기 →</button></div>
   <div class="row"><button class="btn ghost" style="flex:1" onclick="stopSide();go('scProp')">이전</button></div>
 </section>
 
@@ -381,7 +381,7 @@ let _an={};   // 분석값 누적 (맞춤 제안용)
 /* ---- pose helpers (raw front-cam frame = 마주보기 기준) ---- */
 function faceH(p){return Math.hypot(p[10].x-p[152].x,p[10].y-p[152].y)||1;}
 function pitch(p){ return (p[10].z - p[152].z); } // 이마 뒤로/턱 앞으로 → 든=양수, 숙인=음수
-function centered(p){ var cx=(p[468]?.x??p[1].x); return cx>0.32 && cx<0.68 && p[1].y>0.32 && p[1].y<0.72; }
+function centered(p){ var cx=(p[468]?.x??p[1].x); return cx>0.28 && cx<0.72 && p[1].y>0.28 && p[1].y<0.75; }
 
 async function getLandmarker(){
   if(landmarker) return landmarker;
@@ -443,7 +443,7 @@ window.startCapture=async function(){
   filled=new Array(SEG).fill(false); filledN=0; captured={}; doneSweep=false; phase='front'; frontHold=0; _bestYaw=1; frontT0=0;
   go('scCam'); document.getElementById('toResultBtn').disabled=true; drawRing(null);
   try{
-    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1280},height:{ideal:960}},audio:false});
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1920},height:{ideal:1440}},audio:false});
     const v=document.getElementById('cam'); v.srcObject=stream; await v.play();
     await getLandmarker(); running=true;
     document.getElementById('camMsg').textContent='원 안에 얼굴을 맞춰주세요';
@@ -454,9 +454,9 @@ window.startCapture=async function(){
 
 function captureFrame(v,p){
   // raw 프레임 = 마주보기 기준(미러 아님). flip 없이 저장.
-  const c=document.createElement('canvas'), vw=v.videoWidth,vh=v.videoHeight, tw=720, th=Math.round(tw*vh/vw);
-  c.width=tw;c.height=th; c.getContext('2d').drawImage(v,0,0,tw,th);
-  return {img:c.toDataURL('image/jpeg',0.9), lm:p.map(q=>({x:q.x,y:q.y,z:q.z})), w:tw, h:th};
+  const c=document.createElement('canvas'), vw=v.videoWidth,vh=v.videoHeight, tw=1080, th=Math.round(tw*vh/vw);
+  c.width=tw;c.height=th; var _cx=c.getContext('2d'); _cx.imageSmoothingQuality='high'; _cx.drawImage(v,0,0,tw,th);
+  return {img:c.toDataURL('image/jpeg',0.92), lm:p.map(q=>({x:q.x,y:q.y,z:q.z})), w:tw, h:th};
 }
 function loop(){
   if(!running) return;
@@ -468,8 +468,9 @@ function loop(){
       try{ drawMesh(p, v.videoWidth, v.videoHeight); }catch(e){}
       if(phase==='front'){
         drawRing(null);
-        if(cen && r<0.02){ if(!frontT0) frontT0=performance.now(); const el=performance.now()-frontT0, left=Math.max(1,Math.ceil(3-el/1000)); msg.textContent='그대로! '+left; hint.textContent=left+'초 후 자동 촬영';
-          if(el>=3000){ captured.front=captureFrame(v,p); _bestYaw=r; phase='sweep'; frontT0=0; frontDoneAt=performance.now(); flashCam(); if(navigator.vibrate)navigator.vibrate([30,60,30]); document.getElementById('toResultBtn').disabled=false; }
+        var _okF=cen && (frontT0 ? r<0.11 : r<0.06);   /* 정면 판정 완화 + 카운트 중엔 손떨림 허용(히스테리시스) */
+        if(_okF){ if(!frontT0) frontT0=performance.now(); const el=performance.now()-frontT0, left=Math.max(1,Math.ceil(1.5-el/1000)); msg.textContent='그대로! '+left; hint.textContent=left+'초 후 자동 촬영';
+          if(el>=1500){ captured.front=captureFrame(v,p); _bestYaw=r; phase='sweep'; frontT0=0; frontDoneAt=performance.now(); flashCam(); if(navigator.vibrate)navigator.vibrate([30,60,30]); document.getElementById('toResultBtn').disabled=false; }
         } else { frontT0=0; msg.textContent='정면을 봐주세요'; hint.textContent='원 안에 얼굴을 맞춰주세요'; }
       } else {
         if(cen && r<_bestYaw){ _bestYaw=r; captured.front=captureFrame(v,p); }   // 돌면서 가장 정면인 순간을 정면 프레임으로 (정확도↑)
@@ -900,7 +901,7 @@ window.goProp=function(){
   go('scProp'); renderProp(f);
 };
 let _propBase=null,_idealRef=null,_idealTried=false,_idealLm=null,_idealPromise=null;
-const _idealFallback={ys:{top:0.16,brow:0.31,sub:0.575,chin:0.72},xs:[0.285,0.347,0.437,0.562,0.653,0.715],thirds:[27,47,26],fifths:[14,21,29,21,14]};
+const _idealFallback={ys:{top:0.16,brow:0.31,sub:0.55,chin:0.72},xs:[0.285,0.347,0.437,0.562,0.653,0.715],thirds:[27,43,30],fifths:[14,21,29,21,14]};
 function propInterp(pct,ref,kind){ const d=pct-ref; if(Math.abs(d)<3) return ''; if(kind==='eye') return d>0?' · <b>큰 편</b>':' · <b>작은 편</b>'; if(kind==='len') return d>0?' · <b>긴 편</b>':' · <b>짧은 편</b>'; return d>0?' · <b>넓은 편</b>':' · <b>좁은 편</b>'; }
 async function _getFaceImgLm(){ if(_idealLm)return _idealLm; const vision=await import(V); const fs=await vision.FilesetResolver.forVisionTasks(V+'/wasm'); _idealLm=await vision.FaceLandmarker.createFromOptions(fs,{baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',delegate:'CPU'},runningMode:'IMAGE',numFaces:1,minFaceDetectionConfidence:0.3}); return _idealLm; }
 function measureIdealRatios(){ return new Promise(function(res){ const im=new Image(); im.onload=async function(){ try{ await getLandmarker(); let r=null; try{ r=landmarker.detectForVideo(im, performance.now()); }catch(e){} const p=r&&r.faceLandmarks&&r.faceLandmarks[0]; if(!p){res(null);return;} const topY=p[10].y,browY=(p[105].y+p[334].y)/2,subY=p[0].y,chinY=p[152].y,tot=(chinY-topY)||1; const thirds=[(browY-topY)/tot*100,(subY-browY)/tot*100,(chinY-subY)/tot*100]; const xs=[234,33,133,362,263,454].map(i=>p[i].x).sort((a,b)=>a-b); const span=(xs[5]-xs[0])||1; const fifths=[]; for(let i=0;i<5;i++)fifths.push((xs[i+1]-xs[i])/span*100); res({thirds,fifths,ys:{top:topY,brow:browY,sub:subY,chin:chinY},xs:xs}); }catch(e){res(null);} }; im.onerror=function(){res(null);}; im.src='ideal.jpg'; }); }
@@ -909,7 +910,8 @@ function renderProp(f){
   const lm=f.lm;
   const idset=[234,33,133,362,263,454].map(i=>lm[i].x).sort((a,b)=>a-b);
   const span=(idset[5]-idset[0])||1;
-  _propBase={ f, top0:lm[10].y, topY:lm[10].y, brow:(lm[105].y+lm[334].y)/2, sub:lm[0].y, chin:lm[152].y, idset, span };
+  var _hl=lm[10].y-0.10*(lm[152].y-lm[10].y);   /* 헤어라인 추정: 이마 top(lm10)에서 위로 — 참고(헤어라인)와 기준 통일해 중안부 과대측정 방지 */
+  _propBase={ f, top0:_hl, topY:_hl, brow:(lm[105].y+lm[334].y)/2, sub:lm[0].y, chin:lm[152].y, idset, span };
   // 가로 5등분(이마 상단과 무관) — 한 번만
   const seg=[]; for(let i=0;i<5;i++) seg.push((idset[i+1]-idset[i])/span*100);
   const fNames=['바깥여백 오른쪽','눈폭 오른쪽','미간','눈폭 왼쪽','바깥여백 왼쪽'];
