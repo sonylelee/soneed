@@ -437,9 +437,9 @@ function drawRing(curAng){
 
 window.startCapture=async function(){
   const it={collect:c1.checked,store:c2.checked,ai:c3.checked,c1:c1.checked,c2:c2.checked,c3:c3.checked};
-  if(!it.c1||!it.c2){ alert('필수 동의 2개를 체크해 주세요'); return; }
+  window._consented=!!(it.c1&&it.c2);   // 동의 여부(참고용). 미동의여도 진행은 허용 — 리세팅 가이드는 볼 수 있게
   window._consent={name:(cName.value||'').trim(),items:it,at:new Date().toISOString(),ver:'v2'};
-  try{ if(window.parent && window.parent!==window) window.parent.postMessage({soneedConsent:window._consent},'*'); }catch(e){}   // 얼굴앱 차트에 동의완료 표시
+  if(window._consented){ try{ if(window.parent && window.parent!==window) window.parent.postMessage({soneedConsent:window._consent},'*'); }catch(e){} }   // 동의 완료한 경우만 얼굴앱 차트에 저장 신호
   filled=new Array(SEG).fill(false); filledN=0; captured={}; doneSweep=false; phase='front'; frontHold=0; _bestYaw=1; frontT0=0;
   go('scCam'); document.getElementById('toResultBtn').disabled=true; drawRing(null);
   try{
@@ -835,7 +835,7 @@ function collectNeeds(){
   if(a.pose){ if(a.pose.shoulderRatio) sum+='어깨/머리 '+a.pose.shoulderRatio.toFixed(2)+'배 · '; if(a.pose.turtleAngle) sum+='거북목 '+Math.round(a.pose.turtleAngle)+'° · '; }
   obj.summary=sum.replace(/ · $/,''); return obj;
 }
-window.goRec=function(){ go('scRec'); buildRec(); try{ if(window.parent&&window.parent!==window) window.parent.postMessage({soneedNeeds:collectNeeds()},'*'); }catch(e){} };
+window.goRec=function(){ go('scRec'); buildRec(); if(window._consented){ try{ if(window.parent&&window.parent!==window) window.parent.postMessage({soneedNeeds:collectNeeds()},'*'); }catch(e){} } };
 function buildRec(){
   const a=_an||{}, s=a.side||{}, f=a.front||{}, th=a.thirds||[], fi=a.fifths||[], pz=a.pose||{}, sv=window._survey||{}, w=sv.worries||[];
   const obs=[]; const O=t=>obs.push(t);
