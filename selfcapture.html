@@ -212,7 +212,7 @@
   <canvas id="propCanvas" class="propcanv" style="aspect-ratio:4/3"></canvas>
   <div class="sub" style="margin-top:10px">이마 상단(헤어라인) 파란 선이 안 맞으면 <b>직접 조절</b>하세요 (AI가 정확히 못 잡아요)</div>
   <input type="range" id="foreheadSlider" min="0" max="100" value="50" oninput="adjForehead(this.value)" style="width:100%;accent-color:var(--brand);margin-top:6px">
-  <div class="sub" style="color:var(--ink);font-weight:700;margin-top:16px">세로 3등분 <span class="mut" style="font-weight:400">· 참고(평균) = 이마 33 : 중안 40 : 하관 27</span></div>
+  <div class="sub" style="color:var(--ink);font-weight:700;margin-top:16px">세로 3등분 <span class="mut" style="font-weight:400">· 참고 = 이마 27 : 중안 47 : 하관 26</span></div>
   <div class="card" id="propThirds"></div>
   <div class="sub" style="color:var(--ink);font-weight:700;margin-top:14px">가로 비율 <span class="mut" style="font-weight:400">(본인 기준) · 선호 = 여백 좁게 · 눈 크게</span></div>
   <div class="card" id="propFifths"></div>
@@ -900,7 +900,7 @@ window.goProp=function(){
   go('scProp'); renderProp(f);
 };
 let _propBase=null,_idealRef=null,_idealTried=false,_idealLm=null,_idealPromise=null;
-const _idealFallback={ys:{top:0.20,brow:0.30,sub:0.54,chin:0.72},xs:[0.285,0.347,0.437,0.562,0.653,0.715],thirds:[21,44,35],fifths:[14,21,29,21,14]};
+const _idealFallback={ys:{top:0.16,brow:0.31,sub:0.575,chin:0.72},xs:[0.285,0.347,0.437,0.562,0.653,0.715],thirds:[27,47,26],fifths:[14,21,29,21,14]};
 function propInterp(pct,ref,kind){ const d=pct-ref; if(Math.abs(d)<3) return ''; if(kind==='eye') return d>0?' · <b>큰 편</b>':' · <b>작은 편</b>'; if(kind==='len') return d>0?' · <b>긴 편</b>':' · <b>짧은 편</b>'; return d>0?' · <b>넓은 편</b>':' · <b>좁은 편</b>'; }
 async function _getFaceImgLm(){ if(_idealLm)return _idealLm; const vision=await import(V); const fs=await vision.FilesetResolver.forVisionTasks(V+'/wasm'); _idealLm=await vision.FaceLandmarker.createFromOptions(fs,{baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',delegate:'CPU'},runningMode:'IMAGE',numFaces:1,minFaceDetectionConfidence:0.3}); return _idealLm; }
 function measureIdealRatios(){ return new Promise(function(res){ const im=new Image(); im.onload=async function(){ try{ await getLandmarker(); let r=null; try{ r=landmarker.detectForVideo(im, performance.now()); }catch(e){} const p=r&&r.faceLandmarks&&r.faceLandmarks[0]; if(!p){res(null);return;} const topY=p[10].y,browY=(p[105].y+p[334].y)/2,subY=p[0].y,chinY=p[152].y,tot=(chinY-topY)||1; const thirds=[(browY-topY)/tot*100,(subY-browY)/tot*100,(chinY-subY)/tot*100]; const xs=[234,33,133,362,263,454].map(i=>p[i].x).sort((a,b)=>a-b); const span=(xs[5]-xs[0])||1; const fifths=[]; for(let i=0;i<5;i++)fifths.push((xs[i+1]-xs[i])/span*100); res({thirds,fifths,ys:{top:topY,brow:browY,sub:subY,chin:chinY},xs:xs}); }catch(e){res(null);} }; im.onerror=function(){res(null);}; im.src='ideal.jpg'; }); }
