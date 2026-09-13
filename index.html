@@ -1190,19 +1190,24 @@ async function cloudLoad(offset,limit){
   offset=offset||0; limit=limit||_PAGE;
   var lk=LIST_KEYS;
   var sel=('id,updated_at,'+lk.map(function(k){return k+':data->'+k;}).join(',')).replace(/>/g,'%3E');
-  var _ctl=new AbortController(), _to=setTimeout(function(){_ctl.abort();},15000);
-  try{
-    const r=await fetch(sbBase()+'records?select='+sel+'&deleted_at=is.null&order=updated_at.desc&offset='+offset+'&limit='+limit,{headers:sbHeaders(),signal:_ctl.signal});
-    clearTimeout(_to);
-    if(r.status===401||r.status===403){openLogin();throw new Error('auth');}
-    if(!r.ok) throw new Error('목록 '+r.status+' '+await r.text());
-    const rows=await r.json();
-    return rows.map(function(x){ updMap[x.id]=x.updated_at; var o={id:x.id,_light:true}; lk.forEach(function(k){ if(x[k]!=null) o[k]=x[k]; }); return o; });
-  }catch(e){
-    clearTimeout(_to);
-    if(String(e&&e.message)==='auth') throw e;
-    if(e&&e.name==='AbortError') throw new Error('네트워크가 느려 시간초과됐어요');
-    throw e;
+  var _url=sbBase()+'records?select='+sel+'&deleted_at=is.null&order=updated_at.desc&offset='+offset+'&limit='+limit;
+  for(var attempt=0;;attempt++){
+    var _ctl=new AbortController(), _to=setTimeout(function(){_ctl.abort();},15000);
+    try{
+      const r=await fetch(_url,{headers:sbHeaders(),signal:_ctl.signal});
+      clearTimeout(_to);
+      if((r.status===401||r.status===403)){ if(attempt===0){ var ok=false; try{ok=await authRefresh();}catch(e){} if(ok) continue; } openLogin(); throw new Error('auth'); }
+      if((r.status===429||r.status>=500)&&attempt<3){ await _sleep(600*(attempt+1)+Math.floor(Math.random()*600)); continue; }   /* 서버 혼잡 → 재시도 */
+      if(!r.ok) throw new Error('목록 '+r.status+' '+await r.text());
+      const rows=await r.json();
+      return rows.map(function(x){ updMap[x.id]=x.updated_at; var o={id:x.id,_light:true}; lk.forEach(function(k){ if(x[k]!=null) o[k]=x[k]; }); return o; });
+    }catch(e){
+      clearTimeout(_to);
+      if(String(e&&e.message)==='auth') throw e;
+      if(e&&e.name==='AbortError'){ if(attempt<3){ await _sleep(500*(attempt+1)); continue; } throw new Error('네트워크가 느려 시간초과됐어요'); }
+      if(attempt<3){ await _sleep(500*(attempt+1)); continue; }   /* 일시적 네트워크 오류 재시도 */
+      throw e;
+    }
   }
 }
 async function loadMore(){
@@ -1270,13 +1275,21 @@ async function fetchFull(id){
 async function cloudPutPhotos(id,photosObj){
   await _sbWrite(sbBase()+'records?id=eq.'+encodeURIComponent(String(id)),'PATCH',{photos:photosObj,updated_at:new Date().toISOString()});
 }
-async function _sbWrite(url,method,bodyObj){   /* 토큰 만료(401/403) 시 자동 갱신 후 1회 재시도 */
+function _sleep(ms){ return new Promise(function(r){ setTimeout(r,ms); }); }
+async function _sbWrite(url,method,bodyObj){   /* 단체 사용 대비: 토큰만료 자동갱신 + 과부하(429/5xx)·네트워크 오류 시 백오프 재시도 */
   var body=JSON.stringify(bodyObj);
   var doIt=function(){return fetch(url,{method:method,headers:sbHeaders({Prefer:'resolution=merge-duplicates,return=minimal'}),body:body});};
-  var r=await doIt();
-  if(r.status===401||r.status===403){ var ok=false; try{ok=await authRefresh();}catch(e){} if(ok){ r=await doIt(); } }
+  var r=null, refreshed=false;
+  for(var attempt=0;attempt<5;attempt++){
+    try{ r=await doIt(); }
+    catch(netErr){ if(attempt<4){ await _sleep(500*(attempt+1)+Math.floor(Math.random()*400)); continue; } throw new Error('네트워크 오류 — 인터넷 확인 후 다시 시도해 주세요'); }
+    if((r.status===401||r.status===403)&&!refreshed){ refreshed=true; var ok=false; try{ok=await authRefresh();}catch(e){} if(ok){ continue; } try{updateAuthUI();}catch(e){} try{openLogin();}catch(e){} throw new Error('로그인 세션이 만료됐어요 — 다시 로그인 후 저장해 주세요'); }
+    if((r.status===429||r.status>=500)&&attempt<4){ await _sleep(600*(attempt+1)+Math.floor(Math.random()*600)); continue; }   /* 서버 혼잡 → 잠시 후 재시도 */
+    break;
+  }
   if(!r.ok){ var t=''; try{t=await r.text();}catch(e){}
     if(r.status===401||r.status===403){ try{updateAuthUI();}catch(e){} try{openLogin();}catch(e){} throw new Error('로그인 세션이 만료됐어요 — 다시 로그인 후 저장해 주세요'); }
+    if(r.status===429||r.status>=500){ throw new Error('서버가 잠시 혼잡해요 — 잠시 후 다시 저장해 주세요 (HTTP '+r.status+')'); }
     throw new Error('HTTP '+r.status+' '+t); }
   return r;
 }
