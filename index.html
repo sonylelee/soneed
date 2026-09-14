@@ -156,6 +156,8 @@
   #prog .prog-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#C4185C,#7c3aed);transition:width .2s}
   #prog .prog-bar i.done{background:#1f9d55}
   #prog .prog-bar i.err{background:#d64545}
+  #prog .prog-bar i.indet{width:42%!important;transition:none;animation:progIndet 1.05s ease-in-out infinite}
+  @keyframes progIndet{0%{transform:translateX(-115%)}100%{transform:translateX(255%)}}
   #prog .prog-sub{font-size:12px;color:#8a8592;margin-top:7px;word-break:break-all}
   #prog .prog-x{margin-top:10px;font-size:12.5px;font-weight:700;padding:6px 14px;border:1px solid #ddd;border-radius:9px;background:#fafafa;cursor:pointer}
   .mini-cam{margin-top:5px;width:100%;font-size:11.5px;font-weight:700;padding:5px 6px;border:1px solid #d9cfe6;border-radius:8px;background:#f6f1fb;color:#7c3aed;cursor:pointer;line-height:1.2}
@@ -362,8 +364,9 @@ h2.section,.logo{letter-spacing:-.01em}
       <div id="rotLocked" class="subtle" style="display:none;padding:10px 0;border-top:1px dashed #e2d7f7">🔒 회전 진단은 <b>프리미엄 등급</b> 차트입니다. 베이직·스탠다드는 심플 차트(2D·좌우)로 진행됩니다.</div>
       <div id="afterSection" data-etab="3">
       <h2 class="section">회차별 애프터 사진</h2>
-      <button class="btn primary" style="width:100%" onclick="camNewAfter()">애프터 촬영 추가<br><span style="font-size:11px;font-weight:400;opacity:.85">정면·든·숙임 이어서 · 초회차 겹침</span></button>
-      <button class="btn ghost" style="width:100%;margin-top:6px" onclick="document.getElementById('afterInput').click()">앨범에서 3장 넣기</button>
+      <div id="afterOwner" style="margin:-4px 0 10px;padding:8px 11px;background:#fdeef6;border:1px solid #f3c4dd;border-radius:8px;font-size:13px;font-weight:800;color:#c4185c">이 애프터는 지금 기록에 저장됩니다</div>
+      <button class="btn primary" style="width:100%" onclick="if(_confirmAfterOwner())camNewAfter()">애프터 촬영 추가<br><span style="font-size:11px;font-weight:400;opacity:.85">정면·든·숙임 이어서 · 초회차 겹침</span></button>
+      <button class="btn ghost" style="width:100%;margin-top:6px" onclick="if(_confirmAfterOwner())document.getElementById('afterInput').click()">앨범에서 3장 넣기</button>
       <div id="afters" style="margin-top:12px"></div>
       <button class="btn primary" style="width:100%;margin-top:8px" onclick="makeAfterImage()">고객에게 보낼 전/후 이미지 만들기</button>
       <div id="afterCompare" style="margin-top:12px"></div>
@@ -1382,7 +1385,7 @@ function fieldHTML(f){
   if(f.type==='seg'){inner=`<div class="seg" data-k="${f.k}">`+f.opt.map(o=>{const neu=NEUTRAL.includes(o)?' neu':'';return `<button type="button" data-v="${o}" class="${neu.trim()}" onclick="pickSeg('${f.k}','${o}',this)">${o}</button>`;}).join('')+`</div>`;}
   else if(f.type==='multi'){inner=`<div class="seg" data-k="${f.k}" data-multi="1">`+f.opt.map(o=>`<button type="button" data-v="${o}" onclick="pickMulti('${f.k}','${o}',this)">${o}</button>`).join('')+`</div>`;}
   else if(f.type==='select'){inner=`<select id="f_${f.k}" onchange="form['${f.k}']=this.value||null;markOk('${f.k}',this);syncChartToCode('${f.k}');updateValidation()">`+f.opt.map(o=>`<option value="${o}">${o||'—'}</option>`).join('')+`</select>`;}
-  else{const t=f.type==='num'?'number':f.type==='date'?'date':'text';inner=`<input type="${t}" id="f_${f.k}" oninput="form['${f.k}']=this.value||null;markOk('${f.k}',this)">`;}
+  else{const t=f.type==='num'?'number':f.type==='date'?'date':'text';inner=`<input type="${t}" id="f_${f.k}" oninput="form['${f.k}']=this.value||null;markOk('${f.k}',this);if(window._updAfterOwner)_updAfterOwner()">`;}
   return `<div class="field${cls}"><label>${f.label}${hint}</label>${inner}</div>`;
 }
 /* 관리사가 손으로 만진 항목 = 확정 표시(색상), AI 초안(○)에서 넘어감 — form._src에 저장돼 복원됨 */
@@ -2297,7 +2300,9 @@ function setAfterFcode(i,k,v){
   a.face_code=fcodeStr(a.fcode)||null;
   renderAfters(); try{renderAfterCompare();}catch(e){}
 }
-function renderAfters(){const box=document.getElementById('afters');if(!box)return;if(Array.isArray(form.afters)){form.afters.forEach(function(a){if(a&&!a.id)a.id=newId();});form.afters.sort((a,b)=>(a.date||'9999-99').localeCompare(b.date||'9999-99'));}const arr=Array.isArray(form.afters)?form.afters:[];box.innerHTML=arr.map((a,i)=>afterField(i,a)).join('');renderAfterCompare();}
+function _confirmAfterOwner(){ var nm=(form&&form.code)?String(form.code).trim():''; if(!nm){ return confirm('⚠️ 현재 기록에 고객 성함이 없습니다.\n애프터를 지금 이 기록에 추가할까요? (먼저 고객 성함 입력을 권장)'); } return confirm('📸 이 애프터는 [ '+nm+' ] 님 기록에 추가됩니다.\n다른 분이면 취소하고 그 고객 기록을 먼저 여세요.\n\n계속할까요?'); }
+function _updAfterOwner(){ var el=document.getElementById('afterOwner'); if(!el)return; var nm=(form&&form.code)?String(form.code).trim():''; el.innerHTML=nm?('이 애프터는 <span style="font-size:14px">［ '+nm.replace(/</g,'&lt;')+' ］</span> 님 기록에 저장됩니다'):'⚠️ 고객 성함이 없습니다 — 먼저 성함을 입력하세요'; el.style.background=nm?'#fdeef6':'#fff4e5'; el.style.borderColor=nm?'#f3c4dd':'#f3ddba'; el.style.color=nm?'#c4185c':'#9a5b00'; }
+function renderAfters(){_updAfterOwner();const box=document.getElementById('afters');if(!box)return;if(Array.isArray(form.afters)){form.afters.forEach(function(a){if(a&&!a.id)a.id=newId();});form.afters.sort((a,b)=>(a.date||'9999-99').localeCompare(b.date||'9999-99'));}const arr=Array.isArray(form.afters)?form.afters:[];box.innerHTML=arr.map((a,i)=>afterField(i,a)).join('');renderAfterCompare();}
 function delAfter(id){
   if(!confirm('이 회차 애프터를 삭제할까요?'))return;
   var idx=-1, removed=null;
@@ -3071,6 +3076,7 @@ async function saveRecord(){
   const hasAfter=Array.isArray(form.afters)&&form.afters.some(a=>a&&(a.photo_front||a.photo_up||a.photo_down||a.before_front||a.before_up||a.before_down));
   if(hasPhoto||hasAfter)delete form.consultOnly;   // 사진이 들어오면 정식 차트로 승격(상담전용 태그 해제)
   if(!form.code&&!hasPhoto&&!hasAfter){toast('고객 성함이나 사진 중 하나는 입력해 주세요');return;}
+  if(currentId){ var _orig=(records||[]).find(function(r){return String(r.id)===String(currentId);}); if(_orig&&_orig.code&&form.code&&String(_orig.code).trim()!==String(form.code).trim()){ if(!confirm('⚠️ 고객 성함이 "'+_orig.code+'" → "'+form.code+'"(으)로 바뀝니다.\n다른 사람의 기록을 덮어쓰는 게 아닌지 꼭 확인하세요.\n\n이대로 저장할까요?')){ toast('저장 취소됨'); return; } } }
   const rec=Object.assign({},form);rec.id=currentId||newId();currentId=rec.id;
   if(!rec.savedBy&&authEmail())rec.savedBy=authEmail();   // 최초 올린이 고정(cloudPut이 매번 덮어쓰지 않게 여기서 선점)
   rec.lastBy=authEmail()||rec.lastBy||null;               // 마지막 수정자
@@ -3679,9 +3685,9 @@ function showUndo(msg,undoFn){
 function _doUndo(){ var b=document.getElementById('undoBar'); if(b)b.style.display='none'; clearTimeout(_undoT); var f=window._undoFn; window._undoFn=null; if(f)f(); }
 /* ===== 진행률 바 (불러오기·저장 상태를 눈에 보이게) ===== */
 let _progHideT;
-function progShow(label){clearTimeout(_progHideT);const el=document.getElementById('prog');if(!el)return;el.style.display='flex';document.getElementById('progMsg').textContent=label+'…';document.getElementById('progSub').textContent='';const f=document.getElementById('progFill');f.style.width='0%';f.classList.remove('err','done');document.getElementById('progX').style.display='none';}
-function progSet(done,total,extra){const el=document.getElementById('prog');if(!el)return;el.style.display='flex';const pct=total?Math.round(done/total*100):0;document.getElementById('progFill').style.width=pct+'%';document.getElementById('progMsg').textContent='처리 중 '+done+' / '+total+' ('+pct+'%)';document.getElementById('progSub').textContent=extra||'';}
-function progDone(msg,isErr,keep){const el=document.getElementById('prog');if(!el)return;clearTimeout(_progHideT);el.style.display='flex';const f=document.getElementById('progFill');f.style.width='100%';f.classList.remove('err','done');f.classList.add(isErr?'err':'done');document.getElementById('progMsg').textContent=(isErr?'':'✓ ')+msg;document.getElementById('progSub').textContent='';document.getElementById('progX').style.display=(isErr||keep)?'':'none';if(!isErr&&!keep)_progHideT=setTimeout(progHide,2600);}
+function progShow(label){clearTimeout(_progHideT);const el=document.getElementById('prog');if(!el)return;el.style.display='flex';document.getElementById('progMsg').textContent=label+'…';document.getElementById('progSub').textContent='';const f=document.getElementById('progFill');f.style.width='0%';f.classList.remove('err','done');f.classList.add('indet');document.getElementById('progX').style.display='none';}
+function progSet(done,total,extra){const el=document.getElementById('prog');if(!el)return;el.style.display='flex';const pct=total?Math.round(done/total*100):0;var _pf=document.getElementById('progFill');_pf.classList.remove('indet');_pf.style.width=pct+'%';document.getElementById('progMsg').textContent='처리 중 '+done+' / '+total+' ('+pct+'%)';document.getElementById('progSub').textContent=extra||'';}
+function progDone(msg,isErr,keep){const el=document.getElementById('prog');if(!el)return;clearTimeout(_progHideT);el.style.display='flex';const f=document.getElementById('progFill');f.classList.remove('indet');f.style.width='100%';f.classList.remove('err','done');f.classList.add(isErr?'err':'done');document.getElementById('progMsg').textContent=(isErr?'':'✓ ')+msg;document.getElementById('progSub').textContent='';document.getElementById('progX').style.display=(isErr||keep)?'':'none';if(!isErr&&!keep)_progHideT=setTimeout(progHide,2600);}
 function progHide(){const el=document.getElementById('prog');if(el)el.style.display='none';}
 
 renderForm();fillXtSelects();renderConds();updateValidation();setModeBadge();authBoot();
