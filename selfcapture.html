@@ -1,28 +1,30 @@
 <!doctype html><html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>SONEED · 얼굴형 니즈분석</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@700;800&family=Gowun+Batang:wght@700&display=swap" rel="stylesheet">
 <style>
-  :root{--bg:#141215;--panel:#1b191e;--line:#2b2830;--ink:#efe9e2;--mut:#9a938b;--brand:#C81D74;--brandink:#e89bc3;--ok:#6bd3a8}
+  :root{--bg:#080709;--panel:#151310;--line:#2c2820;--ink:#f2ede6;--mut:#948d86;--brand:#C81D74;--brandink:#e6a9c6;--ok:#7fd3ae;--gold:#c9a26a}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,'Apple SD Gothic Neo',sans-serif;letter-spacing:-.01em;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+  body{margin:0;background:var(--bg);background-image:radial-gradient(150% 100% at 50% -5%,rgba(201,162,106,.20) 0%,rgba(201,162,106,.05) 30%,transparent 62%);background-attachment:fixed;color:var(--ink);font-family:-apple-system,'Apple SD Gothic Neo',sans-serif;letter-spacing:-.01em;overflow-x:hidden;-webkit-font-smoothing:antialiased}
   .wrap{max-width:440px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
-  .brandbar{display:flex;align-items:baseline;gap:12px;padding:18px 20px 14px;border-bottom:1px solid var(--line)}
-  .wm{font-family:Georgia,'Times New Roman',serif;font-size:19px;letter-spacing:.16em}
-  .eyebrow{font-size:10px;font-weight:600;letter-spacing:.26em;color:var(--mut);text-transform:uppercase}
-  .screen{display:none;flex:1;flex-direction:column;padding:26px 20px 30px}
+  .brandbar{display:flex;align-items:baseline;gap:12px;padding:22px 22px 16px;border-bottom:1px solid var(--line);position:relative}
+  .brandbar:after{content:'';position:absolute;left:22px;right:22px;bottom:-1px;height:1px;background:linear-gradient(90deg,var(--gold),transparent 60%);opacity:.5}
+  .wm{font-family:Georgia,'Times New Roman',serif;font-size:22px;letter-spacing:.22em;color:var(--ink)}
+  .eyebrow{font-size:10px;font-weight:700;letter-spacing:.32em;color:var(--gold);text-transform:uppercase}
+  .screen{display:none;flex:1;flex-direction:column;padding:30px 22px 34px}
   .screen.on{display:flex;animation:fadeUp .5s cubic-bezier(.2,.7,.2,1)}
   @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
   @media (prefers-reduced-motion:reduce){.screen.on{animation:none}}
-  h1{font-size:27px;font-weight:800;margin:6px 0 8px;letter-spacing:-.025em;line-height:1.18}
+  h1{font-size:30px;font-weight:800;margin:10px 0 10px;letter-spacing:-.035em;line-height:1.15}
   .sub{color:var(--mut);font-size:13.5px;line-height:1.7}
   .mut{color:var(--mut)}
   .hair{height:1px;background:var(--line);margin:6px 0}
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;margin-top:16px}
-  .btn{width:100%;padding:15px;border:0;border-radius:10px;font-weight:700;font-size:14.5px;letter-spacing:.02em;cursor:pointer;background:#26232a;color:#fff;transition:transform .12s ease,opacity .12s}
+  .card{background:linear-gradient(180deg,#17140f,#100e0a);border:1px solid var(--line);border-radius:2px;padding:14px 18px;margin-top:13px;box-shadow:0 20px 40px -30px rgba(0,0,0,.8)}
+  .btn{width:100%;padding:16px;border:0;border-radius:13px;font-weight:700;font-size:14.5px;letter-spacing:.03em;cursor:pointer;background:#242029;color:#fff;transition:transform .12s ease,opacity .12s,box-shadow .2s}
   .btn:active{transform:translateY(1px)}
-  .btn.primary{background:var(--brand);color:#fff}
+  .btn.primary{background:linear-gradient(135deg,#d42a83,#a5175f);color:#fff;box-shadow:0 14px 32px -16px rgba(200,29,116,.7)}
   .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--mut)}
-  .btn.line{background:transparent;border:1px solid var(--brand);color:var(--brandink)}
+  .btn.line{background:transparent;border:1px solid var(--gold);color:var(--gold)}
   .btn:disabled{opacity:.4}
   .row{display:flex;gap:9px;margin-top:14px}
   label.chk{display:flex;gap:11px;align-items:flex-start;padding:13px 14px;border:1px solid var(--line);border-radius:10px;margin-top:9px;cursor:pointer;font-size:13.5px;line-height:1.55}
@@ -54,7 +56,7 @@
   .chip{border:1px solid var(--line);background:#171317;border-radius:8px;padding:9px 13px;font-size:13px;cursor:pointer;color:var(--ink)}
   .chip.on{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:700}
   .seg{display:flex;gap:7px}
-  .seg .s{flex:1;text-align:center;border:1px solid var(--line);background:#171317;border-radius:9px;padding:11px;font-size:13px;cursor:pointer;color:var(--ink)}
+  .seg .s{flex:1;text-align:center;border:1px solid var(--line);background:#16141a;border-radius:11px;padding:12px;font-size:13px;cursor:pointer;color:var(--ink);transition:.15s}
   .seg .s.on{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:700}
   .hist{border:1px solid var(--line);border-radius:10px;padding:11px 12px;margin-top:9px}
   .hist .row1{display:flex;align-items:center;gap:11px}
@@ -72,29 +74,48 @@
   input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:28px;height:28px;margin-top:-11px;border-radius:50%;background:var(--brand);border:2px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.35)}
   input[type=range]::-moz-range-track{height:6px;border-radius:3px;background:#e7cbdb}
   input[type=range]::-moz-range-thumb{width:28px;height:28px;border:2px solid #fff;border-radius:50%;background:var(--brand);box-shadow:0 1px 5px rgba(0,0,0,.35)}
+  .hero{position:relative;padding:32px 24px 28px;background:radial-gradient(120% 100% at 50% 0%,rgba(201,162,106,.24) 0%,rgba(201,162,106,.06) 46%,transparent 78%),#0b0a0c;border-bottom:1px solid var(--line)}
+  .hero:after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:1px;background:linear-gradient(90deg,transparent,var(--gold) 50%,transparent);opacity:.55}
+  .hero-eyebrow{font-size:10px;font-weight:700;letter-spacing:.34em;color:var(--gold);text-transform:uppercase;margin-bottom:12px}
+  .hero-title{font-family:'Nanum Myeongjo','Gowun Batang',Georgia,serif;font-size:26px;line-height:1.32;font-weight:800;letter-spacing:-.01em;color:#f6f1ea}
+  .hero-em{color:#e3c07f}
+  .hero-sub{color:var(--mut);font-size:13px;line-height:1.7;margin-top:11px}
+  .step-list{display:flex;flex-direction:column}
+  .step-row{display:flex;align-items:center;gap:14px;padding:11px 0;border-bottom:1px solid var(--line)}
+  .step-row:last-child{border-bottom:0}
+  .step-no{width:26px;height:26px;flex:0 0 auto;border-radius:50%;border:1px solid var(--gold);color:var(--gold);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .step-tx{font-size:14px;color:var(--ink)}
 </style></head>
 <body><div class="wrap">
 <header class="brandbar"><span class="wm">SONEED</span><span class="eyebrow">Face Contour · 얼굴형 니즈분석</span></header>
 
 <!-- 1. INTRO -->
-<section class="screen on" id="scIntro">
-  <h1>얼굴형 니즈분석</h1>
-  <div class="sub">고개를 원을 그리듯 천천히 돌려 <b>자동 촬영</b>하고,<br>얼굴을 <b>3D · 비율 · 옆모습 · 자세</b>로 분석해요.</div>
-  <div class="card" style="border-color:var(--brand)">
-    <div style="font-weight:800;color:var(--brandink);font-size:16px;margin-bottom:6px">촬영 전, 머리를 묶어주세요!</div>
-    <div class="sub">· <b>머리를 묶어</b> 이마·귀·얼굴선이 다 보이게 해주세요.<br>· <b>어깨</b>도 보이게 살짝 뒤로 앉아주세요 (어깨너비 분석).</div>
+<section class="screen on" id="scIntro" style="padding:0">
+  <div class="hero">
+    <div class="hero-eyebrow">SONEED · First Care</div>
+    <div class="hero-title">나를 위한<br>가장 정밀한 <span class="hero-em">얼굴형 분석</span></div>
+    <div class="hero-sub">3D · 비율 · 옆모습 · 자세를 한 번에.<br>촉진 전, 나만의 리포트를 받아보세요.</div>
   </div>
-  <div class="card">
-    <div style="font-weight:800;margin-bottom:8px">진행 순서</div>
-    <div class="sub" style="line-height:2">① 상담 설문<br>② 촬영 동의<br>③ 얼굴 촬영<br>④ 얼굴 3D · 비율 분석<br>⑤ 옆모습 · 자세 분석<br>⑥ 리포트 요약</div>
+  <div style="padding:24px 22px 34px;display:flex;flex-direction:column;flex:1">
+    <div class="card" style="border-color:var(--gold);margin-top:0">
+      <div style="font-weight:800;color:var(--gold);font-size:15px;margin-bottom:7px;letter-spacing:.02em">촬영 전, 머리를 묶어주세요</div>
+      <div class="sub">· <b>머리를 묶어</b> 이마·귀·얼굴선이 다 보이게<br>· <b>어깨</b>도 보이게 살짝 뒤로 앉아주세요</div>
+    </div>
+    <div class="card">
+      <div class="eyebrow" style="margin-bottom:12px">진행 순서</div>
+      <div class="step-list">
+        <div class="step-row"><div class="step-no">1</div><div class="step-tx">상담 설문</div></div>
+        <div class="step-row"><div class="step-no">2</div><div class="step-tx">촬영 동의</div></div>
+        <div class="step-row"><div class="step-no">3</div><div class="step-tx">얼굴 촬영</div></div>
+        <div class="step-row"><div class="step-no">4</div><div class="step-tx">3D · 비율 분석</div></div>
+        <div class="step-row"><div class="step-no">5</div><div class="step-tx">옆모습 · 자세 분석</div></div>
+        <div class="step-row"><div class="step-no">6</div><div class="step-tx">나만의 리포트</div></div>
+      </div>
+    </div>
+    <div class="sub" style="line-height:1.8;margin-top:16px;font-size:12px">미용 목적의 얼굴 윤곽(비대칭) 분석용이에요. 본인인증·결제·의료가 아니며, 얼굴을 신원 식별용으로 변환·저장하지 않아요.</div>
+    <div style="flex:1"></div>
+    <button class="btn primary" style="margin-top:20px" onclick="go('scSurvey')">시작하기</button>
   </div>
-  <div class="card sub" style="line-height:1.8">
-    · 미용 목적의 얼굴 윤곽(비대칭) 분석용이에요.<br>
-    · <b>본인인증 · 결제 · 의료가 아니며</b>,<br>
-    &nbsp;&nbsp;얼굴을 신원 식별용으로 변환 · 저장하지 않아요.
-  </div>
-  <div style="flex:1"></div>
-  <button class="btn primary" onclick="go('scSurvey')">시작하기</button>
 </section>
 
 <!-- 1. SURVEY -->
