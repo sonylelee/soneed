@@ -305,7 +305,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v243 (2026-09-15)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v244 (2026-09-15)</span></div>
   <div class="tabs"><button id="tabConsult" onclick="openConsultFull()">첫관리 상담</button><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -2772,12 +2772,14 @@ async function measureFront(dataUrl){
     /* 2) 타입: 눈썹바깥끝↔입꼬리 거리 (임계 0.3%) */
     const dSL=dist(brow.L,mouth.L), dSR=dist(brow.R,mouth.R);
     const shortScreen = Math.abs(dSL-dSR)<faceH*0.003 ? '거의같음' : (dSL<dSR?'화면왼쪽':'화면오른쪽');
-    /* 3) 코 방향(코드와 통일): 좌우 눈동자(iris) 직선의 90도 수직선 대비 코끝 편차. 눈선 기울기 보정. */
+    /* 3) 코 방향(대표 정의): 미간(눈 안쪽끝 중점) → 코끝 선과 눈동자선이 이루는 각의 '예각인 쪽'이 코가 밀린 방향 */
+    const MIGAN={x:(P[133].x+P[362].x)/2, y:(P[133].y+P[362].y)/2};
     const eyeMidX=(iris.L.x+iris.R.x)/2, eyeMidY=(iris.L.y+iris.R.y)/2;
-    const eAng=Math.atan2(iris.R.y-iris.L.y, iris.R.x-iris.L.x);   /* 눈동자선 기울기 */
-    const _nx=P[NOSE_TIP].x-eyeMidX, _ny=P[NOSE_TIP].y-eyeMidY;
-    const noseDx=_nx*Math.cos(-eAng)-_ny*Math.sin(-eAng);          /* 눈선 수직 기준 코끝 편차 · +면 화면 오른쪽 */
-    const noseScreen = Math.abs(noseDx)<faceW*0.004 ? '거의수직' : (noseDx>0?'화면오른쪽':'화면왼쪽');
+    const _vN={x:P[NOSE_TIP].x-MIGAN.x, y:P[NOSE_TIP].y-MIGAN.y}; const _nLen=Math.hypot(_vN.x,_vN.y)||1;
+    const _vR={x:iris.R.x-MIGAN.x, y:iris.R.y-MIGAN.y}; const _rLen=Math.hypot(_vR.x,_vR.y)||1;
+    const _cosR=(_vR.x*_vN.x+_vR.y*_vN.y)/(_rLen*_nLen);          /* 화면오른쪽 눈–코라인 각의 cos: >0=예각(코가 오른쪽으로 밀림) */
+    const noseDx=_cosR;
+    const noseScreen = Math.abs(_cosR)<0.05 ? '거의수직' : (_cosR>0?'화면오른쪽':'화면왼쪽');
     /* 4) 옆폭 */
     const sSL=Math.abs(eyeOut.L.x-cheek.L.x), sSR=Math.abs(cheek.R.x-eyeOut.R.x);
 
@@ -2792,18 +2794,18 @@ async function measureFront(dataUrl){
     /* 6) ★ 콧볼 높낮이 (대표 정의: 코 가장 아래+좌우끝 = 콧방울 바깥아래점 = 바깥알라 64/294 + 아래콧구멍 98/327 평균).
        콧대 축(양 홍채 중점→코끝) 기준으로 좌우 콧볼의 '축 위쪽 정도'를 비교 → 더 위(축 top쪽)면 올라간 콧볼. */
     const _amid=(a,b)=>({x:(P[a].x+P[b].x)/2, y:(P[a].y+P[b].y)/2});
-    const _alaA=_amid(64,98), _alaB=_amid(294,327);
+    const _alaA=_amid(64,98), _alaB=_amid(294,327);               /* 콧볼 가장 아래점(바깥알라+아래콧구멍 평균) */
     const _alaSL=_alaA.x<_alaB.x?_alaA:_alaB, _alaSR=_alaA.x<_alaB.x?_alaB:_alaA;   /* 화면 좌/우 콧볼점 */
-    const _axT={x:eyeMidX,y:eyeMidY}, _axB=P[NOSE_TIP];
-    const _adx=_axB.x-_axT.x, _ady=_axB.y-_axT.y, _add=(_adx*_adx+_ady*_ady)||1;
-    const _along=p=>((p.x-_axT.x)*_adx+(p.y-_axT.y)*_ady)/_add;    /* 작을수록 축 위(높음) */
-    const alaDiff=_along(_alaSR)-_along(_alaSL);                   /* <0 : 화면오른쪽 콧볼이 더 위(높음) */
-    const alaScreen = Math.abs(alaDiff)<0.05 ? '거의같음' : (alaDiff<0 ? '화면오른쪽' : '화면왼쪽');
+    const _axU={x:_vN.x/_nLen, y:_vN.y/_nLen};                    /* 코라인(미간→코끝) 단위벡터(아래) */
+    const _projL=(_alaSL.x-MIGAN.x)*_axU.x+(_alaSL.y-MIGAN.y)*_axU.y;
+    const _projR=(_alaSR.x-MIGAN.x)*_axU.x+(_alaSR.y-MIGAN.y)*_axU.y;
+    const alaDiff=(_projR-_projL)/_nLen;                          /* <0 : 화면오른쪽 콧볼이 축 위쪽(더 올라감=예각) */
+    const alaScreen = Math.abs(alaDiff)<0.03 ? '거의같음' : (alaDiff<0 ? '화면오른쪽' : '화면왼쪽');
 
     /* ★ RD/LD 타입: 눈·입꼬리·콧볼이 모두 한쪽으로 '처진' 경우 (측정 결정) — R=화면오른쪽 처짐 */
     var _eLow = Math.abs(eyeDy)>faceH*0.004 ? (eyeDy>0?'R':'L') : '';                 /* 낮은 눈(화면) */
     var _mDy = mouth.R.y-mouth.L.y; var _mLow = Math.abs(_mDy)>faceH*0.004 ? (_mDy>0?'R':'L') : '';   /* 낮은 입꼬리 */
-    var _aLow = Math.abs(alaDiff)>0.06 ? (alaDiff<0?'L':'R') : '';                     /* 낮은(처진) 콧볼: 높은쪽의 반대 */
+    var _aLow = Math.abs(alaDiff)>0.04 ? (alaDiff<0?'L':'R') : '';   /* 낮은(처진) 콧볼: 올라간쪽의 반대 */                     /* 낮은(처진) 콧볼: 높은쪽의 반대 */
     var drop_own=null; var _lows=[_eLow,_mLow,_aLow].filter(Boolean);
     if(_lows.length>=3 && _lows.every(function(x){return x===_lows[0];})){
       drop_own = (_lows[0]==='R') ? '본인왼쪽' : '본인오른쪽';   /* 화면오른쪽 처짐=본인왼쪽=LD / 화면왼쪽=본인오른쪽=RD */
@@ -3669,10 +3671,39 @@ async function renderFaceTrash(){
     if(!r.ok)throw new Error('HTTP '+r.status); rows=await r.json();
   }catch(e){ box.textContent='휴지통 불러오기 실패: '+((e&&e.message)||e); return; }
   if(!rows.length){ box.textContent='휴지통이 비어 있어요.'; return; }
-  box.innerHTML=rows.map(function(x){ var d=x.data||{}; var nm=(d.code||d.name||'(무제)'); var del=String(x.deleted_at||'').replace('T',' ').slice(0,16);
-    return '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #eee"><div style="flex:1;min-width:0"><b>'+_esc(nm)+'</b> <span class="subtle" style="font-size:12px">삭제: '+_esc(del)+'</span></div><button class="btn ghost" style="font-size:12px;padding:5px 10px" data-fact="restore" data-id="'+_esc(String(x.id))+'">복원</button><button class="btn" style="font-size:12px;padding:5px 10px;background:#c0392b;color:#fff;border-color:#c0392b" data-fact="purge" data-id="'+_esc(String(x.id))+'">영구삭제</button></div>';
+  var bar='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 0;border-bottom:2px solid #eee;margin-bottom:4px">'
+    +'<label style="display:flex;align-items:center;gap:5px;font-size:12.5px;cursor:pointer"><input type="checkbox" id="trashAll" style="width:16px;height:16px"> 전체선택</label>'
+    +'<span class="subtle" id="trashSelCnt" style="font-size:12px">0개 선택</span>'
+    +'<span style="flex:1"></span>'
+    +'<button class="btn ghost" style="font-size:12px;padding:5px 10px" data-fact="restoreSel">선택 복원</button>'
+    +'<button class="btn" style="font-size:12px;padding:5px 10px;background:#c0392b;color:#fff;border-color:#c0392b" data-fact="purgeSel">선택 영구삭제</button></div>';
+  box.innerHTML=bar+rows.map(function(x){ var d=x.data||{}; var nm=(d.code||d.name||'(무제)'); var del=String(x.deleted_at||'').replace('T',' ').slice(0,16);
+    return '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #eee"><input type="checkbox" class="trashChk" data-id="'+_esc(String(x.id))+'" style="width:16px;height:16px;flex:0 0 auto"><div style="flex:1;min-width:0"><b>'+_esc(nm)+'</b> <span class="subtle" style="font-size:12px">삭제: '+_esc(del)+'</span></div><button class="btn ghost" style="font-size:12px;padding:5px 10px" data-fact="restore" data-id="'+_esc(String(x.id))+'">복원</button><button class="btn" style="font-size:12px;padding:5px 10px;background:#c0392b;color:#fff;border-color:#c0392b" data-fact="purge" data-id="'+_esc(String(x.id))+'">영구삭제</button></div>';
   }).join('');
-  if(!box._bound){ box._bound=true; box.addEventListener('click',function(e){ var b=e.target.closest('[data-fact]'); if(!b)return; var id=b.getAttribute('data-id'),act=b.getAttribute('data-fact'); if(act==='restore')faceRestore(id); else if(act==='purge')facePurge(id); }); }
+  var _upd=function(){ var n=box.querySelectorAll('.trashChk:checked').length; var c=document.getElementById('trashSelCnt'); if(c)c.textContent=n+'개 선택'; };
+  if(!box._bound){ box._bound=true;
+    box.addEventListener('change',function(e){ if(e.target.id==='trashAll'){ box.querySelectorAll('.trashChk').forEach(function(k){k.checked=e.target.checked;}); } _upd(); });
+    box.addEventListener('click',function(e){ var b=e.target.closest('[data-fact]'); if(!b)return; var id=b.getAttribute('data-id'),act=b.getAttribute('data-fact');
+      if(act==='restore')faceRestore(id); else if(act==='purge')facePurge(id);
+      else if(act==='restoreSel')faceBulk('restore'); else if(act==='purgeSel')faceBulk('purge'); });
+  }
+  _upd();
+}
+function _trashSelIds(){ var box=document.getElementById('faceTrashBox'); return box?Array.prototype.map.call(box.querySelectorAll('.trashChk:checked'),function(k){return k.getAttribute('data-id');}):[]; }
+async function faceBulk(act){
+  if(!isAdmin()){ toast('대표만 가능합니다'); return; }
+  var ids=_trashSelIds(); if(!ids.length){ toast('선택된 기록이 없어요'); return; }
+  if(act==='purge'){ if(!confirm(ids.length+'개 기록을 영구 삭제할까요? 되돌릴 수 없습니다.'))return; }
+  var ok=0,fail=0;
+  try{ progShow(act==='purge'?'선택 영구삭제 중':'선택 복원 중'); }catch(e){}
+  for(var i=0;i<ids.length;i++){
+    try{ if(act==='purge')await cloudDelete(ids[i]); else await cloudRestore(ids[i]); ok++; }catch(e){ fail++; }
+    try{ progSet(i+1, ids.length); }catch(e){}
+  }
+  try{ progDone(fail?('일부 실패 '+fail+'개'):'완료', !!fail); }catch(e){}
+  toast((act==='purge'?'영구삭제':'복원')+' '+ok+'개'+(fail?' · 실패 '+fail:''));
+  renderFaceTrash();
+  if(act==='restore'){ try{ var fresh=await cloudLoad(0,_PAGE); records=fresh; _recOff=fresh.length; _recEnd=fresh.length<_PAGE; _saveRecCache(records); sortRecs(); refreshAll(); }catch(e){} }
 }
 async function faceRestore(id){
   try{ await cloudRestore(id); }catch(e){ toast('복원 실패: '+((e&&e.message)||e)); return; }
@@ -3704,7 +3735,7 @@ function progHide(){const el=document.getElementById('prog');if(el)el.style.disp
 renderForm();fillXtSelects();renderConds();updateValidation();setModeBadge();authBoot();
 
 /* ===== 앱 업데이트 감지 → 업데이트 배너 (홈화면 PWA 캐시 대응) ===== */
-var APP_VER='2026-09-15.1';   /* ★배포할 때마다 이 값 + ver.json 둘 다 올릴 것 */
+var APP_VER='2026-09-15.2';   /* ★배포할 때마다 이 값 + ver.json 둘 다 올릴 것 */
 function _forceUpdate(){
   try{ if('serviceWorker' in navigator) navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){try{r.unregister();}catch(e){}});}); }catch(e){}
   try{ if(window.caches&&caches.keys) caches.keys().then(function(ks){ks.forEach(function(k){caches.delete(k);});}); }catch(e){}
@@ -3722,8 +3753,9 @@ async function checkUpdate(){
   try{ var r=await fetch('ver.json?ts='+Date.now(),{cache:'no-store'}); if(!r.ok)return; var j=await r.json(); if(j&&j.v&&j.v!==APP_VER) showUpdateBanner(j.v); }catch(e){}
 }
 setTimeout(checkUpdate,3000);
-document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible') checkUpdate(); });
+document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible'){ checkUpdate(); try{ if(mode==='cloud'&&authTok) refreshUnread(); }catch(e){} } });
 setInterval(checkUpdate, 30*60*1000);   /* 30분마다(포그라운드 복귀 확인이 주력이라 넉넉히) */
+setInterval(function(){ try{ if(mode==='cloud'&&authTok&&document.visibilityState==='visible') refreshUnread(); }catch(e){} }, 60*1000);   /* 새 코멘트/컨펌 60초마다(앱 화면 켜져있을 때만·작은 요청) */
 
 /* ===== 로그인 게이트 (기존 비밀번호 게이트 대체) — 로그인 전엔 앱/차트가 오버레이로 가려짐 ===== */
 function gateShow(){const ls=document.getElementById('lockScreen');if(ls)ls.style.display='flex';setTimeout(function(){const el=document.getElementById('lockEmail');if(el&&!el.value)el.focus();else{const p=document.getElementById('lockPw');if(p)p.focus();}},120);}
