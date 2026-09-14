@@ -1452,6 +1452,7 @@ function applyFcodeFromAI(parsed){
 function applyFcodeFromMeasure(meas,earsU){
   if(!form.fcode)form.fcode={};var f=form.fcode;var op=function(v){return v==='왼'?'오':(v==='오'?'왼':'중립');};
   if(earsU&&earsU.low_own){f.clock = earsU.low_own==='본인오른쪽'?'7시':(earsU.low_own==='본인왼쪽'?'5시':'6시');}
+  if(meas&&meas.drop_own){ f.t = meas.drop_own==='본인오른쪽'?'RD':'LD'; }   /* 눈·입꼬리·콧볼 모두 한쪽 처짐 → RD/LD 확정(측정) */
   if(meas){
     if(meas.nose_own){                                    /* 코 방향(예각) */
       f.nose = meas.nose_own==='거의수직'?'중립':(meas.nose_own==='본인오른쪽'?'오':'왼');
@@ -2799,7 +2800,17 @@ async function measureFront(dataUrl){
     const alaDiff=_along(_alaSR)-_along(_alaSL);                   /* <0 : 화면오른쪽 콧볼이 더 위(높음) */
     const alaScreen = Math.abs(alaDiff)<0.05 ? '거의같음' : (alaDiff<0 ? '화면오른쪽' : '화면왼쪽');
 
+    /* ★ RD/LD 타입: 눈·입꼬리·콧볼이 모두 한쪽으로 '처진' 경우 (측정 결정) — R=화면오른쪽 처짐 */
+    var _eLow = Math.abs(eyeDy)>faceH*0.004 ? (eyeDy>0?'R':'L') : '';                 /* 낮은 눈(화면) */
+    var _mDy = mouth.R.y-mouth.L.y; var _mLow = Math.abs(_mDy)>faceH*0.004 ? (_mDy>0?'R':'L') : '';   /* 낮은 입꼬리 */
+    var _aLow = Math.abs(alaDiff)>0.06 ? (alaDiff<0?'L':'R') : '';                     /* 낮은(처진) 콧볼: 높은쪽의 반대 */
+    var drop_own=null; var _lows=[_eLow,_mLow,_aLow].filter(Boolean);
+    if(_lows.length>=3 && _lows.every(function(x){return x===_lows[0];})){
+      drop_own = (_lows[0]==='R') ? '본인왼쪽' : '본인오른쪽';   /* 화면오른쪽 처짐=본인왼쪽=LD / 화면왼쪽=본인오른쪽=RD */
+    }
+
     return {
+      drop_own: drop_own,
       eye_low_own: own(eyeScreen),
       eye_dy_norm: norm(Math.abs(eyeDy)),
       type_short_own: own(shortScreen),
@@ -3279,7 +3290,7 @@ async function delComment(i){
 }
 async function editRecord(id){var r=records.find(x=>String(x.id)===String(id));if(!r)return;
   _reportScroll=window.scrollY||document.documentElement.scrollTop||0;_restoreReport=true;
-  if(r._light && mode==='cloud'){ try{ toast('불러오는 중…'); var full=await fetchFull(id); var i=records.findIndex(x=>String(x.id)===String(id)); if(i>=0)records[i]=full; r=full; }catch(e){ toast('기록 불러오기 실패: '+(e.message||e)); return; } }
+  if(r._light && mode==='cloud'){ try{ progShow('차트 불러오는 중 (사진 포함)'); var full=await fetchFull(id); var i=records.findIndex(x=>String(x.id)===String(id)); if(i>=0)records[i]=full; r=full; progHide(); }catch(e){ progDone('기록 불러오기 실패: '+(e.message||e),true); return; } }
   else if(mode==='cloud'){ try{ var fr=await fetch(sbBase()+'records?id=eq.'+encodeURIComponent(id)+'&select=data->comments,data->confirmedBy,data->confirmedAt',{headers:sbHeaders()}); if(fr.ok){ var fj=await fr.json(); if(fj&&fj[0]){ r.comments=fj[0].comments||r.comments; r.confirmedBy=(fj[0].confirmedBy!==undefined?fj[0].confirmedBy:r.confirmedBy); r.confirmedAt=(fj[0].confirmedAt!==undefined?fj[0].confirmedAt:r.confirmedAt); } } }catch(e){} }
   try{ markNotifSeen(id); }catch(e){}
   form=Object.assign({},r);currentId=r.id;autoFilled={};renderForm();applyFormToUI();document.getElementById('editState').textContent=(r.code||'무제')+' · 편집 중';document.getElementById('delBtn').style.display='';document.getElementById('autoMsg').innerHTML='';const _fr2=document.getElementById('faceResult');if(_fr2)_fr2.innerHTML='';renderConfirmUI();showView('entry');}
