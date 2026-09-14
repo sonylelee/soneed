@@ -305,7 +305,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v242 (2026-09-11)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v243 (2026-09-15)</span></div>
   <div class="tabs"><button id="tabConsult" onclick="openConsultFull()">첫관리 상담</button><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -3702,6 +3702,28 @@ function progDone(msg,isErr,keep){const el=document.getElementById('prog');if(!e
 function progHide(){const el=document.getElementById('prog');if(el)el.style.display='none';}
 
 renderForm();fillXtSelects();renderConds();updateValidation();setModeBadge();authBoot();
+
+/* ===== 앱 업데이트 감지 → 업데이트 배너 (홈화면 PWA 캐시 대응) ===== */
+var APP_VER='2026-09-15.1';   /* ★배포할 때마다 이 값 + ver.json 둘 다 올릴 것 */
+function _forceUpdate(){
+  try{ if('serviceWorker' in navigator) navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){try{r.unregister();}catch(e){}});}); }catch(e){}
+  try{ if(window.caches&&caches.keys) caches.keys().then(function(ks){ks.forEach(function(k){caches.delete(k);});}); }catch(e){}
+  setTimeout(function(){ var u=location.href.split('#')[0].replace(/([?&])v=\d+/,'$1').replace(/[?&]$/,''); u+=(u.indexOf('?')<0?'?':'&')+'v='+Date.now(); location.replace(u); },250);
+}
+function showUpdateBanner(newv){
+  if(document.getElementById('updBar'))return;
+  var b=document.createElement('div'); b.id='updBar';
+  b.style.cssText='position:fixed;left:0;right:0;top:0;z-index:100090;background:linear-gradient(135deg,#C4185C,#7c3aed);color:#fff;display:flex;align-items:center;justify-content:center;gap:12px;padding:calc(10px + env(safe-area-inset-top)) 14px 10px;font-weight:800;font-size:14px;box-shadow:0 4px 18px rgba(0,0,0,.3)';
+  b.innerHTML='🔄 새 버전이 나왔어요';
+  var btn=document.createElement('button'); btn.textContent='업데이트'; btn.style.cssText='background:#fff;color:#C4185C;border:0;border-radius:9px;padding:8px 18px;font-weight:800;font-size:14px;cursor:pointer'; btn.onclick=_forceUpdate;
+  b.appendChild(btn); document.body.appendChild(b);
+}
+async function checkUpdate(){
+  try{ var r=await fetch('ver.json?ts='+Date.now(),{cache:'no-store'}); if(!r.ok)return; var j=await r.json(); if(j&&j.v&&j.v!==APP_VER) showUpdateBanner(j.v); }catch(e){}
+}
+setTimeout(checkUpdate,3000);
+document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible') checkUpdate(); });
+setInterval(checkUpdate, 30*60*1000);   /* 30분마다(포그라운드 복귀 확인이 주력이라 넉넉히) */
 
 /* ===== 로그인 게이트 (기존 비밀번호 게이트 대체) — 로그인 전엔 앱/차트가 오버레이로 가려짐 ===== */
 function gateShow(){const ls=document.getElementById('lockScreen');if(ls)ls.style.display='flex';setTimeout(function(){const el=document.getElementById('lockEmail');if(el&&!el.value)el.focus();else{const p=document.getElementById('lockPw');if(p)p.focus();}},120);}
