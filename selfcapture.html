@@ -526,7 +526,8 @@ window.build3D=async function(){
   const front=captured.front; if(!front){alert('정면 촬영이 필요해요');return;}
   await getLandmarker();
   const lm=front.lm;
-  const asp=(front.w&&front.h)?front.w/front.h:1;   // 사진 비율 보정 → 실제 얼굴형
+  let asp=(front.w&&front.h)?front.w/front.h:1;
+  asp=Math.max(0.85,Math.min(1.15,asp));   // 사진 비율 보정 → 실제 얼굴형 (폰 세로프레임에서 과도하게 갸름해지지 않도록 clamp)
   const pos=new Float32Array(468*3), uv=new Float32Array(468*2);
   for(let i=0;i<468;i++){ pos[i*3]=(lm[i].x-0.5)*asp; pos[i*3+1]=-(lm[i].y-0.5); pos[i*3+2]=-(lm[i].z)*0.8; uv[i*2]=lm[i].x; uv[i*2+1]=1-lm[i].y; }
   const idx=tessTriangles(window._TESS);
@@ -1192,7 +1193,8 @@ function drawSideAnnot(){
 }
 function detectSideAuto(ph){ return new Promise(function(res){ const im=new Image(); im.onload=async function(){ try{ await _getFaceImgLm(); const r=_idealLm.detect(im); const q=r&&r.faceLandmarks&&r.faceLandmarks[0]; if(!q){res(null);return;} const iw=im.naturalWidth,ih=im.naturalHeight, idx=[9,168,1,2,0,152]; res(idx.map(i=>({x:q[i].x*iw,y:q[i].y*ih}))); }catch(e){res(null);} }; im.onerror=function(){res(null);}; im.src=ph.img; }); }
 window.resetSidePts=function(){ _sidePts=[]; _sideWarp={nose:0,brow:0,chin:0}; _sideZoom=1; _sideCx=0.5; _sideCy=0.5; drawSideAnnot(); sideTapPrompt(); };
-window.sideWarpAdj=function(k,v){ _sideWarp[k]=+v; var _d=document.getElementById('sideAngleD'); if(_d&&_d.open)_d.open=false; if(_swRaf)return; _swRaf=requestAnimationFrame(function(){_swRaf=0;drawSideAnnot();}); };
+function _swLabel(v){ v=+v||0; return v===0?'내 얼굴 (기준·0)':(v>0?('앞으로 +'+v):('뒤로 '+v)); }
+window.sideWarpAdj=function(k,v){ _sideWarp[k]=+v; var lbl=document.getElementById('swv_'+k); if(lbl)lbl.textContent=_swLabel(+v); var _d=document.getElementById('sideAngleD'); if(_d&&_d.open)_d.open=false; if(_swRaf)return; _swRaf=requestAnimationFrame(function(){_swRaf=0;drawSideAnnot();}); };
 function liquifySide(c,W,H,cps){ let x0=W,y0=H,x1=0,y1=0; cps.forEach(cp=>{const R=cp.r*3;x0=Math.min(x0,cp.x-R);y0=Math.min(y0,cp.y-R);x1=Math.max(x1,cp.x+R);y1=Math.max(y1,cp.y+R);}); x0=Math.max(0,x0|0);y0=Math.max(0,y0|0);x1=Math.min(W,x1|0);y1=Math.min(H,y1|0); const bw=x1-x0,bh=y1-y0; if(bw<=0||bh<=0)return; const src=c.getImageData(0,0,W,H),sdata=src.data; const out=c.getImageData(x0,y0,bw,bh),d=out.data; for(let yy=0;yy<bh;yy++){const gy=y0+yy; for(let xx=0;xx<bw;xx++){const gx=x0+xx; let ddx=0,ddy=0; for(let k=0;k<cps.length;k++){const cp=cps[k];const ex=gx-cp.x,ey=gy-cp.y;const w=Math.exp(-(ex*ex+ey*ey)/(2*cp.r*cp.r));ddx+=cp.mx*w;ddy+=cp.my*w;} let sxp=gx-ddx,syp=gy-ddy; if(sxp<0)sxp=0;else if(sxp>W-1)sxp=W-1; if(syp<0)syp=0;else if(syp>H-1)syp=H-1; const si=(((syp|0)*W)+(sxp|0))*4,di=(yy*bw+xx)*4; d[di]=sdata[si];d[di+1]=sdata[si+1];d[di+2]=sdata[si+2];d[di+3]=255;}} c.putImageData(out,x0,y0); }
 function computeSideAngles(){
   const P=_sidePts; if(P.length<6) return;
@@ -1218,11 +1220,12 @@ function computeSideAngles(){
     row('E-line 대비 윗입술', (eLip>=0?'+':'')+eLip.toFixed(0)+'%', '한국인은 붙거나 살짝 앞이 정상')+
     '</details>'+
     '<div class="flabel" style="margin-top:12px">코·이마·턱 시뮬 <span class="mut" style="text-transform:none;letter-spacing:0;font-weight:400">(밀어서 실제 변형)</span></div>'+
-    '<div style="font-size:12px;color:var(--brandink)">코 (앞으로/뒤로)</div><input type="range" id="sw_nose" min="-100" max="100" value="'+(_sideWarp.nose||0)+'" oninput="sideWarpAdj(\'nose\',this.value)" '+rng+'>'+
-    '<div style="font-size:12px;color:var(--brandink);margin-top:6px">이마 (앞으로/뒤로)</div><input type="range" id="sw_brow" min="-100" max="100" value="'+(_sideWarp.brow||0)+'" oninput="sideWarpAdj(\'brow\',this.value)" '+rng+'>'+
-    '<div style="font-size:12px;color:var(--brandink);margin-top:6px">턱 (앞으로/뒤로)</div><input type="range" id="sw_chin" min="-100" max="100" value="'+(_sideWarp.chin||0)+'" oninput="sideWarpAdj(\'chin\',this.value)" '+rng+'>'+
-    '<button class="btn ghost" style="margin-top:10px;width:100%" onclick="resetSidePts()">점 다시 찍기</button>'+
-    '<div class="sub" style="margin-top:8px">잘못된 점은 <b>그 위치를 다시 탭</b>하면 수정돼요. 콧대각은 <b>클수록 낮은 코</b> · 기준=<b>한국인 실측</b> 참고용.</div>';
+    '<div style="display:flex;justify-content:space-between;color:var(--mut);font-size:11px;margin:2px 0 6px"><span>◀ 뒤로 (얼굴 안으로)</span><span style="color:var(--brandink);font-weight:800">0 = 지금 내 얼굴</span><span>앞으로 (돌출) ▶</span></div>'+
+    '<div style="display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--brandink)"><span>코 (앞뒤)</span><b id="swv_nose" style="font-size:11px">'+_swLabel(_sideWarp.nose||0)+'</b></div><input type="range" id="sw_nose" min="-100" max="100" value="'+(_sideWarp.nose||0)+'" oninput="sideWarpAdj(\'nose\',this.value)" '+rng+'>'+
+    '<div style="display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--brandink);margin-top:6px"><span>이마 (앞뒤)</span><b id="swv_brow" style="font-size:11px">'+_swLabel(_sideWarp.brow||0)+'</b></div><input type="range" id="sw_brow" min="-100" max="100" value="'+(_sideWarp.brow||0)+'" oninput="sideWarpAdj(\'brow\',this.value)" '+rng+'>'+
+    '<div style="display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--brandink);margin-top:6px"><span>턱 (앞뒤)</span><b id="swv_chin" style="font-size:11px">'+_swLabel(_sideWarp.chin||0)+'</b></div><input type="range" id="sw_chin" min="-100" max="100" value="'+(_sideWarp.chin||0)+'" oninput="sideWarpAdj(\'chin\',this.value)" '+rng+'>'+
+    '<button class="btn ghost" style="margin-top:10px;width:100%" onclick="resetSidePts()">점 다시 찍기 · 0으로</button>'+
+    '<div class="sub" style="margin-top:8px"><b>0(가운데)</b> = 지금 내 옆모습 그대로예요. 오른쪽(+)으로 밀면 <b>앞으로 나온</b> 모습, 왼쪽(−)으로 밀면 <b>뒤로 들어간</b> 모습이에요. 잘못된 점은 <b>그 위치를 다시 탭</b>하면 수정돼요.</div>';
   document.getElementById('sideMetrics').style.display='block';
   drawSideAnnot();
   if(navigator.vibrate)navigator.vibrate([20,40,20]);
