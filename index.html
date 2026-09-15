@@ -24,7 +24,7 @@
   .top .wrap{display:flex;align-items:center;gap:14px;height:60px}
   .logo{font-weight:800;letter-spacing:-.02em;font-size:17px} .logo b{color:var(--brand)} .logo span{color:var(--faint);font-weight:600;font-size:12px;margin-left:6px;letter-spacing:0}
   .tabs{margin-left:auto;display:flex;gap:4px;background:var(--surface2);border:1px solid var(--line);padding:4px;border-radius:10px}
-  .tabs button{border:0;background:transparent;color:var(--muted);font:inherit;font-weight:700;padding:7px 14px;border-radius:7px;cursor:pointer}
+  .tabs button{border:0;background:transparent;color:var(--muted);font:inherit;font-weight:700;padding:7px 14px;border-radius:7px;cursor:pointer;white-space:nowrap;word-break:keep-all}
   .tabs button.on{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
   .count-pill{font-size:12px;color:var(--muted);font-weight:700;background:var(--surface);border:1px solid var(--line);padding:4px 10px;border-radius:999px} .count-pill b{color:var(--brand)}
   .modebtn{border:1px solid var(--line2);background:var(--surface);color:var(--muted);font:inherit;font-weight:800;font-size:12px;padding:6px 12px;border-radius:999px;cursor:pointer}
@@ -305,7 +305,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v244 (2026-09-15)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v245 (2026-09-15)</span></div>
   <div class="tabs"><button id="tabConsult" onclick="openConsultFull()">첫관리 상담</button><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -3735,7 +3735,7 @@ function progHide(){const el=document.getElementById('prog');if(el)el.style.disp
 renderForm();fillXtSelects();renderConds();updateValidation();setModeBadge();authBoot();
 
 /* ===== 앱 업데이트 감지 → 업데이트 배너 (홈화면 PWA 캐시 대응) ===== */
-var APP_VER='2026-09-15.2';   /* ★배포할 때마다 이 값 + ver.json 둘 다 올릴 것 */
+var APP_VER='2026-09-15.3';   /* ★배포할 때마다 이 값 + ver.json 둘 다 올릴 것 */
 function _forceUpdate(){
   try{ if('serviceWorker' in navigator) navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){try{r.unregister();}catch(e){}});}); }catch(e){}
   try{ if(window.caches&&caches.keys) caches.keys().then(function(ks){ks.forEach(function(k){caches.delete(k);});}); }catch(e){}
