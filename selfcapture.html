@@ -526,8 +526,9 @@ window.build3D=async function(){
   const front=captured.front; if(!front){alert('정면 촬영이 필요해요');return;}
   await getLandmarker();
   const lm=front.lm;
-  let asp=(front.w&&front.h)?front.w/front.h:1;
-  asp=Math.max(0.85,Math.min(1.15,asp));   // 사진 비율 보정 → 실제 얼굴형 (폰 세로프레임에서 과도하게 갸름해지지 않도록 clamp)
+  let asp=(front.w&&front.h)?front.w/front.h:1;   // 사진 비율 보정
+  // ★ 얼굴 폭:세로를 자연 비율(0.82)로 정규화 — 기기(맥북 웹캠·폰)·원근과 무관하게 갸름/둥글 왜곡 제거. (숫자만 바꾸면 폭 조절)
+  try{ const _fw=Math.abs(lm[234].x-lm[454].x)*asp||1, _fh=Math.abs(lm[10].y-lm[152].y)||1; asp*=(0.82*_fh)/_fw; }catch(e){}
   const pos=new Float32Array(468*3), uv=new Float32Array(468*2);
   for(let i=0;i<468;i++){ pos[i*3]=(lm[i].x-0.5)*asp; pos[i*3+1]=-(lm[i].y-0.5); pos[i*3+2]=-(lm[i].z)*0.8; uv[i*2]=lm[i].x; uv[i*2+1]=1-lm[i].y; }
   const idx=tessTriangles(window._TESS);
