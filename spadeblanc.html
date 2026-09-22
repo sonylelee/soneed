@@ -840,6 +840,41 @@ async function delRecord(id){if(_isVwr()){toast('읽기 전용 계정입니다')
 function onProgramPick(){var s=document.getElementById('recProgram');var o=s&&s.options[s.selectedIndex];var p=o&&o.getAttribute('data-price');var pe=document.getElementById('recPrice');if(pe&&p)pe.value=p;}
 (function(){var d=new Date(),t=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);var e=document.getElementById('recDate');if(e&&!e.value)e.value=t;})();
 renderPhotos();renderChecklist();authBoot();
+
+/* ===== 자동 업데이트 감지 → 팝업 (옛 버전 켠 기기에 강제 새로고침 유도) ===== */
+var APP_VER='2026-09-22.1';   /* ★배포할 때마다 이 숫자만 올리면, 옛 버전 켠 사람에게 업데이트 팝업이 뜸 */
+function _forceUpdate(){
+  try{ if('caches' in window) caches.keys().then(function(ks){ks.forEach(function(k){caches.delete(k);});}); }catch(e){}
+  try{ if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations) navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){r.unregister();});}); }catch(e){}
+  var base=location.href.split('?')[0].split('#')[0];
+  location.replace(base+'?v='+Date.now());
+}
+function _showUpdatePopup(){
+  if(document.getElementById('updPop'))return;
+  var ov=document.createElement('div'); ov.id='updPop';
+  ov.style.cssText='position:fixed;inset:0;z-index:100000;background:rgba(15,12,20,.72);display:flex;align-items:center;justify-content:center;padding:24px';
+  ov.innerHTML='<div style="background:#fff;border-radius:18px;max-width:340px;width:100%;padding:26px 22px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.4)">'
+    +'<div style="font-size:40px;margin-bottom:8px">🔄</div>'
+    +'<div style="font-size:19px;font-weight:900;color:#2a2620;margin-bottom:6px">새 버전이 나왔어요</div>'
+    +'<div style="font-size:13.5px;color:#776;line-height:1.6;margin-bottom:18px">최신 기능·오류 수정이 적용됐어요.<br>아래 버튼을 눌러 새로고침 해주세요.</div>'
+    +'<button id="updGo" style="width:100%;border:0;border-radius:10px;padding:13px;font-size:16px;font-weight:900;background:linear-gradient(90deg,#8a6d3b,#b8945a);color:#fff;cursor:pointer">지금 업데이트</button>'
+    +'<div id="updLater" style="margin-top:12px;font-size:12.5px;color:#aaa;cursor:pointer">나중에</div>'
+    +'</div>';
+  document.body.appendChild(ov);
+  document.getElementById('updGo').onclick=_forceUpdate;
+  document.getElementById('updLater').onclick=function(){ ov.remove(); };
+}
+async function _checkUpdate(){
+  try{
+    var r=await fetch(location.pathname+'?_ck='+Date.now(),{cache:'no-store'});
+    var t=await r.text();
+    var m=t.match(/APP_VER=['"]([^'"]+)['"]/);
+    if(m&&m[1]&&m[1]!==APP_VER)_showUpdatePopup();
+  }catch(e){}
+}
+setTimeout(_checkUpdate,3000);
+document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible')_checkUpdate(); });
+setInterval(function(){ if(document.visibilityState==='visible')_checkUpdate(); }, 5*60*1000);
 </script>
 
 <script type="module">
