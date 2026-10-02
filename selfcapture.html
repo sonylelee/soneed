@@ -496,8 +496,12 @@ function captureFrame(v,p){
   c.width=tw;c.height=th; var _cx=c.getContext('2d'); _cx.imageSmoothingQuality='high'; _cx.drawImage(v,0,0,tw,th);
   return {img:c.toDataURL('image/jpeg',0.92), lm:p.map(q=>({x:q.x,y:q.y,z:q.z})), w:tw, h:th};
 }
+var _DET_GAP=66, _lastDet=0;   /* 얼굴인식 ~15fps로 제한 (CPU 과부하 방지) */
 function loop(){
   if(!running) return;
+  const _now=performance.now();
+  if(_now-_lastDet<_DET_GAP){ requestAnimationFrame(loop); return; }
+  _lastDet=_now;
   const v=document.getElementById('cam'); const msg=document.getElementById('camMsg'), hint=document.getElementById('camHint');
   if(v.readyState>=2){
     let res=null; try{ res=landmarker.detectForVideo(v, performance.now()); }catch(e){}
@@ -1367,8 +1371,11 @@ window.goUp=async function(){
 };
 window.stopUp=function(){ upRun=false; if(upStream){ upStream.getTracks().forEach(t=>t.stop()); upStream=null; } };
 window.retakeUp=function(){ stopUp(); goUp(); };
+var _lastUpDet=0;
 function upLoop(){
-  if(!upRun) return; const v=document.getElementById('upCam'); const msg=document.getElementById('upMsg');
+  if(!upRun) return;
+  const _now=performance.now(); if(_now-_lastUpDet<_DET_GAP){ requestAnimationFrame(upLoop); return; } _lastUpDet=_now;
+  const v=document.getElementById('upCam'); const msg=document.getElementById('upMsg');
   if(v.readyState>=2){ let res=null; try{ res=landmarker.detectForVideo(v,performance.now()); }catch(e){}
     if(res && res.faceLandmarks && res.faceLandmarks.length){ const p=res.faceLandmarks[0]; upCur={ lm:p.map(q=>({x:q.x,y:q.y,z:q.z})), img:grabSide(v) }; msg.textContent='고개 든 채로 촬영하세요'; }
     else { upCur=null; msg.textContent='고개를 살짝 뒤로 들어 귀가 보이게 해주세요'; }
@@ -1405,7 +1412,7 @@ function measureUp(b){
 }
 
 /* ===== 자동 업데이트 감지 (강력 새로고침 유도) ===== */
-const APP_VER='2026-09-29.3';   /* ★배포할 때마다 이 숫자만 올리면, 옛 버전 켠 사람에게 '업데이트' 배너가 뜸 */
+const APP_VER='2026-10-02.1';   /* ★배포할 때마다 이 숫자만 올리면, 옛 버전 켠 사람에게 '업데이트' 배너가 뜸 */
 function _forceUpdate(){
   try{ if('caches' in window) caches.keys().then(ks=>ks.forEach(k=>caches.delete(k))); }catch(e){}
   try{ if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations) navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister())); }catch(e){}
