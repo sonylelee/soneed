@@ -779,10 +779,18 @@ async function saveRecord(){
   var ph=gv('recPhone'); var ds=gv('recDate')||ds0;
   var extra={phone:ph,gender:gv('recGender'),age:gv('recAge'),route:gv('recRoute'),memo:gv('recMemo'),program:gv('recProgram'),price:gv('recPrice'),guide:gv('recGuide'),memos:(window._curMemos||[]),thoConv:_thoConv};
   var rec={id:(currentId||('b'+Date.now())),name:nm,date:ds,data:Object.assign({state:st},extra)};  /* phone은 data 안에만(DB 최상위 컬럼 아님) */
-  try{
-    var r=await fetch(SB_URL+'/rest/v1/body_records',{method:'POST',headers:_sbH({Prefer:'resolution=merge-duplicates,return=minimal'}),body:JSON.stringify(Object.assign({updated_at:new Date().toISOString()},rec))});
-    if(!r.ok)throw new Error('HTTP '+r.status);
-  }catch(e){ toast('저장 실패, 다시 시도하세요 ('+((e&&e.message)||e)+')'); return; }  /* ★ 서버 실패 시 로컬 저장 안 함 */
+  var _body=JSON.stringify(Object.assign({updated_at:new Date().toISOString()},rec));
+  var ok=false,errMsg='';
+  for(var attempt=0;attempt<2;attempt++){
+    try{
+      if(!authTok){ var _r0=await authRefresh(); if(!_r0){ errMsg='로그인이 만료됐어요 · 다시 로그인하세요'; break; } }
+      var r=await fetch(SB_URL+'/rest/v1/body_records',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+authTok,'Content-Type':'application/json',Prefer:'resolution=merge-duplicates,return=minimal'},body:_body});
+      if((r.status===401||r.status===403)&&attempt===0){ var _rf=await authRefresh(); if(_rf) continue; errMsg='로그인이 만료됐어요 · 다시 로그인하세요'; break; }
+      if(!r.ok){ var _t=''; try{_t=(await r.text()).replace(/\s+/g,' ').slice(0,80);}catch(_){} errMsg='HTTP '+r.status+(_t?(' · '+_t):''); break; }
+      ok=true; break;
+    }catch(e){ errMsg=(e&&e.message)||String(e); break; }
+  }
+  if(!ok){ toast('저장 실패 · '+errMsg); return; }  /* ★ 서버 실패 시 로컬 저장 안 함 */
   if(!_viewLock){document.getElementById('recName').value=''; currentId=null;}
   toast('저장됨: '+nm);
   renderRecords();

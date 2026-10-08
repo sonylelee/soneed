@@ -772,13 +772,20 @@ async function saveRecord(){
   var ph=gv('recPhone'); var ds=gv('recDate')||ds0;
   var extra={phone:ph,gender:gv('recGender'),age:gv('recAge'),route:gv('recRoute'),memo:gv('recMemo'),program:gv('recProgram'),price:gv('recPrice'),guide:gv('recGuide'),memos:(window._curMemos||[]),thoConv:_thoConv};
   var rec={id:(currentId||('b'+Date.now())),name:nm,phone:ph,date:ds,data:Object.assign({state:st},extra)};
+  var _body=JSON.stringify(Object.assign({updated_at:new Date().toISOString()},rec));
   var ok=false, errInfo='';
-  try{
-    var r=await fetch(SB_URL+'/rest/v1/spadeblanc_records',{method:'POST',headers:_sbH({Prefer:'resolution=merge-duplicates,return=minimal'}),body:JSON.stringify(Object.assign({updated_at:new Date().toISOString()},rec))});
-    if(r.ok)ok=true; else { var _t=''; try{_t=await r.text();}catch(_){}  errInfo='HTTP '+r.status+(authTok?'':' · 로그인안됨(토큰없음)')+(_t?(' · '+_t.replace(/\s+/g,' ').slice(0,110)):''); throw new Error(errInfo); }
-  }catch(e){ if(!errInfo)errInfo=(e&&e.message)||String(e); var arr=_recAll(); arr.unshift(Object.assign({state:st,phone:ph},rec)); _recSave(arr); }
+  for(var attempt=0;attempt<2;attempt++){
+    try{
+      if(!authTok){ var _r0=await authRefresh(); }   /* 토큰 없으면 먼저 갱신 시도 */
+      var r=await fetch(SB_URL+'/rest/v1/spadeblanc_records',{method:'POST',headers:_sbH({Prefer:'resolution=merge-duplicates,return=minimal'}),body:_body});
+      if((r.status===401||r.status===403)&&attempt===0){ var _rf=await authRefresh(); if(_rf) continue; }   /* 만료 → 재발급 후 재시도 */
+      if(r.ok){ ok=true; break; }
+      var _t=''; try{_t=await r.text();}catch(_){} errInfo='HTTP '+r.status+(authTok?'':' · 로그인안됨')+(_t?(' · '+_t.replace(/\s+/g,' ').slice(0,90)):''); break;
+    }catch(e){ errInfo=(e&&e.message)||String(e); break; }
+  }
+  if(!ok){ var arr=_recAll(); arr.unshift(Object.assign({state:st,phone:ph},rec)); _recSave(arr); }   /* 서버 실패 시 로컬 백업 */
   if(ok&&!_viewLock){var _n=document.getElementById('recName'); if(_n)_n.value=''; currentId=null;}
-  toast(ok?('클라우드 저장됨: '+nm):('클라우드 실패 · 로컬만 저장 · '+errInfo));
+  toast(ok?('클라우드 저장됨: '+nm):('클라우드 실패(로컬 백업됨) · '+(/401|403|row-level|만료|로그인/.test(errInfo)?'로그인이 만료됐어요 · 다시 로그인하세요':errInfo)));
   renderRecords();
  }catch(fatal){
    try{alert('저장 중 오류: '+((fatal&&fatal.message)||fatal));}catch(_){}
@@ -842,7 +849,7 @@ function onProgramPick(){var s=document.getElementById('recProgram');var o=s&&s.
 renderPhotos();renderChecklist();authBoot();
 
 /* ===== 자동 업데이트 감지 → 팝업 (옛 버전 켠 기기에 강제 새로고침 유도) ===== */
-var APP_VER='2026-09-22.1';   /* ★배포할 때마다 이 숫자만 올리면, 옛 버전 켠 사람에게 업데이트 팝업이 뜸 */
+var APP_VER='2026-10-08.1';   /* ★배포할 때마다 이 숫자만 올리면, 옛 버전 켠 사람에게 업데이트 팝업이 뜸 */
 function _forceUpdate(){
   try{ if('caches' in window) caches.keys().then(function(ks){ks.forEach(function(k){caches.delete(k);});}); }catch(e){}
   try{ if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations) navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){r.unregister();});}); }catch(e){}
