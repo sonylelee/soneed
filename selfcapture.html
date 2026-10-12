@@ -660,7 +660,19 @@ function renderMetrics(lm){
   // 소니드 페이셜 코드 (사진 추정) — 타입은 눈동자↔입꼬리 거리 좌우차로 추정
   const dImgL=Math.hypot(P[468].x-P[61].x,P[468].y-P[61].y), dImgR=Math.hypot(P[473].x-P[291].x,P[473].y-P[291].y);
   const relT=(dImgL-dImgR)/(((dImgL+dImgR)/2)||1);
-  const typeC=Math.abs(relT)<0.03?'?':(dImgL<dImgR?'A':'B');   // 화면왼쪽(본인 오른쪽) 짧음=압축=A
+  // ★ RD/LD: 눈·입꼬리·콧볼이 모두 한쪽으로 처지면 → 본인 오른쪽=RD / 왼쪽=LD (메인앱 drop_own과 동일)
+  const _dpk=(a,b)=>P[a].x<P[b].x?{L:P[a],R:P[b]}:{L:P[b],R:P[a]};
+  const _dIr=_dpk(468,473), _dMt=_dpk(61,291);
+  const _dAlL={x:(P[64].x+P[98].x)/2,y:(P[64].y+P[98].y)/2}, _dAlR={x:(P[294].x+P[327].x)/2,y:(P[294].y+P[327].y)/2};
+  const _dAl=_dAlL.x<_dAlR.x?{L:_dAlL,R:_dAlR}:{L:_dAlR,R:_dAlL};
+  const _thD=fh*0.004;
+  const _dELow=Math.abs(_dIr.R.y-_dIr.L.y)>_thD?(_dIr.R.y>_dIr.L.y?'R':'L'):'';
+  const _dMLow=Math.abs(_dMt.R.y-_dMt.L.y)>_thD?(_dMt.R.y>_dMt.L.y?'R':'L'):'';
+  const _dALow=Math.abs(_dAl.R.y-_dAl.L.y)>_thD?(_dAl.R.y>_dAl.L.y?'R':'L'):'';
+  const _dLows=[_dELow,_dMLow,_dALow].filter(Boolean);
+  let _drop=null;
+  if(_dLows.length>=3 && _dLows.every(x=>x===_dLows[0])) _drop=(_dLows[0]==='R')?'LD':'RD';   // 화면오른쪽 처짐=본인왼쪽=LD / 화면왼쪽=본인오른쪽=RD
+  const typeC = _drop || (Math.abs(relT)<0.03?'?':(dImgL<dImgR?'A':'B'));   // 화면왼쪽(본인 오른쪽) 짧음=압축=A
   const noseC=Math.abs(noseDev/fw)<0.006?'중립':(noseDev>0?'왼':'오');
   const eyeC=Math.abs(eyeAng)<0.6?'중립':(eyeAng>0?'오':'왼');
   const alaC=Math.abs(alaAng)<0.6?'중립':(alaAng>0?'오':'왼');
@@ -1412,7 +1424,7 @@ function measureUp(b){
 }
 
 /* ===== 자동 업데이트 감지 (강력 새로고침 유도) ===== */
-const APP_VER='2026-10-02.1';   /* ★배포할 때마다 이 숫자만 올리면, 옛 버전 켠 사람에게 '업데이트' 배너가 뜸 */
+const APP_VER='2026-10-12.1';   /* ★배포할 때마다 이 숫자만 올리면, 옛 버전 켠 사람에게 '업데이트' 배너가 뜸 */
 function _forceUpdate(){
   try{ if('caches' in window) caches.keys().then(ks=>ks.forEach(k=>caches.delete(k))); }catch(e){}
   try{ if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations) navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister())); }catch(e){}
