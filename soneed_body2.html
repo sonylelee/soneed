@@ -215,7 +215,13 @@ h2.sec,.logo{letter-spacing:-.02em}
   </div>
 
   </div>
-  <div id="view-records" style="display:none"><div class="card"><h2 class="sec">고객 기록</h2><div class="hint">클라우드 저장 — <b>어느 브라우저·폰·기기에서든</b> 보여요. [불러오기]로 복원 후 [분석하기].</div><input id="recSearch" oninput="_paintRecords()" placeholder="고객 이름 검색" style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:6px;font-size:14px;margin-bottom:10px"><div id="recList"></div></div></div>
+  <div id="view-records" style="display:none"><div class="card"><h2 class="sec">고객 기록</h2><div class="hint">클라우드 저장 — <b>어느 브라우저·폰·기기에서든</b> 보여요. [불러오기]로 복원 후 [분석하기].</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+    <button class="btn" style="padding:7px 12px;font-size:12.5px" onclick="exportBackup()">⬇ 데이터 백업 (JSON)</button>
+    <button class="btn" style="padding:7px 12px;font-size:12.5px" onclick="document.getElementById('bkFile').click()">⬆ 백업 복원</button>
+    <input type="file" id="bkFile" accept="application/json,.json" style="display:none" onchange="importBackup(event)">
+  </div>
+  <input id="recSearch" oninput="_paintRecords()" placeholder="고객 이름 검색" style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:6px;font-size:14px;margin-bottom:10px"><div id="recList"></div></div></div>
   <div class="muted" style="text-align:center;padding:6px 0 20px">SONEED Body OS · 사진 분석은 가설, 촉진은 검증<br><span style="font-size:10px;opacity:.7">3D 해부 모델: Z-Anatomy / BodyParts3D · CC BY-SA</span></div>
 </div>
 
@@ -781,6 +787,50 @@ async function renderRecords(){
   }catch(e){ arr=_recAll(); }
   window._recCache=arr||[];
   _paintRecords();
+}
+/* ===== 데이터 백업(내보내기) / 복원(가져오기) — 전체 기록을 JSON 파일로 ===== */
+async function exportBackup(){
+  var rows=null;
+  try{
+    toast('전체 기록 불러오는 중…');
+    var r=await fetch(SB_URL+'/rest/v1/soneedbody_records?select=id,name,date,data,updated_at&order=updated_at.desc',{headers:_sbH()});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    rows=await r.json();
+  }catch(e){
+    rows=window._recCache||[];
+    if(!rows.length){ toast('백업 실패 · '+((e&&e.message)||e)); return; }
+    toast('서버 응답 지연 · 현재 목록만 백업');
+  }
+  var out={app:'soneed_body2',exported_at:new Date().toISOString(),count:rows.length,records:rows};
+  var blob=new Blob([JSON.stringify(out)],{type:'application/json'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  var d=new Date(), ds=d.getFullYear()+''+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2)+'_'+('0'+d.getHours()).slice(-2)+('0'+d.getMinutes()).slice(-2);
+  a.href=url; a.download='soneed_body2_backup_'+ds+'.json';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url);},2000);
+  toast('백업 완료 · '+rows.length+'건 다운로드');
+}
+async function importBackup(ev){
+  var file=ev.target.files&&ev.target.files[0]; ev.target.value='';
+  if(!file)return;
+  var txt=''; try{ txt=await file.text(); }catch(e){ toast('파일 읽기 실패'); return; }
+  var data=null; try{ data=JSON.parse(txt); }catch(e){ toast('JSON 형식이 아니에요'); return; }
+  var recs=Array.isArray(data)?data:(data&&data.records);
+  if(!Array.isArray(recs)||!recs.length){ toast('복원할 기록이 없어요'); return; }
+  if(!confirm(recs.length+'건을 복원할까요?\n(같은 ID는 덮어쓰기, 새 ID는 추가 · 기존 기록은 지워지지 않아요)'))return;
+  var ok=0,fail=0;
+  for(var i=0;i<recs.length;i++){
+    var x=recs[i]; if(!x||!x.id)continue;
+    var rec={id:x.id,name:x.name||'',date:x.date||'',data:x.data||{}};
+    try{
+      var r=await fetch(SB_URL+'/rest/v1/soneedbody_records',{method:'POST',headers:_sbH({Prefer:'resolution=merge-duplicates,return=minimal'}),body:JSON.stringify(Object.assign({updated_at:new Date().toISOString()},rec))});
+      if(r.ok)ok++; else {fail++; if((r.status===401||r.status===403)&&i===0){ var _rf=await authRefresh(); if(_rf){fail--; i--; continue;} toast('로그인이 만료됐어요 · 다시 로그인하세요'); break; }}
+    }catch(e){ fail++; }
+    if(i%10===0) toast('복원 중… '+(i+1)+' / '+recs.length);
+  }
+  toast('복원 완료 · 성공 '+ok+(fail?(' · 실패 '+fail):''));
+  renderRecords();
 }
 function _paintRecords(){
   var box=document.getElementById('recList'); if(!box)return;
