@@ -305,7 +305,7 @@ h2.section,.logo{letter-spacing:-.01em}
 </div>
 
 <header class="top"><div class="wrap">
-  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v246 (2026-10-02)</span></div>
+  <div class="logo"><b>SONEED</b> 얼굴윤곽 3D 분석 데이터<span>데이터베이스 · v247 (2026-10-08)</span></div>
   <div class="tabs"><button id="tabConsult" onclick="openConsultFull()">첫관리 상담</button><button id="tabEntry" class="on" onclick="showView('entry')">기록 입력</button><button id="tabData" onclick="showView('data')">고객<br class="m-br">리포트 <span id="notifDot" style="display:none;background:#e02424;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;font-weight:800;margin-left:2px"></span></button><button id="tabAdmin" onclick="showView('admin')" style="display:none">관리</button><button id="tabAcademy" onclick="showView('academy')" style="display:none">아카데미</button></div>
   <button class="modebtn" id="authBtn" onclick="openLogin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>로그인</button>
   <button class="modebtn" id="modeBtn" onclick="openSettings()">로컬 모드</button>
@@ -740,7 +740,7 @@ const THERAPISTS=['','이소니','신대성','정수영','김현주','신경미'
 /* 차트 항목 = 데이터 컬럼 (인쇄 차트 순서 그대로: 2D 진단 → 좌우 진단 → 회전 진단) */
 const FIELDS=[
  {k:'code',g:'meta',label:'고객 성함',type:'text'},
- {k:'branch',g:'meta',label:'지점',type:'select',opt:['','소니드동탄본점','소니드압구정점','스파드블랑','게스트1']},
+ {k:'branch',g:'meta',label:'지점',type:'select',opt:['','소니드동탄본점','소니드압구정점','소니드청담점','스파드블랑','게스트1']},
  {k:'therapist',g:'meta',label:'리셋터 (관리사)',type:'select',opt:THERAPISTS},
  {k:'final_type',g:'meta',label:'최종 타입',type:'seg',opt:['A','B','RD','LD']},
  {k:'signup',g:'meta',label:'가입회차',type:'select',opt:['',...Array.from({length:40},(_,i)=>(i+1)+'회')]},
@@ -1195,7 +1195,7 @@ async function doLogin(){
 function doLogout(){authLogout();closeLogin();}
 /* 목록은 사진 제외한 가벼운 필드만 로드 → 편집 시 그 기록만 전체 로드(editRecord) */
 /* 목록에 필요한 최소 필드만(사진·상세 제외). data jsonb에서 이것만 뽑아 statement timeout 회피 */
-var LIST_KEYS=['code','date','therapist','signup','branch','savedBy','lastBy','confirmedBy','confirmedAt','face_code','fcode','type','waterslide','nasolabial','zyg_maxilla','thumb'];  /* ★목록은 가벼운 필드만. comments·reads(큰 배열)는 제외 — 안읽음은 my_unread RPC, 코멘트는 기록 열때 로드 */
+var LIST_KEYS=['code','date','therapist','signup','branch','savedBy','lastBy','confirmedBy','confirmedAt','face_code','fcode','type','waterslide','nasolabial','zyg_maxilla'];  /* ★목록은 가벼운 텍스트 필드만. comments·reads(큰 배열)·thumb(base64 이미지)는 제외 — 썸네일은 캐시+백그라운드 지연로딩(_lazyThumbs), 안읽음은 my_unread RPC, 코멘트는 기록 열때 로드 */
 var _recOff=0, _recEnd=false; const _PAGE=500;
 async function cloudLoad(offset,limit){
   offset=offset||0; limit=limit||_PAGE;
@@ -1229,7 +1229,7 @@ async function loadMore(){
     var have={}; records.forEach(function(r){have[r.id]=1;}); more=more.filter(function(r){return !have[r.id];});
     var cc=_loadRecCache(); if(cc&&cc.length){ var _tm={}; cc.forEach(function(r){ if(r&&r.thumb)_tm[r.id]=r.thumb; }); more.forEach(function(r){ if(r&&!r.thumb&&_tm[r.id])r.thumb=_tm[r.id]; }); }
     records=records.concat(more); _recOff+=more.length; if(more.length<_PAGE)_recEnd=true;
-    _saveRecCache(records); sortRecs(); refreshAll();
+    _saveRecCache(records); sortRecs(); refreshAll(); try{_lazyThumbs();}catch(e){}
   }catch(e){ var m2=document.getElementById('recMoreBtn'); if(m2){m2.disabled=false;m2.textContent='더 보기 (다시 시도)';} }
 }
 /* ===== 사진 Storage(3단계): 사진은 Supabase Storage(photos 버킷)에, DB엔 경로만. 옛 base64도 하위호환 ===== */
@@ -1331,6 +1331,27 @@ async function removeRecord(id){if(mode==='cloud')await cloudDelete(id);else awa
 function _lightForCache(r){var c=Object.assign({},r);delete c.photo_front;delete c.photo_up;delete c.photo_down;delete c._ai;if(Array.isArray(c.afters))c.afters=c.afters.map(function(a){var b=Object.assign({},a);delete b.photo_front;delete b.photo_up;delete b.photo_down;return b;});c._light=true;return c;}
 function _saveRecCache(recs){try{localStorage.setItem('soneed_reccache',JSON.stringify((recs||[]).map(_lightForCache)));}catch(e){try{localStorage.setItem('soneed_reccache',JSON.stringify((recs||[]).map(function(r){var c=_lightForCache(r);delete c.thumb;return c;})));}catch(e2){try{localStorage.removeItem('soneed_reccache');}catch(e3){}}}}
 function _loadRecCache(){try{var s=localStorage.getItem('soneed_reccache');var a=s?JSON.parse(s):null;if(Array.isArray(a)){a.forEach(function(r){r._light=true;});return a;}}catch(e){}return null;}
+/* 썸네일 지연로딩: 목록이 뜬 뒤, 사진 없는 기록들의 thumb만 배치로 가져와 채움 (목록 쿼리 가볍게 유지) */
+var _lazyThumbRun=false;
+async function _lazyThumbs(){
+  if(mode!=='cloud'||_lazyThumbRun)return; _lazyThumbRun=true;
+  try{
+    var need=(records||[]).filter(function(r){return r&&!r.thumb;}).map(function(r){return r.id;});
+    var CH=80;
+    for(var i=0;i<need.length;i+=CH){
+      var ids=need.slice(i,i+CH);
+      var inlist='('+ids.map(function(x){return '"'+String(x).replace(/["\\]/g,'')+'"';}).join(',')+')';
+      var r;
+      try{ r=await fetch(sbBase()+'records?id=in.'+encodeURIComponent(inlist)+'&select=id,thumb:data-%3Ethumb',{headers:sbHeaders()}); }catch(e){ break; }
+      if(!r||!r.ok) break;
+      var rows=await r.json(); var map={}; rows.forEach(function(x){ if(x.thumb)map[x.id]=x.thumb; });
+      var changed=false;
+      (records||[]).forEach(function(rr){ if(rr&&!rr.thumb&&map[rr.id]){ rr.thumb=map[rr.id]; changed=true; } });
+      if(changed){ try{renderRecList();}catch(e){} }
+    }
+    try{_saveRecCache(records);}catch(e){}
+  }finally{ _lazyThumbRun=false; }
+}
 async function loadAll(){
   if(mode==='cloud'){
     var cached=_loadRecCache();
@@ -1343,6 +1364,7 @@ async function loadAll(){
       records=fresh; _recOff=fresh.length; _recEnd=fresh.length<_PAGE; _saveRecCache(records);
       const b=document.getElementById('storeBanner');if(b)b.style.display='none';
       progDone(records.length+(_recEnd?'':'+')+'건 · 공용 클라우드 DB');
+      try{ _lazyThumbs(); }catch(e){}   /* 썸네일은 목록 뜬 뒤 백그라운드로 */
     }catch(e){
       if(String(e&&e.message)==='auth'){progHide();}
       else{
@@ -3735,7 +3757,7 @@ function progHide(){const el=document.getElementById('prog');if(el)el.style.disp
 renderForm();fillXtSelects();renderConds();updateValidation();setModeBadge();authBoot();
 
 /* ===== 앱 업데이트 감지 → 업데이트 배너 (홈화면 PWA 캐시 대응) ===== */
-var APP_VER='2026-10-02.1';   /* ★배포할 때마다 이 값 + ver.json 둘 다 올릴 것 */
+var APP_VER='2026-10-08.1';   /* ★배포할 때마다 이 값 + ver.json 둘 다 올릴 것 */
 function _forceUpdate(){
   try{ if('serviceWorker' in navigator) navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){try{r.unregister();}catch(e){}});}); }catch(e){}
   try{ if(window.caches&&caches.keys) caches.keys().then(function(ks){ks.forEach(function(k){caches.delete(k);});}); }catch(e){}
