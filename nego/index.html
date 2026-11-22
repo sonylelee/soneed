@@ -273,12 +273,11 @@
 const $ = id => document.getElementById(id);
 const won = n => "₩" + (Math.round(n||0)).toLocaleString("ko-KR");
 const RESETTERS_COMMON = ["신대성","이소니"]; // 양쪽 지점 공통
-const RESETTERS_BRANCH = { "동탄본점":["이수연","김려은","신경미"], "압구정점":["정수영","김현주"] };
+const RESETTERS_BRANCH = { "동탄본점":["이수연","김려은","신경미"], "압구정점":["정수영","김현주"], "은율 동탄점":["이수연","김려은","신경미"], "은율 청담점":[] };
 function resettersFor(b){ return (RESETTERS_BRANCH[b]||[]).concat(RESETTERS_COMMON); }
-const BRANCHES = ["압구정점","동탄본점"];
 const FEE_RATE = 0.030981;   // 네이버페이 수수료율(부가세 포함, 시트 기준)
-// 패키지 가격표 (시트 하단 표 기준) : [이름, 총결제금액, 가입횟수]
-const PROGRAMS = [
+// 패키지 가격표 : [이름, 총결제금액, 가입횟수]
+const PROGRAMS_HB = [   // 또한별 2차 공구
   ["— 선택 안 함 —",0,0],
   ["페이스리세팅 1회",220000,1],
   ["페이스리세팅 5회",890000,5],
@@ -287,8 +286,25 @@ const PROGRAMS = [
   ["원장 1회",300000,1],
   ["원장 단독 10+1회",2310000,11],
 ];
-const pkgPrice = nm => { const p=PROGRAMS.find(x=>x[0]===nm); return p?p[1]:0; };
-const pkgSess  = nm => { const p=PROGRAMS.find(x=>x[0]===nm); return p?p[2]:0; };
+const PROGRAMS_EY = [   // 은율 특가이벤트 (15+3 · 원장 15회 315만)
+  ["— 선택 안 함 —",0,0],
+  ["페이스리세팅 1회",220000,1],
+  ["페이스리세팅 5회",890000,5],
+  ["페이스리세팅 10+1회",1510000,11],
+  ["페이스리세팅 15+3회",2260000,18],
+  ["원장 1회",300000,1],
+  ["원장 단독 15회",3150000,15],
+];
+// 이벤트 구성
+const EVENTS = {
+  "또한별 2차 공구": { emo:"🎁", branches:["압구정점","동탄본점"], gate:"9092", programs:PROGRAMS_HB },
+  "은율 특가이벤트": { emo:"✨", branches:["은율 동탄점","은율 청담점"], gate:null, programs:PROGRAMS_EY },
+};
+const EVENT_NAMES = Object.keys(EVENTS);
+function curPrograms(){ var e=EVENTS[STATE&&STATE.event]; return e?e.programs:PROGRAMS_HB; }
+function curBranches(){ var e=EVENTS[STATE&&STATE.event]; return e?e.branches:["압구정점","동탄본점"]; }
+const pkgPrice = nm => { const p=curPrograms().find(x=>x[0]===nm); return p?p[1]:0; };
+const pkgSess  = nm => { const p=curPrograms().find(x=>x[0]===nm); return p?p[2]:0; };
 // 급여 정산용: 서비스(+N) 제외한 정가 회차
 const PKG_BASE = {"페이스리세팅 10+1회":10,"페이스리세팅 15+2회":15,"원장 단독 10+1회":10};
 const pkgBase = nm => (PKG_BASE[nm] != null ? PKG_BASE[nm] : pkgSess(nm));
@@ -302,7 +318,7 @@ function recSessions(r,b){ return (paySessions(r.pkg,b)||0) + ((r.addons||[]).re
 // 스마트윤곽 업그레이드 보너스: 15+2회는 +2회분을 스마트윤곽으로 업그레이드 → 급여 총 2만원 추가
 const SMART_BONUS={"페이스리세팅 15+2회":20000};
 function recBonus(r){ let bo=SMART_BONUS[r.pkg]||0; (r.addons||[]).forEach(function(a){ bo+=SMART_BONUS[a.pkg]||0; }); return bo; }
-function pkgOptHtml(sel){ return PROGRAMS.map(function(x){ return '<option value="'+escAttr(x[0])+'"'+(x[0]===sel?' selected':'')+'>'+escHtml(dispPkg(x[0]))+(x[1]?" · "+won(x[1]):"")+'</option>'; }).join(""); }
+function pkgOptHtml(sel){ return curPrograms().map(function(x){ return '<option value="'+escAttr(x[0])+'"'+(x[0]===sel?' selected':'')+'>'+escHtml(dispPkg(x[0]))+(x[1]?" · "+won(x[1]):"")+'</option>'; }).join(""); }
 // 상태 표시 라벨 (내부값 "구매확정" → 화면엔 "네이버내 구매확정됨")
 function stLabel(st){ return st==="구매확정" ? "네이버내 구매확정됨" : (st||"예정"); }
 // 상품명 원본 그대로 표기 (10+1회 등)
@@ -342,7 +358,7 @@ function openPayroll(){
     '<tr><td style="text-align:left">네이버페이 수수료</td><td class="tnum">− '+won(npay)+'</td></tr>'+
     '<tr><td style="text-align:left">관리사 급여 합계</td><td class="tnum">− '+won(payTot)+'</td></tr>'+
     '</tbody></table>';
-  html+='<div class="sumrow" style="margin:12px 0"><div class="metric a"><div class="k">💰 순수익 (대표님 실수령)</div><div class="v tnum" style="font-size:1.15em">'+won(profit)+'</div></div></div>';
+  html+='<div style="display:flex;justify-content:space-between;align-items:center;margin:10px 2px;padding-top:8px;border-top:1px solid var(--line,rgba(0,0,0,.08))"><span style="font-size:.82em;color:var(--muted,#888)">순수익 (대표님 실수령)</span><span class="tnum" style="font-size:.9em;color:var(--muted,#888)">'+won(profit)+'</span></div>';
   html+='<div class="note-inline" style="margin:14px 0 8px">관리사별 급여 상세 (회차당 6만원)</div>';
   if(!names.length){ html+='<div class="empty">예약이 없어요.</div>'; }
   else{
@@ -383,11 +399,25 @@ async function pullBranch(b){
     setData(b,arr); SYNC_STATE="동기화됨"; return true;
   }catch(e){ SYNC_STATE="로컬"; return false; }
 }
-async function pushRec(b,rec){ try{ await fetch(SB_URL+"/rest/v1/gongu_reservations",{method:"POST",headers:Object.assign({Prefer:"resolution=merge-duplicates,return=minimal"},SB_H),body:JSON.stringify([{id:rec.id,branch:b,rec:rec,updated_at:new Date().toISOString()}])}); }catch(e){} }
+async function pushRec(b,rec){ try{
+  // 서버 최신본과 병합 — 오래된 로컬이 애드온/담당/방문을 덮어써 유실되는 것 방지
+  try{
+    const g=await fetch(SB_URL+"/rest/v1/gongu_reservations?select=rec&id=eq."+encodeURIComponent(rec.id),{headers:SB_H});
+    const j=await g.json(); const srv=(j&&j[0])?j[0].rec:null;
+    if(srv){
+      // 차액결제 애드온: 서버가 더 많으면 서버 유지(줄어드는 저장 차단)
+      if((srv.addons||[]).length > (rec.addons||[]).length) rec.addons=srv.addons;
+      // 담당·방문·확정일: 로컬이 비어있고 서버에 값이 있으면 서버 값 보존
+      ["reset","visit","reserve","confirmDate"].forEach(function(k){ if(!rec[k] && srv[k]) rec[k]=srv[k]; });
+      if((!rec.sms||!rec.sms.length) && srv.sms&&srv.sms.length) rec.sms=srv.sms;
+    }
+  }catch(e){}
+  await fetch(SB_URL+"/rest/v1/gongu_reservations",{method:"POST",headers:Object.assign({Prefer:"resolution=merge-duplicates,return=minimal"},SB_H),body:JSON.stringify([{id:rec.id,branch:b,rec:rec,updated_at:new Date().toISOString()}])});
+}catch(e){} }
 async function delRec(id){ try{ await fetch(SB_URL+"/rest/v1/gongu_reservations?id=eq."+encodeURIComponent(id),{method:"DELETE",headers:SB_H}); }catch(e){} }
 function refreshBranch(){ const b=STATE.branch; SYNC_STATE="…"; renderList(b); pullBranch(b).then(()=>{ if(STATE.unlocked[b]&&STATE.branch===b) renderList(b); }); }
 
-let STATE = { view:"select", branch:"압구정점", unlocked:{"압구정점":false,"동탄본점":false}, search:"", sort:"visit", filter:"all", freset:"", view2:"table", editId:null, status:"예정", pinBuf:"", pinMode:null };
+let STATE = { view:"event", event:null, branch:"압구정점", unlocked:{}, search:"", sort:"visit", filter:"all", freset:"", view2:"table", editId:null, status:"예정", pinBuf:"", pinMode:null };
 function toggleView2(){ STATE.view2=(STATE.view2==="table"?"card":"table"); renderList(STATE.branch); }
 function fmtShort(s){ if(!s) return "—"; const d=new Date(s); if(isNaN(d)) return s; return (d.getMonth()+1)+"/"+d.getDate()+" "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); }
 function hardRefresh(){ toast("새로고침 중… ⏳"); try{ location.reload(); }catch(e){ location.href=location.href; } }
@@ -416,21 +446,35 @@ function markStatus(id,st){ const b=STATE.branch; const arr=getData(b); const i=
 $("themeBtn").onclick=()=>{ const cur=document.documentElement.getAttribute("data-theme"); const nx=cur==="dark"?"light":(cur==="light"?"":"dark"); if(nx) document.documentElement.setAttribute("data-theme",nx); else document.documentElement.removeAttribute("data-theme"); localStorage.setItem("gongu_theme", nx|| (matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light")); };
 
 // ---- navigation: 지점 선택 → 비번 → 목록 ----
-function selectBranch(b){ STATE.branch=b; STATE.unlocked[b]=false; STATE.view="branch"; render(); }
-function backToSelect(){ STATE.view="select"; STATE.unlocked={"압구정점":false,"동탄본점":false}; STATE.search=""; render(); }
+// 이벤트 선택
+function selectEvent(ev){ var e=EVENTS[ev]; if(!e) return;
+  if(e.gate){ var p=prompt("🔒 "+ev+"\n비밀번호 4자리를 입력하세요"); if(p===null) return; if(p!==e.gate){ alert("비밀번호가 달라요."); return; } }
+  STATE.event=ev; STATE.view="select"; STATE.search=""; render();
+}
+function backToEvent(){ STATE.event=null; STATE.view="event"; STATE.search=""; document.body.removeAttribute("data-branch"); render(); }
+function selectBranch(b){ STATE.branch=b; STATE.unlocked[b]=true; STATE.view="branch"; render(); }
+function backToSelect(){ STATE.view="select"; STATE.search=""; render(); }
 function render(){
+  if(STATE.view==="event"){ document.body.removeAttribute("data-branch"); $("fab").style.display="none"; renderEvent(); return; }
   if(STATE.view==="select"){ document.body.removeAttribute("data-branch"); $("fab").style.display="none"; renderSelect(); return; }
   const b=STATE.branch; document.body.setAttribute("data-branch", b);
   if(!STATE.unlocked[b]){ $("fab").style.display="none"; renderGate(b); return; }
   $("fab").style.display="flex";
   renderList(b);
 }
-function renderSelect(){
+function renderEvent(){
   $("app").innerHTML='<div class="wrap"><div class="selwrap">'+
-    '<div class="seltitle">어느 지점이세요?</div>'+
-    '<button class="selcard" onclick="selectBranch(\'압구정점\')"><span class="se">💆‍♀️</span><span class="sn">압구정점</span><span class="sa">›</span></button>'+
-    '<button class="selcard" onclick="selectBranch(\'동탄본점\')"><span class="se">🎨</span><span class="sn">동탄본점</span><span class="sa">›</span></button>'+
-    '<div class="selnote">지점 비밀번호를 아는 사람만 들어갈 수 있어요.</div>'+
+    '<div class="seltitle">어떤 이벤트예요?</div>'+
+    EVENT_NAMES.map(function(ev){ var e=EVENTS[ev]; return '<button class="selcard" onclick="selectEvent(\''+ev+'\')"><span class="se">'+e.emo+'</span><span class="sn">'+ev+(e.gate?' 🔒':'')+'</span><span class="sa">›</span></button>'; }).join("")+
+    '<div class="selnote">이벤트를 고르면 지점이 나와요.</div>'+
+  '</div></div>';
+}
+function renderSelect(){
+  var EMO={"압구정점":"💆‍♀️","동탄본점":"🎨","은율 동탄점":"🎨","은율 청담점":"🌿"};
+  $("app").innerHTML='<div class="wrap"><div class="selwrap">'+
+    '<button class="ghostbtn" onclick="backToEvent()" style="margin-bottom:14px">← 이벤트 다시 선택</button>'+
+    '<div class="seltitle">'+STATE.event+'<br><span style="font-size:.8rem;color:var(--faint)">어느 지점이세요?</span></div>'+
+    curBranches().map(function(b){ return '<button class="selcard" onclick="selectBranch(\''+b+'\')"><span class="se">'+(EMO[b]||"🏠")+'</span><span class="sn">'+b+'</span><span class="sa">›</span></button>'; }).join("")+
   '</div></div>';
 }
 
@@ -579,7 +623,7 @@ function renderBody(b){
 
 // ---- form ----
 function fillSelects(){
-  const p=$("f_pkg"); p.innerHTML=PROGRAMS.map(x=>'<option value="'+escAttr(x[0])+'">'+escHtml(dispPkg(x[0]))+(x[1]?" · "+won(x[1]):"")+'</option>').join("");
+  const p=$("f_pkg"); p.innerHTML=curPrograms().map(x=>'<option value="'+escAttr(x[0])+'">'+escHtml(dispPkg(x[0]))+(x[1]?" · "+won(x[1]):"")+'</option>').join("");
   const r=$("f_reset"); r.innerHTML='<option value="">— 선택 —</option>'+resettersFor(STATE.branch).map(x=>'<option>'+x+'</option>').join("");
 }
 let confirmAuthed=false;
@@ -780,6 +824,86 @@ const TEMPLATES = {
 
 예약일에 뵙겠습니다 :)` },
   ],
+  "은율 동탄점":[
+    { t:"① 예약접수 안내", x:`안녕하세요 소니드얼굴윤곽 동탄점입니다 :)
+지점 맞는지 꼭 확인해주세요
+
+요청해 주신 예약 접수 도와드리기 위해 연락드립니다 !
+
+-> 요청 시간 될 때 : 요청주신 9/00 00:00 예약이 가능합니다
+
+-> 요청 시간이 안될 때 : 요청주신 9/00 00:00 예약은 현재 예약이 있어 가장 가까운 시간으로 안내드려봅니다 !
+
+✔️페이스리세팅은 얼굴 재조립을 위한 30분 건식관리이며 첫관리만 상담 포함하여 약 1시간 소요됩니다.
+✔️주차 가능합니다.
+✔️위치는 경기도 화성시 동탄구 동탄반석로 172 (동양파라곤) 133호입니다.
+✔️1회권 결제 하신 후 첫관리 방문권 사용은 12/31까지만 가능합니다 !
+✔️받아보신 후 패키지 가입을 원하시면 특별할인가로 차액결제 해드립니다!
+
+✔️다른 얼굴 시술 후 방문 시
+보톡스, 레이저 1주일 후 관리가능
+필러, 실리프팅, 2~4주 후 관리가능
+부분 얼굴 성형 1~2달 후 관리가능
+윤곽 관련 수술 6~12개월 후 관리가능` },
+    { t:"② 방문안내 (확정 후)", x:`고객님 방문 안내문자 보내드립니다 :)
+
+
+⚠️첫 관리 환불 안내⚠️
+2일전 > 100% 환불
+1일전 > 90% 환불
+당일 > 80% 환불
+
+
+주소 : 경기도 화성시 동탄구 동탄반석로 172 (동양파라곤) 133호 소니드얼굴윤곽
+
+✔️네이버 예약 확정시간은 실제 방문시간과 다를 수 있으니 문자로 안내드린 시간만 기억해주시면 됩니다 :)
+✔️첫관리 시 목티를 입지 말아주세요 :)
+✔️5~10분 이라도 늦을 시 미리연락주세요 !
+✔️다음예약이 연결되어 있기 때문에 관리시간에 늦으시면 관리가 줄어들 수 있습니다
+✔️10분 이상 지연시 예약 자동취소 됩니다(당일 취소 환불80% 적용)
+
+예약일에 뵙겠습니다 :)` },
+  ],
+  "은율 청담점":[
+    { t:"① 예약접수 안내", x:`안녕하세요 소니드얼굴윤곽 청담점입니다 :)
+지점 맞는지 꼭 확인해주세요
+
+요청해 주신 예약 접수 도와드리기 위해 연락드립니다 !
+
+-> 요청 시간 될 때 : 요청주신 9/00 00:00 예약이 가능합니다
+
+-> 요청 시간이 안될 때 : 요청주신 9/00 00:00 예약은 현재 예약이 있어 가장 가까운 시간으로 안내드려봅니다 !
+
+✔️페이스리세팅은 얼굴재조립을 위한 30분 건식관리이며 첫관리만 상담 포함하여 약 1시간 소요됩니다.
+✔️주차 가능합니다. (발렛비 5000원)
+✔️위치는 서울특별시 강남구 청담동94-3 퍼즐하우스 204호 입니다.
+✔️1회권 결제 하신 후 첫관리 방문권 사용은 10/4까지만 가능합니다 !
+✔️받아보신 후 패키지 가입을 원하시면 특별할인가로 차액결제 해드립니다!
+
+✔️다른 얼굴 시술 후 방문 시
+보톡스, 레이저 1주일 후 관리가능
+필러, 실리프팅, 2~4주 후 관리가능
+부분 얼굴 성형 1~2달 후 관리가능
+윤곽 관련 수술 6-12개월 후 관리가능` },
+    { t:"② 방문안내 (확정 후)", x:`고객님 방문 안내문자 보내드립니다 :)
+
+
+⚠️첫 관리 환불 안내⚠️
+2일전 > 100% 환불
+1일전 > 90% 환불
+당일 > 80% 환불
+
+
+주소 : 서울특별시 강남구 청담동 94-3번지 퍼즐하우스 204호
+
+✔️네이버 예약 확정시간은 실제 방문시간과 다를 수 있으니 문자로 안내드린 시간만 기억해주시면 됩니다 :)
+✔️첫관리 시 목티를 입지 말아주세요 :)
+✔️5~10분 이라도 늦을 시 미리연락주세요 !
+✔️다음예약이 연결되어 있기 때문에 관리시간에 늦으시면 관리가 줄어들 수 있습니다
+✔️10분 이상 지연시 예약 자동취소 됩니다 (당일 취소 환불80% 적용)
+
+예약일에 뵙겠습니다 :)` },
+  ],
 };
 let TPL_CUR=0, TPL_LIST=[];
 function openTemplates(){ TPL_LIST=(TEMPLATES[STATE.branch]||[]).concat([TPL_COMMON]); TPL_CUR=0; $("tplTitle").textContent=STATE.branch+" 안내문자"; renderTpl(); $("tplModal").classList.add("on"); }
@@ -824,7 +948,7 @@ async function onPhotoFile(file){
     if(d.reserve) $("f_reserve").value=d.reserve;
     if(d.memo) $("f_memo").value=d.memo;
     if(d.info){ STATE.editInfo=d.info; $("f_info").textContent=d.info; $("infoFld").style.display=""; }
-    if(d.pkg && PROGRAMS.some(function(p){return p[0]===d.pkg;})){ $("f_pkg").value=d.pkg; onPkg(); }
+    if(d.pkg && curPrograms().some(function(p){return p[0]===d.pkg;})){ $("f_pkg").value=d.pkg; onPkg(); }
     toast("불러왔어요! 담당자·방문확정 채우고 저장하세요 ✅");
   }catch(e){ toast("사진 읽기 오류(워커 주소 확인) — 직접 입력해주세요"); openForm(); }
 }
