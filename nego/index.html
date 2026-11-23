@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>네고 이벤트 예약 · 소니드</title>
+<title>특가이벤트 예약 · 소니드</title>
 <style>
   :root{
     --bg:#f5f3f0; --surface:#ffffff; --surface-2:#faf8f6; --line:#e7e1db; --line-2:#efeae5;
@@ -197,8 +197,8 @@
   <div class="brand">
     <div class="dot">S</div>
     <div>
-      <h1>네고 이벤트 예약</h1>
-      <div class="sub">소니드 × 미니쉬 · 얼굴윤곽</div>
+      <h1>특가이벤트 예약</h1>
+      <div class="sub" id="brandSub">소니드 얼굴윤곽</div>
     </div>
     <div class="spacer"></div>
     <button class="iconbtn" id="reloadBtn" title="전체 새로고침" onclick="hardRefresh()">🔄</button>
@@ -458,10 +458,12 @@ function selectEvent(ev){ var e=EVENTS[ev]; if(!e) return;
 function backToEvent(){ STATE.event=null; STATE.view="event"; STATE.search=""; document.body.removeAttribute("data-branch"); render(); }
 function selectBranch(b){ STATE.branch=b; STATE.unlocked[b]=true; STATE.view="branch"; render(); SYNC_STATE="…"; pullBranch(b).then(function(){ if(STATE.unlocked[b]&&STATE.branch===b) renderList(b); }); }
 function backToSelect(){ STATE.view="select"; STATE.search=""; render(); }
+function brandLabel(b){ if(/청담/.test(b)) return "소니드 청담"; if(/동탄/.test(b)) return "소니드 동탄본점"; if(/압구정/.test(b)) return "소니드 압구정"; return "소니드 얼굴윤곽"; }
+function setBrandSub(t){ var e=$("brandSub"); if(e) e.textContent=t; }
 function render(){
-  if(STATE.view==="event"){ document.body.removeAttribute("data-branch"); $("fab").style.display="none"; renderEvent(); return; }
-  if(STATE.view==="select"){ document.body.removeAttribute("data-branch"); $("fab").style.display="none"; renderSelect(); return; }
-  const b=STATE.branch; document.body.setAttribute("data-branch", b);
+  if(STATE.view==="event"){ document.body.removeAttribute("data-branch"); $("fab").style.display="none"; setBrandSub("소니드 얼굴윤곽"); renderEvent(); return; }
+  if(STATE.view==="select"){ document.body.removeAttribute("data-branch"); $("fab").style.display="none"; setBrandSub("소니드 얼굴윤곽"); renderSelect(); return; }
+  const b=STATE.branch; document.body.setAttribute("data-branch", b); setBrandSub(brandLabel(b));
   if(!STATE.unlocked[b]){ $("fab").style.display="none"; renderGate(b); return; }
   $("fab").style.display="flex";
   renderList(b);
