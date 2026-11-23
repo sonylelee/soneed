@@ -452,9 +452,26 @@ $("themeBtn").onclick=()=>{ const cur=document.documentElement.getAttribute("dat
 // ---- navigation: 지점 선택 → 비번 → 목록 ----
 // 이벤트 선택
 function selectEvent(ev){ var e=EVENTS[ev]; if(!e) return;
-  if(e.gate){ var p=prompt("🔒 "+ev+"\n비밀번호 4자리를 입력하세요"); if(p===null) return; if(p!==e.gate){ alert("비밀번호가 달라요."); return; } }
+  if(e.gate){ STATE.pendingEvent=ev; STATE.view="eventgate"; STATE.pinBuf=""; render(); return; }
   STATE.event=ev; STATE.view="select"; STATE.search=""; render();
 }
+function renderEventGate(){
+  var ev=STATE.pendingEvent, e=EVENTS[ev]||{}; STATE.pinBuf="";
+  $("app").innerHTML =
+    '<div class="gate">'+
+      '<button class="ghostbtn" onclick="backToEvent()" style="margin-bottom:14px">← 이벤트 다시 선택</button>'+
+      '<div class="emo">'+(e.emo||"🔒")+'</div>'+
+      '<h2>'+ev+'</h2>'+
+      '<p>비밀번호 4자리를 입력하세요</p>'+
+      '<div class="pininput" id="pinDots"></div>'+
+      '<div class="gateerr" id="pinErr"></div>'+
+      '<div class="pad" id="pad"></div>'+
+    '</div>';
+  const pad=$("pad");
+  ["1","2","3","4","5","6","7","8","9","blank","0","del"].forEach(k=>{ const btn=document.createElement("button"); if(k==="blank"){btn.className="blank";btn.disabled=true;} else { btn.textContent = k==="del"?"⌫":k; btn.onclick=()=>pinKey(k); } pad.appendChild(btn); });
+  drawDots();
+}
+function submitEventPin(){ var e=EVENTS[STATE.pendingEvent]; if(e&&STATE.pinBuf===e.gate){ STATE.event=STATE.pendingEvent; STATE.pendingEvent=null; STATE.view="select"; STATE.search=""; render(); } else { var el=$("pinErr"); if(el) el.textContent="비밀번호가 달라요. 다시 입력해주세요."; STATE.pinBuf=""; drawDots(); } }
 function backToEvent(){ STATE.event=null; STATE.view="event"; STATE.search=""; document.body.removeAttribute("data-branch"); render(); }
 function selectBranch(b){ STATE.branch=b; STATE.unlocked[b]=true; STATE.view="branch"; render(); SYNC_STATE="…"; pullBranch(b).then(function(){ if(STATE.unlocked[b]&&STATE.branch===b) renderList(b); }); }
 function backToSelect(){ STATE.view="select"; STATE.search=""; render(); }
@@ -462,6 +479,7 @@ function brandLabel(b){ if(/청담/.test(b)) return "소니드 청담"; if(/동�
 function setBrandSub(t){ var e=$("brandSub"); if(e) e.textContent=t; }
 function render(){
   if(STATE.view==="event"){ document.body.removeAttribute("data-branch"); $("fab").style.display="none"; setBrandSub("소니드 얼굴윤곽"); renderEvent(); return; }
+  if(STATE.view==="eventgate"){ document.body.removeAttribute("data-branch"); $("fab").style.display="none"; setBrandSub("소니드 얼굴윤곽"); renderEventGate(); return; }
   if(STATE.view==="select"){ document.body.removeAttribute("data-branch"); $("fab").style.display="none"; setBrandSub("소니드 얼굴윤곽"); renderSelect(); return; }
   const b=STATE.branch; document.body.setAttribute("data-branch", b); setBrandSub(brandLabel(b));
   if(!STATE.unlocked[b]){ $("fab").style.display="none"; renderGate(b); return; }
@@ -477,11 +495,42 @@ function renderEvent(){
 }
 function renderSelect(){
   var EMO={"압구정점":"💆‍♀️","동탄본점":"🎨","은율님 동탄점":"🎨","은율님 청담점":"🌿"};
+  var brs=curBranches();
   $("app").innerHTML='<div class="wrap"><div class="selwrap">'+
     '<button class="ghostbtn" onclick="backToEvent()" style="margin-bottom:14px">← 이벤트 다시 선택</button>'+
     '<div class="seltitle">'+STATE.event+'<br><span style="font-size:.8rem;color:var(--faint)">어느 지점이세요?</span></div>'+
-    curBranches().map(function(b){ return '<button class="selcard" onclick="selectBranch(\''+b+'\')"><span class="se">'+(EMO[b]||"🏠")+'</span><span class="sn">'+b+'</span><span class="sa">›</span></button>'; }).join("")+
+    '<div id="selStats" style="margin:0 0 14px"></div>'+
+    brs.map(function(b){ return '<button class="selcard" onclick="selectBranch(\''+b+'\')"><span class="se">'+(EMO[b]||"🏠")+'</span><span class="sn">'+b+'<span id="sc_'+b.replace(/\s/g,'_')+'" style="display:block;font-size:.72rem;font-weight:600;color:var(--faint);margin-top:3px">집계 중…</span></span><span class="sa">›</span></button>'; }).join("")+
   '</div></div>';
+  loadSelStats(brs);
+}
+async function loadSelStats(brs){
+  try{
+    const r=await fetch(SB_URL+"/rest/v1/gongu_reservations?select=branch,rec",{headers:SB_H});
+    const rows=await r.json(); const now=new Date();
+    const per={}; brs.forEach(b=>per[b]={tot:0,done:0,conv:0});
+    function isConv(rec){ if(rec.addons && rec.addons.length) return true; var p=rec.pkg; return !!(p && p!=="페이스리세팅 1회" && p!=="원장 1회" && p!=="— 선택 안 함 —"); }
+    (rows||[]).forEach(function(x){ if(per[x.branch]===undefined) return; const rec=x.rec||{}; if(rec.status==="취소"||rec.status==="노쇼") return; per[x.branch].tot++; const v=rec.visit; if(v && new Date(v)<now) per[x.branch].done++; if(isConv(rec)) per[x.branch].conv++; });
+    let totAll=0,doneAll=0,convAll=0; brs.forEach(b=>{ totAll+=per[b].tot; doneAll+=per[b].done; convAll+=per[b].conv; });
+    const el=$("selStats");
+    function shortB(b){ return b.replace("은율님 ","").replace("본점",""); }
+    function tds(t,dn,cv){ return '<td style="text-align:center;padding:8px 4px">'+t+'</td>'+
+        '<td style="text-align:center;padding:8px 4px;color:var(--accent);font-weight:700">'+dn+'</td>'+
+        '<td style="text-align:center;padding:8px 4px;color:#2e86c1;font-weight:700">'+cv+'</td>'+
+        '<td style="text-align:center;padding:8px 4px">'+(t-cv)+'</td>'; }
+    let rowsHtml=brs.map(function(b){ var o=per[b];
+      return '<tr><td style="text-align:left;font-weight:700;padding:8px 6px">'+shortB(b)+'</td>'+tds(o.tot,o.done,o.conv)+'</tr>'; }).join("");
+    if(el) el.innerHTML=
+      '<table style="width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--line);border-radius:8px;overflow:hidden;font-size:.82rem">'+
+      '<thead><tr style="background:var(--line-soft,rgba(0,0,0,.04));color:var(--faint);font-size:.7rem">'+
+        '<th style="text-align:left;padding:7px 6px">지점</th><th style="padding:7px 4px">등록</th><th style="padding:7px 4px">완료</th><th style="padding:7px 4px">패키지<br>전환</th><th style="padding:7px 4px">1회만</th></tr></thead>'+
+      '<tbody>'+rowsHtml+
+        '<tr style="border-top:2px solid var(--line);font-weight:800;background:var(--line-soft,rgba(0,0,0,.03))">'+
+        '<td style="text-align:left;padding:9px 6px">합계</td>'+tds(totAll,doneAll,convAll)+'</tr>'+
+      '</tbody></table>'+
+      '<div style="font-size:.68rem;color:var(--faint);margin-top:5px;text-align:center">완료=방문 지남 · 전환=패키지 가입 · 1회만=1회 등록 후 미전환</div>';
+    brs.forEach(function(b){ const s=$("sc_"+b.replace(/\s/g,'_')); if(s) s.textContent="등록 "+per[b].tot+" · 전환 "+per[b].conv+" · 1회만 "+(per[b].tot-per[b].conv); });
+  }catch(e){ const el=$("selStats"); if(el) el.textContent="통계를 불러오지 못했어요"; }
 }
 
 function renderGate(b){
@@ -503,7 +552,7 @@ function renderGate(b){
   drawDots();
 }
 function drawDots(){ const d=$("pinDots"); if(!d) return; d.innerHTML=""; for(let i=0;i<4;i++){ const s=document.createElement("div"); s.className="pindot"+(i<STATE.pinBuf.length?" on":""); d.appendChild(s); } }
-function pinKey(k){ if(k==="del"){ STATE.pinBuf=STATE.pinBuf.slice(0,-1); drawDots(); return; } if(STATE.pinBuf.length>=4) return; STATE.pinBuf+=k; drawDots(); if(STATE.pinBuf.length===4) setTimeout(submitPin,120); }
+function pinKey(k){ if(k==="del"){ STATE.pinBuf=STATE.pinBuf.slice(0,-1); drawDots(); return; } if(STATE.pinBuf.length>=4) return; STATE.pinBuf+=k; drawDots(); if(STATE.pinBuf.length===4) setTimeout(STATE.view==="eventgate"?submitEventPin:submitPin,120); }
 function unlockBranch(b){ STATE.unlocked[b]=true; SYNC_STATE="…"; render(); pullBranch(b).then(()=>{ if(STATE.unlocked[b]&&STATE.branch===b) renderList(b); }); }
 function submitPin(){ const b=STATE.branch; if(STATE.pinMode==="create"){ setPw(b,STATE.pinBuf); unlockBranch(b); } else { if(STATE.pinBuf===getPw(b)){ unlockBranch(b); } else { $("pinErr").textContent="비밀번호가 달라요. 다시 입력해주세요."; STATE.pinBuf=""; drawDots(); } } }
 // 컴퓨터: 키보드로 비번 입력 (게이트 화면이 떠 있을 때만 작동)
@@ -511,7 +560,7 @@ document.addEventListener("keydown",function(e){
   if(!document.getElementById("pinDots")) return;
   if(e.key>="0"&&e.key<="9"){ pinKey(e.key); e.preventDefault(); }
   else if(e.key==="Backspace"){ pinKey("del"); e.preventDefault(); }
-  else if(e.key==="Enter"){ if(STATE.pinBuf.length===4) submitPin(); e.preventDefault(); }
+  else if(e.key==="Enter"){ if(STATE.pinBuf.length===4) (STATE.view==="eventgate"?submitEventPin:submitPin)(); e.preventDefault(); }
 });
 // ---- 관리자(원장) : 이 비밀번호를 아는 사람만 지점 비번을 바꿀 수 있음 ----
 function getMaster(){ return CFG&&CFG.master; }
