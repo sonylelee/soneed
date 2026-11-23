@@ -273,7 +273,7 @@
 const $ = id => document.getElementById(id);
 const won = n => "₩" + (Math.round(n||0)).toLocaleString("ko-KR");
 const RESETTERS_COMMON = ["신대성","이소니"]; // 양쪽 지점 공통
-const RESETTERS_BRANCH = { "동탄본점":["이수연","김려은","신경미"], "압구정점":["정수영","김현주"], "은율 동탄점":["이수연","신대성","김려은","신경미","이소니"], "은율 청담점":["신대성","이소니","정수영","김현주","이수연"] };
+const RESETTERS_BRANCH = { "동탄본점":["이수연","김려은","신경미"], "압구정점":["정수영","김현주"], "은율님 동탄점":["이수연","신대성","김려은","신경미","이소니"], "은율님 청담점":["신대성","이소니","정수영","김현주","이수연"] };
 function resettersFor(b){ return (RESETTERS_BRANCH[b]||[]).concat(RESETTERS_COMMON); }
 const FEE_RATE = 0.030981;   // 네이버페이 수수료율(부가세 포함, 시트 기준)
 // 패키지 가격표 : [이름, 총결제금액, 가입횟수]
@@ -286,7 +286,7 @@ const PROGRAMS_HB = [   // 또한별 2차 공구
   ["원장 1회",300000,1],
   ["원장 단독 10+1회",2310000,11],
 ];
-const PROGRAMS_EY = [   // 은율 특가이벤트 (15+3 · 원장 15회 315만)
+const PROGRAMS_EY = [   // 은율님 특가이벤트 (15+3 · 원장 15회 315만)
   ["— 선택 안 함 —",0,0],
   ["페이스리세팅 1회",220000,1],
   ["페이스리세팅 5회",890000,5],
@@ -298,7 +298,7 @@ const PROGRAMS_EY = [   // 은율 특가이벤트 (15+3 · 원장 15회 315만)
 // 이벤트 구성
 const EVENTS = {
   "이전 공구 내역": { emo:"🗂", branches:["압구정점","동탄본점"], gate:"9092", programs:PROGRAMS_HB },
-  "은율님 특가이벤트": { emo:"✨", branches:["은율 동탄점","은율 청담점"], gate:"1470", programs:PROGRAMS_EY },
+  "은율님 특가이벤트": { emo:"✨", branches:["은율님 동탄점","은율님 청담점"], gate:"7777", programs:PROGRAMS_EY },
 };
 const EVENT_NAMES = Object.keys(EVENTS);
 function curPrograms(){ var e=EVENTS[STATE&&STATE.event]; return e?e.programs:PROGRAMS_HB; }
@@ -474,7 +474,7 @@ function renderEvent(){
   '</div></div>';
 }
 function renderSelect(){
-  var EMO={"압구정점":"💆‍♀️","동탄본점":"🎨","은율 동탄점":"🎨","은율 청담점":"🌿"};
+  var EMO={"압구정점":"💆‍♀️","동탄본점":"🎨","은율님 동탄점":"🎨","은율님 청담점":"🌿"};
   $("app").innerHTML='<div class="wrap"><div class="selwrap">'+
     '<button class="ghostbtn" onclick="backToEvent()" style="margin-bottom:14px">← 이벤트 다시 선택</button>'+
     '<div class="seltitle">'+STATE.event+'<br><span style="font-size:.8rem;color:var(--faint)">어느 지점이세요?</span></div>'+
@@ -828,7 +828,7 @@ const TEMPLATES = {
 
 예약일에 뵙겠습니다 :)` },
   ],
-  "은율 동탄점":[
+  "은율님 동탄점":[
     { t:"① 예약접수 안내", x:`안녕하세요 소니드얼굴윤곽 동탄점입니다 :)
 지점 맞는지 꼭 확인해주세요
 
@@ -868,7 +868,7 @@ const TEMPLATES = {
 
 예약일에 뵙겠습니다 :)` },
   ],
-  "은율 청담점":[
+  "은율님 청담점":[
     { t:"① 예약접수 안내", x:`안녕하세요 소니드얼굴윤곽 청담점입니다 :)
 지점 맞는지 꼭 확인해주세요
 
