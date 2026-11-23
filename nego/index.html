@@ -226,7 +226,7 @@
       <div class="fld"><label>⭐ 배정 리셋터 (담당자 입력)</label><select id="f_reset"></select></div>
       <div class="two">
         <div class="fld"><label>📅 예약일시 (네이버)</label><input id="f_reserve" type="datetime-local"></div>
-        <div class="fld"><label>⭐ 방문 확정일시 (담당자 입력) <button type="button" class="samebtn" onclick="sameAsReserve()">= 요청일과 동일</button></label><input id="f_visit" type="datetime-local"></div>
+        <div class="fld"><label>⭐ 방문 확정일시 (담당자 입력) <button type="button" class="samebtn" onclick="sameAsReserve()">= 요청일과 동일</button> <button type="button" class="samebtn" onclick="clearVisit()" style="color:var(--bad,#c0392b)">🗑 방문확정 삭제</button></label><input id="f_visit" type="datetime-local"></div>
       </div>
       <div class="fld"><label>네이버페이 결제완료액 (원)</label><input id="f_paid" type="number" inputmode="numeric" placeholder="0"><div class="hint" id="pkgHint"></div></div>
       <div class="fld" id="addonFld"><label>➕ 추가 가입 <span style="font-weight:500;color:var(--muted);font-size:.8em">(차액결제 · 정가−22만 자동입력 · 다르면 수정)</span></label>
@@ -273,7 +273,7 @@
 const $ = id => document.getElementById(id);
 const won = n => "₩" + (Math.round(n||0)).toLocaleString("ko-KR");
 const RESETTERS_COMMON = ["신대성","이소니"]; // 양쪽 지점 공통
-const RESETTERS_BRANCH = { "동탄본점":["이수연","김려은","신경미"], "압구정점":["정수영","김현주"], "은율 동탄점":["이수연","김려은","신경미"], "은율 청담점":[] };
+const RESETTERS_BRANCH = { "동탄본점":["이수연","김려은","신경미"], "압구정점":["정수영","김현주"], "은율 동탄점":["이수연","신대성","김려은","신경미","이소니"], "은율 청담점":["신대성","이소니","정수영","김현주","이수연"] };
 function resettersFor(b){ return (RESETTERS_BRANCH[b]||[]).concat(RESETTERS_COMMON); }
 const FEE_RATE = 0.030981;   // 네이버페이 수수료율(부가세 포함, 시트 기준)
 // 패키지 가격표 : [이름, 총결제금액, 가입횟수]
@@ -297,8 +297,8 @@ const PROGRAMS_EY = [   // 은율 특가이벤트 (15+3 · 원장 15회 315만)
 ];
 // 이벤트 구성
 const EVENTS = {
-  "또한별 2차 공구": { emo:"🎁", branches:["압구정점","동탄본점"], gate:"9092", programs:PROGRAMS_HB },
-  "은율 특가이벤트": { emo:"✨", branches:["은율 동탄점","은율 청담점"], gate:null, programs:PROGRAMS_EY },
+  "이전 공구 내역": { emo:"🗂", branches:["압구정점","동탄본점"], gate:"9092", programs:PROGRAMS_HB },
+  "은율님 특가이벤트": { emo:"✨", branches:["은율 동탄점","은율 청담점"], gate:"1470", programs:PROGRAMS_EY },
 };
 const EVENT_NAMES = Object.keys(EVENTS);
 function curPrograms(){ var e=EVENTS[STATE&&STATE.event]; return e?e.programs:PROGRAMS_HB; }
@@ -399,7 +399,7 @@ async function pullBranch(b){
     setData(b,arr); SYNC_STATE="동기화됨"; return true;
   }catch(e){ SYNC_STATE="로컬"; return false; }
 }
-async function pushRec(b,rec){ try{
+async function pushRec(b,rec,opts){ opts=opts||{}; try{
   // 서버 최신본과 병합 — 오래된 로컬이 애드온/담당/방문을 덮어써 유실되는 것 방지
   try{
     const g=await fetch(SB_URL+"/rest/v1/gongu_reservations?select=rec&id=eq."+encodeURIComponent(rec.id),{headers:SB_H});
@@ -407,8 +407,8 @@ async function pushRec(b,rec){ try{
     if(srv){
       // 차액결제 애드온: 서버가 더 많으면 서버 유지(줄어드는 저장 차단)
       if((srv.addons||[]).length > (rec.addons||[]).length) rec.addons=srv.addons;
-      // 담당·방문·확정일: 로컬이 비어있고 서버에 값이 있으면 서버 값 보존
-      ["reset","visit","reserve","confirmDate"].forEach(function(k){ if(!rec[k] && srv[k]) rec[k]=srv[k]; });
+      // 담당·방문·확정일: 로컬이 비어있고 서버에 값이 있으면 서버 값 보존 (단, 방문확정 '삭제'는 허용)
+      ["reset","visit","reserve","confirmDate"].forEach(function(k){ if(!rec[k] && srv[k] && !(k==="visit"&&opts.allowClearVisit)) rec[k]=srv[k]; });
       if((!rec.sms||!rec.sms.length) && srv.sms&&srv.sms.length) rec.sms=srv.sms;
     }
   }catch(e){}
@@ -422,6 +422,10 @@ function toggleView2(){ STATE.view2=(STATE.view2==="table"?"card":"table"); rend
 function fmtShort(s){ if(!s) return "—"; const d=new Date(s); if(isNaN(d)) return s; return (d.getMonth()+1)+"/"+d.getDate()+" "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); }
 function hardRefresh(){ toast("새로고침 중… ⏳"); try{ location.reload(); }catch(e){ location.href=location.href; } }
 function sameAsReserve(){ const rv=$("f_reserve").value; if(!rv){ toast("먼저 예약일시가 있어야 해요"); return; } $("f_visit").value=rv; }
+function clearVisit(){ $("f_visit").value=""; STATE.clearVisitFlag=true;
+  if(STATE.editId){ const b=STATE.branch; const arr=getData(b); const i=arr.findIndex(x=>x.id===STATE.editId);
+    if(i>=0){ arr[i].visit=""; setData(b,arr); pushRec(b,arr[i],{allowClearVisit:true}); renderBody(b); } }
+  toast("방문확정일을 삭제했어요 🗑"); }
 // 연락처: 번호 탭=전화, 💬 탭=문자(보냄표시), ✅문자 탭=보냄해제
 function phoneCell(r){ if(!r||!r.phone) return ""; const d=(r.phone||"").replace(/[^0-9]/g,"");
   const tel='<a class="tel" href="tel:'+d+'" onclick="event.stopPropagation()">'+escHtml(r.phone)+'</a>';
@@ -452,7 +456,7 @@ function selectEvent(ev){ var e=EVENTS[ev]; if(!e) return;
   STATE.event=ev; STATE.view="select"; STATE.search=""; render();
 }
 function backToEvent(){ STATE.event=null; STATE.view="event"; STATE.search=""; document.body.removeAttribute("data-branch"); render(); }
-function selectBranch(b){ STATE.branch=b; STATE.unlocked[b]=true; STATE.view="branch"; render(); }
+function selectBranch(b){ STATE.branch=b; STATE.unlocked[b]=true; STATE.view="branch"; render(); SYNC_STATE="…"; pullBranch(b).then(function(){ if(STATE.unlocked[b]&&STATE.branch===b) renderList(b); }); }
 function backToSelect(){ STATE.view="select"; STATE.search=""; render(); }
 function render(){
   if(STATE.view==="event"){ document.body.removeAttribute("data-branch"); $("fab").style.display="none"; renderEvent(); return; }
@@ -639,7 +643,7 @@ function setStatus(st){
 document.querySelectorAll("#statusSeg .seg").forEach(s=>s.onclick=()=>setStatus(s.dataset.st));
 function openForm(id){
   fillSelects();
-  STATE.editId=id||null;
+  STATE.editId=id||null; STATE.clearVisitFlag=false;
   const r = id ? getData(STATE.branch).find(x=>x.id===id) : null;
   $("formTitle").textContent = r ? "예약 수정" : (STATE.branch+" · 고객 추가");
   $("f_name").value=r?.name||""; $("f_phone").value=r?.phone||"";
@@ -689,7 +693,7 @@ function saveForm(){
   rec.manual = (rec.status !== autoWouldBe(rec));
   const isNew = !STATE.editId;
   const arr=getData(b); const i=arr.findIndex(x=>x.id===rec.id); if(i>=0){ rec.ord=arr[i].ord; rec.sms=arr[i].sms; arr[i]=rec; } else { rec.ord=(arr.reduce((m,x)=>Math.max(m,+x.ord||0),0)+1); arr.push(rec); }
-  setData(b,arr); pushRec(b,rec); closeForm(); renderList(b);
+  setData(b,arr); pushRec(b,rec,{allowClearVisit:!!STATE.clearVisitFlag}); STATE.clearVisitFlag=false; closeForm(); renderList(b);
   toast(isNew ? (rec.name+"님 추가되었습니다 ✅") : (rec.name+"님 수정되었습니다 ✅"));
 }
 function delForm(){ if(!STATE.editId) return; const b=STATE.branch; const id=STATE.editId; const arr=getData(b); const cur=arr.find(x=>x.id===id); const nm=cur?cur.name:""; if(confirm("이 예약을 삭제할까요?")){ setData(b, arr.filter(x=>x.id!==id)); delRec(id); closeForm(); renderList(b); toast((nm||"예약")+" 삭제되었습니다 🗑️"); } }
@@ -877,7 +881,7 @@ const TEMPLATES = {
 ✔️페이스리세팅은 얼굴재조립을 위한 30분 건식관리이며 첫관리만 상담 포함하여 약 1시간 소요됩니다.
 ✔️주차 가능합니다. (발렛비 5000원)
 ✔️위치는 서울특별시 강남구 청담동94-3 퍼즐하우스 204호 입니다.
-✔️1회권 결제 하신 후 첫관리 방문권 사용은 10/4까지만 가능합니다 !
+✔️1회권 결제 하신 후 첫관리 방문권 사용은 12/31까지만 가능합니다 !
 ✔️받아보신 후 패키지 가입을 원하시면 특별할인가로 차액결제 해드립니다!
 
 ✔️다른 얼굴 시술 후 방문 시
@@ -895,6 +899,7 @@ const TEMPLATES = {
 
 
 주소 : 서울특별시 강남구 청담동 94-3번지 퍼즐하우스 204호
+(주차 필요 시 건물 앞 발렛부스가 있습니다)
 
 ✔️네이버 예약 확정시간은 실제 방문시간과 다를 수 있으니 문자로 안내드린 시간만 기억해주시면 됩니다 :)
 ✔️첫관리 시 목티를 입지 말아주세요 :)
