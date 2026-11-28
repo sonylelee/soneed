@@ -405,8 +405,8 @@ async function pushRec(b,rec,opts){ opts=opts||{}; try{
     const g=await fetch(SB_URL+"/rest/v1/gongu_reservations?select=rec&id=eq."+encodeURIComponent(rec.id),{headers:SB_H});
     const j=await g.json(); const srv=(j&&j[0])?j[0].rec:null;
     if(srv){
-      // 차액결제 애드온: 서버가 더 많으면 서버 유지(줄어드는 저장 차단)
-      if((srv.addons||[]).length > (rec.addons||[]).length) rec.addons=srv.addons;
+      // 차액결제 애드온: 서버가 더 많으면 서버 유지(백그라운드 저장의 유실 차단). 단, 폼에서 직접 수정 시엔 허용.
+      if(!opts.allowAddonEdit && (srv.addons||[]).length > (rec.addons||[]).length) rec.addons=srv.addons;
       // 담당·방문·확정일: 로컬이 비어있고 서버에 값이 있으면 서버 값 보존 (단, 방문확정 '삭제'는 허용)
       ["reset","visit","reserve","confirmDate"].forEach(function(k){ if(!rec[k] && srv[k] && !(k==="visit"&&opts.allowClearVisit)) rec[k]=srv[k]; });
       if((!rec.sms||!rec.sms.length) && srv.sms&&srv.sms.length) rec.sms=srv.sms;
@@ -744,7 +744,7 @@ function saveForm(){
   rec.manual = (rec.status !== autoWouldBe(rec));
   const isNew = !STATE.editId;
   const arr=getData(b); const i=arr.findIndex(x=>x.id===rec.id); if(i>=0){ rec.ord=arr[i].ord; rec.sms=arr[i].sms; arr[i]=rec; } else { rec.ord=(arr.reduce((m,x)=>Math.max(m,+x.ord||0),0)+1); arr.push(rec); }
-  setData(b,arr); pushRec(b,rec,{allowClearVisit:!!STATE.clearVisitFlag}); STATE.clearVisitFlag=false; closeForm(); renderList(b);
+  setData(b,arr); pushRec(b,rec,{allowClearVisit:!!STATE.clearVisitFlag, allowAddonEdit:true}); STATE.clearVisitFlag=false; closeForm(); renderList(b);
   toast(isNew ? (rec.name+"님 추가되었습니다 ✅") : (rec.name+"님 수정되었습니다 ✅"));
 }
 function delForm(){ if(!STATE.editId) return; const b=STATE.branch; const id=STATE.editId; const arr=getData(b); const cur=arr.find(x=>x.id===id); const nm=cur?cur.name:""; if(confirm("이 예약을 삭제할까요?")){ setData(b, arr.filter(x=>x.id!==id)); delRec(id); closeForm(); renderList(b); toast((nm||"예약")+" 삭제되었습니다 🗑️"); } }
